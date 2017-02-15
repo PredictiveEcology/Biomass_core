@@ -7,20 +7,15 @@ output: pdf_document
 
 # Overview
 
-Provide an overview of what the module does / how to use the module.
+This is the major rewrite of the `LANDIS-II` biomass succession module as a `SpaDES` module. This is a 'landscape' module that simulates vegetation change through biomass accumulation in pixels. Biomass accumulation is affected by competition, which is itself based on the relative biomass of other `cohorts` in the same pixel. This module contains the LANDIS-II Ward seed dispersal kernel. 
 
-Module documentation should be written so that others can use your module.
-This is a template for module documentation, and should be changed to reflect your module.
+Parameters for this module can be taken from a variety of sources. The default module downloads publically available vegetation layers from NRCAN servers, plus parameters developed by Boulanger et al. (2014). Default sources used by this module can be found here:
+`depends(mySim)@dependencies[["LBMR"]]@inputObjects$sourceURL`
 
-## RMarkdown
+These default values are not particularly useful. Users should likely have data prepraration modules to help out on this.
 
-RMarkdown syntax allows R code, outputs, and figures to be rendered in the documentation.
+For all equations, see the source code here, and the LANDIS-II manual. The manual for this module has not been written yet. 
 
-For help writing in RMarkdown, see http://rmarkdown.rstudio.com/.
-
-# Usage
-
-Your working directory must be the base of the module directory.
 
 ```{r update SpaDES, eval=TRUE}
 detach("package:SpaDES", unload = TRUE)
@@ -56,31 +51,4 @@ mySim <- simInit(times = times, params = parameters, modules = modules,
 
 mySimOut <- spades(mySim, debug = TRUE)
 ```
-
-# Events
-
-Describe what happens for each event type.
-
-## Plotting
-
-Write what is plotted.
-
-## Saving
-
-Write what is saved.
-
-# Data dependencies
-
-## Input data
-
-How to obtain input data, and a description of the data required by the module.
-If `sourceURL` is specified, `downloadData("LBMR", "path/to/modules/dir")` may be sufficient.
-
-## Output data
-
-Description of the module outputs.
-
-# Links to other modules
-
-Describe any anticipated linkages to other modules.
 
