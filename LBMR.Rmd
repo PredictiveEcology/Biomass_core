@@ -9,7 +9,7 @@ output: pdf_document
 
 This is the major rewrite of the `LANDIS-II` biomass succession module as a `SpaDES` module. This is a 'landscape' module that simulates vegetation change through biomass accumulation in pixels. Biomass accumulation is affected by competition, which is itself based on the relative biomass of other `cohorts` in the same pixel. This module contains the LANDIS-II Ward seed dispersal kernel. 
 
-Parameters for this module can be taken from a variety of sources. The default module downloads publically available vegetation layers from NRCAN servers, plus parameters developed by Boulanger et al. (2014). Default sources used by this module can be found here:
+Parameters for this module can be taken from a variety of sources. The default module downloads publically available vegetation layers from NRCAN servers, plus parameters developed by Boulanger et al. (2014). Default sources used by this module can be found here (must have run the `simInit` below):
 `depends(mySim)@dependencies[["LBMR"]]@inputObjects$sourceURL`
 
 These default values are not particularly useful. Users should likely have data prepraration modules to help out on this.
