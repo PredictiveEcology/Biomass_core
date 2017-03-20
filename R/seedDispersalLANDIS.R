@@ -293,7 +293,8 @@ WardFast <- expression(ifelse(cellSize<=effDist, {
 #' 
 #' @param verbose Logical. Whether a somewhat verbose output to screen occurs. For debugging.
 #' 
-#' @param useParallel Logical. whether parallel computation will be used in the dispersal process
+#' @param useParallel any. if the class of this arguement is logical, whether the function creates the cluster based on TRue and FALSE. 
+#'                         if the class of this arguement is cluster, the function will use this cluster to implement the parallel computation.
 #'
 #' @param ...   Additional parameters. Currently none
 #'
@@ -415,7 +416,205 @@ setMethod("LANDISDisp",
             subSamp <- pmin((0:subSamp)*ceiling(nPotentials/subSamp),nPotentials)
             #subSamp[length(subSamp)] <- nPotentials
             ultimateMaxDist <- max(dtRcv$seeddistance_max)
-            if(useParallel){
+            if(is(useParallel, "logical")){
+              if(useParallel){
+                subSampList <- list()
+                tempk <- 1
+                for(spatialSubset in 2:length(subSamp)) {
+                  # do the spatial subsetting -> potentials becomes the subset only
+                  subSampList[[tempk]] <- list(activeCell = seedRcvOrig[(subSamp[spatialSubset-1]+1):(subSamp[spatialSubset])],
+                                               potentials = potentialsOrig[(subSamp[spatialSubset-1]+1):(subSamp[spatialSubset])])
+                  tempk <- tempk+1
+                }
+                rm(tempk)
+                if(Sys.info()[["sysname"]] == "Windows"){
+                  cl <- parallel::makeCluster(parallel::detectCores()-1)
+                  allarguementsInMainFunc <- formalArgs(mainFunction)
+                  parallel::clusterExport(cl, c("mainFunction", 
+                                                "data.table", "%>%", "setkey", "adj",
+                                                "%<=%", "set", "rbindlist", "%<<%",
+                                                allarguementsInMainFunc[!(allarguementsInMainFunc %in% c("activeCell", "potentials", "n"))]),
+                                          envir = environment())
+                } else {
+                  cl <- parallel::makeForkCluster(parallel::detectCores()-1)
+                }
+                allSeedsArrived <- parallel::parLapply(cl, subSampList,
+                                                       function(y) mainFunction(activeCell = y[[1]],
+                                                                                potentials = y[[2]], 
+                                                                                n = cellSize,
+                                                                                speciesRcvPool, sc,
+                                                                                seedReceiveMap, ultimateMaxDist, 
+                                                                                cellSize, xysAll, 
+                                                                                dtSrc, pixelGroupMapVec,
+                                                                                dispersalFn,
+                                                                                k, b, lociReturn, 
+                                                                                speciesComm, 
+                                                                                pointDistance))
+                parallel::stopCluster(cl)
+                for(i in 1:length(allSeedsArrived)){
+                  if(i == 1){
+                    seedsArrived <- allSeedsArrived[[i]]
+                  } else {
+                    seedsArrived <- rbind(seedsArrived, allSeedsArrived[[i]])
+                  }
+                }
+              } else {
+                seedsArrived <- data.table(fromInit=numeric(),speciesCode=integer(),
+                                           key=c("fromInit","speciesCode"))
+                for(spatialSubset in 2:length(subSamp)) {
+                  n <- cellSize
+                  # do the spatial subsetting -> potentials becomes the subset only
+                  activeCell <- seedRcvOrig[(subSamp[spatialSubset-1]+1):(subSamp[spatialSubset])]
+                  potentials <- potentialsOrig[(subSamp[spatialSubset-1]+1):(subSamp[spatialSubset])] 
+                  # Go to species level
+                  
+                  spRcvCommCodes <- speciesComm(unique(speciesRcvPool$speciesRcvPool), sc=sc)
+                  #spRcvCommCodes <- speciesComm(unique(potentials$RcvCommunity))
+                  setkey(spRcvCommCodes, RcvCommunity)
+                  setkey(potentials, RcvCommunity)
+                  
+                  # Make potentials have all Rcv pixels, with each species as unique line
+                  potentials = spRcvCommCodes[potentials, allow.cartesian=TRUE][,`:=`(RcvCommunity=NULL)]
+                  setkey(potentials,"from")
+                  # identify which are 8 neighbours from each "active cell"
+                  adjCells <- adj(seedReceiveMap, unique(activeCell), directions=8, pairs=TRUE,include=TRUE) %>%
+                    data.table(key=c("from"))
+                  while (NROW(potentials) & ((n-cellSize)%<=%ultimateMaxDist)) { # while there are active cells and less than maxDistance
+                    #                  browser(expr=round(time(sim))>=20)
+                    # If this is second or greater time through this while loop, make active cells (i.e., the "from")
+                    #  be the previous round's "to" column. Also, delete "to" and "dis" columns
+                    #                  browser()
+                    if(n>cellSize) {
+                      potentials[,`:=`(from=NULL)][,from:=to][,`:=`(to=NULL,dis=NULL)]
+                      setkey(potentials,"from")
+                    }
+                    ################ original
+                    # join these to the potentials object
+                    potentials <- potentials[adjCells, allow.cartesian=TRUE] %>% 
+                      unique(by=c("fromInit", "to", "speciesCode"))
+                    potentials <- potentials[!is.na(fromInit),]
+                    
+                    # because there will be duplicate "from - to" pairs, say from 2 different species, only calculate
+                    #   distance once, then re-join the shorter version back to longer version by species
+                    shortPotentials <- setkey(potentials, fromInit, to) %>% unique(., by = c("fromInit", "to")) %>% .[,list(fromInit, to)] 
+                    set(shortPotentials, , "dis", pointDistance(xysAll[shortPotentials[,fromInit],], xysAll[shortPotentials[,to],], 
+                                                                lonlat=FALSE)) 
+                    
+                    # merge shorter object with no duplicate from-to pairs back with potentials, which does have duplicate from-to pairs
+                    #   due to multiple species having same from-to pair
+                    if(n-cellSize==0){ # the first loop incudes on site regeneration
+                      potentials <- shortPotentials[((n-cellSize) %<=% dis) & (dis %<=% n),][
+                        potentials, nomatch=0][
+                          (dis %<=% maxDist),]
+                    } else {
+                      potentials <- shortPotentials[((n-cellSize) %<<% dis) & (dis %<=% n),][
+                        potentials, nomatch=0][
+                          (dis %<=% maxDist),]
+                    }
+                    
+                    if(verbose) print(paste0("SimTime=",time(sim),", dist=",n,", spatialSubset=",spatialSubset-1,", nrow potentials=",NROW(potentials),
+                                             ", numSpec=",length(unique(potentials$speciesCode)),", 1st spec=",unique(potentials$speciesCode)[1]))
+                    
+                    
+                    if(plot.it) {
+                      wardSeedDispersalHab1[potentials[,from]] <- 
+                        n + rnorm(NROW(potentials),0,0.001)
+                      Plot(wardSeedDispersalHab1, axes=T,new=T)#, zoomExtent = extent(0,300,0,300))
+                    }
+                    if(NROW(potentials)>0) {
+                      dtSrcShort <- dtSrc[,list(pixelGroup,speciesCode)] 
+                      set(potentials,,"pixelGroup",pixelGroupMapVec[potentials[,to]])
+                      setkey(dtSrcShort, speciesCode, pixelGroup)
+                      setkey(potentials, speciesCode, pixelGroup)
+                      
+                      
+                      potentialsWithSeedDT <- potentials[dtSrcShort, nomatch=0]
+                      if(NROW(potentialsWithSeedDT)>0) {
+                        #                     cat("\n Year:",round(time(sim)),"\n")
+                        #                     dd <- potentialsWithSeedDT[,.(NumberofCell=length(from)),by=c("dis","to")]
+                        #                     print(dd)
+                        #potentialsWithSeedDT  <- potentials[potentialsWithSeed,]
+                        #setkey(potentialsWithSeedDT, "fromInit")
+                        
+                        
+                        set(potentialsWithSeedDT,,"receivesSeeds",NA)
+                        nr <- NROW(potentialsWithSeedDT)
+                        
+                        
+                        # back to Ward
+                        # Don't include the ones that were already, calculate probability
+                        potentialsWithSeedDT[is.na(receivesSeeds) & dis==0,
+                                             dispersalProb:=1]
+                        potentialsWithSeedDT[is.na(receivesSeeds) & dis!=0,
+                                             dispersalProb:=eval(dispersalFn)]
+                        potentialsWithSeedDT <- potentialsWithSeedDT[,.(receivesSeeds=runif(nr)<dispersalProb,
+                                                                        fromInit,speciesCode)]
+                        receivedSeeds <- potentialsWithSeedDT[,any(receivesSeeds), by=c("fromInit,speciesCode")]
+                        setkey(receivedSeeds, fromInit, speciesCode)
+                        
+                        #drop any that received seeds from potentials, as they are now in lociReturn
+                        if(NROW(receivedSeeds[V1==TRUE])>0)  {
+                          seedsArrived <- rbindlist(list(seedsArrived,
+                                                         lociReturn[receivedSeeds[V1==TRUE]][,V1:=NULL]))
+                          setkey(seedsArrived, fromInit, speciesCode)
+                          setkey(potentials, fromInit, speciesCode)
+                          potentials <- potentials[!receivedSeeds[V1==TRUE]]
+                          #potentials <- potentials[!receivedSeeds[V1==TRUE]]
+                        }
+                        #potentials <- specPotentials[,list(RcvCommunity=sum(2^speciesCode)), by=c("fromInit","from","to")]
+                        
+                      }
+                      plot.it2  <-  FALSE
+                      if(plot.it2) {
+                        
+                        seedsReceived[seedsArrived[species=="querrubr",fromInit]] <- 
+                          ifelse(as.numeric(seedsReceived[seedsArrived[species=="querrubr",fromInit]]==0), 
+                                 n,
+                                 seedsReceived[seedsArrived[species=="querrubr",fromInit]])
+                        assignGlobal("seedsReceived")
+                        #seedsReceived[seedReceive[species==unique(seedReceive$species)[i],pixelIndex]] <- 1; 
+                        Plot(seedsReceived, cols=c("red","blue"), na.color = "white", zero.color="white", new=TRUE);
+                        
+                        activeCells <- raster(seedsReceived)
+                        activeCells[] <- NA
+                        pots <- potentials %>% filter(species=="querrubr") %>% group_by(to) %>% summarise(len=.N)
+                        activeCells[pots[,to]] <- pots[,len]
+                        assignGlobal("activeCells")
+                        Plot(activeCells)
+                        
+                        potSeedsReceived <- pixelGroupMap %in% dtRcv[species=="querrubr",pixelGroup]
+                        assignGlobal("potSeedsReceived")
+                        #Plot(potSeedsReceived, cols="orange", na.color = "white", zero.color="white");
+                        
+                        seedsSource <- pixelGroupMap %in% dtSrc[species=="querrubr",pixelGroup]
+                        seedsSource[seedsSource==0] <- NA
+                        assignGlobal("seedsSource")
+                        #Plot(seedsSource, cols="orange", na.color = "white", zero.color="white");
+                        
+                        disSeedSourceMap <- round(distance(seedsSource, doEdge=FALSE),0)
+                        assignGlobal("disSeedSourceMap")
+                        #Plot(disSeedSourceMap)
+                        
+                        disPotSeedsReceived <- potSeedsReceived * disSeedSourceMap
+                        assignGlobal("disPotSeedsReceived")
+                        #Plot(disPotSeedsReceived)
+                        
+                        print(unique(disPotSeedsReceived[seedsReceived==n]))
+                        print(unique(seedsReceived[disPotSeedsReceived==n]))
+                        
+                        
+                        #i=i+1; 
+                        #print(unique(seedingData$species)[i-1])
+                        #potSeedsReceived <- pixelGroupMap %in% potentials[species=="querrubr",pixelGroup]
+                      }
+                    }
+                    n <- n+cellSize
+                    # refresh so that "to" cells become new "from" cells
+                    activeCell <- potentials[,to]
+                  }
+                }
+              }
+            } else if (is(useParallel, "cluster")){
               subSampList <- list()
               tempk <- 1
               for(spatialSubset in 2:length(subSamp)) {
@@ -425,42 +624,26 @@ setMethod("LANDISDisp",
                 tempk <- tempk+1
               }
               rm(tempk)
-              cl <- parallel::makeCluster(parallel::detectCores()-1)
-              tempEnvironment <- new.env()
-              tempEnvironment$mainFunction <- mainFunction
-              tempEnvironment$cellSize <- cellSize
-              tempEnvironment$speciesRcvPool <- speciesRcvPool
-              tempEnvironment$sc <- sc
-              tempEnvironment$seedReceiveMap <- seedReceiveMap
-              tempEnvironment$ultimateMaxDist <- ultimateMaxDist
-              tempEnvironment$xysAll <- xysAll
-              tempEnvironment$dtSrc <- dtSrc
-              tempEnvironment$pixelGroupMapVec <- pixelGroupMapVec
-              tempEnvironment$dispersalFn <- dispersalFn
-              tempEnvironment$k <- k
-              tempEnvironment$b <- b
-              tempEnvironment$lociReturn <- lociReturn
-              tempEnvironment$speciesComm <- speciesComm
-              tempEnvironment$pointDistance <- pointDistance
-              parallel::clusterExport(cl, c("mainFunction", "speciesRcvPool", 
-                                            "sc", "seedReceiveMap", "ultimateMaxDist", 
-                                            "cellSize", "xysAll", "dtSrc",
-                                            "pixelGroupMapVec", "dispersalFn", "k", 
-                                            "b", "lociReturn", "speciesComm", "pointDistance"),
-                                      envir = tempEnvironment)
-              parallel::clusterExport(cl, c("data.table", "%>%", "setkey", "adj",
-                                            "%<=%", "set", "rbindlist", "%<<%"))
-              allSeedsArrived <- parallel::parLapply(cl, subSampList,
+              if(Sys.info()[["sysname"]] == "Windows"){
+                allarguementsInMainFunc <- formalArgs(mainFunction)
+                parallel::clusterExport(useParallel, c("mainFunction", 
+                                              "data.table", "%>%", "setkey", "adj",
+                                              "%<=%", "set", "rbindlist", "%<<%",
+                                              allarguementsInMainFunc[!(allarguementsInMainFunc %in% c("activeCell", "potentials", "n"))]),
+                                        envir = environment())
+              }
+              allSeedsArrived <- parallel::parLapply(useParallel, subSampList,
                                                      function(y) mainFunction(activeCell = y[[1]],
-                                                                              potentials = y[[2]],
+                                                                              potentials = y[[2]], 
                                                                               n = cellSize,
-                                                                              speciesRcvPool, 
-                                                                              sc, seedReceiveMap, ultimateMaxDist,
-                                                                              cellSize, xysAll,
-                                                                              dtSrc, pixelGroupMapVec, 
-                                                                              dispersalFn, k, b, lociReturn))
-              rm(tempEnvironment)
-              parallel::stopCluster(cl)
+                                                                              speciesRcvPool, sc,
+                                                                              seedReceiveMap, ultimateMaxDist, 
+                                                                              cellSize, xysAll, 
+                                                                              dtSrc, pixelGroupMapVec,
+                                                                              dispersalFn,
+                                                                              k, b, lociReturn, 
+                                                                              speciesComm, 
+                                                                              pointDistance))
               for(i in 1:length(allSeedsArrived)){
                 if(i == 1){
                   seedsArrived <- allSeedsArrived[[i]]
@@ -469,169 +652,9 @@ setMethod("LANDISDisp",
                 }
               }
             } else {
-              seedsArrived <- data.table(fromInit=numeric(),speciesCode=integer(),
-                                         key=c("fromInit","speciesCode"))
-              for(spatialSubset in 2:length(subSamp)) {
-                n <- cellSize
-                # do the spatial subsetting -> potentials becomes the subset only
-                activeCell <- seedRcvOrig[(subSamp[spatialSubset-1]+1):(subSamp[spatialSubset])]
-                potentials <- potentialsOrig[(subSamp[spatialSubset-1]+1):(subSamp[spatialSubset])] 
-                # Go to species level
-                
-                spRcvCommCodes <- speciesComm(unique(speciesRcvPool$speciesRcvPool), sc=sc)
-                #spRcvCommCodes <- speciesComm(unique(potentials$RcvCommunity))
-                setkey(spRcvCommCodes, RcvCommunity)
-                setkey(potentials, RcvCommunity)
-                
-                # Make potentials have all Rcv pixels, with each species as unique line
-                potentials = spRcvCommCodes[potentials, allow.cartesian=TRUE][,`:=`(RcvCommunity=NULL)]
-                setkey(potentials,"from")
-                # identify which are 8 neighbours from each "active cell"
-                adjCells <- adj(seedReceiveMap, unique(activeCell), directions=8, pairs=TRUE,include=TRUE) %>%
-                  data.table(key=c("from"))
-                while (NROW(potentials) & ((n-cellSize)%<=%ultimateMaxDist)) { # while there are active cells and less than maxDistance
-                  #                  browser(expr=round(time(sim))>=20)
-                  # If this is second or greater time through this while loop, make active cells (i.e., the "from")
-                  #  be the previous round's "to" column. Also, delete "to" and "dis" columns
-                  #                  browser()
-                  if(n>cellSize) {
-                    potentials[,`:=`(from=NULL)][,from:=to][,`:=`(to=NULL,dis=NULL)]
-                    setkey(potentials,"from")
-                  }
-                  ################ original
-                  # join these to the potentials object
-                  potentials <- potentials[adjCells, allow.cartesian=TRUE] %>% 
-                    unique(by=c("fromInit", "to", "speciesCode"))
-                  potentials <- potentials[!is.na(fromInit),]
-                  
-                  # because there will be duplicate "from - to" pairs, say from 2 different species, only calculate
-                  #   distance once, then re-join the shorter version back to longer version by species
-                  shortPotentials <- setkey(potentials, fromInit, to) %>% unique(., by = c("fromInit", "to")) %>% .[,list(fromInit, to)] 
-                  set(shortPotentials, , "dis", pointDistance(xysAll[shortPotentials[,fromInit],], xysAll[shortPotentials[,to],], 
-                                                              lonlat=FALSE)) 
-                  
-                  # merge shorter object with no duplicate from-to pairs back with potentials, which does have duplicate from-to pairs
-                  #   due to multiple species having same from-to pair
-                  if(n-cellSize==0){ # the first loop incudes on site regeneration
-                    potentials <- shortPotentials[((n-cellSize) %<=% dis) & (dis %<=% n),][
-                      potentials, nomatch=0][
-                        (dis %<=% maxDist),]
-                  } else {
-                    potentials <- shortPotentials[((n-cellSize) %<<% dis) & (dis %<=% n),][
-                      potentials, nomatch=0][
-                        (dis %<=% maxDist),]
-                  }
-                  
-                  if(verbose) print(paste0("SimTime=",time(sim),", dist=",n,", spatialSubset=",spatialSubset-1,", nrow potentials=",NROW(potentials),
-                                           ", numSpec=",length(unique(potentials$speciesCode)),", 1st spec=",unique(potentials$speciesCode)[1]))
-                  
-                  
-                  if(plot.it) {
-                    wardSeedDispersalHab1[potentials[,from]] <- 
-                      n + rnorm(NROW(potentials),0,0.001)
-                    Plot(wardSeedDispersalHab1, axes=T,new=T)#, zoomExtent = extent(0,300,0,300))
-                  }
-                  if(NROW(potentials)>0) {
-                    dtSrcShort <- dtSrc[,list(pixelGroup,speciesCode)] 
-                    set(potentials,,"pixelGroup",pixelGroupMapVec[potentials[,to]])
-                    setkey(dtSrcShort, speciesCode, pixelGroup)
-                    setkey(potentials, speciesCode, pixelGroup)
-                    
-                    
-                    potentialsWithSeedDT <- potentials[dtSrcShort, nomatch=0]
-                    if(NROW(potentialsWithSeedDT)>0) {
-                      #                     cat("\n Year:",round(time(sim)),"\n")
-                      #                     dd <- potentialsWithSeedDT[,.(NumberofCell=length(from)),by=c("dis","to")]
-                      #                     print(dd)
-                      #potentialsWithSeedDT  <- potentials[potentialsWithSeed,]
-                      #setkey(potentialsWithSeedDT, "fromInit")
-                      
-                      
-                      set(potentialsWithSeedDT,,"receivesSeeds",NA)
-                      nr <- NROW(potentialsWithSeedDT)
-                      
-                      
-                      # back to Ward
-                      # Don't include the ones that were already, calculate probability
-                      potentialsWithSeedDT[is.na(receivesSeeds) & dis==0,
-                                           dispersalProb:=1]
-                      potentialsWithSeedDT[is.na(receivesSeeds) & dis!=0,
-                                           dispersalProb:=eval(dispersalFn)]
-                      potentialsWithSeedDT <- potentialsWithSeedDT[,.(receivesSeeds=runif(nr)<dispersalProb,
-                                                                      fromInit,speciesCode)]
-                      receivedSeeds <- potentialsWithSeedDT[,any(receivesSeeds), by=c("fromInit,speciesCode")]
-                      setkey(receivedSeeds, fromInit, speciesCode)
-                      
-                      #drop any that received seeds from potentials, as they are now in lociReturn
-                      if(NROW(receivedSeeds[V1==TRUE])>0)  {
-                        seedsArrived <- rbindlist(list(seedsArrived,
-                                                       lociReturn[receivedSeeds[V1==TRUE]][,V1:=NULL]))
-                        setkey(seedsArrived, fromInit, speciesCode)
-                        setkey(potentials, fromInit, speciesCode)
-                        potentials <- potentials[!receivedSeeds[V1==TRUE]]
-                        #potentials <- potentials[!receivedSeeds[V1==TRUE]]
-                      }
-                      #potentials <- specPotentials[,list(RcvCommunity=sum(2^speciesCode)), by=c("fromInit","from","to")]
-                      
-                    }
-                    plot.it2  <-  FALSE
-                    if(plot.it2) {
-                      
-                      seedsReceived[seedsArrived[species=="querrubr",fromInit]] <- 
-                        ifelse(as.numeric(seedsReceived[seedsArrived[species=="querrubr",fromInit]]==0), 
-                               n,
-                               seedsReceived[seedsArrived[species=="querrubr",fromInit]])
-                      assignGlobal("seedsReceived")
-                      #seedsReceived[seedReceive[species==unique(seedReceive$species)[i],pixelIndex]] <- 1; 
-                      Plot(seedsReceived, cols=c("red","blue"), na.color = "white", zero.color="white", new=TRUE);
-                      
-                      activeCells <- raster(seedsReceived)
-                      activeCells[] <- NA
-                      pots <- potentials %>% filter(species=="querrubr") %>% group_by(to) %>% summarise(len=.N)
-                      activeCells[pots[,to]] <- pots[,len]
-                      assignGlobal("activeCells")
-                      Plot(activeCells)
-                      
-                      potSeedsReceived <- pixelGroupMap %in% dtRcv[species=="querrubr",pixelGroup]
-                      assignGlobal("potSeedsReceived")
-                      #Plot(potSeedsReceived, cols="orange", na.color = "white", zero.color="white");
-                      
-                      seedsSource <- pixelGroupMap %in% dtSrc[species=="querrubr",pixelGroup]
-                      seedsSource[seedsSource==0] <- NA
-                      assignGlobal("seedsSource")
-                      #Plot(seedsSource, cols="orange", na.color = "white", zero.color="white");
-                      
-                      disSeedSourceMap <- round(distance(seedsSource, doEdge=FALSE),0)
-                      assignGlobal("disSeedSourceMap")
-                      #Plot(disSeedSourceMap)
-                      
-                      disPotSeedsReceived <- potSeedsReceived * disSeedSourceMap
-                      assignGlobal("disPotSeedsReceived")
-                      #Plot(disPotSeedsReceived)
-                      
-                      print(unique(disPotSeedsReceived[seedsReceived==n]))
-                      print(unique(seedsReceived[disPotSeedsReceived==n]))
-                      
-                      
-                      #i=i+1; 
-                      #print(unique(seedingData$species)[i-1])
-                      #potSeedsReceived <- pixelGroupMap %in% potentials[species=="querrubr",pixelGroup]
-                    }
-                    
-                    
-                    
-                  }
-                  
-                  n <- n+cellSize
-                  
-                  # refresh so that "to" cells become new "from" cells
-                  activeCell <- potentials[,to]
-                  
-                }
-              }
+              stop("Please specify the useParallel arguement correctly. Currently, it takes either logical or cluster object")
             }
-            
-            #potentialsOrig <- copy(potentials)
+            # potentialsOrig <- copy(potentials)
             # potentials <- copy(potentialsOrig)
             setnames(seedsArrived,"fromInit","pixelIndex") 
             return(seedsArrived)
@@ -753,14 +776,18 @@ WardEqn <- function(dis, cellSize, effDist, maxDist, k, b) {
 # h[seedingData[species=="querrubr",pixelIndex]] <- 1
 # Plot(h)
 
-mainFunction <- function(activeCell, potentials, n, speciesRcvPool, sc,
-                         seedReceiveMap, ultimateMaxDist, cellSize, 
-                         xysAll, dtSrc, pixelGroupMapVec, dispersalFn,
-                         k, b, lociReturn){
+mainFunction <- function(activeCell, potentials, n, 
+                         speciesRcvPool, sc,
+                         seedReceiveMap, ultimateMaxDist, 
+                         cellSize, xysAll, 
+                         dtSrc, pixelGroupMapVec,
+                         dispersalFn,
+                         k, b, lociReturn, 
+                         speciesComm, 
+                         pointDistance){
   seedsArrived <- data.table(fromInit=numeric(),speciesCode=integer(),
                              key=c("fromInit","speciesCode"))
   # Go to species level
-  
   spRcvCommCodes <- speciesComm(unique(speciesRcvPool$speciesRcvPool), sc=sc)
   #spRcvCommCodes <- speciesComm(unique(potentials$RcvCommunity))
   setkey(spRcvCommCodes, RcvCommunity)
@@ -792,7 +819,7 @@ mainFunction <- function(activeCell, potentials, n, speciesRcvPool, sc,
     #   distance once, then re-join the shorter version back to longer version by species
     shortPotentials <- setkey(potentials, fromInit, to) %>% unique(., by = c("fromInit", "to")) %>% .[,list(fromInit, to)] 
     set(shortPotentials, , "dis", pointDistance(xysAll[shortPotentials[,fromInit],], xysAll[shortPotentials[,to],], 
-                                                lonlat=FALSE)) 
+                                                   lonlat=FALSE)) 
     
     # merge shorter object with no duplicate from-to pairs back with potentials, which does have duplicate from-to pairs
     #   due to multiple species having same from-to pair
@@ -855,5 +882,4 @@ mainFunction <- function(activeCell, potentials, n, speciesRcvPool, sc,
   }
   return(seedsArrived)
 }
-
 

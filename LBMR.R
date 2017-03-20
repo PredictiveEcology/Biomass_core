@@ -71,7 +71,7 @@ defineModule(sim, list(
     expectsInput(objectName = "rstCurrentBurn", objectClass = "RasterLayer", 
                  desc = "a fire burn raster", 
                  sourceURL = "NA"),
-    expectsInput(objectName = "useParallel", objectClass = "logic", 
+    expectsInput(objectName = "useParallel", objectClass = "Any", 
                  desc = "an object to determine whether the parallel computation will be used in the simulation,
                  default is TRUE", 
                  sourceURL = "NA")
@@ -269,7 +269,7 @@ LBMRInit <- function(sim) {
                                  pixelIndex = 1:ncell(ecoregionMap))[
                                    ,.(NofPixel = length(pixelIndex)), by = c("Ecoregion", "pixelGroup")]
   simulationOutput <- setkey(simulationOutput, pixelGroup)[setkey(pixelAll, pixelGroup), nomatch = 0][
-    ,.(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = Ecoregion]
+    ,.(Biomass = sum(uniqueSumB*NofPixel)), by = Ecoregion]
   simulationOutput <- setkey(simulationOutput, Ecoregion)[setkey(sim$activeEcoregionLength, Ecoregion),
                                                           nomatch = 0]
   sim$simulationOutput <- simulationOutput[,.(Ecoregion, NofCell, Year = time(sim), Biomass = round(Biomass/NofCell),
@@ -531,7 +531,7 @@ LBMRSummaryBGM = function(sim) {
     rm(summarytable_sub, tempOutput, subCohortData)
     gc()
   }
-  tempOutput_All <- tempOutput_All[,.(Biomass = sum(as.numeric(uniqueSumB*NofPixelGroup)),
+  tempOutput_All <- tempOutput_All[,.(Biomass = sum(uniqueSumB*NofPixelGroup),
                  ANPP = sum(uniqueSumANPP*NofPixelGroup),
                  Mortality = sum(uniqueSumMortality*NofPixelGroup),
                  Regeneration = sum(uniqueSumRege*NofPixelGroup)),
@@ -934,6 +934,7 @@ LBMRWardDispersalSeeding = function(sim) {
                               verbose = FALSE,
                               useParallel = sim$useParallel)
                               # verbose = globals(sim)$verbose)
+    
     rm(seedReceive, seedSource)
     if(NROW(seedingData) > 0) {
       seedingData$ecoregionGroup <- getValues(sim$ecoregionMap)[seedingData$pixelIndex]
@@ -1509,9 +1510,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   sim$useCache <- TRUE
   sim$cellSize <- res(ecoregionMap)[1]
   sim$calibrate <- FALSE
-  sim$useParallel <- TRUE
+  sim$useParallel <- FALSE
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
 }
 ### add additional events as needed by copy/pasting from above
+
 
