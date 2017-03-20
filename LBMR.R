@@ -71,7 +71,7 @@ defineModule(sim, list(
     expectsInput(objectName = "rstCurrentBurn", objectClass = "RasterLayer", 
                  desc = "a fire burn raster", 
                  sourceURL = "NA"),
-    expectsInput(objectName = "useParallel", objectClass = "logic", 
+    expectsInput(objectName = "useParallel", objectClass = "any", 
                  desc = "an object to determine whether the parallel computation will be used in the simulation,
                  default is TRUE", 
                  sourceURL = "NA")
@@ -934,6 +934,7 @@ LBMRWardDispersalSeeding = function(sim) {
                               verbose = FALSE,
                               useParallel = sim$useParallel)
                               # verbose = globals(sim)$verbose)
+    
     rm(seedReceive, seedSource)
     if(NROW(seedingData) > 0) {
       seedingData$ecoregionGroup <- getValues(sim$ecoregionMap)[seedingData$pixelIndex]
@@ -1509,7 +1510,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   sim$useCache <- TRUE
   sim$cellSize <- res(ecoregionMap)[1]
   sim$calibrate <- FALSE
-  sim$useParallel <- TRUE
+  sim$useParallel <- FALSE
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
 }
