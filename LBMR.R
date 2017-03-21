@@ -269,7 +269,7 @@ LBMRInit <- function(sim) {
                                  pixelIndex = 1:ncell(ecoregionMap))[
                                    ,.(NofPixel = length(pixelIndex)), by = c("Ecoregion", "pixelGroup")]
   simulationOutput <- setkey(simulationOutput, pixelGroup)[setkey(pixelAll, pixelGroup), nomatch = 0][
-    ,.(Biomass = sum(uniqueSumB*NofPixel)), by = Ecoregion]
+    ,.(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = Ecoregion]
   simulationOutput <- setkey(simulationOutput, Ecoregion)[setkey(sim$activeEcoregionLength, Ecoregion),
                                                           nomatch = 0]
   sim$simulationOutput <- simulationOutput[,.(Ecoregion, NofCell, Year = time(sim), Biomass = round(Biomass/NofCell),
@@ -532,7 +532,7 @@ LBMRSummaryBGM = function(sim) {
     gc()
   }
   tempOutput_All <- tempOutput_All[,.(Biomass = sum(uniqueSumB*NofPixelGroup),
-                 ANPP = sum(uniqueSumANPP*NofPixelGroup),
+                 ANPP = sum(as.numeric(uniqueSumANPP*NofPixelGroup)),
                  Mortality = sum(uniqueSumMortality*NofPixelGroup),
                  Regeneration = sum(uniqueSumRege*NofPixelGroup)),
                  by = Ecoregion]
