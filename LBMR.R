@@ -240,6 +240,7 @@ LBMRInit <- function(sim) {
     sim$calibrate <- FALSE
   }
   sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
+  message("Running spinup")
   spinupstage <- sim$spinUpCache(cohortData = cohortData, calibrate = sim$calibrate,
                                  successionTimestep = sim$successionTimestep,
                                  spinupMortalityfraction = sim$spinupMortalityfraction,
@@ -317,6 +318,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
   }
   
   for(presimuT in (maxAge):presimuT_end) {
+    message("Spin up time: year ", -presimuT)
     k <- k+1
     cohortData[origAge == presimuT,     age:=1L]
     cohortData[origAge >= presimuT,     age:=age+1L]
