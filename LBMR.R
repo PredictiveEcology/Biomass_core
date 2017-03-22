@@ -927,8 +927,9 @@ LBMRWardDispersalSeeding = function(sim) {
     } else {
       reducedPixelGroupMap <- pixelGroupMap
     }
-    source(file.path(modulePath(sim), "LBMR", "R", "seedDispersalLANDIS.R"))
-    seedingData <- LANDISDisp(sim, dtRcv=seedReceive, plot.it = FALSE,
+    #source(file.path(modulePath(sim), "LBMR", "R", "seedDispersalLANDIS.R")) # not needed b/c SpaDES already did this
+    
+    seedingData <- sim$LANDISDisp(sim, dtRcv=seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
                               reducedPixelGroupMap,
