@@ -80,12 +80,10 @@ setGeneric("seedDispRcv", function(seedSrc, seedRcv=seedSrc,
 #'   seedRcvRaster[seeds] <- 1
 #'   Plot(seedRcvRaster, cols="black")
 #' }
-setMethod("seedDispRcv",
-          signature(seedSrc="RasterLayer"),
-          definition = function(seedSrc, seedRcv, dispersalFn,
+seedDispRcv <- function(seedSrc, seedRcv, dispersalFn,
                                 effDist, maxDist, b, k,
                                 plot.it=FALSE, ...) {
-            cellSize=unique(res(seedSrc))
+            cellSize <- unique(res(seedSrc))
             
             seedSrcVec <- getValues(seedSrc)
             seedRcv <- Which(seedRcv>0, cells=TRUE)
@@ -188,7 +186,7 @@ setMethod("seedDispRcv",
             return(seedsArrived$fromInit)
             
           }
-)
+
 
 ##############################################################
 #' Ward Seed Dispersal kernel
@@ -313,19 +311,6 @@ WardFast <- expression(ifelse(cellSize<=effDist, {
 #' @name LANDISDisp
 #' @aliases LANDISDisp
 #' @rdname LANDISDisp
-setGeneric("LANDISDisp", function(sim, dtSrc, dtRcv, pixelGroupMap, 
-                                  species,
-                                  dispersalFn=WardFast, 
-                                  b=0.01, k=0.95,
-                                  plot.it=FALSE, 
-                                  maxPotentialsLength=1e3, 
-                                  verbose=FALSE,
-                                  useParallel, ...) {
-  standardGeneric("LANDISDisp")
-})
-
-#' @rdname LANDISDisp
-#' @examples
 #' library(raster)
 #'
 #' # Make random forest cover map
@@ -344,12 +329,15 @@ setGeneric("LANDISDisp", function(sim, dtSrc, dtRcv, pixelGroupMap,
 #'   seedRcvRaster[seeds] <- 1
 #'   Plot(seedRcvRaster, cols="black")
 #' }
-setMethod("LANDISDisp",
-          signature(dtSrc="data.table"),
-          definition = function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn,
-                                b, k,
-                                plot.it=FALSE, maxPotentialsLength,
-                                verbose, useParallel, ...) {
+LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, 
+                       species,
+                       dispersalFn=WardFast, 
+                       b=0.01, k=0.95,
+                       plot.it=FALSE, 
+                       maxPotentialsLength=1e3, 
+                       verbose=FALSE,
+                       useParallel, ...) {
+  
             cellSize=unique(res(pixelGroupMap))
             pixelGroupMapVec <- getValues(pixelGroupMap)
             seedsReceived <- raster(pixelGroupMap) 
@@ -659,7 +647,7 @@ setMethod("LANDISDisp",
             setnames(seedsArrived,"fromInit","pixelIndex") 
             return(seedsArrived)
           }
-)
+
 
 
 
