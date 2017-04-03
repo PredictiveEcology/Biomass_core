@@ -339,7 +339,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                        useParallel, ...) {
   
   cellSize=unique(res(pixelGroupMap))
-  pixelGroupMapVec <- getValues(pixelGroupMap)
+  #pixelGroupMapVec <- getValues(pixelGroupMap)
   seedsReceived <- raster(pixelGroupMap) 
   seedsReceived[] <- 0L
   sc <- species %>%
@@ -363,15 +363,10 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   
   setkey(sc, speciesCode)
   
-  #browser()
   spPool <- merge(speciesRcvPool, speciesSrcPool, all = TRUE)
-  seedSourceMaps <- rasterizeReduced(spPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol=c("speciesSrcPool","speciesRcvPool"))
-  #seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol="speciesSrcPool")
-  #seedReceiveMap <- rasterizeReduced(speciesRcvPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol="speciesRcvPool")
+  seedSourceMaps <- rasterizeReduced(spPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", newRasterCols=c("speciesSrcPool","speciesRcvPool"))
   seedSourceMaps <- lapply(seedSourceMaps, function(x) setValues(x, as.integer(x[])))
-  #seedSourceMap[] <- as.integer(seedSourceMap[])
-  #seedReceiveMap[] <- as.integer(seedReceiveMap[])
-  
+
   seedRcvOrig <- which(!is.na(seedSourceMaps$speciesRcvPool[]))
   seedSrcOrig <- which(seedSourceMaps$speciesSrcPool[]>0)
   
@@ -381,7 +376,6 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
     # start it in the centre cell
     activeCell <- (nrow(seedSrcOrig)/2L + 0.5) * ncol(seedSrcOrig)
   }
-  #seedSrcVec <- getValues(seedSourceMap)
   if(length(cellSize)>1) stop("pixelGroupMap resolution must be same in x and y dimension")
   ### should sanity check map extents
   if(plot.it) {
@@ -436,7 +430,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                                                                       speciesRcvPool, sc,
                                                                       seedSourceMaps$speciesRcvPool, ultimateMaxDist, 
                                                                       cellSize, xysAll, 
-                                                                      dtSrc, pixelGroupMapVec,
+                                                                      dtSrc, getValues(pixelGroupMap),
                                                                       dispersalFn,
                                                                       k, b, lociReturn, 
                                                                       speciesComm, 
@@ -453,7 +447,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                                                 speciesRcvPool, sc,
                                                 seedSourceMaps$speciesRcvPool, ultimateMaxDist, 
                                                 cellSize, xysAll, 
-                                                dtSrc, pixelGroupMapVec,
+                                                dtSrc, getValues(pixelGroupMap),
                                                 dispersalFn,
                                                 k, b, lociReturn, 
                                                 speciesComm, 
@@ -633,7 +627,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                                                                     speciesRcvPool, sc,
                                                                     seedSourceMaps$speciesRcvPool, ultimateMaxDist, 
                                                                     cellSize, xysAll, 
-                                                                    dtSrc, pixelGroupMapVec,
+                                                                    dtSrc, getValues(pixelGroupMap),
                                                                     dispersalFn,
                                                                     k, b, lociReturn, 
                                                                     speciesComm, 
