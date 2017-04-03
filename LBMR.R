@@ -258,17 +258,20 @@ LBMRInit <- function(sim) {
   }
   names(pixelGroupMap) <- "pixelGroup"
   pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE))), by=pixelGroup]
-  #if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
-  biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
-  ANPPMap <- setValues(biomassMap, 0L)
-  mortalityMap <- setValues(biomassMap, 0L)
-  reproductionMap <- setValues(biomassMap, 0L)
-  biomassMap <- writeRaster(biomassMap, filename = file.path(outputPath(sim), "biomassMap.tif"), 
+  if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
+    biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
+    ANPPMap <- setValues(biomassMap, 0)
+    mortalityMap <- setValues(biomassMap, 0)
+  }
+  reproductionMap <- setValues(pixelGroupMap, 0)
+  if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
+    biomassMap <- writeRaster(biomassMap, filename = file.path(outputPath(sim), "biomassMap.tif"), 
                             overwrite = TRUE)
-  ANPPMap <- writeRaster(ANPPMap, filename = file.path(outputPath(sim), "ANPPMap.tif"), 
+    ANPPMap <- writeRaster(ANPPMap, filename = file.path(outputPath(sim), "ANPPMap.tif"), 
                          overwrite = TRUE)
-  mortalityMap <- writeRaster(mortalityMap, filename = file.path(outputPath(sim), "mortalityMap.tif"), 
+    mortalityMap <- writeRaster(mortalityMap, filename = file.path(outputPath(sim), "mortalityMap.tif"), 
                               overwrite = TRUE)
+  }
   reproductionMap <- writeRaster(reproductionMap, filename = file.path(outputPath(sim), "reproductionMap.tif"), 
                                  overwrite = TRUE)
   #}
@@ -423,7 +426,7 @@ LBMRMortalityAndGrowth = function(sim) {
   sim$cohortData <- cohortData[0,]
   pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup), 
                             temID = 1:length(unique(cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 1e5), max(pixelGroups$temID))))
+  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 1e6), max(pixelGroups$temID))))
   if(length(cutpoints) == 1){cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups:=cut(temID, breaks = cutpoints,
                             labels = paste("Group", 1:(length(cutpoints)-1),
@@ -506,7 +509,7 @@ LBMRMortalityAndGrowth = function(sim) {
 LBMRSummaryBGM = function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup), 
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 10^4), max(pixelGroups$temID))))
+  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 1e6), max(pixelGroups$temID))))
   if(length(cutpoints) == 1){cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups:=cut(temID, breaks = cutpoints,
                             labels = paste("Group", 1:(length(cutpoints)-1),
@@ -558,25 +561,25 @@ LBMRSummaryBGM = function(sim) {
                                                            Regeneration = as.integer(Regeneration/NofCell))]))
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively. 
   names(sim$pixelGroupMap) <- "pixelGroup"
-  #if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
-  sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
+  if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
+    sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                      "uniqueSumB")
-  setColors(sim$biomassMap) <- c("light green", "dark green")
+    setColors(sim$biomassMap) <- c("light green", "dark green")
   
-  sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
-  setColors(sim$ANPPMap) <- c("light green", "dark green")
+    sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
+    setColors(sim$ANPPMap) <- c("light green", "dark green")
   
-  sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
-  setColors(sim$mortalityMap) <- c("light green", "dark green")
+    sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
+    setColors(sim$mortalityMap) <- c("light green", "dark green")
   
-  sim$biomassMap <- writeRaster(sim$biomassMap, filename = file.path(outputPath(sim), "biomassMap.tif"), 
+    sim$biomassMap <- writeRaster(sim$biomassMap, filename = file.path(outputPath(sim), "biomassMap.tif"), 
                                 overwrite = TRUE)
-  sim$ANPPMap <- writeRaster(sim$ANPPMap, filename = file.path(outputPath(sim), "ANPPMap.tif"), 
+    sim$ANPPMap <- writeRaster(sim$ANPPMap, filename = file.path(outputPath(sim), "ANPPMap.tif"), 
                              overwrite = TRUE)
-  sim$mortalityMap <- writeRaster(sim$mortalityMap, filename = file.path(outputPath(sim), "mortalityMap.tif"), 
+    sim$mortalityMap <- writeRaster(sim$mortalityMap, filename = file.path(outputPath(sim), "mortalityMap.tif"), 
                                   overwrite = TRUE)
   
-  #}
+  }
   
   # the following codes for preparing the data table for saving
   
@@ -602,7 +605,7 @@ LBMRFireDisturbance = function(sim) {
   if(extent(sim$rstCurrentBurn) != extent(sim$pixelGroupMap)){
     sim$rstCurrentBurn <- raster::crop(sim$rstCurrentBurn, extent(sim$pixelGroupMap))
   }
-  sim$burnLoci <- Which(sim$rstCurrentBurn == 1, cell = TRUE)
+  sim$burnLoci <- which(sim$rstCurrentBurn[] == 1)
   if(length(sim$inactivePixelIndex) > 0){
     sim$burnLoci <- sim$burnLoci[!(sim$burnLoci %in% sim$inactivePixelIndex)] # this is to prevent avaluating the pixels that are inactive
   }
