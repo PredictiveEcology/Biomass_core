@@ -781,7 +781,7 @@ seedDispInnerFn <- function(activeCell, potentials, n,
   potentials = spRcvCommCodes[potentials, allow.cartesian=TRUE][,`:=`(RcvCommunity=NULL)]
   setkey(potentials,"from")
   # identify which are 8 neighbours from each "active cell"
-  adjCells <- adj(seedSourceMaps$speciesRcvPool, unique(activeCell), directions=8, pairs=TRUE,include=TRUE) %>%
+  adjCells <- adj(seedRcvMap, unique(activeCell), directions=8, pairs=TRUE,include=TRUE) %>%
     data.table(key=c("from"))
   while (NROW(potentials) & ((n-cellSize)%<=%ultimateMaxDist)) { # while there are active cells and less than maxDistance
     #                  browser(expr=round(time(sim))>=20)
