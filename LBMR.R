@@ -485,10 +485,8 @@ LBMRMortalityAndGrowth = function(sim) {
     }
     sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData))
     rm(subCohortData)
-    gc()
   }
   rm(cohortData, cutpoints, pixelGroups)
-  gc()
   return(invisible(sim))
 }
 
@@ -531,13 +529,12 @@ LBMRSummaryBGM = function(sim) {
       tempOutput_All <- rbindlist(list(tempOutput_All, tempOutput))
     }
     rm(summarytable_sub, tempOutput, subCohortData)
-    gc()
   }
   tempOutput_All <- tempOutput_All[,.(Biomass = sum(uniqueSumB*NofPixelGroup),
-                 ANPP = sum(as.numeric(uniqueSumANPP*NofPixelGroup)),
-                 Mortality = sum(uniqueSumMortality*NofPixelGroup),
-                 Regeneration = sum(uniqueSumRege*NofPixelGroup)),
-                 by = Ecoregion]
+                                      ANPP = sum(as.numeric(uniqueSumANPP*NofPixelGroup)),
+                                      Mortality = sum(uniqueSumMortality*NofPixelGroup),
+                                      Regeneration = sum(uniqueSumRege*NofPixelGroup)),
+                                   by = Ecoregion]
   tempOutput_All <- setkey(tempOutput_All, Ecoregion)[setkey(sim$activeEcoregionLength, 
                                                              Ecoregion), nomatch = 0]
   sim$simulationOutput <- rbindlist(list(sim$simulationOutput, 
@@ -548,6 +545,7 @@ LBMRSummaryBGM = function(sim) {
                                                            Regeneration = round(Regeneration/NofCell))]))
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively. 
   names(sim$pixelGroupMap) <- "pixelGroup"
+  #if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
   sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                      "uniqueSumB")
   setColors(sim$biomassMap) <- c("light green", "dark green")
@@ -558,10 +556,18 @@ LBMRSummaryBGM = function(sim) {
   sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
   setColors(sim$mortalityMap) <- c("light green", "dark green")
   
+  sim$biomassMap <- writeRaster(sim$biomassMap, filename = file.path(outputPath(sim), "biomassMap.tif"), 
+                                overwrite = TRUE)
+  sim$ANPPMap <- writeRaster(sim$ANPPMap, filename = file.path(outputPath(sim), "ANPPMap.tif"), 
+                             overwrite = TRUE)
+  sim$mortalityMap <- writeRaster(sim$mortalityMap, filename = file.path(outputPath(sim), "mortalityMap.tif"), 
+                                  overwrite = TRUE)
+  
+  #}
+  
   # the following codes for preparing the data table for saving
   
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
-  gc()
   return(invisible(sim))
 }
 
@@ -581,14 +587,14 @@ LBMRFireDisturbance = function(sim) {
                                            numberOfRegen = numeric())
   }
   if(extent(sim$rstCurrentBurn) != extent(sim$pixelGroupMap)){
-   sim$rstCurrentBurn <- raster::crop(sim$rstCurrentBurn, extent(sim$pixelGroupMap))
+    sim$rstCurrentBurn <- raster::crop(sim$rstCurrentBurn, extent(sim$pixelGroupMap))
   }
   sim$burnLoci <- Which(sim$rstCurrentBurn == 1, cell = TRUE)
   if(length(sim$inactivePixelIndex) > 0){
     sim$burnLoci <- sim$burnLoci[!(sim$burnLoci %in% sim$inactivePixelIndex)] # this is to prevent avaluating the pixels that are inactive
   }
   firePixelTable <- data.table(cbind(pixelIndex = sim$burnLoci,
-                                     pixelGroup = sim$pixelGroupMap[sim$burnLoci]))
+                                     pixelGroup = getValues(sim$pixelGroupMap)[sim$burnLoci]))
   burnPixelGroup <- unique(firePixelTable$pixelGroup)
   sim$pixelGroupMap[sim$burnLoci] <- 0 # 0 is the fire burnt pixels without regenerations
   burnedcohortData <- sim$cohortData[pixelGroup %in% burnPixelGroup]
@@ -790,9 +796,9 @@ LBMRNoDispersalSeeding = function(sim) {
 
 LBMRUniversalDispersalSeeding = function(sim) {
   pixelGroupMap <- sim$pixelGroupMap
-  fire_nonRegPixels <- Which(pixelGroupMap == 0, cell = TRUE)
+  fire_nonRegPixels <- which(getValues(pixelGroupMap) == 0)
   if(length(fire_nonRegPixels) > 0){
-    pixelGroupMap[fire_nonRegPixels] <- as.numeric(as.factor(getValues(sim$ecoregionMap)[fire_nonRegPixels])) + max(getValues(pixelGroupMap))
+    pixelGroupMap[fire_nonRegPixels] <- as.numeric(as.factor(getValues(sim$ecoregionMap)[fire_nonRegPixels])) + maxValue(pixelGroupMap)
   }
   if(sim$lastFireYear == round(time(sim))){ # the current year is both fire year and succession year
     tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
@@ -806,7 +812,7 @@ LBMRUniversalDispersalSeeding = function(sim) {
   speciessource <- setkey(sim$species[,.(speciesCode, k = 1)], k)
   siteShade <- data.table(calcSiteShade(time = round(time(sim)), sim$cohortData, 
                                         sim$speciesEcoregion, sim$minRelativeB))
-  activePixelGroup <- unique(data.table(pixelGroup = pixelGroupMap[tempActivePixel],
+  activePixelGroup <- unique(data.table(pixelGroup = getValues(pixelGroupMap)[tempActivePixel],
                                         ecoregionGroup = sim$ecoregionMap[tempActivePixel]),
                              by = "pixelGroup")
   siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table
@@ -859,7 +865,7 @@ LBMRUniversalDispersalSeeding = function(sim) {
 LBMRWardDispersalSeeding = function(sim) {
   #   cohortData <- sim$cohortData
   pixelGroupMap <- sim$pixelGroupMap
-  fire_nonRegPixels <- Which(pixelGroupMap == 0, cell = TRUE)
+  fire_nonRegPixels <- which(getValues(pixelGroupMap) == 0)
   if(length(fire_nonRegPixels) > 0){
     pixelGroupMap[fire_nonRegPixels] <- as.numeric(as.factor(getValues(sim$ecoregionMap)[fire_nonRegPixels])) + max(sim$cohortData$pixelGroup)
   }
@@ -873,7 +879,7 @@ LBMRWardDispersalSeeding = function(sim) {
                                   successionTimestep = sim$successionTimestep) 
   siteShade <- calcSiteShade(time = round(time(sim)), cohortData = sim$cohortData, 
                              sim$speciesEcoregion, sim$minRelativeB)
-  activePixelGroup <- data.table(pixelGroup = unique(pixelGroupMap[tempActivePixel]))
+  activePixelGroup <- data.table(pixelGroup = unique(getValues(pixelGroupMap)[tempActivePixel]))
   siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table
   siteShade[is.na(siteShade),siteShade := 0]
   # Seed source cells:
@@ -930,13 +936,13 @@ LBMRWardDispersalSeeding = function(sim) {
     #source(file.path(modulePath(sim), "LBMR", "R", "seedDispersalLANDIS.R")) # not needed b/c SpaDES already did this
     
     seedingData <- sim$LANDISDisp(sim, dtRcv=seedReceive, plot.it = FALSE,
-                              dtSrc = seedSource, inSituReceived = inSituReceived,
-                              species = sim$species,
-                              reducedPixelGroupMap,
-                              maxPotentialsLength = 3e5,
-                              verbose = FALSE,
-                              useParallel = sim$useParallel)
-                              # verbose = globals(sim)$verbose)
+                                  dtSrc = seedSource, inSituReceived = inSituReceived,
+                                  species = sim$species,
+                                  reducedPixelGroupMap,
+                                  maxPotentialsLength = 1e5,
+                                  verbose = FALSE,
+                                  useParallel = sim$useParallel)
+    # verbose = globals(sim)$verbose)
     
     rm(seedReceive, seedSource)
     if(NROW(seedingData) > 0) {
@@ -961,9 +967,9 @@ LBMRWardDispersalSeeding = function(sim) {
       }
       if(nrow(seedingData)>0){
         addnewcohort <- addNewCohorts(seedingData, cohortData = sim$cohortData, pixelGroupMap,
-                                    time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
-      sim$cohortData <- addnewcohort$cohortData
-      sim$pixelGroupMap <- addnewcohort$pixelGroupMap
+                                      time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
+        sim$cohortData <- addnewcohort$cohortData
+        sim$pixelGroupMap <- addnewcohort$pixelGroupMap
       } else {
         sim$cohortData <- sim$cohortData
         sim$pixelGroupMap <- sim$pixelGroupMap
@@ -992,21 +998,19 @@ LBMRSummaryRegen = function(sim){
   rm(pixelAll)
   sim$reproductionMap <- reproductionMap
   rm(cohortData, pixelGroupMap)
-  gc()
   return(invisible(sim))
 }
 
 LBMRPlot = function(sim) {
   if(time(sim) == sim$successionTimestep){
     dev(4)
-     clearPlot()
+    clearPlot()
   }
   Plot(sim$biomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap, 
        title = c("Biomass", "ANPP", "mortality", "reproduction"), new = TRUE, speedup = 1)
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ",round(time(sim))), x = 0.93, y = 0.97)
   #rm(biomassMap, ANPPMap, mortalityMap, reproductionMap)
-  #gc()
   return(invisible(sim))
 }
 
@@ -1032,10 +1036,10 @@ LBMRSave = function(sim) {
 
 LBMRCohortAgeReclassification = function(sim) {
   if(time(sim) != 0){
-    cohortData <- sim$cohortData
-    cohortData <- ageReclassification(cohortData = cohortData, successionTimestep = successionTimestep,
-                                      stage = "mainSimulation")
-    sim$cohortData <- cohortData
+    #cohortData <- sim$cohortData
+    sim$cohortData <- ageReclassification(cohortData = sim$reproductionMap, successionTimestep = successionTimestep,
+                                               stage = "mainSimulation")
+    #sim$cohortData <- cohortData
     return(invisible(sim))
   } else {
     return(invisible(sim))
@@ -1164,7 +1168,6 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep){
     rm(subCohortData, sumBtable)
   }
   rm(cohortData, pixelGroups, cutpoints)
-  gc()
   return(newcohortData)
 }
 
@@ -1254,7 +1257,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     set(newCohortDataExtra, , "community",
         newCohortDataExtra$temppixelGroup + max(newCohortDataExtra$temppixelGroup)*newCohortDataExtra$community)
   }
-  maxPixelGroup <- max(max(cohortData$pixelGroup), max(getValues(pixelGroupMap)))
+  maxPixelGroup <- max(max(cohortData$pixelGroup), maxValue(pixelGroupMap))
   set(newCohortDataExtra, ,  "newpixelGroup",
       as.numeric(as.factor(newCohortDataExtra$community)) + maxPixelGroup)
   set(newCohortDataExtra, , c("community", "temppixelGroup"), NULL)
@@ -1303,9 +1306,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   pixelGroupMap_new <- pixelGroupMap
   
   temppixelIndex11 <- which(!(getValues(pixelGroupMap) %in% c(0, -1)))
-  pixelGroupMap_new[temppixelIndex11] <- as.numeric(as.factor(pixelGroupMap[temppixelIndex11]))
-  pixelGroupConnection <- data.table(pixelGroup = pixelGroupMap[temppixelIndex11],
-                                     newPixelGroup = pixelGroupMap_new[temppixelIndex11]) %>%
+  pgmTemp <- getValues(pixelGroupMap)[temppixelIndex11]
+  pixelGroupMap_new[temppixelIndex11] <- as.numeric(as.factor(pgmTemp))
+  pixelGroupConnection <- data.table(pixelGroup = pgmTemp,
+                                     newPixelGroup = getValues(pixelGroupMap_new)[temppixelIndex11]) %>%
     unique(by = "pixelGroup")
   setkey(pixelGroupConnection, pixelGroup)
   setkey(cohortData, pixelGroup)
@@ -1338,7 +1342,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   names(allFiles) <- unlist(lapply(fileNames, basename))
   needDownload <- digest::digest(allFiles) != "6e31b97b0fc075f46c44f07d1c94a71f"
   if(needDownload){
-   checkTable <- data.table(downloadData(module = "LBMR", path = modulePath(sim))) 
+    checkTable <- data.table(downloadData(module = "LBMR", path = modulePath(sim))) 
   } else {
     message("  Download data step skipped for module LBMR. Local copy exists")
   }
@@ -1360,9 +1364,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   initialCommunities <- initialCommunities[species != "LandisData",]
   cutRows <- grep(">>", initialCommunities$species)
   for(i in cutRows){
-  initialCommunities[i, 
-                     desc:=paste(initialCommunities[i, 3:maxcol, with = F],
-                                 collapse = " ")]
+    initialCommunities[i, 
+                       desc:=paste(initialCommunities[i, 3:maxcol, with = F],
+                                   collapse = " ")]
   }
   initialCommunities[, rowN := 1:nrow(initialCommunities)]
   initialCommunities[, ':='(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
@@ -1452,9 +1456,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   sim$speciesEcoregion <- speciesEcoregion
   rm(maxcol)
   
-#   # load the biomass succession txt and obtain 1) minRelativeB, 
-#                                                2) sufficientLight, and 
-#                                                3) additional species traits
+  #   # load the biomass succession txt and obtain 1) minRelativeB, 
+  #                                                2) sufficientLight, and 
+  #                                                3) additional species traits
   maxcol <- max(count.fields(file.path(dataPath, "biomass-succession_test.txt"), sep = ""))
   mainInput <- read.table(file.path(dataPath, "biomass-succession_test.txt"),
                           fill = TRUE,
