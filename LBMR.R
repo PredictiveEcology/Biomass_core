@@ -1051,11 +1051,10 @@ LBMRSave = function(sim) {
 
 LBMRCohortAgeReclassification = function(sim) {
   if(time(sim) != 0){
-    cohortData <- sim$cohortData
-    browser()
-    cohortData <- ageReclassification(cohortData = sim$reproductionMap, successionTimestep = successionTimestep,
+    #cohortData <- sim$cohortData
+    sim$cohortData <- ageReclassification(cohortData = sim$cohortData, successionTimestep = successionTimestep,
                                                stage = "mainSimulation")
-    sim$cohortData <- cohortData
+    #sim$cohortData <- cohortData
     return(invisible(sim))
   } else {
     return(invisible(sim))
@@ -1400,6 +1399,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   # load the initial community map
   sim$initialCommunitiesMap <- raster(file.path(dataPath, "initial-communities.gis"))
   sim$initialCommunitiesMap <- setValues(sim$initialCommunitiesMap, as.integer(sim$initialCommunitiesMap[]))
+  sim$initialCommunitiesMap <- writeRaster(sim$initialCommunitiesMap, overwrite = TRUE,
+                                           filename = file.path(outputPath(sim), "initialCommunitiesMap.tif"),
+                                           datatype="INT2U")
   
   # read species txt and convert it to data table
   maxcol <- max(count.fields(file.path(dataPath, "species.txt"), sep = ""))

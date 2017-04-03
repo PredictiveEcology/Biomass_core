@@ -341,7 +341,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   cellSize=unique(res(pixelGroupMap))
   pixelGroupMapVec <- getValues(pixelGroupMap)
   seedsReceived <- raster(pixelGroupMap) 
-  seedsReceived[] <- 0
+  seedsReceived[] <- 0L
   sc <- species %>%
     dplyr::select(speciesCode, seeddistance_eff, seeddistance_max) %>%
     rename(effDist=seeddistance_eff, maxDist=seeddistance_max) %>%
@@ -363,6 +363,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   
   seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol="speciesSrcPool")
   seedReceiveMap <- rasterizeReduced(speciesRcvPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol="speciesRcvPool")
+  seedSourceMap[] <- as.integer(seedSourceMap[])
+  seedReceiveMap[] <- as.integer(seedReceiveMap[])
   
   seedRcvOrig <- Which(!is.na(seedReceiveMap), cells=TRUE)
   seedSrcOrig <- Which(seedSourceMap,cells=TRUE)
@@ -629,7 +631,7 @@ speciesComm <- function(num, sc){
                     function(x) rev(as.logical(as.numeric(x))))
   
   speciesCode <- lapply(indices, function(x) (seq_len(length(x))-1)[x])
-  data.table(RcvCommunity=rep(num, sapply(speciesCode,length)),
+  data.table(RcvCommunity=as.integer(rep(num, sapply(speciesCode,length))),
              speciesCode=unlist(speciesCode),key="speciesCode")[!is.na(speciesCode)] %>%
     sc[.]
   
@@ -779,8 +781,8 @@ mainFunction <- function(activeCell, potentials, n,
     # because there will be duplicate "from - to" pairs, say from 2 different species, only calculate
     #   distance once, then re-join the shorter version back to longer version by species
     shortPotentials <- setkey(potentials, fromInit, to) %>% unique(., by = c("fromInit", "to")) %>% .[,list(fromInit, to)] 
-    set(shortPotentials, , "dis", pointDistance(xysAll[shortPotentials[,fromInit],], xysAll[shortPotentials[,to],], 
-                                                lonlat=FALSE)) 
+    set(shortPotentials, , "dis", as.integer(pointDistance(xysAll[shortPotentials[,fromInit],], xysAll[shortPotentials[,to],], 
+                                                lonlat=FALSE)))
     
     # merge shorter object with no duplicate from-to pairs back with potentials, which does have duplicate from-to pairs
     #   due to multiple species having same from-to pair
@@ -813,12 +815,13 @@ mainFunction <- function(activeCell, potentials, n,
         set(potentialsWithSeedDT,,"receivesSeeds",NA)
         nr <- NROW(potentialsWithSeedDT)
         
-        
         # back to Ward
         # Don't include the ones that were already, calculate probability
-        potentialsWithSeedDT[is.na(receivesSeeds) & dis==0,
+        potentialsWithSeedDT[#is.na(receivesSeeds) & 
+                               dis==0,
                              dispersalProb:=1]
-        potentialsWithSeedDT[is.na(receivesSeeds) & dis!=0,
+        potentialsWithSeedDT[#is.na(receivesSeeds) & 
+                               dis!=0,
                              dispersalProb:=eval(dispersalFn)]
         potentialsWithSeedDT <- potentialsWithSeedDT[,.(receivesSeeds=runif(nr)<dispersalProb,
                                                         fromInit,speciesCode)]
