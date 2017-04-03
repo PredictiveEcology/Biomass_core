@@ -353,23 +353,29 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   
   speciesSrcPool <- sc[dtSrc] %>%
     group_by(pixelGroup) %>%
-    summarise(speciesSrcPool=sum(2^speciesCode))
+    summarise(speciesSrcPool=sum(2^speciesCode)) %>%
+    data.table(key="pixelGroup")
   
   speciesRcvPool <- sc[dtRcv] %>%
     group_by(pixelGroup) %>%
-    summarise(speciesRcvPool=sum(2^speciesCode))
+    summarise(speciesRcvPool=sum(2^speciesCode)) %>%
+    data.table(key="pixelGroup")
   
   setkey(sc, speciesCode)
   
-  seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol="speciesSrcPool")
-  seedReceiveMap <- rasterizeReduced(speciesRcvPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol="speciesRcvPool")
-  seedSourceMap[] <- as.integer(seedSourceMap[])
-  seedReceiveMap[] <- as.integer(seedReceiveMap[])
+  #browser()
+  spPool <- merge(speciesRcvPool, speciesSrcPool, all = TRUE)
+  seedSourceMaps <- rasterizeReduced(spPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol=c("speciesSrcPool","speciesRcvPool"))
+  #seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol="speciesSrcPool")
+  #seedReceiveMap <- rasterizeReduced(speciesRcvPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol="speciesRcvPool")
+  seedSourceMaps <- lapply(seedSourceMaps, function(x) setValues(x, as.integer(x[])))
+  #seedSourceMap[] <- as.integer(seedSourceMap[])
+  #seedReceiveMap[] <- as.integer(seedReceiveMap[])
   
-  seedRcvOrig <- Which(!is.na(seedReceiveMap), cells=TRUE)
-  seedSrcOrig <- Which(seedSourceMap,cells=TRUE)
+  seedRcvOrig <- which(!is.na(seedSourceMaps$speciesRcvPool[]))
+  seedSrcOrig <- which(seedSourceMaps$speciesSrcPool[]>0)
   
-  xysAll <- xyFromCell(seedSourceMap, 1:ncell(seedSourceMap))
+  xysAll <- xyFromCell(seedSourceMaps$speciesSrcPool, 1:ncell(seedSourceMaps$speciesSrcPool))
   
   if (is.null(seedRcvOrig))  {
     # start it in the centre cell
@@ -379,18 +385,19 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   if(length(cellSize)>1) stop("pixelGroupMap resolution must be same in x and y dimension")
   ### should sanity check map extents
   if(plot.it) {
-    wardSeedDispersalHab1 <- raster(seedSourceMap)
+    wardSeedDispersalHab1 <- raster(seedSourceMaps$speciesSrcPool)
     wardSeedDispersalHab1[] <- NA
-    Plot(seedSourceMap, new=TRUE)
+    Plot(wardSeedDispersalHab1, new=TRUE)
   }
   
+  seedSourceMaps$speciesSrcPool <- NULL # don't need once xysAll are gotten
   
   lociReturn <- data.table(fromInit=seedRcvOrig,key="fromInit")
   
   
   #            scFull <- sc[speciesComm(getValues(seedSourceMap))] %>%
   #              setkey(.,pixelIndex)
-  potentialsOrig <- data.table("fromInit"=seedRcvOrig,"RcvCommunity"=seedReceiveMap[][seedRcvOrig],
+  potentialsOrig <- data.table("fromInit"=seedRcvOrig,"RcvCommunity"=seedSourceMaps$speciesRcvPool[][seedRcvOrig],
                                key="fromInit")
   potentialsOrig[,from:=fromInit]
   
@@ -423,17 +430,17 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
       }
       message("Running seed dispersal in parallel on ", length(cl), " clusters")
       seedsArrived <- parallel::parLapply(cl, subSampList,
-                                             function(y) seedDispInnerFn(activeCell = y[[1]],
-                                                                         potentials = y[[2]], 
-                                                                         n = cellSize,
-                                                                         speciesRcvPool, sc,
-                                                                         seedReceiveMap, ultimateMaxDist, 
-                                                                         cellSize, xysAll, 
-                                                                         dtSrc, pixelGroupMapVec,
-                                                                         dispersalFn,
-                                                                         k, b, lociReturn, 
-                                                                         speciesComm, 
-                                                                         pointDistance)) %>%
+                                          function(y) seedDispInnerFn(activeCell = y[[1]],
+                                                                      potentials = y[[2]], 
+                                                                      n = cellSize,
+                                                                      speciesRcvPool, sc,
+                                                                      seedSourceMaps$speciesRcvPool, ultimateMaxDist, 
+                                                                      cellSize, xysAll, 
+                                                                      dtSrc, pixelGroupMapVec,
+                                                                      dispersalFn,
+                                                                      k, b, lociReturn, 
+                                                                      speciesComm, 
+                                                                      pointDistance)) %>%
         rbindlist()
       parallel::stopCluster(cl)
       #seedsArrived <- rbindlist(allSeedsArrived)
@@ -444,7 +451,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                                                 potentials = subSampList[[y]][[2]], 
                                                 n = cellSize,
                                                 speciesRcvPool, sc,
-                                                seedReceiveMap, ultimateMaxDist, 
+                                                seedSourceMaps$speciesRcvPool, ultimateMaxDist, 
                                                 cellSize, xysAll, 
                                                 dtSrc, pixelGroupMapVec,
                                                 dispersalFn,
@@ -472,7 +479,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
       #   potentials = spRcvCommCodes[potentials, allow.cartesian=TRUE][,`:=`(RcvCommunity=NULL)]
       #   setkey(potentials,"from")
       #   # identify which are 8 neighbours from each "active cell"
-      #   adjCells <- adj(seedReceiveMap, unique(activeCell), directions=8, pairs=TRUE,include=TRUE) %>%
+      #   adjCells <- adj(seedSourceMaps$speciesRcvPool, unique(activeCell), directions=8, pairs=TRUE,include=TRUE) %>%
       #     data.table(key=c("from"))
       #   while (NROW(potentials) & ((n-cellSize)%<=%ultimateMaxDist)) { # while there are active cells and less than maxDistance
       #     #                  browser(expr=round(time(sim))>=20)
@@ -624,7 +631,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                                                                     potentials = y[[2]], 
                                                                     n = cellSize,
                                                                     speciesRcvPool, sc,
-                                                                    seedReceiveMap, ultimateMaxDist, 
+                                                                    seedSourceMaps$speciesRcvPool, ultimateMaxDist, 
                                                                     cellSize, xysAll, 
                                                                     dtSrc, pixelGroupMapVec,
                                                                     dispersalFn,
@@ -721,45 +728,45 @@ WardEqn <- function(dis, cellSize, effDist, maxDist, k, b) {
 # 
 # #effDist=species[species==speciesCode,seeddistance_eff]
 # 
-# #seedReceiveMap[seedReceiveMap==0] <- NA
+# #seedSourceMaps$speciesRcvPool[seedSourceMaps$speciesRcvPool==0] <- NA
 # 
-# seedReceiveMap = pixelGroupMap %in% seedReceive[species==speciesCode]$pixelGroup
+# seedSourceMaps$speciesRcvPool = pixelGroupMap %in% seedReceive[species==speciesCode]$pixelGroup
 # seedSourceMap[is.na(seedSourceMap)] <- 0
 # Plot(seedSourceMap, cols=c("white","light grey"), new=TRUE)
 # 
-# seedReceiveMap2 <- raster(seedReceiveMap)
+# seedReceiveMap2 <- raster(seedSourceMaps$speciesRcvPool)
 # seedReceiveMap2[] <- 0
 # 
 # st <- system.time({
 # for(i in 1:30*100) {
 #   a  <-  focal(seedSourceMap, w=ringWeight(seedSourceMap,i-100,i), fun=WardFn, pad=TRUE, padValue=0)
-#   a[seedReceiveMap==0] <- 0
+#   a[seedSourceMaps$speciesRcvPool==0] <- 0
 # #  Plot(a)
-#   seedReceiveMap <- seedReceiveMap*(a==0)
+#   seedSourceMaps$speciesRcvPool <- seedSourceMaps$speciesRcvPool*(a==0)
 #   seedReceiveMap2[a==1] <- seedReceiveMap2[a==1] + i
 # }
 # })
 # 
 # Plot(seedReceiveMap2)
-# seedReceiveMap = pixelGroupMap %in% seedReceive[species==speciesCode]$pixelGroup
+# seedSourceMaps$speciesRcvPool = pixelGroupMap %in% seedReceive[species==speciesCode]$pixelGroup
 # Plot(seedReceiveMap2, addTo="seedSourceMap", zero.color="#00000000")
-# Plot(seedReceiveMap2, seedReceiveMap)
+# Plot(seedReceiveMap2, seedSourceMaps$speciesRcvPool)
 # Plot(seedReceiveMap2, new=T)
 # Plot(seedSourceMap, addTo="seedReceiveMap2", zero.color="#00000000", cols="#FFFFFF11")
 # 
 # Plot(seedSourceMap, new=T, cols=c("white","black"))
 # Plot(seedReceiveMap2, addTo="seedSourceMap", zero.color="#00000000", cols="#11FF1155")
-# Plot(seedReceiveMap, cols=c("white","black"))
-# Plot(seedReceiveMap2, addTo="seedReceiveMap", zero.color="#00000000", cols="#11881100")
+# Plot(seedSourceMaps$speciesRcvPool, cols=c("white","black"))
+# Plot(seedReceiveMap2, addTo="seedSourceMaps$speciesRcvPool", zero.color="#00000000", cols="#11881100")
 # 
-# h <- raster(seedReceiveMap)
+# h <- raster(seedSourceMaps$speciesRcvPool)
 # h[]=0
 # h[seedingData[species=="querrubr",pixelIndex]] <- 1
 # Plot(h)
 
 seedDispInnerFn <- function(activeCell, potentials, n, 
                             speciesRcvPool, sc,
-                            seedReceiveMap, ultimateMaxDist, 
+                            seedRcvMap, ultimateMaxDist, 
                             cellSize, xysAll, 
                             dtSrc, pixelGroupMapVec,
                             dispersalFn,
@@ -778,7 +785,7 @@ seedDispInnerFn <- function(activeCell, potentials, n,
   potentials = spRcvCommCodes[potentials, allow.cartesian=TRUE][,`:=`(RcvCommunity=NULL)]
   setkey(potentials,"from")
   # identify which are 8 neighbours from each "active cell"
-  adjCells <- adj(seedReceiveMap, unique(activeCell), directions=8, pairs=TRUE,include=TRUE) %>%
+  adjCells <- adj(seedSourceMaps$speciesRcvPool, unique(activeCell), directions=8, pairs=TRUE,include=TRUE) %>%
     data.table(key=c("from"))
   while (NROW(potentials) & ((n-cellSize)%<=%ultimateMaxDist)) { # while there are active cells and less than maxDistance
     #                  browser(expr=round(time(sim))>=20)
@@ -800,7 +807,7 @@ seedDispInnerFn <- function(activeCell, potentials, n,
     #   distance once, then re-join the shorter version back to longer version by species
     shortPotentials <- setkey(potentials, fromInit, to) %>% unique(., by = c("fromInit", "to")) %>% .[,list(fromInit, to)] 
     set(shortPotentials, , "dis", as.integer(pointDistance(xysAll[shortPotentials[,fromInit],], xysAll[shortPotentials[,to],], 
-                                                lonlat=FALSE)))
+                                                           lonlat=FALSE)))
     
     # merge shorter object with no duplicate from-to pairs back with potentials, which does have duplicate from-to pairs
     #   due to multiple species having same from-to pair
@@ -836,11 +843,11 @@ seedDispInnerFn <- function(activeCell, potentials, n,
         # back to Ward
         # Don't include the ones that were already, calculate probability
         potentialsWithSeedDT[#is.na(receivesSeeds) & 
-                               dis==0,
-                             dispersalProb:=1]
+          dis==0,
+          dispersalProb:=1]
         potentialsWithSeedDT[#is.na(receivesSeeds) & 
-                               dis!=0,
-                             dispersalProb:=eval(dispersalFn)]
+          dis!=0,
+          dispersalProb:=eval(dispersalFn)]
         potentialsWithSeedDT <- potentialsWithSeedDT[,.(receivesSeeds=runif(nr)<dispersalProb,
                                                         fromInit,speciesCode)]
         receivedSeeds <- potentialsWithSeedDT[,any(receivesSeeds), by=c("fromInit,speciesCode")]
@@ -864,4 +871,3 @@ seedDispInnerFn <- function(activeCell, potentials, n,
   }
   return(seedsArrived)
 }
-
