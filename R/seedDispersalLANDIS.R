@@ -365,9 +365,9 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   
   #browser()
   spPool <- merge(speciesRcvPool, speciesSrcPool, all = TRUE)
-  seedSourceMaps <- rasterizeReduced(spPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol=c("speciesSrcPool","speciesRcvPool"))
-  #seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol="speciesSrcPool")
-  #seedReceiveMap <- rasterizeReduced(speciesRcvPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", plotCol="speciesRcvPool")
+  seedSourceMaps <- rasterizeReduced(spPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", newRasterCols=c("speciesSrcPool","speciesRcvPool"))
+  #seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", newRasterCols="speciesSrcPool")
+  #seedReceiveMap <- rasterizeReduced(speciesRcvPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", newRasterCols="speciesRcvPool")
   seedSourceMaps <- lapply(seedSourceMaps, function(x) setValues(x, as.integer(x[])))
   #seedSourceMap[] <- as.integer(seedSourceMap[])
   #seedReceiveMap[] <- as.integer(seedReceiveMap[])
