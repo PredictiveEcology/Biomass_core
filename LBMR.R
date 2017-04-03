@@ -419,10 +419,11 @@ LBMRMortalityAndGrowth = function(sim) {
                                       speciesCode, age, B, mortality,
                                       aNPPAct)]
   cohortData <- sim$cohortData
+  
   sim$cohortData <- cohortData[0,]
   pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup), 
                             temID = 1:length(unique(cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 10^4), max(pixelGroups$temID))))
+  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 1e5), max(pixelGroups$temID))))
   if(length(cutpoints) == 1){cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups:=cut(temID, breaks = cutpoints,
                             labels = paste("Group", 1:(length(cutpoints)-1),
@@ -982,9 +983,6 @@ LBMRWardDispersalSeeding = function(sim) {
                                       time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
         sim$cohortData <- addnewcohort$cohortData
         sim$pixelGroupMap <- addnewcohort$pixelGroupMap
-      } else {
-        sim$cohortData <- sim$cohortData
-        sim$pixelGroupMap <- sim$pixelGroupMap
       } 
     }
   }
@@ -994,11 +992,11 @@ LBMRWardDispersalSeeding = function(sim) {
 
 
 LBMRSummaryRegen = function(sim){
-  cohortData <- sim$cohortData
+  #cohortData <- sim$cohortData
   pixelGroupMap <- sim$pixelGroupMap
   names(pixelGroupMap) <- "pixelGroup"
   # please note that the calculation of reproduction is based on successioinTime step interval,
-  pixelAll <- cohortData[age <= sim$successionTimestep,
+  pixelAll <- sim$cohortData[age <= sim$successionTimestep,
                          .(uniqueSumReproduction = sum(B, na.rm=TRUE)),
                          by = pixelGroup]
   if(NROW(pixelAll)>0){
@@ -1012,7 +1010,8 @@ LBMRSummaryRegen = function(sim){
   sim$reproductionMap <- writeRaster(sim$reproductionMap, filename = file.path(outputPath(sim), "reproductionMap.tif"), 
                                      overwrite = TRUE)
   
-  rm(cohortData, pixelGroupMap)
+  #rm(cohortData, pixelGroupMap)
+  rm(pixelGroupMap)
   return(invisible(sim))
 }
 
