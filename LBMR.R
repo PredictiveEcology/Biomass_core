@@ -100,7 +100,6 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
   if (eventType == "init") {
     ### check for more detailed object dependencies:
     ### (use `checkObject` or similar)
-    
     # do stuff for this event
     sim <- sim$LBMRInit(sim)
     if(sim$successionTimestep != 1){
@@ -261,9 +260,9 @@ LBMRInit <- function(sim) {
   pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE))), by=pixelGroup]
   #if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
   biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
-  ANPPMap <- setValues(biomassMap, 0)
-  mortalityMap <- setValues(biomassMap, 0)
-  reproductionMap <- setValues(biomassMap, 0)
+  ANPPMap <- setValues(biomassMap, 0L)
+  mortalityMap <- setValues(biomassMap, 0L)
+  reproductionMap <- setValues(biomassMap, 0L)
   biomassMap <- writeRaster(biomassMap, filename = file.path(outputPath(sim), "biomassMap.tif"), 
                             overwrite = TRUE)
   ANPPMap <- writeRaster(ANPPMap, filename = file.path(outputPath(sim), "ANPPMap.tif"), 
@@ -282,11 +281,12 @@ LBMRInit <- function(sim) {
                                  pixelIndex = 1:ncell(sim$ecoregionMap))[
                                    ,.(NofPixel = length(pixelIndex)), by = c("Ecoregion", "pixelGroup")]
   simulationOutput <- setkey(simulationOutput, pixelGroup)[setkey(pixelAll, pixelGroup), nomatch = 0][
-    ,.(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = Ecoregion]
+    ,.(Biomass = as.integer(sum(uniqueSumB*NofPixel))), by = Ecoregion]
   simulationOutput <- setkey(simulationOutput, Ecoregion)[setkey(sim$activeEcoregionLength, Ecoregion),
                                                           nomatch = 0]
-  sim$simulationOutput <- simulationOutput[,.(Ecoregion, NofCell, Year = time(sim), Biomass = round(Biomass/NofCell),
-                                              ANPP = 0, Mortality = 0, Regeneration = 0)]
+  sim$simulationOutput <- simulationOutput[,.(Ecoregion, NofCell, Year = as.integer(time(sim)), 
+                                              Biomass = as.integer(Biomass/NofCell),
+                                              ANPP = 0L, Mortality = 0L, Regeneration = 0L)]
   sim$lastReg <- 0
   speciesEcoregion[, identifier:=year>sim$successionTimestep]
   speciesEcoregion_True <- speciesEcoregion[identifier == "TRUE",]
@@ -526,10 +526,10 @@ LBMRSummaryBGM = function(sim) {
       subCohortData[, reproduction:=0]
     }
     
-    summarytable_sub <- subCohortData[,.(uniqueSumB = as.numeric(sum(as.numeric(B), na.rm=TRUE)),
-                                         uniqueSumANPP = as.numeric(sum(as.numeric(aNPPAct), na.rm=TRUE)),
-                                         uniqueSumMortality = as.numeric(sum(as.numeric(mortality), na.rm=TRUE)),
-                                         uniqueSumRege = as.numeric(sum(as.numeric(reproduction), na.rm = TRUE))),
+    summarytable_sub <- subCohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE)),
+                                         uniqueSumANPP = as.integer(sum(aNPPAct, na.rm=TRUE)),
+                                         uniqueSumMortality = as.integer(sum(mortality, na.rm=TRUE)),
+                                         uniqueSumRege = as.integer(sum(reproduction, na.rm = TRUE))),
                                       by = pixelGroup]
     tempOutput <- setkey(ecoPixelgroup[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ],
                          pixelGroup)[setkey(summarytable_sub, pixelGroup), nomatch = 0]
@@ -544,18 +544,18 @@ LBMRSummaryBGM = function(sim) {
     rm(summarytable_sub, tempOutput, subCohortData)
   }
   tempOutput_All <- tempOutput_All[,.(Biomass = sum(uniqueSumB*NofPixelGroup),
-                                      ANPP = sum(as.numeric(uniqueSumANPP*NofPixelGroup)),
+                                      ANPP = sum(uniqueSumANPP*NofPixelGroup),
                                       Mortality = sum(uniqueSumMortality*NofPixelGroup),
                                       Regeneration = sum(uniqueSumRege*NofPixelGroup)),
                                    by = Ecoregion]
   tempOutput_All <- setkey(tempOutput_All, Ecoregion)[setkey(sim$activeEcoregionLength, 
                                                              Ecoregion), nomatch = 0]
   sim$simulationOutput <- rbindlist(list(sim$simulationOutput, 
-                                         tempOutput_All[,.(Ecoregion, NofCell, Year = round(time(sim)),
-                                                           Biomass = round(Biomass/NofCell),
-                                                           ANPP = round(ANPP/NofCell),
-                                                           Mortality = round(Mortality/NofCell),
-                                                           Regeneration = round(Regeneration/NofCell))]))
+                                         tempOutput_All[,.(Ecoregion, NofCell, Year = as.integer(time(sim)),
+                                                           Biomass = as.integer(Biomass/NofCell),
+                                                           ANPP = as.integer(ANPP/NofCell),
+                                                           Mortality = as.integer(Mortality/NofCell),
+                                                           Regeneration = as.integer(Regeneration/NofCell))]))
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively. 
   names(sim$pixelGroupMap) <- "pixelGroup"
   #if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
