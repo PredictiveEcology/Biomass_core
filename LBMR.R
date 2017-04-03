@@ -423,7 +423,7 @@ LBMRMortalityAndGrowth = function(sim) {
   sim$cohortData <- cohortData[0,]
   pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup), 
                             temID = 1:length(unique(cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 1e5), max(pixelGroups$temID))))
+  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 1e6), max(pixelGroups$temID))))
   if(length(cutpoints) == 1){cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups:=cut(temID, breaks = cutpoints,
                             labels = paste("Group", 1:(length(cutpoints)-1),
@@ -506,7 +506,7 @@ LBMRMortalityAndGrowth = function(sim) {
 LBMRSummaryBGM = function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup), 
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 10^4), max(pixelGroups$temID))))
+  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 1e6), max(pixelGroups$temID))))
   if(length(cutpoints) == 1){cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups:=cut(temID, breaks = cutpoints,
                             labels = paste("Group", 1:(length(cutpoints)-1),
@@ -602,7 +602,7 @@ LBMRFireDisturbance = function(sim) {
   if(extent(sim$rstCurrentBurn) != extent(sim$pixelGroupMap)){
     sim$rstCurrentBurn <- raster::crop(sim$rstCurrentBurn, extent(sim$pixelGroupMap))
   }
-  sim$burnLoci <- Which(sim$rstCurrentBurn == 1, cell = TRUE)
+  sim$burnLoci <- which(sim$rstCurrentBurn[] == 1)
   if(length(sim$inactivePixelIndex) > 0){
     sim$burnLoci <- sim$burnLoci[!(sim$burnLoci %in% sim$inactivePixelIndex)] # this is to prevent avaluating the pixels that are inactive
   }
