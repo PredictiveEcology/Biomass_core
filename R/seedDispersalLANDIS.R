@@ -148,7 +148,6 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                        maxPotentialsLength=1e3, 
                        verbose=FALSE,
                        useParallel, ...) {
-  
   cellSize=unique(res(pixelGroupMap))
   #pixelGroupMapVec <- getValues(pixelGroupMap)
   seedsReceived <- raster(pixelGroupMap) 
@@ -173,7 +172,6 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
     data.table(key="pixelGroup")
   
   setkey(sc, speciesCode)
-  
   spPool <- merge(speciesRcvPool, speciesSrcPool, all = TRUE)
   seedSourceMaps <- rasterizeReduced(spPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", newRasterCols=c("speciesSrcPool","speciesRcvPool"))
   #seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", newRasterCols="speciesSrcPool")
