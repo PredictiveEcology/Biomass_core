@@ -187,6 +187,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
 }
 
 LBMRInit <- function(sim) {
+  sim$cutpoint <- 1e10
   communities <- sim$initialCommunities %>%
     gather(key=cohort, value=age, -mapcode,-description,-species,na.rm=TRUE) %>%
     data.table %>%
@@ -424,11 +425,11 @@ LBMRMortalityAndGrowth = function(sim) {
                                       speciesCode, age, B, mortality,
                                       aNPPAct)]
   cohortData <- sim$cohortData
-  
   sim$cohortData <- cohortData[0,]
   pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup), 
                             temID = 1:length(unique(cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 1e6), max(pixelGroups$temID))))
+  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = sim$cutpoint), max(pixelGroups$temID))))
+  #cutpoints <- c(1,max(pixelGroups$temID))
   if(length(cutpoints) == 1){cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups:=cut(temID, breaks = cutpoints,
                             labels = paste("Group", 1:(length(cutpoints)-1),
@@ -511,7 +512,7 @@ LBMRMortalityAndGrowth = function(sim) {
 LBMRSummaryBGM = function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup), 
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 1e6), max(pixelGroups$temID))))
+  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = sim$cutpoint), max(pixelGroups$temID))))
   if(length(cutpoints) == 1){cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups:=cut(temID, breaks = cutpoints,
                             labels = paste("Group", 1:(length(cutpoints)-1),
