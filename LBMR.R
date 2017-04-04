@@ -19,9 +19,7 @@ defineModule(sim, list(
   parameters = rbind(
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_, "Initial time for the growth event to occur"),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA, "This describes the simulation time at which the first plot event should occur"),
-    defineParameter(".saveInitialTime", "numeric", 0, NA, NA, "This describes the simulation time at which the first plot event should occur"),
-    defineParameter("fireDisturbanceInitialTime", "numeric", 1, NA_real_, NA_real_, "Initial time for the post fire reproduction event to occur")
-  ),
+    defineParameter(".saveInitialTime", "numeric", 0, NA, NA, "This describes the simulation time at which the first plot event should occur")  ),
   inputObjects = bind_rows(
     expectsInput(objectName = "initialCommunities", objectClass = "data.table",
                  desc = "initial community table", 
@@ -65,6 +63,9 @@ defineModule(sim, list(
                  spinupOutput and simulationTreeOutput, default is FALSE", 
                  sourceURL = "NA"),
     # For inputs from optional fire module
+    expectsInput(objectName = "fireInitialTime", objectClass = "numeric", 
+                 desc = "The event time that the first fire disturbance event occurs", 
+                 sourceURL = "NA"),
     expectsInput(objectName = "fireTimestep", objectClass = "numeric", 
                  desc = "The number of time units between successive fire events in a fire module", 
                  sourceURL = "NA"),
@@ -103,15 +104,15 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
     # do stuff for this event
     sim <- sim$LBMRInit(sim)
     if(sim$successionTimestep != 1){
-      sim <- scheduleEvent(sim, start(sim) + 2*sim$successionTimestep - 1, "LBMR",
-                           "cohortAgeReclassification", eventPriority = 0.5)
+      sim <- scheduleEvent(sim, start(sim) + sim$successionTimestep, "LBMR",
+                           "cohortAgeReclassification", eventPriority = 5.25)
     }
-    sim <- scheduleEvent(sim, start(sim) + params(sim)$LBMR$growthInitialTime,
+    sim <- scheduleEvent(sim, start(sim) + P(sim)$growthInitialTime,
                          "LBMR", "mortalityAndGrowth", eventPriority = 5)
     sim <- scheduleEvent(sim, start(sim) + sim$successionTimestep,
                          "LBMR", "summaryBGM", eventPriority = 6)
     if(!is.null(sim$rstCurrentBurn)){ # anything related to fire disturbance
-      sim <- scheduleEvent(sim, start(sim) + params(sim)$LBMR$fireDisturbanceInitialTime,
+      sim <- scheduleEvent(sim, start(sim) + sim$fireInitialTime,
                            "LBMR", "fireDisturbance", eventPriority = 3)
     }
     if(sim$seedingAlgorithm == "noDispersal"){
@@ -128,9 +129,9 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
     }
     sim <- scheduleEvent(sim, start(sim) + sim$successionTimestep,
                          "LBMR", "summaryRegen", eventPriority = 5.5)
-    sim <- scheduleEvent(sim, params(sim)$LBMR$.plotInitialTime + sim$successionTimestep,
+    sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + sim$successionTimestep,
                          "LBMR", "plot", eventPriority = 7)
-    sim <- scheduleEvent(sim, params(sim)$LBMR$.saveInitialTime + sim$successionTimestep,
+    sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + sim$successionTimestep,
                          "LBMR", "save", eventPriority = 7.5)
   } else if (eventType == "mortalityAndGrowth") {
     sim <- LBMRMortalityAndGrowth(sim)
@@ -178,7 +179,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
     sim <- LBMRCohortAgeReclassification(sim)
     sim <- scheduleEvent(sim, time(sim) + sim$successionTimestep,
                          "LBMR", "cohortAgeReclassification",
-                         eventPriority = 0.5)
+                         eventPriority = 5.25)
   } else {
     warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                   "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
@@ -213,6 +214,7 @@ LBMRInit <- function(sim) {
   #ecoregionMap <- sim$ecoregionMap
   pixelGroupMap <- setValues(initialCommunitiesMap, as.integer((initialCommunitiesMap + 
                                                                   sim$ecoregionMap*pixelGroupFactor)[]))
+  sim$initialCommunitiesMap <- NULL
   active_ecoregion <- setkey(ecoregion[active=="yes" ,.(k=1,ecoregionGroup)], k)
   cohortData <- setkey(communities[, k:=1], k)[active_ecoregion, allow.cartesian=TRUE][, k:=NULL]
   set(cohortData, ,"pixelGroup", cohortData$communityGroup + cohortData$ecoregionGroup*pixelGroupFactor)
@@ -1098,16 +1100,16 @@ ageReclassification <- function(cohortData, successionTimestep, stage){
     cohortData[age == successionTimestep+1, age:=successionTimestep]
   } else {
     # non- spinup stage
-    targetData <- cohortData[age <= successionTimestep, ]
+    targetData <- cohortData[age <= (successionTimestep+1), ]
     targetData <- targetData[,.(ecoregionGroup = mean(ecoregionGroup),
-                                age = successionTimestep - 1,
+                                age = successionTimestep + 1,
                                 B = sum(B, na.rm = TRUE), 
                                 mortality = sum(mortality, na.rm = TRUE), 
                                 aNPPAct = sum(aNPPAct, na.rm = TRUE)),
                              by = .(pixelGroup, speciesCode)]
     targetData <- targetData[,.(pixelGroup, ecoregionGroup, speciesCode, age,
                                 B, mortality, aNPPAct)]
-    cohortData <- cohortData[age >= successionTimestep + 1]
+    cohortData <- cohortData[age >= successionTimestep + 2]
     cohortData <- rbindlist(list(cohortData, targetData))
   }
   return(cohortData)
