@@ -260,10 +260,11 @@ LBMRInit <- function(sim) {
   pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE))), by=pixelGroup]
   if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
-    ANPPMap <- setValues(biomassMap, 0)
-    mortalityMap <- setValues(biomassMap, 0)
+    ANPPMap <- setValues(biomassMap, 0L)
+    mortalityMap <- setValues(biomassMap, 0L)
+    reproductionMap <- setValues(pixelGroupMap, 0L)
   }
-  reproductionMap <- setValues(pixelGroupMap, 0)
+  
   if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     biomassMap <- writeRaster(biomassMap, filename = file.path(outputPath(sim), "biomassMap.tif"), 
                             overwrite = TRUE)
@@ -271,9 +272,10 @@ LBMRInit <- function(sim) {
                          overwrite = TRUE)
     mortalityMap <- writeRaster(mortalityMap, filename = file.path(outputPath(sim), "mortalityMap.tif"), 
                               overwrite = TRUE)
+    reproductionMap <- writeRaster(reproductionMap, filename = file.path(outputPath(sim), "reproductionMap.tif"), 
+                                   overwrite = TRUE)
   }
-  reproductionMap <- writeRaster(reproductionMap, filename = file.path(outputPath(sim), "reproductionMap.tif"), 
-                                 overwrite = TRUE)
+  
   #}
 
   sim$pixelGroupMap <- pixelGroupMap
@@ -996,25 +998,27 @@ LBMRWardDispersalSeeding = function(sim) {
 
 LBMRSummaryRegen = function(sim){
   #cohortData <- sim$cohortData
-  pixelGroupMap <- sim$pixelGroupMap
-  names(pixelGroupMap) <- "pixelGroup"
-  # please note that the calculation of reproduction is based on successioinTime step interval,
-  pixelAll <- sim$cohortData[age <= sim$successionTimestep,
-                         .(uniqueSumReproduction = sum(B, na.rm=TRUE)),
-                         by = pixelGroup]
-  if(NROW(pixelAll)>0){
-    reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
-    setColors(reproductionMap) <- c("light green", "dark green")
-  } else {
-    reproductionMap <- setValues(pixelGroupMap, 0)
+  if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
+    pixelGroupMap <- sim$pixelGroupMap
+    names(pixelGroupMap) <- "pixelGroup"
+    # please note that the calculation of reproduction is based on successioinTime step interval,
+    pixelAll <- sim$cohortData[age <= sim$successionTimestep,
+                               .(uniqueSumReproduction = as.integer(sum(B, na.rm=TRUE))),
+                               by = pixelGroup]
+    if(NROW(pixelAll)>0){
+      reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
+      setColors(reproductionMap) <- c("light green", "dark green")
+    } else {
+      reproductionMap <- setValues(pixelGroupMap, 0L)
+    }
+    rm(pixelAll)
+    sim$reproductionMap <- reproductionMap
+    sim$reproductionMap <- writeRaster(sim$reproductionMap, filename = file.path(outputPath(sim), "reproductionMap.tif"), 
+                                       overwrite = TRUE)
+    
+    #rm(cohortData, pixelGroupMap)
+    rm(pixelGroupMap)
   }
-  rm(pixelAll)
-  sim$reproductionMap <- reproductionMap
-  sim$reproductionMap <- writeRaster(sim$reproductionMap, filename = file.path(outputPath(sim), "reproductionMap.tif"), 
-                                     overwrite = TRUE)
-  
-  #rm(cohortData, pixelGroupMap)
-  rm(pixelGroupMap)
   return(invisible(sim))
 }
 
