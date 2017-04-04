@@ -592,7 +592,9 @@ seedDispInnerFn <- function(activeCell, potentials, n,
   # identify which are 8 neighbours from each "active cell"
   adjCells <- adj(seedRcvMap, unique(activeCell), directions=8, pairs=TRUE,include=TRUE) %>%
     data.table(key=c("from"))
-  adjCells[,':='(from = as.integer(from), to = as.integer(to))]
+  set(adjCells, , "from", as.integer(adjCells$from))
+  set(adjCells, , "to", as.integer(adjCells$to))
+  #adjCells[,':='(from = as.integer(from), to = as.integer(to))]
   while (NROW(potentials) & ((n-cellSize)%<=%ultimateMaxDist)) { # while there are active cells and less than maxDistance
     #                  browser(expr=round(time(sim))>=20)
     # If this is second or greater time through this while loop, make active cells (i.e., the "from")
