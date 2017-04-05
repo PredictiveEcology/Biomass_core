@@ -268,17 +268,6 @@ LBMRInit <- function(sim) {
     reproductionMap <- setValues(pixelGroupMap, 0L)
   }
   
-  if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
-    biomassMap <- writeRaster(biomassMap, filename = file.path(outputPath(sim), "biomassMap.tif"), 
-                            overwrite = TRUE)
-    ANPPMap <- writeRaster(ANPPMap, filename = file.path(outputPath(sim), "ANPPMap.tif"), 
-                         overwrite = TRUE)
-    mortalityMap <- writeRaster(mortalityMap, filename = file.path(outputPath(sim), "mortalityMap.tif"), 
-                              overwrite = TRUE)
-    reproductionMap <- writeRaster(reproductionMap, filename = file.path(outputPath(sim), "reproductionMap.tif"), 
-                                   overwrite = TRUE)
-  }
-  
   #}
 
   sim$pixelGroupMap <- pixelGroupMap
@@ -528,16 +517,16 @@ LBMRSummaryBGM = function(sim) {
   
   for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")){
     subCohortData <- sim$cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
-    if(nrow(subCohortData[age == 1,])>0){
-      subCohortData[age == 1,reproduction:=sum(B), by = pixelGroup]
+    if(nrow(subCohortData[age == (successionTimestep+1),])>0){
+      subCohortData[age == (successionTimestep+1),reproduction:=sum(B), by = pixelGroup]
     } else {
       subCohortData[, reproduction:=0]
     }
-    
+    subCohortData[is.na(reproduction), reproduction := 0L]
     summarytable_sub <- subCohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE)),
                                          uniqueSumANPP = as.integer(sum(aNPPAct, na.rm=TRUE)),
                                          uniqueSumMortality = as.integer(sum(mortality, na.rm=TRUE)),
-                                         uniqueSumRege = as.integer(sum(reproduction, na.rm = TRUE))),
+                                         uniqueSumRege = as.integer(mean(reproduction, na.rm = TRUE))),
                                       by = pixelGroup]
     tempOutput <- setkey(ecoPixelgroup[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ],
                          pixelGroup)[setkey(summarytable_sub, pixelGroup), nomatch = 0]
@@ -568,26 +557,16 @@ LBMRSummaryBGM = function(sim) {
   names(sim$pixelGroupMap) <- "pixelGroup"
   if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                     "uniqueSumB")
+                                       "uniqueSumB")
     setColors(sim$biomassMap) <- c("light green", "dark green")
-  
+    
     sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
     setColors(sim$ANPPMap) <- c("light green", "dark green")
-  
+    
     sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
     setColors(sim$mortalityMap) <- c("light green", "dark green")
-  
-    sim$biomassMap <- writeRaster(sim$biomassMap, filename = file.path(outputPath(sim), "biomassMap.tif"), 
-                                overwrite = TRUE)
-    sim$ANPPMap <- writeRaster(sim$ANPPMap, filename = file.path(outputPath(sim), "ANPPMap.tif"), 
-                             overwrite = TRUE)
-    sim$mortalityMap <- writeRaster(sim$mortalityMap, filename = file.path(outputPath(sim), "mortalityMap.tif"), 
-                                  overwrite = TRUE)
-  
   }
-  
   # the following codes for preparing the data table for saving
-  
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
   return(invisible(sim))
 }
@@ -1005,7 +984,7 @@ LBMRSummaryRegen = function(sim){
     pixelGroupMap <- sim$pixelGroupMap
     names(pixelGroupMap) <- "pixelGroup"
     # please note that the calculation of reproduction is based on successioinTime step interval,
-    pixelAll <- sim$cohortData[age <= sim$successionTimestep,
+    pixelAll <- sim$cohortData[age <= sim$successionTimestep+1,
                                .(uniqueSumReproduction = as.integer(sum(B, na.rm=TRUE))),
                                by = pixelGroup]
     if(NROW(pixelAll)>0){
@@ -1016,9 +995,6 @@ LBMRSummaryRegen = function(sim){
     }
     rm(pixelAll)
     sim$reproductionMap <- reproductionMap
-    sim$reproductionMap <- writeRaster(sim$reproductionMap, filename = file.path(outputPath(sim), "reproductionMap.tif"), 
-                                       overwrite = TRUE)
-    
     #rm(cohortData, pixelGroupMap)
     rm(pixelGroupMap)
   }
