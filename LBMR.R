@@ -1003,7 +1003,7 @@ LBMRSummaryRegen = function(sim){
 
 LBMRPlot = function(sim) {
   if(time(sim) == sim$successionTimestep){
-    dev(4)
+    #dev(4)
     clearPlot()
   }
   Plot(sim$biomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap, 
