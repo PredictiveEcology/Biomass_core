@@ -1385,7 +1385,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   sim$initialCommunitiesMap <- raster(file.path(dataPath, "initial-communities.gis"))
   sim$initialCommunitiesMap <- setValues(sim$initialCommunitiesMap, as.integer(sim$initialCommunitiesMap[]))
   sim$initialCommunitiesMap <- writeRaster(sim$initialCommunitiesMap, overwrite = TRUE,
-                                           filename = file.path(outputPath(sim), "initialCommunitiesMap.tif"),
+                                           filename = file.path(outputPath(sim), "initialCommunitiesMapDefault.tif"),
                                            datatype="INT2U")
   
   # read species txt and convert it to data table
