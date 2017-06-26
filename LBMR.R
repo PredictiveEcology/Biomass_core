@@ -1365,7 +1365,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   cutRows <- grep(">>", initialCommunities$species)
   for(i in cutRows){
     initialCommunities[i, 
-                       desc:=paste(initialCommunities[i, 3:maxcol, with = F],
+                       desc:=paste(initialCommunities[i, 3:maxcol, with = FALSE],
                                    collapse = " ")]
   }
   initialCommunities[, rowN := 1:nrow(initialCommunities)]
