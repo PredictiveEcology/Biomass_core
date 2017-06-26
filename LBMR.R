@@ -299,7 +299,7 @@ cacheSpinUpFunction <- function(sim, cachePath) {
   # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
   if(sim$useCache) {
     sim$spinUpCache <- function(...) {
-      SpaDES::Cache(FUN = spinUp, ...)
+      reproducible::Cache(FUN = spinUp, ...)
     }
   } else {
     # Step 3 - create a non-caching version in case caching is not desired
