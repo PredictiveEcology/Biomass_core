@@ -625,7 +625,8 @@ LBMRFireDisturbance = function(sim) {
     # light check
     newCohortData <- setkey(newCohortData, speciesCode)[sim$species[,.(speciesCode, shadetolerance)],
                                                         nomatch = 0][,siteShade := 0]
-    newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight, newCohortData)
+    newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight, 
+                                     newCohortData)
     newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0, 1),]
     set(newCohortData, ,c("shadetolerance", "siteShade", "lightProb"), NULL)
     specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
@@ -685,7 +686,8 @@ LBMRFireDisturbance = function(sim) {
                                                         nomatch = 0][, siteShade := 0]
     
     # Light check
-    newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight, newCohortData)
+    newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight, 
+                                     newCohortData)
     newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0, 1),]
     newCohortData <- newCohortData[runif(nrow(newCohortData), 0, 1) %<<% newCohortData$resproutprob]
     newCohortData <- unique(newCohortData, by = c("pixelIndex", "speciesCode"))
@@ -1230,6 +1232,7 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
 }
 
 assignLightProb <- function(sufficientLight, newCohortData){
+  if(!is.data.frame(sufficientLight)) sufficientLight <- data.frame(sufficientLight) 
   newCohortData[ , lightProb := sufficientLight[cbind(shadetolerance, siteShade + 2)]]
 }
 
@@ -1496,26 +1499,32 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   minRelativeB <- minRelativeB[(startRow+1):(startRow+6),]
   minRelativeB[1,2:ncol(minRelativeB)] <- minRelativeB[1,1:(ncol(minRelativeB)-1)]
   names(minRelativeB) <- NULL
+  minRelativeB <- minRelativeB[,apply(minRelativeB, 2, function(x) all(nzchar(x)))] 
   minRelativeB <- minRelativeB[,-1] %>%
     t(.) %>%
     gsub(pattern="%",replacement="") %>%
     data.table
   names(minRelativeB) <- c("ecoregion", "X1", "X2", "X3", "X4", "X5")
-  minRelativeB <- minRelativeB %>%
-    mutate_each(funs(as.numeric(as.character(.))/100), vars=-ecoregion)
+  set(minRelativeB, , "ecoregion", NULL)
+  minRelativeB <- minRelativeB[, lapply(.SD, function(x) as.numeric(as.character(x)))]
+  # minRelativeB <- minRelativeB %>%
+  #   mutate_at(funs(as.numeric(as.character(.))/100), .vars=-ecoregion)
   sim$minRelativeB <- minRelativeB
   
   sufficientLight <- mainInput %>%
     data.frame
   startRow <- which(sufficientLight$col1 == "SufficientLight")
   sufficientLight <- sufficientLight[(startRow+1):(startRow+5), 1:7]
-  for(i in 1:ncol(sufficientLight)){
-    sufficientLight[,i] <- as.numeric(sufficientLight[,i])
-  }
+  sufficientLight <- data.table(sufficientLight)
+  sufficientLight <- sufficientLight[, lapply(.SD, function(x) as.numeric(x))]
+  
+  # for(i in 1:ncol(sufficientLight)){
+  #   sufficientLight[,i] <- as.numeric(sufficientLight[,i])
+  # }
   names(sufficientLight) <- c("speciesshadetolerance",
                               "X0", "X1", "X2", "X3", "X4", "X5")
   
-  sim$sufficientLight <- sufficientLight
+  sim$sufficientLight <- as.data.frame(sufficientLight)
   sim$spinupMortalityfraction <- 0.001
   sim$successionTimestep <- 10
   sim$seedingAlgorithm <- "wardDispersal"
