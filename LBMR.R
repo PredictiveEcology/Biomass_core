@@ -1530,7 +1530,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   sim$useCache <- TRUE
   sim$cellSize <- res(ecoregionMap)[1]
   sim$calibrate <- FALSE
-  sim$useParallel <- FALSE
+  if(is.null(sim$useParallel)) sim$useParallel <- FALSE
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
 }
