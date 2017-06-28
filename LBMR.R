@@ -1386,10 +1386,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   rm(cutRows, i, maxcol)
   # load the initial community map
   sim$initialCommunitiesMap <- raster(file.path(dataPath, "initial-communities.gis"))
-  sim$initialCommunitiesMap <- setValues(sim$initialCommunitiesMap, as.integer(sim$initialCommunitiesMap[]))
-  sim$initialCommunitiesMap <- writeRaster(sim$initialCommunitiesMap, overwrite = TRUE,
-                                           filename = file.path(outputPath(sim), "initialCommunitiesMapDefault.tif"),
-                                           datatype="INT2U")
+  #sim$initialCommunitiesMap <- setValues(sim$initialCommunitiesMap, as.integer(sim$initialCommunitiesMap[]))
+  # sim$initialCommunitiesMap <- writeRaster(sim$initialCommunitiesMap, overwrite = TRUE,
+  #                                          filename = file.path(outputPath(sim), "initialCommunitiesMapDefault.tif"),
+  #                                          datatype="INT2U")
   
   # read species txt and convert it to data table
   maxcol <- max(count.fields(file.path(dataPath, "species.txt"), sep = ""))
@@ -1438,7 +1438,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   rm(maxcol)
   # load ecoregion map
   sim$ecoregionMap <- raster(file.path(dataPath, "ecoregions.gis"))
-  sim$ecoregionMap <- setValues(sim$ecoregionMap, as.integer(sim$ecoregionMap[]))
+  #sim$ecoregionMap <- setValues(sim$ecoregionMap, as.integer(sim$ecoregionMap[]))
   
   # input species ecoregion dynamics table
   maxcol <- max(count.fields(file.path(dataPath, "biomass-succession-dynamic-inputs_test.txt"), 
