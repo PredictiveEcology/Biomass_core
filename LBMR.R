@@ -1231,7 +1231,6 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
 }
 
 assignLightProb <- function(sufficientLight, newCohortData){
-  if(!is.data.frame(sufficientLight)) sufficientLight <- data.frame(sufficientLight) 
   newCohortData[ , lightProb := sufficientLight[cbind(shadetolerance, siteShade + 2)]]
 }
 
@@ -1522,8 +1521,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   # }
   names(sufficientLight) <- c("speciesshadetolerance",
                               "X0", "X1", "X2", "X3", "X4", "X5")
-  
-  sim$sufficientLight <- as.data.frame(sufficientLight)
+  sim$sufficientLight <- data.frame(sufficientLight)
   sim$spinupMortalityfraction <- 0.001
   sim$successionTimestep <- 10
   sim$seedingAlgorithm <- "wardDispersal"
