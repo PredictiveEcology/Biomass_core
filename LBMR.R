@@ -86,14 +86,16 @@ defineModule(sim, list(
                   succession time step"),
     createsOutput(objectName = "pixelGroupMap", objectClass = "RasterLayer", 
                   desc = "updated community map at each succession time step"),
-    createsOutput(objectName = "BiomassMap", objectClass = "RasterLayer", 
+    createsOutput(objectName = "biomassMap", objectClass = "RasterLayer", 
                   desc = "Bioimass map at each succession time step"),
     createsOutput(objectName = "ANPPMap", objectClass = "RasterLayer", 
                   desc = "ANPP map at each succession time step"),
     createsOutput(objectName = "MortalityMap", objectClass = "RasterLayer", 
                   desc = "Mortality map at each succession time step"),
     createsOutput(objectName = "RegenerationMap", objectClass = "RasterLayer", 
-                  desc = "Regeneration map at each succession time step")
+                  desc = "Regeneration map at each succession time step"),
+    createsOutput(objectName = "cutpoint", objectClass = "numeric", 
+                  desc = "A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks")
     )
 ))
 
