@@ -271,7 +271,7 @@ LBMRInit <- function(sim) {
   }
   
   #}
-
+  
   sim$pixelGroupMap <- pixelGroupMap
   sim$cohortData <- cohortData[,.(pixelGroup, ecoregionGroup, speciesCode, age,
                                   B, mortality = 0, aNPPAct = 0)]
@@ -1054,7 +1054,7 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData)
   # the following codes were for updating cohortdata using speciesecoregion data at current simulation year
   # to assign maxB, maxANPP and maxB_eco to cohortData
   specieseco_current <- speciesEcoregion[year <= time]
-  specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
+  specieseco_current <- setkey(specieseco_current[year == max(year),
                                                   .(speciesCode, maxANPP,
                                                     maxB, ecoregionGroup)],
                                speciesCode, ecoregionGroup)
