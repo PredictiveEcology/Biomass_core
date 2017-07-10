@@ -434,7 +434,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
     message("Running seed dispersal in parallel on ", length(useParallel), " clusters")
     reqdPkgs <- unlist(depends(sim)@dependencies[[current(sim)[["moduleName"]]]]@reqdPkgs)
     parallel::clusterExport(useParallel, c("reqdPkgs"), envir=environment())
-    clusterEvalQ(cl=useParallel, {SpaDES:::.modifySearchPath(reqdPkgs, removeOthers = FALSE)})
+    clusterEvalQ(cl=useParallel, {SpaDES.core:::.modifySearchPath(reqdPkgs, removeOthers = FALSE)})
     seedsArrived <- parallel::parLapplyLB(useParallel, subSampList,
                                         function(y) seedDispInnerFn(activeCell = y[[1]],
                                                                     potentials = y[[2]], 
