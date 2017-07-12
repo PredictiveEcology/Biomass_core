@@ -58,10 +58,6 @@ defineModule(sim, list(
     expectsInput(objectName = "useCache", objectClass = "logic", 
                  desc = "define which the caching for spinup simulation should be used, default is TRUE",
                  sourceURL = "NA"),
-    expectsInput(objectName = "calibrate", objectClass = "logic", 
-                 desc = "should the detailed simulation information be outputed in 
-                 spinupOutput and simulationTreeOutput, default is FALSE", 
-                 sourceURL = "NA"),
     # For inputs from optional fire module
     expectsInput(objectName = "fireInitialTime", objectClass = "numeric", 
                  desc = "The event time that the first fire disturbance event occurs", 
@@ -95,8 +91,27 @@ defineModule(sim, list(
     createsOutput(objectName = "RegenerationMap", objectClass = "RasterLayer", 
                   desc = "Regeneration map at each succession time step"),
     createsOutput(objectName = "cutpoint", objectClass = "numeric", 
-                  desc = "A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks")
-    )
+                  desc = "A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks"),
+    createsOutput(objectName = "speciesEcoregion", objectClass = "data.table", 
+                 desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
+    createsOutput(objectName = "species", objectClass = "data.table", 
+                 desc = "a table that has species traits such as longevity..."),
+    createsOutput(objectName = "simulationTreeOutput", objectClass = "data.table", 
+                 desc = "Summary of several characteristics about the stands, derived from cohortData"),
+    createsOutput(objectName = "minRelativeB", objectClass = "data.frame", 
+                 desc = "define the cut points to classify stand shadeness"),
+    createsOutput(objectName = "sufficientLight", objectClass = "data.frame", 
+                 desc = "define how the species with different shade tolerance respond to stand shadeness"),
+    createsOutput(objectName = "activePixelIndex", objectClass = "logical",
+                  desc = "internal use. Keeps track of which pixels are active"),
+    createsOutput(objectName = "inactivePixelIndex", objectClass = "logical",
+                  desc = "internal use. Keeps track of which pixels are inactive"),
+    createsOutput(objectName = "activeEcoregionLength", objectClass = "data.table",
+                  desc = "internal use. Keeps track of the length of the ecoregion"),
+    createsOutput(objectName = "lastReg", objectClass = "numeric", 
+                 desc = "an internal counter keeping track of when the last regeneration event occurred")
+    
+  )
 ))
 
 doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
