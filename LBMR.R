@@ -264,7 +264,7 @@ LBMRInit <- function(sim) {
   spinupstage <- sim$spinUpCache(cohortData = cohortData, calibrate = sim$calibrate,
                                  successionTimestep = sim$successionTimestep,
                                  spinupMortalityfraction = sim$spinupMortalityfraction,
-                                 species = sim$species)
+                                 species = sim$species, userTags = "stable")
   cohortData <- spinupstage$cohortData
   if(sim$calibrate){
     sim$spinupOutput <- spinupstage$spinupOutput
