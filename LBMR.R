@@ -15,7 +15,7 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("README.txt", "LBMR.Rmd"),
   reqdPkgs = list("raster", "sp", "data.table", "dplyr", "ggplot2", "purrr", "SpaDES.tools",
-                  "fpCompare", "grid", "archivist", "tidyr", "Rcpp", "scales"),
+                  "fpCompare", "grid"), #"archivist", "tidyr", "Rcpp", "scales"),
   parameters = rbind(
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_, "Initial time for the growth event to occur"),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA, "This describes the simulation time at which the first plot event should occur"),
@@ -115,11 +115,13 @@ defineModule(sim, list(
 ))
 
 doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
+  a <- setDTthreads(min(6, parallel::detectCores()))
+  on.exit(setDTthreads(a))
   if (eventType == "init") {
     ### check for more detailed object dependencies:
     ### (use `checkObject` or similar)
     # do stuff for this event
-    sim <- sim$LBMRInit(sim)
+    sim <- sim$Init(sim)
     if(sim$successionTimestep != 1){
       sim <- scheduleEvent(sim, start(sim) + sim$successionTimestep, "LBMR",
                            "cohortAgeReclassification", eventPriority = 5.25)
@@ -151,49 +153,49 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
     sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + sim$successionTimestep,
                          "LBMR", "save", eventPriority = 7.5)
   } else if (eventType == "mortalityAndGrowth") {
-    sim <- LBMRMortalityAndGrowth(sim)
+    sim <- MortalityAndGrowth(sim)
     sim <- scheduleEvent(sim, time(sim) + 1, "LBMR", "mortalityAndGrowth", 
                          eventPriority = 5)
   } else if (eventType == "summaryBGM"){
-    sim <- LBMRSummaryBGM(sim)
+    sim <- SummaryBGM(sim)
     sim <- scheduleEvent(sim, time(sim) + sim$successionTimestep,
                          "LBMR", "summaryBGM",
                          eventPriority = 6)
   } else if (eventType == "fireDisturbance" & !is.null(sim$rstCurrentBurn)) {
-    sim <- LBMRFireDisturbance(sim)
+    sim <- FireDisturbance(sim)
     sim <- scheduleEvent(sim, time(sim) + sim$fireTimestep,
                          "LBMR", "fireDisturbance", 
                          eventPriority = 3)
   } else if (eventType == "noDispersalSeeding" | eventType=="universalDispersalSeeding" | eventType=="wardDispersalSeeding") {
     if(sim$seedingAlgorithm=="noDispersal"){
-      sim <- LBMRNoDispersalSeeding(sim)
+      sim <- NoDispersalSeeding(sim)
       sim <- scheduleEvent(sim, time(sim) + sim$successionTimestep, 
                            "LBMR", "noDispersalSeeding", eventPriority = 4)
     }
     if(sim$seedingAlgorithm == "universalDispersal"){
-      sim <- LBMRUniversalDispersalSeeding(sim)
+      sim <- UniversalDispersalSeeding(sim)
       sim <- scheduleEvent(sim, time(sim) + sim$successionTimestep, 
                            "LBMR", "universalDispersalSeeding", eventPriority = 4)
     }
     if(sim$seedingAlgorithm == "wardDispersal"){
-      sim <- LBMRWardDispersalSeeding(sim)
+      sim <- WardDispersalSeeding(sim)
       sim <- scheduleEvent(sim, time(sim) + sim$successionTimestep,
                            "LBMR", "wardDispersalSeeding", eventPriority = 4)
     }
   } else if (eventType == "summaryRegen"){
-    sim <- LBMRSummaryRegen(sim)
+    sim <- SummaryRegen(sim)
     sim <- scheduleEvent(sim, time(sim) + sim$successionTimestep,
                          "LBMR", "summaryRegen", eventPriority = 5.5)
   } else if (eventType == "plot") {
-    sim <- LBMRPlot(sim)
+    sim <- Plot(sim)
     sim <- scheduleEvent(sim, time(sim) + sim$successionTimestep,
                          "LBMR", "plot", eventPriority = 7)
   } else if (eventType == "save") {
-    sim <- LBMRSave(sim)
+    sim <- Save(sim)
     sim <- scheduleEvent(sim, time(sim) + sim$successionTimestep,
                          "LBMR", "save", eventPriority = 7.5)
   } else if (eventType == "cohortAgeReclassification" & sim$successionTimestep != 1) {
-    sim <- LBMRCohortAgeReclassification(sim)
+    sim <- CohortAgeReclassification(sim)
     sim <- scheduleEvent(sim, time(sim) + sim$successionTimestep,
                          "LBMR", "cohortAgeReclassification",
                          eventPriority = 5.25)
@@ -204,7 +206,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
   return(invisible(sim))
 }
 
-LBMRInit <- function(sim) {
+Init <- function(sim) {
   sim$cutpoint <- 1e10
   communities <- sim$initialCommunities %>%
     gather(key=cohort, value=age, -mapcode,-description,-species,na.rm=TRUE) %>%
@@ -428,7 +430,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
   return(all)
 }
 ### template for your event1
-LBMRMortalityAndGrowth = function(sim) {
+MortalityAndGrowth = function(sim) {
   sim$cohortData <- sim$cohortData[,.(pixelGroup, ecoregionGroup,
                                       speciesCode, age, B, mortality,
                                       aNPPAct)]
@@ -517,7 +519,7 @@ LBMRMortalityAndGrowth = function(sim) {
   return(invisible(sim))
 }
 
-LBMRSummaryBGM = function(sim) {
+SummaryBGM = function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup), 
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
   cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = sim$cutpoint), max(pixelGroups$temID))))
@@ -588,7 +590,7 @@ LBMRSummaryBGM = function(sim) {
   return(invisible(sim))
 }
 
-LBMRFireDisturbance = function(sim) {
+FireDisturbance = function(sim) {
   # the presence of valid fire can cause three processes:
   # 1. remove species cohorts from the pixels that have been affected.
   # 2. initiate the post-fire regeneration
@@ -753,7 +755,7 @@ LBMRFireDisturbance = function(sim) {
   return(invisible(sim))
 }
 
-LBMRNoDispersalSeeding = function(sim) {
+NoDispersalSeeding = function(sim) {
   pixelGroupMap <- sim$pixelGroupMap
   if(sim$lastFireYear == round(time(sim))){ # if current year is both fire year and succession year
     # find new active pixel that remove successful postfire regeneration
@@ -813,7 +815,7 @@ LBMRNoDispersalSeeding = function(sim) {
   return(invisible(sim))
 }
 
-LBMRUniversalDispersalSeeding = function(sim) {
+UniversalDispersalSeeding = function(sim) {
   pixelGroupMap <- sim$pixelGroupMap
   fire_nonRegPixels <- which(getValues(pixelGroupMap) == 0)
   if(length(fire_nonRegPixels) > 0){
@@ -881,7 +883,7 @@ LBMRUniversalDispersalSeeding = function(sim) {
   return(invisible(sim))
 }
 
-LBMRWardDispersalSeeding = function(sim) {
+WardDispersalSeeding = function(sim) {
   #   cohortData <- sim$cohortData
   pixelGroupMap <- sim$pixelGroupMap
   fire_nonRegPixels <- which(getValues(pixelGroupMap) == 0)
@@ -996,7 +998,7 @@ LBMRWardDispersalSeeding = function(sim) {
 }
 
 
-LBMRSummaryRegen = function(sim){
+SummaryRegen = function(sim){
   #cohortData <- sim$cohortData
   if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     pixelGroupMap <- sim$pixelGroupMap
@@ -1019,7 +1021,7 @@ LBMRSummaryRegen = function(sim){
   return(invisible(sim))
 }
 
-LBMRPlot = function(sim) {
+Plot = function(sim) {
   if(time(sim) == sim$successionTimestep){
     #dev(4)
     clearPlot()
@@ -1032,7 +1034,7 @@ LBMRPlot = function(sim) {
   return(invisible(sim))
 }
 
-LBMRSave = function(sim) {
+Save = function(sim) {
   raster::projection(sim$biomassMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$ANPPMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
@@ -1052,7 +1054,7 @@ LBMRSave = function(sim) {
   return(invisible(sim))
 }
 
-LBMRCohortAgeReclassification = function(sim) {
+CohortAgeReclassification = function(sim) {
   if(time(sim) != 0){
     #cohortData <- sim$cohortData
     sim$cohortData <- ageReclassification(cohortData = sim$cohortData, successionTimestep = successionTimestep,
