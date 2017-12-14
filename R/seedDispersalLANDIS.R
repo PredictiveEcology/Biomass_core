@@ -148,6 +148,9 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                        maxPotentialsLength=1e3, 
                        verbose=FALSE,
                        useParallel, ...) {
+  a <- data.table::setDTthreads(6)
+  on.exit(data.table::setDTthreads(a))
+  
   cellSize=unique(res(pixelGroupMap))
   seedsReceived <- raster(pixelGroupMap) 
   seedsReceived[] <- 0L
