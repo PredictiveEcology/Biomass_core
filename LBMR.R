@@ -15,7 +15,7 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("README.txt", "LBMR.Rmd"),
   reqdPkgs = list("raster", "sp", "data.table", "dplyr", "ggplot2", "purrr", "SpaDES.tools",
-                  "fpCompare", "grid"), #"archivist", "tidyr", "Rcpp", "scales"),
+                  "fpCompare", "grid", "archivist", "tidyr", "Rcpp", "scales"),
   parameters = rbind(
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_, "Initial time for the growth event to occur"),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA, "This describes the simulation time at which the first plot event should occur"),
@@ -121,7 +121,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
     ### check for more detailed object dependencies:
     ### (use `checkObject` or similar)
     # do stuff for this event
-    sim <- sim$Init(sim)
+    sim <- Init(sim)
     if(sim$successionTimestep != 1){
       sim <- scheduleEvent(sim, start(sim) + sim$successionTimestep, "LBMR",
                            "cohortAgeReclassification", eventPriority = 5.25)
