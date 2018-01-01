@@ -114,8 +114,7 @@ defineModule(sim, list(
     createsOutput(objectName = "activeEcoregionLength", objectClass = "data.table",
                   desc = "internal use. Keeps track of the length of the ecoregion"),
     createsOutput(objectName = "lastReg", objectClass = "numeric", 
-                 desc = "an internal counter keeping track of when the last regeneration event occurred")
-    
+                  desc = "an internal counter keeping track of when the last regeneration event occurred")
   )
 ))
 
