@@ -8,17 +8,18 @@ output:
 ---
 
 # Overview
+A fast and large landscape biomass succession model modified from LANDIS-II.
 
-Provide an overview of what the module does / how to use the module.
+# Download the module
+```{r download module, eval = FALSE, echo = TRUE}
+library(SpaDES)
 
-Module documentation should be written so that others can use your module.
-This is a template for module documentation, and should be changed to reflect your module.
+moduleName <- "LBMR"
 
-## RMarkdown
+spadesModulesDirectory <- tempdir() # Location where the module will be downloaded
 
-RMarkdown syntax allows R code, outputs, and figures to be rendered in the documentation.
-
-For help writing in RMarkdown, see http://rmarkdown.rstudio.com/.
+downloadModule(moduleName, path = spadesModulesDirectory)
+```
 
 # Usage
 
@@ -40,6 +41,11 @@ Name|Default|Description
 `initialRunTime`|`start(simList)`|when to start this module? By default, the start time of the simulation.
 `intervalRunModule`|`NA`|optional. Interval between two runs of this module, expressed in units of simulation time.
 |||
+
+
+## Usage example
+```{r module usage example, eval = FALSE}
+library(SpaDES.core)
 library(magrittr)
 
 inputDir <- file.path(dirname(tempdir()), "LBMR", "inputs") %>% checkPath(create = TRUE)
@@ -57,13 +63,12 @@ modules <- list("LBMR")
 objects <- list(successionTimestep = 2)
 paths <- list(
   cachePath = file.path(outputDir, "cache"),
-  modulePath = file.path("."),
+  modulePath = "~/Documents/GitHub/LandWeb/m/",
   inputPath = inputDir,
   outputPath = outputDir
 )
 
-mySim <- simInit(times = times, params = parameters, modules = modules,
-                 objects = objects, paths = paths)
+mySim <- simInit(times = times, params = parameters, modules = modules, objects = objects, paths = paths)
 
 mySimOut <- spades(mySim, debug = TRUE)
 ```
