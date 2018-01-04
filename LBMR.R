@@ -39,12 +39,10 @@ defineModule(sim, list(
     defineParameter(name = "useCache", class = "logic", default = TRUE,
                     desc = "define which the caching for spinup simulation should be used"),
     # For inputs from optional fire module
-    defineParameter(name = "fireInitialTime", class = "numeric",
-                 desc = "The event time that the first fire disturbance event occurs",
-                 sourceURL = "NA"),
-    defineParameter(name = "fireTimestep", class = "numeric",
-                 desc = "The number of time units between successive fire events in a fire module",
-                 sourceURL = "NA"),
+    defineParameter(name = "fireInitialTime", class = "numeric", default = start(sim),
+                 desc = "The event time that the first fire disturbance event occurs"),
+    defineParameter(name = "fireTimestep", class = "numeric", default = 1,
+                 desc = "The number of time units between successive fire events in a fire module"),
     defineParameter(name = "useParallel", class = "logical", default = TRUE,
                     desc = "an object to determine whether the parallel computation
                             will be used in the simulation")
@@ -71,11 +69,11 @@ defineModule(sim, list(
     expectsInput(objectName = "minRelativeB", objectClass = "data.frame", 
                  desc = "define the cut points to classify stand shadeness", 
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
-    expectsInput(objectName = "sufficientLight", objectClass = "data.frame", 
-                 desc = "define how the species with different shade tolerance respond to stand shadeness",
     expectsInput(objectName = "rstCurrentBurn", objectClass = "RasterLayer", 
                  desc = "a fire burn raster", 
                  sourceURL = "NA"),
+    expectsInput(objectName = "sufficientLight", objectClass = "data.frame", 
+                 desc = "define how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt")
   ),
   outputObjects = bind_rows(
