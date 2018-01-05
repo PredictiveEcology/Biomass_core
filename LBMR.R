@@ -69,9 +69,6 @@ defineModule(sim, list(
     expectsInput(objectName = "minRelativeB", objectClass = "data.frame", 
                  desc = "define the cut points to classify stand shadeness", 
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
-    expectsInput(objectName = "rstCurrentBurn", objectClass = "RasterLayer", 
-                 desc = "a fire burn raster", 
-                 sourceURL = "NA"),
     expectsInput(objectName = "sufficientLight", objectClass = "data.frame", 
                  desc = "define how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt")
@@ -607,8 +604,11 @@ FireDisturbance = function(sim) {
                                            species = character(), 
                                            numberOfRegen = numeric())
   }
-  if(extent(sim$rstCurrentBurn) != extent(sim$pixelGroupMap)){
-    sim$rstCurrentBurn <- raster::crop(sim$rstCurrentBurn, extent(sim$pixelGroupMap))
+
+  if(!is.null(sim$rstCurrentBurn)){ # anything related to fire disturbance
+    if(extent(sim$rstCurrentBurn) != extent(sim$pixelGroupMap)){
+      sim$rstCurrentBurn <- raster::crop(sim$rstCurrentBurn, extent(sim$pixelGroupMap))
+    }
   }
   sim$burnLoci <- which(sim$rstCurrentBurn[] == 1)
   if(length(sim$inactivePixelIndex) > 0){
