@@ -1524,9 +1524,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     t(.) %>%
     gsub(pattern="%",replacement="") %>%
     data.table
-  names(minRelativeB) <- c("ecoregion", "X1", "X2", "X3", "X4", "X5")
-  set(minRelativeB, , "ecoregion", NULL)
-  minRelativeB <- minRelativeB[, lapply(.SD, function(x) as.numeric(as.character(x)))]
+  
+  colNames <- c("ecoregion", "X1", "X2", "X3", "X4", "X5")
+  names(minRelativeB) <- colNames
+  minRelativeB[, (colNames[-1]) := lapply(.SD, function(x) as.numeric(as.character(x))), .SDcols = colNames[-1]]
   # minRelativeB <- minRelativeB %>%
   #   mutate_at(funs(as.numeric(as.character(.))/100), .vars=-ecoregion)
   sim$minRelativeB <- minRelativeB
