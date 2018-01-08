@@ -15,7 +15,8 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("README.txt", "LBMR.Rmd"),
   reqdPkgs = list("raster", "sp", "data.table", "dplyr", "ggplot2", "purrr", "SpaDES.tools",
-                  "fpCompare", "grid", "archivist", "tidyr", "Rcpp", "scales"),
+                  "fpCompare", "grid", "tidyr", "Rcpp", "scales", "PredictiveEcology/quickPlot@development",
+                  "reproducible"),
   parameters = rbind(
     defineParameter(name = "growthInitialTime", class = "numeric", default = 0, 
                     min = NA_real_, max = NA_real_,
