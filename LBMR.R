@@ -75,8 +75,7 @@ defineModule(sim, list(
                  desc = "define how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     expectsInput(objectName = "rstCurrentBurn", objectClass = "RasterLayer", 
-                 desc = "a fire burn raster", 
-                 sourceURL = "NA")
+                 desc = "a fire burn raster")
   ),
   outputObjects = bind_rows(
     createsOutput(objectName = "simulationOutput", objectClass = "data.table", 
