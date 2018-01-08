@@ -964,7 +964,7 @@ WardDispersalSeeding = function(sim) {
                                   reducedPixelGroupMap,
                                   maxPotentialsLength = 1e5,
                                   verbose = FALSE,
-                                  useParallel = sim$useParallel)
+                                  useParallel = P(sim)$useParallel)
     # verbose = globals(sim)$verbose)
     
     rm(seedReceive, seedSource)
