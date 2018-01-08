@@ -453,7 +453,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
       rbindlist()
     #seedsArrived <- rbindlist(allSeedsArrived)
   } else {
-    stop("Please specify the useParallel arguement correctly. Currently, it takes either logical or cluster object")
+    stop("Please specify the useParallel argument correctly. Currently, it takes either logical or cluster object")
   }
   # potentialsOrig <- copy(potentials)
   # potentials <- copy(potentialsOrig)
