@@ -8,7 +8,7 @@ defineModule(sim, list(
               person(c("Eliot", "J", "B"), "McIntire", email="Eliot.McIntire@canada.ca", role=c("aut", "cre")),
               person(c("Jean"), "Marchal", email="jean.d.marchal@gmail.com", role=c("aut", "cre"))),
   childModules = character(0),
-  version = numeric_version("1.2.0.9011"),
+  version = numeric_version("1.3.0.9000"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
