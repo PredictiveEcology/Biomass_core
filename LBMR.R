@@ -190,7 +190,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
     sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                          "LBMR", "summaryRegen", eventPriority = 5.5)
   } else if (eventType == "plot") {
-    sim <- Plot(sim)
+    sim <- doPlot(sim)
     sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                          "LBMR", "plot", eventPriority = 7)
   } else if (eventType == "save") {
@@ -1024,11 +1024,12 @@ SummaryRegen = function(sim){
   return(invisible(sim))
 }
 
-Plot = function(sim) {
+doPlot = function(sim) {
   if(time(sim) == P(sim)$successionTimestep){
     #dev(4)
     clearPlot()
   }
+
   quickPlot::Plot(sim$biomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap, 
                   title = c("Biomass", "ANPP", "mortality", "reproduction"), new = TRUE, speedup = 1)
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
