@@ -8,7 +8,7 @@ defineModule(sim, list(
               person(c("Eliot", "J", "B"), "McIntire", email="Eliot.McIntire@canada.ca", role=c("aut", "cre")),
               person(c("Jean"), "Marchal", email="jean.d.marchal@gmail.com", role=c("aut", "cre"))),
   childModules = character(0),
-  version = numeric_version("1.2.0.9011"),
+  version = numeric_version("1.3.0.9000"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
@@ -39,10 +39,12 @@ defineModule(sim, list(
     defineParameter(name = "useCache", class = "logic", default = TRUE,
                     desc = "define which the caching for spinup simulation should be used"),
     # For inputs from optional fire module
-    defineParameter(name = "fireInitialTime", class = "numeric", default = start(sim),
-                 desc = "The event time that the first fire disturbance event occurs"),
-    defineParameter(name = "fireTimestep", class = "numeric", default = 1,
-                 desc = "The number of time units between successive fire events in a fire module"),
+    # defineParameter(name = "fireInitialTime", class = "numeric",
+    #              desc = "The event time that the first fire disturbance event occurs",
+    #              sourceURL = "NA"),
+    # defineParameter(name = "fireTimestep", class = "numeric",
+    #              desc = "The number of time units between successive fire events in a fire module",
+    #              sourceURL = "NA"),
     defineParameter(name = "useParallel", class = "logical", default = TRUE,
                     desc = "an object to determine whether the parallel computation
                             will be used in the simulation")
@@ -963,7 +965,7 @@ WardDispersalSeeding = function(sim) {
                                   reducedPixelGroupMap,
                                   maxPotentialsLength = 1e5,
                                   verbose = FALSE,
-                                  useParallel = sim$useParallel)
+                                  useParallel = P(sim)$useParallel)
     # verbose = globals(sim)$verbose)
     
     rm(seedReceive, seedSource)
@@ -1028,8 +1030,8 @@ Plot = function(sim) {
     #dev(4)
     clearPlot()
   }
-  Plot(sim$biomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap, 
-       title = c("Biomass", "ANPP", "mortality", "reproduction"), new = TRUE, speedup = 1)
+  quickPlot::Plot(sim$biomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap, 
+                  title = c("Biomass", "ANPP", "mortality", "reproduction"), new = TRUE, speedup = 1)
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ",round(time(sim))), x = 0.93, y = 0.97)
   #rm(biomassMap, ANPPMap, mortalityMap, reproductionMap)
@@ -1523,9 +1525,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     t(.) %>%
     gsub(pattern="%",replacement="") %>%
     data.table
-  names(minRelativeB) <- c("ecoregion", "X1", "X2", "X3", "X4", "X5")
-  set(minRelativeB, , "ecoregion", NULL)
-  minRelativeB <- minRelativeB[, lapply(.SD, function(x) as.numeric(as.character(x)))]
+  
+  colNames <- c("ecoregion", "X1", "X2", "X3", "X4", "X5")
+  names(minRelativeB) <- colNames
+  minRelativeB[, (colNames[-1]) := lapply(.SD, function(x) as.numeric(as.character(x))), .SDcols = colNames[-1]]
   # minRelativeB <- minRelativeB %>%
   #   mutate_at(funs(as.numeric(as.character(.))/100), .vars=-ecoregion)
   sim$minRelativeB <- minRelativeB
