@@ -27,19 +27,15 @@ downloadModule(moduleName, path = spadesModulesDirectory)
 ## Module parameters
 Name|Default|Description
 ----|:--------------|---------------------------------------------------------------------
-`formula`|`NA`|a formula describing the model to be fitted. Piece-wised terms can be specifed using `pw(variableName, knotName)`.
-`family`|`negative.binomial`|a family function (must be wrapped with `quote()`) or a character string naming a family function. For additional details see `?family`.
-`data`|`"dataFireSense_FrequencyFit"`|a character vector indicating the names of objects in the `simList` environment in which to look for variables present in the model formula. `data` objects should be data.frames. If variables are not found in `data` objects, they are searched in the `simList` environment.
-`start`|`NULL`|optional starting values for the parameters to be estimated. Those are passed to `nlminb` and can be a single vector, or a list of vectors. In the latter case, only the best solution, that is, the one which minimizes the most the objective function, is kept.
-`lb`|`NULL`|optional named list with up to three elements, 'coef', 'theta' and 'knots', specifying lower bounds for coefficients to be estimated. These must be finite and will be recycled if necessary to match `length(coefficients)`.
-`ub`|`NULL`|optional named list with up to three elements, 'coef', 'theta' and 'knots', specifying upper bounds for coefficients to be estimated. These must be finite and will be recycled if necessary to match `length(coefficients)`.
-`itermax`|`500`|integer defining the maximum number of iterations allowed (DEoptim optimizer).
-`nTrials`|`500`|if start is not supplied, `nTrials` defines the number of trials, or searches, to be performed by the nlminb optimizer in order to find the best solution.
-`nCores`|`1`|non-negative integer. Defines the number of logical cores to be used for parallel computation. The default value is 1, which disables parallel computing.
-`trace`|`0`|non-negative integer. If > 0, tracing information on the progress of the optimization are printed every `trace` iteration. If parallel computing is enable, nlminb trace logs are written to disk. Log files are prefixed with 'fireSense_FrequencyFit_trace' followed by the subprocess pid. Default is 0, which turns off tracing.
-`nlminb.control`|`list(iter.max = 5e3L,`<br>&emsp;&emsp;&emsp;`eval.max=5e3L`)|optional list of control parameters to be passed to the `nlminb` optimizer. See `?nlminb`.
-`initialRunTime`|`start(simList)`|when to start this module? By default, the start time of the simulation.
-`intervalRunModule`|`NA`|optional. Interval between two runs of this module, expressed in units of simulation time.
+`growthInitialTime`|`0`|initial time for the growth event to occur.
+`.plotInitialTime`|`0`|describes the simulation time at which the first plot event should occur.
+`.saveInitialTime`|`0`|describes the simulation time at which the first save event should occur.
+`spinupMortalityfraction`|`0.001`|defines the mortality loss fraction in spin up-stage simulation.
+`successionTimestep`|`10`|defines the simulation time step.
+`cellSize`|`NA`|defines the cell size.
+`seedingAlgorithm`|`"wardDispersal"`|chooses which seeding algorithm will be used among noDispersal, universalDispersal, and wardDispersal, default is wardDispersal.
+`useCache`|`TRUE`|use caching for the spinup simulation?
+`useParallel`|`TRUE`|determines whether the parallel computation will be used in the simulation.
 |||
 
 
@@ -74,8 +70,17 @@ mySimOut <- spades(mySim, debug = TRUE)
 ```
 
 # Events
+Events are scheduled as follows:
 
-Describe what happens for each event type.
+- Module initiation and spin-up
+- Account for fire disturbance if present
+- Seed dispersal
+- Mortality and growth
+- Reclassification of age cohorts
+- SummaryRegen
+- SummaryBGM
+- Plot
+- Save
 
 ## Plotting
 

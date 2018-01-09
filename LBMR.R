@@ -28,17 +28,19 @@ defineModule(sim, list(
     defineParameter(name = ".saveInitialTime", class = "numeric", default = 0,
                     min = NA, max = NA, 
                     desc = "This describes the simulation time at which the
-                            first plot event should occur"),
+                            first save event should occur"),
     defineParameter(name = "spinupMortalityfraction", class = "numeric", default = 0.001, 
-                    desc = "define the mortality loss fraction in spin up-stage simulation"),
+                    desc = "defines the mortality loss fraction in spin up-stage simulation"),
     defineParameter(name = "successionTimestep", class = "numeric", default = 10, 
-                    desc = "define the simulation time step, default is 10 years"),
-    defineParameter(name = "cellSize", class = "numeric", default = NA, desc = "define the cell size"),
+                    desc = "defines the simulation time step, default is 10 years"),
+    defineParameter(name = "cellSize", class = "numeric", default = NA,
+                    desc = "defines the cell size"),
     defineParameter(name = "seedingAlgorithm", class = "character", default = "wardDispersal",
-                    desc = "choose which seeding algorithm will be used among noDispersal, 
-                            universalDispersal, and wardDispersal, default is wardDispersal"),
+                    desc = "choose which seeding algorithm will be used among
+                            noDispersal, universalDispersal, and wardDispersal,
+                            default is wardDispersal"),
     defineParameter(name = "useCache", class = "logic", default = TRUE,
-                    desc = "define which the caching for spinup simulation should be used"),
+                    desc = "use caching for the spinup simulation?"),
     # For inputs from optional fire module
     # defineParameter(name = "fireInitialTime", class = "numeric",
     #              desc = "The event time that the first fire disturbance event occurs",
@@ -47,7 +49,7 @@ defineModule(sim, list(
     #              desc = "The number of time units between successive fire events in a fire module",
     #              sourceURL = "NA"),
     defineParameter(name = "useParallel", class = "logical", default = TRUE,
-                    desc = "an object to determine whether the parallel computation
+                    desc = "determines whether the parallel computation
                             will be used in the simulation")
   ),
   inputObjects = bind_rows(
