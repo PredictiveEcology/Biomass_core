@@ -113,6 +113,8 @@ defineModule(sim, list(
                   desc = "internal use. Keeps track of which pixels are inactive"),
     createsOutput(objectName = "activeEcoregionLength", objectClass = "data.table",
                   desc = "internal use. Keeps track of the length of the ecoregion"),
+    createsOutput(objectName = "lastFireYear", objectClass = "numeric",
+                  desc = "Year of the most recent fire year"),
     createsOutput(objectName = "lastReg", objectClass = "numeric", 
                   desc = "an internal counter keeping track of when the last regeneration event occurred")
   )
