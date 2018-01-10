@@ -41,12 +41,6 @@ defineModule(sim, list(
                             default is wardDispersal"),
     defineParameter(name = "useCache", class = "logic", default = TRUE,
                     desc = "use caching for the spinup simulation?"),
-    # For inputs from optional fire module
-    defineParameter(name = "fireInitialTime", class = "numeric",
-                    desc = "The event time that the first fire disturbance event occurs"),
-    defineParameter(name = "fireTimestep", class = "numeric",
-                 desc = "The number of time units between successive fire events in a fire module"),
-    #              sourceURL = "NA"),
     defineParameter(name = "useParallel", class = "logical", default = TRUE,
                     desc = "determines whether the parallel computation
                             will be used in the simulation")
@@ -75,7 +69,15 @@ defineModule(sim, list(
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     expectsInput(objectName = "sufficientLight", objectClass = "data.frame", 
                  desc = "define how the species with different shade tolerance respond to stand shadeness",
-                 sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt")
+                 sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
+    # For inputs from optional fire module 
+    expectsInput(objectName = "fireInitialTime", objectClass = "numeric",  
+                 desc = "The event time that the first fire disturbance event occurs",  
+                 sourceURL = "NA"), 
+    expectsInput(objectName = "fireTimestep", objectClass = "numeric",  
+                 desc = "The number of time units between successive fire events in a fire module",  
+                 sourceURL = "NA")
+    
   ),
   outputObjects = bind_rows(
     createsOutput(objectName = "simulationOutput", objectClass = "data.table", 
@@ -136,7 +138,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
     sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                          "LBMR", "summaryBGM", eventPriority = 6)
     if(!is.null(sim$rstCurrentBurn)){ # anything related to fire disturbance
-      sim <- scheduleEvent(sim, start(sim) + P(sim)$fireInitialTime,
+      sim <- scheduleEvent(sim, start(sim) + sim$fireInitialTime,
                            "LBMR", "fireDisturbance", eventPriority = 3)
     }
     if(P(sim)$seedingAlgorithm == "noDispersal"){
@@ -168,7 +170,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
                          eventPriority = 6)
   } else if (eventType == "fireDisturbance" & !is.null(sim$rstCurrentBurn)) {
     sim <- FireDisturbance(sim)
-    sim <- scheduleEvent(sim, time(sim) + P(sim)$fireTimestep,
+    sim <- scheduleEvent(sim, time(sim) + sim$fireTimestep,
                          "LBMR", "fireDisturbance", 
                          eventPriority = 3)
   } else if (eventType == "noDispersalSeeding" | eventType=="universalDispersalSeeding" | eventType=="wardDispersalSeeding") {
