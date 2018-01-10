@@ -42,11 +42,10 @@ defineModule(sim, list(
     defineParameter(name = "useCache", class = "logic", default = TRUE,
                     desc = "use caching for the spinup simulation?"),
     # For inputs from optional fire module
-    # defineParameter(name = "fireInitialTime", class = "numeric",
-    #              desc = "The event time that the first fire disturbance event occurs",
-    #              sourceURL = "NA"),
-    # defineParameter(name = "fireTimestep", class = "numeric",
-    #              desc = "The number of time units between successive fire events in a fire module",
+    defineParameter(name = "fireInitialTime", class = "numeric",
+                    desc = "The event time that the first fire disturbance event occurs"),
+    defineParameter(name = "fireTimestep", class = "numeric",
+                 desc = "The number of time units between successive fire events in a fire module"),
     #              sourceURL = "NA"),
     defineParameter(name = "useParallel", class = "logical", default = TRUE,
                     desc = "determines whether the parallel computation
