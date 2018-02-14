@@ -1384,7 +1384,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                                    sep = "",
                                    blank.lines.skip = TRUE,
                                    col.names = c("species", paste("age",1:(maxcol-1), sep = "")),
-                                   stringsAsFactor = FALSE)
+                                   stringsAsFactors = FALSE)
   # correct the typo in the original txt
   initialCommunities[14,1:4] <- initialCommunities[14,2:5]
   
@@ -1426,7 +1426,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                         header = FALSE,
                         blank.lines.skip = TRUE,
                         col.names = c(paste("col",1:maxcol, sep = "")),
-                        stringsAsFactor = FALSE)
+                        stringsAsFactors = FALSE)
   
   species <- data.table(species[,1:11])
   species <- species[col1!= "LandisData",]
@@ -1455,7 +1455,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                           header = FALSE,
                           blank.lines.skip = TRUE,
                           col.names = c(paste("col",1:maxcol, sep = "")),
-                          stringsAsFactor = FALSE)
+                          stringsAsFactors = FALSE)
   ecoregion <- data.table(ecoregion)
   ecoregion <- ecoregion[col1 != "LandisData",]
   ecoregion <- ecoregion[col1 != ">>",]
@@ -1476,7 +1476,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                                  header = FALSE,
                                  blank.lines.skip = TRUE,
                                  col.names = c(paste("col",1:maxcol, sep = "")),
-                                 stringsAsFactor = FALSE)
+                                 stringsAsFactors = FALSE)
   speciesEcoregion <- data.table(speciesEcoregion)
   speciesEcoregion <- speciesEcoregion[col1 != "LandisData",]
   speciesEcoregion <- speciesEcoregion[col1 != ">>",]
@@ -1501,7 +1501,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                           header = FALSE,
                           blank.lines.skip = TRUE,
                           col.names = c(paste("col",1:maxcol, sep = "")),
-                          stringsAsFactor = FALSE)
+                          stringsAsFactors = FALSE)
   mainInput <- data.table(mainInput)
   mainInput <- mainInput[col1 != ">>",]
   
