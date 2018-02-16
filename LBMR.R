@@ -194,7 +194,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
     sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                          "LBMR", "summaryRegen", eventPriority = 5.5)
   } else if (eventType == "plot") {
-    sim <- Plot(sim)
+    sim <- plotFn(sim)
     sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                          "LBMR", "plot", eventPriority = 7)
   } else if (eventType == "save") {
@@ -289,9 +289,9 @@ Init <- function(sim) {
   pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE))), by=pixelGroup]
   if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
-    ANPPMap <- setValues(biomassMap, 0L)
-    mortalityMap <- setValues(biomassMap, 0L)
-    reproductionMap <- setValues(pixelGroupMap, 0L)
+    #ANPPMap <- setValues(biomassMap, 0L)
+    #mortalityMap <- setValues(biomassMap, 0L)
+    #reproductionMap <- setValues(pixelGroupMap, 0L)
   }
   
   #}
@@ -1031,12 +1031,12 @@ SummaryRegen = function(sim){
   return(invisible(sim))
 }
 
-Plot = function(sim) {
+plotFn <- function(sim) {
   if(time(sim) == P(sim)$successionTimestep){
     #dev(4)
     clearPlot()
   }
-  quickPlot::Plot(sim$biomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap, 
+  Plot(sim$biomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap, 
                   title = c("Biomass", "ANPP", "mortality", "reproduction"), new = TRUE, speedup = 1)
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ",round(time(sim))), x = 0.93, y = 0.97)
