@@ -1378,13 +1378,16 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   }
   # convert inititial communities txt to data table
   # input initial communities
-  maxcol <- max(count.fields(file.path(dataPath, "initial-communities.txt"), sep = ""))
-  initialCommunities <- read.table(file.path(dataPath, "initial-communities.txt"),
-                                   fill = TRUE,
-                                   sep = "",
-                                   blank.lines.skip = TRUE,
-                                   col.names = c("species", paste("age",1:(maxcol-1), sep = "")),
-                                   stringsAsFactors = FALSE)
+  maxcol <- 7 #max(count.fields(file.path(dataPath, "initial-communities.txt"), sep = ""))
+  initialCommunities <- Cache(prepInputs, targetFile = "initial-communities.txt", 
+                              destinationPath = dataPath(sim), 
+                              fun = "read.table", 
+                              pkg = "utils", quickCheck = TRUE, 
+                              fill = TRUE, row.names = NULL,
+                              sep = "",
+                              blank.lines.skip = TRUE,
+                              col.names = c("species", paste("age",1:(maxcol-1), sep = "")),
+                              stringsAsFactors = FALSE)
   # correct the typo in the original txt
   initialCommunities[14,1:4] <- initialCommunities[14,2:5]
   
@@ -1406,47 +1409,55 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   initialCommunities <- initialCommunities[!c(cutRows, cutRows+1),][,':='(desc = NULL, rowN = NULL)]
   initialCommunities[, ':='(description = gsub(">>", "", description), 
                             mapcode = as.integer(as.character(mapcode)))]
-  for(i in 4:ncol(initialCommunities)){
-    initialCommunities[,i] <- as.integer(unlist(initialCommunities[,i, with = FALSE]))
-  }
+  
+  sim$initialCommunities <- data.table(initialCommunities[,1:3, with=FALSE],
+                                       initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
+  
+  # for(i in 4:ncol(initialCommunities)){
+  #   initialCommunities[,i] <- as.integer(unlist(initialCommunities[,i, with = FALSE]))
+  # }
   sim$initialCommunities <- data.table(initialCommunities)
   rm(cutRows, i, maxcol)
   # load the initial community map
-  sim$initialCommunitiesMap <- raster(file.path(dataPath, "initial-communities.gis"))
+  sim$initialCommunitiesMap <- Cache(prepInputs, "initial-communities.gis", destinationPath = dataPath(sim))
+  #sim$initialCommunitiesMap <- raster(file.path(dataPath, "initial-communities.gis"))
   #sim$initialCommunitiesMap <- setValues(sim$initialCommunitiesMap, as.integer(sim$initialCommunitiesMap[]))
   # sim$initialCommunitiesMap <- writeRaster(sim$initialCommunitiesMap, overwrite = TRUE,
   #                                          filename = file.path(outputPath(sim), "initialCommunitiesMapDefault.tif"),
   #                                          datatype="INT2U")
   
+  ######################################################
+  ######################################################
   # read species txt and convert it to data table
-  maxcol <- max(count.fields(file.path(dataPath, "species.txt"), sep = ""))
-  species <- read.table(file.path(dataPath, "species.txt"),
-                        fill = TRUE,
-                        sep = "",
-                        header = FALSE,
-                        blank.lines.skip = TRUE,
-                        col.names = c(paste("col",1:maxcol, sep = "")),
-                        stringsAsFactors = FALSE)
-  
+  maxcol <- 13#max(count.fields(file.path(dataPath, "species.txt"), sep = ""))
+  species <- Cache(prepInputs, targetFile = "species.txt", 
+                   destinationPath = dataPath(sim), 
+                   fun = "read.table", 
+                   pkg = "utils", quickCheck = TRUE, 
+                   fill = TRUE, row.names = NULL,
+                   sep = "",
+                   header = FALSE,
+                   blank.lines.skip = TRUE,
+                   col.names = c(paste("col",1:maxcol, sep = "")),
+                   stringsAsFactors = FALSE)
   species <- data.table(species[,1:11])
   species <- species[col1!= "LandisData",]
   species <- species[col1!= ">>",]
-  names(species) <- c("species", "longevity", "sexualmature", "shadetolerance", 
-                      "firetolerance", "seeddistance_eff", "seeddistance_max", 
-                      "resproutprob", "resproutage_min", "resproutage_max",
-                      "postfireregen")
+  colNames <- c("species", "longevity", "sexualmature", "shadetolerance", 
+                "firetolerance", "seeddistance_eff", "seeddistance_max", 
+                "resproutprob", "resproutage_min", "resproutage_max",
+                "postfireregen")
+  names(species) <- colNames
   species[,':='(seeddistance_eff = gsub(",", "", seeddistance_eff),
                 seeddistance_max = gsub(",", "", seeddistance_max))]
-  species$longevity <- as.integer(species$longevity)
-  species$sexualmature <- as.integer(species$sexualmature)
-  species$shadetolerance <- as.integer(species$shadetolerance)
-  species$firetolerance <- as.integer(species$firetolerance)
-  species$seeddistance_eff <- as.integer(species$seeddistance_eff)
-  species$seeddistance_max <- as.integer(species$seeddistance_max)
-  species$resproutprob <- as.numeric(species$resproutprob)
-  species$resproutage_min <- as.integer(species$resproutage_min)
-  species$resproutage_max <- as.integer(species$resproutage_max)
+  # change all columns to integer
+  species <- species[, lapply(.SD, as.integer), .SDcols = names(species)[-c(1,NCOL(species))], by = "species,postfireregen"]
+  setcolorder(species, colNames)
   rm(maxcol)
+  
+  ######################################################
+  ######################################################
+  # Eliot -- have not yet converted below here to use prepInputs
   # read ecoregion and ecoregioin map
   maxcol <- max(count.fields(file.path(dataPath, "ecoregions.txt"), sep = ""))
   ecoregion <- read.table(file.path(dataPath, "ecoregions.txt"),
