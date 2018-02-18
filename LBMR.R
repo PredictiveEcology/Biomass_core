@@ -76,7 +76,23 @@ defineModule(sim, list(
                  sourceURL = "NA"), 
     expectsInput(objectName = "fireTimestep", objectClass = "numeric",  
                  desc = "The number of time units between successive fire events in a fire module",  
-                 sourceURL = "NA")
+                 sourceURL = "NA"),
+    expectsInput("spinupMortalityfraction", "numeric", ""),
+    expectsInput("successionTimestep", "numeric", ""), 
+    expectsInput("seedingAlgorithm", "character", ""), 
+    expectsInput("useCache", "logical", ""), 
+    expectsInput("cellSize", "numeric", ""), 
+    expectsInput("calibrate", "logical", ""), 
+    expectsInput("useParallel", "logical", ""),
+    expectsInput("rstCurrentBurn", "RasterLayer", ""), 
+    expectsInput("burnLoci", "numeric", ""), 
+    expectsInput("postFireRegenSummary", "data.table", ""), 
+    expectsInput("postFirePixel", "numeric", ""),
+    expectsInput("spinUpCache", "logical", ""),
+    expectsInput("firePixelTable", "data.table", ""),
+    expectsInput("regenerationOutput", "data.table", ""),
+    expectsInput("mortalityMap", "RasterLayer", ""),
+    expectsInput("reproductionMap", "RasterLayer", "")
     
   ),
   outputObjects = bind_rows(
@@ -117,7 +133,21 @@ defineModule(sim, list(
     createsOutput(objectName = "lastFireYear", objectClass = "numeric",
                   desc = "Year of the most recent fire year"),
     createsOutput(objectName = "lastReg", objectClass = "numeric", 
-                  desc = "an internal counter keeping track of when the last regeneration event occurred")
+                  desc = "an internal counter keeping track of when the last regeneration event occurred"),
+    createsOutput(objectName = "initialCommunitiesMap", objectClass = "RasterLayer", 
+                 desc = "initial community map that has mapcodes match initial community table"),
+    createsOutput("calibrate", "logical", ""), 
+    createsOutput("useParallel", "logical", ""),
+    createsOutput("rstCurrentBurn", "RasterLayer", ""), 
+    createsOutput("burnLoci", "numeric", ""), 
+    createsOutput("postFireRegenSummary", "data.table", ""), 
+    createsOutput("postFirePixel", "numeric", ""),
+    createsOutput("spinUpCache", "logical", ""),
+    createsOutput("firePixelTable", "data.table", ""),
+    createsOutput("regenerationOutput", "data.table", ""),
+    createsOutput("mortalityMap", "RasterLayer", ""),
+    createsOutput("reproductionMap", "RasterLayer", ""),
+    createsOutput("spinupOutput", "data.table", "")
   )
 ))
 
