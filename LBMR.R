@@ -1409,15 +1409,16 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   # convert inititial communities txt to data table
   # input initial communities
   maxcol <- 7 #max(count.fields(file.path(dataPath, "initial-communities.txt"), sep = ""))
-  initialCommunities <- Cache(prepInputs, targetFile = "initial-communities.txt", 
-                              destinationPath = dataPath(sim), 
-                              fun = "read.table", 
-                              pkg = "utils", quickCheck = TRUE, 
+  initialCommunities <- Cache(prepInputs, targetFile = "initial-communities.txt",
+                              destinationPath = dataPath(sim),
+                              fun = "read.table",
+                              pkg = "utils", quickCheck = TRUE,
                               fill = TRUE, row.names = NULL,
                               sep = "",
                               blank.lines.skip = TRUE,
-                              col.names = c("species", paste("age",1:(maxcol-1), sep = "")),
-                              stringsAsFactors = FALSE)
+                              col.names = c("species", paste("age", 1:(maxcol - 1), sep = "")),
+                              stringsAsFactors = FALSE,
+                              cacheRepo = cachePath(sim))
   # correct the typo in the original txt
   initialCommunities[14,1:4] <- initialCommunities[14,2:5]
   
