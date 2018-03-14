@@ -33,17 +33,12 @@ defineModule(sim, list(
                     desc = "defines the mortality loss fraction in spin up-stage simulation"),
     defineParameter(name = "successionTimestep", class = "numeric", default = 10, 
                     desc = "defines the simulation time step, default is 10 years"),
-    defineParameter(name = "cellSize", class = "numeric", default = NA,
-                    desc = "defines the cell size"),
     defineParameter(name = "seedingAlgorithm", class = "character", default = "wardDispersal",
                     desc = "choose which seeding algorithm will be used among
                             noDispersal, universalDispersal, and wardDispersal,
                             default is wardDispersal"),
     defineParameter(name = "useCache", class = "logic", default = TRUE,
-                    desc = "use caching for the spinup simulation?"),
-    defineParameter(name = "useParallel", class = "logical", default = FALSE,
-                    desc = "determines whether the parallel computation
-                            will be used in the simulation")
+                    desc = "use caching for the spinup simulation?")
   ),
   inputObjects = bind_rows(
     expectsInput(objectName = "initialCommunities", objectClass = "data.table",
@@ -81,7 +76,6 @@ defineModule(sim, list(
     expectsInput("successionTimestep", "numeric", ""), 
     expectsInput("seedingAlgorithm", "character", ""), 
     expectsInput("useCache", "logical", ""), 
-    expectsInput("cellSize", "numeric", ""), 
     expectsInput("calibrate", "logical", ""), 
     expectsInput("useParallel", "logical", ""),
     expectsInput("rstCurrentBurn", "RasterLayer", ""), 
@@ -137,7 +131,6 @@ defineModule(sim, list(
     createsOutput(objectName = "initialCommunitiesMap", objectClass = "RasterLayer", 
                  desc = "initial community map that has mapcodes match initial community table"),
     createsOutput("calibrate", "logical", ""), 
-    createsOutput("useParallel", "logical", ""),
     createsOutput("rstCurrentBurn", "RasterLayer", ""), 
     createsOutput("burnLoci", "numeric", ""), 
     createsOutput("postFireRegenSummary", "data.table", ""), 
@@ -1001,7 +994,7 @@ WardDispersalSeeding = function(sim) {
                                   reducedPixelGroupMap,
                                   maxPotentialsLength = 1e5,
                                   verbose = FALSE,
-                                  useParallel = P(sim)$useParallel)
+                                  useParallel = sim$useParallel)
     # verbose = globals(sim)$verbose)
     
     rm(seedReceive, seedSource)
@@ -1382,225 +1375,228 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
 
 .inputObjects = function(sim) {
-  # Any code written here will be run during the simInit for the purpose of creating
-  # and objects required by this module and identified in the inputObjects element of defineModule,
-  # This is useful if there is something required before simulation to produce the module
-  # object dependencies, including such things as downloading default datasets, e.g.,
-  # downloadData("LCC2005", modulePath(sim)).
-  # Nothing should be created here that is not part of inputObjects. Any other initiation
-  # procedures should be put in "init" eventType of the doEvent function.
-  # ! ----- EDIT BELOW ----- ! #
-  # check local existence
-  dataPath <- file.path(modulePath(sim), "LBMR", "data")
-  fileNames <- c("biomass-succession_test.txt", "biomass-succession-dynamic-inputs_test.txt",
-                 "ecoregions.gis", "ecoregions.txt", "initial-communities.gis", "initial-communities.txt",
-                 "species.txt")
-  fileNames <- lapply(fileNames, function(x){file.path(dataPath, x)})
-  allFiles <- lapply(fileNames, function(x) {
-    file.info(x)[,"size"]}
-  )
-  names(allFiles) <- unlist(lapply(fileNames, basename))
-  needDownload <- digest::digest(allFiles) != "6e31b97b0fc075f46c44f07d1c94a71f"
-  if(needDownload){
-    checkTable <- data.table(downloadData(module = "LBMR", path = modulePath(sim))) 
-  } else {
-    message("  Download data step skipped for module LBMR. Local copy exists")
+  dataPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
+  
+  if (!suppliedElsewhere("initialCommunities", sim)) {
+    maxcol <- 7 #max(count.fields(file.path(dataPath, "initial-communities.txt"), sep = ""))
+    initialCommunities <- Cache(prepInputs, targetFile = "initial-communities.txt", 
+                                destinationPath = dataPath, 
+                                fun = "read.table", 
+                                pkg = "utils", quickCheck = TRUE, 
+                                fill = TRUE, row.names = NULL,
+                                sep = "",
+                                blank.lines.skip = TRUE,
+                                col.names = c("species", paste("age",1:(maxcol-1), sep = "")),
+                                stringsAsFactors = FALSE)
+    # correct the typo in the original txt
+    initialCommunities[14,1:4] <- initialCommunities[14,2:5]
+    
+    initialCommunities <- data.table(initialCommunities)
+    initialCommunities <- cbind(data.table(mapcode = 1:nrow(initialCommunities),
+                                           description = NA), initialCommunities)
+    initialCommunities <- initialCommunities[species != "LandisData",]
+    cutRows <- grep(">>", initialCommunities$species)
+    for(i in cutRows){
+      initialCommunities[i, 
+                         desc:=paste(initialCommunities[i, 3:maxcol, with = FALSE],
+                                     collapse = " ")]
+    }
+    initialCommunities[, rowN := 1:nrow(initialCommunities)]
+    initialCommunities[, ':='(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
+                                            labels = initialCommunities[cutRows+1,]$age1),
+                              description = cut(rowN, breaks = c(cutRows, max(rowN)),
+                                                labels = initialCommunities[cutRows,]$desc))]
+    initialCommunities <- initialCommunities[!c(cutRows, cutRows+1),][,':='(desc = NULL, rowN = NULL)]
+    initialCommunities[, ':='(description = gsub(">>", "", description), 
+                              mapcode = as.integer(as.character(mapcode)))]
+    
+    sim$initialCommunities <- data.table(initialCommunities[,1:3, with=FALSE],
+                                         initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
+    rm(cutRows, i, maxcol)
   }
-  # convert inititial communities txt to data table
-  # input initial communities
-  maxcol <- 7 #max(count.fields(file.path(dataPath, "initial-communities.txt"), sep = ""))
-  initialCommunities <- Cache(prepInputs, targetFile = "initial-communities.txt", 
-                              destinationPath = dataPath(sim), 
-                              fun = "read.table", 
-                              pkg = "utils", quickCheck = TRUE, 
-                              fill = TRUE, row.names = NULL,
-                              sep = "",
-                              blank.lines.skip = TRUE,
-                              col.names = c("species", paste("age",1:(maxcol-1), sep = "")),
-                              stringsAsFactors = FALSE)
-  # correct the typo in the original txt
-  initialCommunities[14,1:4] <- initialCommunities[14,2:5]
-  
-  initialCommunities <- data.table(initialCommunities)
-  initialCommunities <- cbind(data.table(mapcode = 1:nrow(initialCommunities),
-                                         description = NA), initialCommunities)
-  initialCommunities <- initialCommunities[species != "LandisData",]
-  cutRows <- grep(">>", initialCommunities$species)
-  for(i in cutRows){
-    initialCommunities[i, 
-                       desc:=paste(initialCommunities[i, 3:maxcol, with = FALSE],
-                                   collapse = " ")]
-  }
-  initialCommunities[, rowN := 1:nrow(initialCommunities)]
-  initialCommunities[, ':='(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
-                                          labels = initialCommunities[cutRows+1,]$age1),
-                            description = cut(rowN, breaks = c(cutRows, max(rowN)),
-                                              labels = initialCommunities[cutRows,]$desc))]
-  initialCommunities <- initialCommunities[!c(cutRows, cutRows+1),][,':='(desc = NULL, rowN = NULL)]
-  initialCommunities[, ':='(description = gsub(">>", "", description), 
-                            mapcode = as.integer(as.character(mapcode)))]
-  
-  sim$initialCommunities <- data.table(initialCommunities[,1:3, with=FALSE],
-                                       initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
-  
-  # for(i in 4:ncol(initialCommunities)){
-  #   initialCommunities[,i] <- as.integer(unlist(initialCommunities[,i, with = FALSE]))
-  # }
-  sim$initialCommunities <- data.table(initialCommunities)
-  rm(cutRows, i, maxcol)
+    
   # load the initial community map
-  sim$initialCommunitiesMap <- Cache(prepInputs, "initial-communities.gis", destinationPath = dataPath(sim))
-  #sim$initialCommunitiesMap <- raster(file.path(dataPath, "initial-communities.gis"))
-  #sim$initialCommunitiesMap <- setValues(sim$initialCommunitiesMap, as.integer(sim$initialCommunitiesMap[]))
-  # sim$initialCommunitiesMap <- writeRaster(sim$initialCommunitiesMap, overwrite = TRUE,
-  #                                          filename = file.path(outputPath(sim), "initialCommunitiesMapDefault.tif"),
-  #                                          datatype="INT2U")
+  if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
+    sim$initialCommunitiesMap <- Cache(prepInputs, "initial-communities.gis", 
+                                       destinationPath = dataPath)
+  }
   
   ######################################################
-  ######################################################
-  # read species txt and convert it to data table
-  maxcol <- 13#max(count.fields(file.path(dataPath, "species.txt"), sep = ""))
-  species <- Cache(prepInputs, targetFile = "species.txt", 
-                   destinationPath = dataPath(sim), 
-                   fun = "read.table", 
-                   pkg = "utils", quickCheck = TRUE, 
-                   fill = TRUE, row.names = NULL,
-                   sep = "",
-                   header = FALSE,
-                   blank.lines.skip = TRUE,
-                   col.names = c(paste("col",1:maxcol, sep = "")),
-                   stringsAsFactors = FALSE)
-  species <- data.table(species[,1:11])
-  species <- species[col1!= "LandisData",]
-  species <- species[col1!= ">>",]
-  colNames <- c("species", "longevity", "sexualmature", "shadetolerance", 
-                "firetolerance", "seeddistance_eff", "seeddistance_max", 
-                "resproutprob", "resproutage_min", "resproutage_max",
-                "postfireregen")
-  names(species) <- colNames
-  species[,':='(seeddistance_eff = gsub(",", "", seeddistance_eff),
-                seeddistance_max = gsub(",", "", seeddistance_max))]
-  # change all columns to integer
-  species <- species[, lapply(.SD, as.integer), .SDcols = names(species)[-c(1,NCOL(species))], by = "species,postfireregen"]
-  setcolorder(species, colNames)
-  rm(maxcol)
-  
-  ######################################################
-  ######################################################
-  # Eliot -- have not yet converted below here to use prepInputs
-  # read ecoregion and ecoregioin map
-  maxcol <- max(count.fields(file.path(dataPath, "ecoregions.txt"), sep = ""))
-  ecoregion <- read.table(file.path(dataPath, "ecoregions.txt"),
-                          fill = TRUE,
-                          sep = "",
-                          header = FALSE,
-                          blank.lines.skip = TRUE,
-                          col.names = c(paste("col",1:maxcol, sep = "")),
-                          stringsAsFactors = FALSE)
-  ecoregion <- data.table(ecoregion)
-  ecoregion <- ecoregion[col1 != "LandisData",]
-  ecoregion <- ecoregion[col1 != ">>",]
-  names(ecoregion)[1:4] <- c("active", "mapcode", "ecoregion", "description")
-  ecoregion$mapcode <- as.integer(ecoregion$mapcode)
-  sim$ecoregion <- ecoregion
-  rm(maxcol)
-  # load ecoregion map
-  sim$ecoregionMap <- raster(file.path(dataPath, "ecoregions.gis"))
-  #sim$ecoregionMap <- setValues(sim$ecoregionMap, as.integer(sim$ecoregionMap[]))
-  
-  # input species ecoregion dynamics table
-  maxcol <- max(count.fields(file.path(dataPath, "biomass-succession-dynamic-inputs_test.txt"), 
-                             sep = ""))
-  speciesEcoregion <- read.table(file.path(dataPath, "biomass-succession-dynamic-inputs_test.txt"),
-                                 fill = TRUE,
-                                 sep = "",
-                                 header = FALSE,
-                                 blank.lines.skip = TRUE,
-                                 col.names = c(paste("col",1:maxcol, sep = "")),
-                                 stringsAsFactors = FALSE)
-  speciesEcoregion <- data.table(speciesEcoregion)
-  speciesEcoregion <- speciesEcoregion[col1 != "LandisData",]
-  speciesEcoregion <- speciesEcoregion[col1 != ">>",]
-  names(speciesEcoregion)[1:6] <- c("year", "ecoregion", "species",
-                                    "establishprob", "maxANPP", "maxB")
-  speciesEcoregion <- speciesEcoregion[,.(year, ecoregion, species,
-                                          establishprob, maxANPP, maxB)]
-  speciesEcoregion$year <- as.integer(speciesEcoregion$year)
-  speciesEcoregion$establishprob <- as.numeric(speciesEcoregion$establishprob)
-  speciesEcoregion$maxANPP <- as.integer(speciesEcoregion$maxANPP)
-  speciesEcoregion$maxB <- as.integer(speciesEcoregion$maxB)
-  sim$speciesEcoregion <- speciesEcoregion
-  rm(maxcol)
-  
   #   # load the biomass succession txt and obtain 1) minRelativeB, 
   #                                                2) sufficientLight, and 
   #                                                3) additional species traits
-  maxcol <- max(count.fields(file.path(dataPath, "biomass-succession_test.txt"), sep = ""))
-  mainInput <- read.table(file.path(dataPath, "biomass-succession_test.txt"),
-                          fill = TRUE,
-                          sep = "",
-                          header = FALSE,
-                          blank.lines.skip = TRUE,
-                          col.names = c(paste("col",1:maxcol, sep = "")),
-                          stringsAsFactors = FALSE)
-  mainInput <- data.table(mainInput)
-  mainInput <- mainInput[col1 != ">>",]
+  if (!suppliedElsewhere("sufficientLight", sim) |
+      (!suppliedElsewhere("species", sim)) |
+      (!suppliedElsewhere("minRelativeB", sim))) {
+    maxcol <- 7L
+    for (i in 1:2) {
+      mainInput <- Cache(prepInputs, 
+            targetFile = "biomass-succession_test.txt", 
+            destinationPath = dataPath, 
+            fun = "read.table", 
+            pkg = "utils", 
+            fill = TRUE, 
+            sep = "",
+            header = FALSE,
+            col.names = c(paste("col",1:maxcol, sep = "")), 
+            blank.lines.skip = TRUE,
+            stringsAsFactors = FALSE)
+      maxcol1 <- max(count.fields(file.path(dataPath, "biomass-succession_test.txt"), sep = "")) 
+      if (identical(maxcol1,maxcol)) break
+    
+    }
+    
+    mainInput <- data.table(mainInput)
+    mainInput <- mainInput[col1 != ">>",]
+  }
+  
+  # read species txt and convert it to data table
+  if (!suppliedElsewhere("species", sim)) {
+    maxcol <- 13#max(count.fields(file.path(dataPath, "species.txt"), sep = ""))
+    species <- Cache(prepInputs, targetFile = "species.txt", 
+                     destinationPath = dataPath, 
+                     fun = "read.table", 
+                     pkg = "utils", quickCheck = TRUE, 
+                     fill = TRUE, row.names = NULL,
+                     sep = "",
+                     header = FALSE,
+                     blank.lines.skip = TRUE,
+                     col.names = c(paste("col",1:maxcol, sep = "")),
+                     stringsAsFactors = FALSE)
+    species <- data.table(species[,1:11])
+    species <- species[col1!= "LandisData",]
+    species <- species[col1!= ">>",]
+    colNames <- c("species", "longevity", "sexualmature", "shadetolerance", 
+                  "firetolerance", "seeddistance_eff", "seeddistance_max", 
+                  "resproutprob", "resproutage_min", "resproutage_max",
+                  "postfireregen")
+    names(species) <- colNames
+    species[,':='(seeddistance_eff = gsub(",", "", seeddistance_eff),
+                  seeddistance_max = gsub(",", "", seeddistance_max))]
+    # change all columns to integer
+    species <- species[, lapply(.SD, as.integer), .SDcols = names(species)[-c(1,NCOL(species))], by = "species,postfireregen"]
+    setcolorder(species, colNames)
+    
+    # get additional species traits
+    speciesAddon <- mainInput
+    startRow <- which(speciesAddon$col1 == "SpeciesParameters")
+    speciesAddon <- speciesAddon[(startRow+1):(startRow+nrow(species)),1:6, with = FALSE]
+    names(speciesAddon) <- c("species", "leaflongevity", "wooddecayrate",
+                             "mortalityshape", "growthcurve", "leafLignin")
+    speciesAddon[, ':='(leaflongevity = as.numeric(leaflongevity),
+                        wooddecayrate = as.numeric(wooddecayrate),
+                        mortalityshape = as.numeric(mortalityshape),
+                        growthcurve = as.numeric(growthcurve),
+                        leafLignin = as.numeric(leafLignin))]
+    sim$species <- setkey(species, species)[setkey(speciesAddon, species), nomatch = 0]
+    rm(maxcol)
+    
+  }
+  
+  if (!suppliedElsewhere("ecoregion", sim)) {
+    maxcol <- max(count.fields(file.path(dataPath, "ecoregions.txt"), sep = ""))
+    ecoregion <- Cache(prepInputs, targetFile = "ecoregions.txt", 
+          destinationPath = dataPath, 
+          fun = "read.table", 
+          pkg = "utils", 
+          fill = TRUE, 
+          sep = "",
+          #row.names = NULL,
+          header = FALSE,
+          blank.lines.skip = TRUE,
+          stringsAsFactors = FALSE)
+    colnames(ecoregion) <- c(paste("col",1:maxcol, sep = ""))
+    ecoregion <- data.table(ecoregion)
+    ecoregion <- ecoregion[col1 != "LandisData",]
+    ecoregion <- ecoregion[col1 != ">>",]
+    names(ecoregion)[1:4] <- c("active", "mapcode", "ecoregion", "description")
+    ecoregion$mapcode <- as.integer(ecoregion$mapcode)
+    sim$ecoregion <- ecoregion
+    rm(maxcol)
+  }
+  
+  ######################################################
+  ######################################################
+  if (!suppliedElsewhere("ecoregionMap", sim )) {
+    # load ecoregion map
+    sim$ecoregionMap <- raster(file.path(dataPath, "ecoregions.gis"))
+  }
+
+  # input species ecoregion dynamics table
+  if (!suppliedElsewhere("speciesEcoregion", sim)) {
+    speciesEcoregion <- Cache(prepInputs, 
+          fun = "read.table", 
+          pkg = "utils", 
+          destinationPath = dataPath, 
+          targetFile = "biomass-succession-dynamic-inputs_test.txt",
+          fill = TRUE,
+          sep = "",
+          header = FALSE,
+          blank.lines.skip = TRUE,
+          stringsAsFactors = FALSE)
+    maxcol <- max(count.fields(file.path(dataPath, "biomass-succession-dynamic-inputs_test.txt"), 
+                               sep = ""))
+    colnames(speciesEcoregion) <- paste("col",1:maxcol, sep = "")
+    speciesEcoregion <- data.table(speciesEcoregion)
+    speciesEcoregion <- speciesEcoregion[col1 != "LandisData",]
+    speciesEcoregion <- speciesEcoregion[col1 != ">>",]
+    keepColNames <- c("year", "ecoregion", "species", "establishprob", "maxANPP", "maxB")
+    names(speciesEcoregion)[1:6] <- keepColNames
+    speciesEcoregion <- speciesEcoregion[, keepColNames, with = FALSE]
+    integerCols <- c("year", "establishprob", "maxANPP", "maxB")
+    speciesEcoregion[, (integerCols) := lapply(.SD, as.integer), .SDcols = integerCols, with = FALSE]
+    sim$speciesEcoregion <- speciesEcoregion
+    rm(maxcol)
+  }
   
   
-  # get additional species traits
-  speciesAddon <- mainInput
-  startRow <- which(speciesAddon$col1 == "SpeciesParameters")
-  speciesAddon <- speciesAddon[(startRow+1):(startRow+nrow(species)),1:6, with = FALSE]
-  names(speciesAddon) <- c("species", "leaflongevity", "wooddecayrate",
-                           "mortalityshape", "growthcurve", "leafLignin")
-  speciesAddon[, ':='(leaflongevity = as.numeric(leaflongevity),
-                      wooddecayrate = as.numeric(wooddecayrate),
-                      mortalityshape = as.numeric(mortalityshape),
-                      growthcurve = as.numeric(growthcurve),
-                      leafLignin = as.numeric(leafLignin))]
-  sim$species <- setkey(species, species)[setkey(speciesAddon, species), nomatch = 0]
-  rm(maxcol)
+  if (!suppliedElsewhere("minRelativeB", sim)) {
+    minRelativeB <- mainInput %>%
+      data.frame
+    startRow <- which(minRelativeB$col1 == "MinRelativeBiomass")
+    minRelativeB <- minRelativeB[(startRow+1):(startRow+6),]
+    minRelativeB[1,2:ncol(minRelativeB)] <- minRelativeB[1,1:(ncol(minRelativeB)-1)]
+    names(minRelativeB) <- NULL
+    minRelativeB <- minRelativeB[,apply(minRelativeB, 2, function(x) all(nzchar(x)))] 
+    minRelativeB <- minRelativeB[,-1] %>%
+      t(.) %>%
+      gsub(pattern="%",replacement="") %>%
+      data.table
+    
+    colNames <- c("ecoregion", "X1", "X2", "X3", "X4", "X5")
+    names(minRelativeB) <- colNames
+    minRelativeB[, (colNames[-1]) := lapply(.SD, function(x) as.numeric(as.character(x))), .SDcols = colNames[-1]]
+    # minRelativeB <- minRelativeB %>%
+    #   mutate_at(funs(as.numeric(as.character(.))/100), .vars=-ecoregion)
+    sim$minRelativeB <- minRelativeB
+  }
   
-  minRelativeB <- mainInput %>%
-    data.frame
-  startRow <- which(minRelativeB$col1 == "MinRelativeBiomass")
-  minRelativeB <- minRelativeB[(startRow+1):(startRow+6),]
-  minRelativeB[1,2:ncol(minRelativeB)] <- minRelativeB[1,1:(ncol(minRelativeB)-1)]
-  names(minRelativeB) <- NULL
-  minRelativeB <- minRelativeB[,apply(minRelativeB, 2, function(x) all(nzchar(x)))] 
-  minRelativeB <- minRelativeB[,-1] %>%
-    t(.) %>%
-    gsub(pattern="%",replacement="") %>%
-    data.table
+  if (!suppliedElsewhere("sufficientLight", sim)) {
+    sufficientLight <- mainInput %>%
+      data.frame
+    startRow <- which(sufficientLight$col1 == "SufficientLight")
+    sufficientLight <- sufficientLight[(startRow+1):(startRow+5), 1:7]
+    sufficientLight <- data.table(sufficientLight)
+    sufficientLight <- sufficientLight[, lapply(.SD, function(x) as.numeric(x))]
+    
+    names(sufficientLight) <- c("speciesshadetolerance",
+                                "X0", "X1", "X2", "X3", "X4", "X5")
+    sim$sufficientLight <- data.frame(sufficientLight)
+  }
   
-  colNames <- c("ecoregion", "X1", "X2", "X3", "X4", "X5")
-  names(minRelativeB) <- colNames
-  minRelativeB[, (colNames[-1]) := lapply(.SD, function(x) as.numeric(as.character(x))), .SDcols = colNames[-1]]
-  # minRelativeB <- minRelativeB %>%
-  #   mutate_at(funs(as.numeric(as.character(.))/100), .vars=-ecoregion)
-  sim$minRelativeB <- minRelativeB
+  if (!suppliedElsewhere("spinupMortalityfraction", sim))
+    sim$spinupMortalityfraction <- 0.001
+  if (!suppliedElsewhere("successionTimestep", sim))
+    sim$successionTimestep <- 10
+  if (!suppliedElsewhere("seedingAlgorithm", sim))
+    sim$seedingAlgorithm <- "wardDispersal"
+  if (!suppliedElsewhere("useCache", sim))
+    sim$useCache <- TRUE
+  if (!suppliedElsewhere("calibrate", sim))
+    sim$calibrate <- FALSE
+  if (!suppliedElsewhere("useParallel", sim))
+    sim$useParallel <- FALSE
   
-  sufficientLight <- mainInput %>%
-    data.frame
-  startRow <- which(sufficientLight$col1 == "SufficientLight")
-  sufficientLight <- sufficientLight[(startRow+1):(startRow+5), 1:7]
-  sufficientLight <- data.table(sufficientLight)
-  sufficientLight <- sufficientLight[, lapply(.SD, function(x) as.numeric(x))]
-  
-  # for(i in 1:ncol(sufficientLight)){
-  #   sufficientLight[,i] <- as.numeric(sufficientLight[,i])
-  # }
-  names(sufficientLight) <- c("speciesshadetolerance",
-                              "X0", "X1", "X2", "X3", "X4", "X5")
-  sim$sufficientLight <- data.frame(sufficientLight)
-  sim$spinupMortalityfraction <- 0.001
-  sim$successionTimestep <- 10
-  sim$seedingAlgorithm <- "wardDispersal"
-  sim$useCache <- TRUE
-  sim$cellSize <- res(ecoregionMap)[1]
-  sim$calibrate <- FALSE
-  if(is.null(P(sim)$useParallel)) sim$useParallel <- FALSE
-  # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
 }
 ### add additional events as needed by copy/pasting from above
