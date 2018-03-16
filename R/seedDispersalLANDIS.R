@@ -150,7 +150,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                        useParallel, ...) {
   lowDTthreads <- data.table::getDTthreads() == 1
   if (lowDTthreads) {
-    a <- data.table::setDTthreads(data.table::getDTthreads() == 1)
+    a <- data.table::setDTthreads(0)
     on.exit(data.table::setDTthreads(a))
   }
   
