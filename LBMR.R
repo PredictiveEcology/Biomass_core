@@ -78,9 +78,8 @@ defineModule(sim, list(
                  desc = "The number of time units between successive fire events in a fire module",  
                  sourceURL = "NA"),
     expectsInput("spinupMortalityfraction", "numeric", ""),
-    expectsInput("successionTimestep", "numeric", ""), 
     expectsInput("seedingAlgorithm", "character", ""), 
-    expectsInput("useCache", "logical", ""), 
+    #expectsInput("useCache", "logical", ""), 
     expectsInput("cellSize", "numeric", ""), 
     expectsInput("calibrate", "logical", ""), 
     expectsInput("useParallel", "logical", ""),
@@ -152,7 +151,7 @@ defineModule(sim, list(
 ))
 
 doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
-  a <- setDTthreads(min(6, parallel::detectCores()))
+  a <- setDTthreads(max(6, 0))
   on.exit(setDTthreads(a))
   if (eventType == "init") {
     ### check for more detailed object dependencies:
@@ -1594,9 +1593,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                               "X0", "X1", "X2", "X3", "X4", "X5")
   sim$sufficientLight <- data.frame(sufficientLight)
   sim$spinupMortalityfraction <- 0.001
-  sim$successionTimestep <- 10
   sim$seedingAlgorithm <- "wardDispersal"
-  sim$useCache <- TRUE
+  #sim$useCache <- TRUE
   sim$cellSize <- res(ecoregionMap)[1]
   sim$calibrate <- FALSE
   if(is.null(P(sim)$useParallel)) sim$useParallel <- FALSE
