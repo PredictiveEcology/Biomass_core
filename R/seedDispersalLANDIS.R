@@ -148,11 +148,6 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                        maxPotentialsLength=1e3, 
                        verbose=FALSE,
                        useParallel, ...) {
-  lowDTthreads <- data.table::getDTthreads() == 1
-  if (lowDTthreads) {
-    a <- data.table::setDTthreads(0)
-    on.exit(data.table::setDTthreads(a))
-  }
   
   cellSize=unique(res(pixelGroupMap))
   seedsReceived <- raster(pixelGroupMap) 
@@ -224,9 +219,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   splitFactor <- sort(rep(seq_len(subSamp), length.out = nPotentials))
   subSampList <- purrr::transpose(list(activeCell=split(seedRcvOrig, splitFactor), 
                                        potentials=split(potentialsOrig, splitFactor)))
-  
-  if(is(useParallel, "logical")){
-    if(useParallel){
+  if(is.logical(useParallel) | is.numeric(useParallel)){
+    if(isTRUE(useParallel)) {
       numCores <- min(length(subSampList), parallel::detectCores()-1)
       if(Sys.info()[["sysname"]] == "Windows"){
         cl <- parallel::makeCluster(numCores)
@@ -257,8 +251,13 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
     } else {
       allSeedsArrived <- list()
       message(" Should be using more than 100% CPU because of data.table openMP use")
-      #browser()
+      
       for(y in seq_along(subSampList)) {
+        curThreads <- getDTthreads()
+        if (P(sim)$useParallel != curThreads) {
+          a <- data.table::setDTthreads(P(sim)$useParallel)
+          on.exit(data.table::setDTthreads(a))
+        }
         allSeedsArrived[[y]] <- seedDispInnerFn(activeCell = subSampList[[y]][[1]],
                                                 potentials = subSampList[[y]][[2]], 
                                                 n = cellSize,
@@ -302,7 +301,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                                                                     pointDistance)) %>%
       rbindlist()
   } else {
-    stop("Please specify the useParallel argument correctly. Currently, it takes either logical or cluster object")
+    stop("Please specify the useParallel argument correctly. Currently, it takes either numeric, logical or cluster object")
   }
   setnames(seedsArrived,"fromInit","pixelIndex") 
   return(seedsArrived)

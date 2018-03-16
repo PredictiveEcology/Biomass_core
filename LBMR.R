@@ -41,9 +41,8 @@ defineModule(sim, list(
                             default is wardDispersal"),
     defineParameter(name = "useCache", class = "logic", default = TRUE,
                     desc = "use caching for the spinup simulation?"),
-    defineParameter(name = "useParallel", class = "logical", default = FALSE,
-                    desc = "determines whether the parallel computation
-                            will be used in the simulation")
+    defineParameter(name = "useParallel", class = "ANY", default = 0,
+                    desc = "Used only in seed dispersal. If numeric, it will be passed to data.table::setDTthreads, if logical and TRUE, it will be passed to parallel::makeCluster, and if cluster object it will be passed to parallel::parClusterApplyLB")
   ),
   inputObjects = bind_rows(
     expectsInput(objectName = "initialCommunities", objectClass = "data.table",
