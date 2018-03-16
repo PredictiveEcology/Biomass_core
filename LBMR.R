@@ -297,12 +297,16 @@ Init <- function(sim) {
   if(is.null(sim$calibrate)){
     sim$calibrate <- FALSE
   }
-  sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
+  #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
   message("Running spinup")
-  spinupstage <- sim$spinUpCache(cohortData = cohortData, calibrate = sim$calibrate,
-                                 successionTimestep = P(sim)$successionTimestep,
-                                 spinupMortalityfraction = P(sim)$spinupMortalityfraction,
-                                 species = sim$species, userTags = "stable")
+  spinupstage <- Cache(spinUp, cohortData = cohortData, calibrate = sim$calibrate,
+                        successionTimestep = P(sim)$successionTimestep,
+                        spinupMortalityfraction = P(sim)$spinupMortalityfraction,
+                        species = sim$species, userTags = "stable")
+  # spinupstage <- sim$spinUpCache(cohortData = cohortData, calibrate = sim$calibrate,
+  #                                successionTimestep = P(sim)$successionTimestep,
+  #                                spinupMortalityfraction = P(sim)$spinupMortalityfraction,
+  #                                species = sim$species, userTags = "stable")
   cohortData <- spinupstage$cohortData
   if(sim$calibrate){
     sim$spinupOutput <- spinupstage$spinupOutput
@@ -350,19 +354,19 @@ Init <- function(sim) {
   return(invisible(sim))
 }
 
-cacheSpinUpFunction <- function(sim, cachePath) {
-  # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
-  if(P(sim)$useCache) {
-    sim$spinUpCache <- function(...) {
-      reproducible::Cache(FUN = spinUp, ...)
-    }
-  } else {
-    # Step 3 - create a non-caching version in case caching is not desired
-    #  sim$spinUp <- sim$spinUpRaw
-    sim$spinUpCache <- spinUp
-  }
-  return(invisible(sim))
-}
+# cacheSpinUpFunction <- function(sim, cachePath) {
+#   # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
+#   if(P(sim)$useCache) {
+#     sim$spinUpCache <- function(...) {
+#       reproducible::Cache(FUN = spinUp, ...)
+#     }
+#   } else {
+#     # Step 3 - create a non-caching version in case caching is not desired
+#     #  sim$spinUp <- sim$spinUpRaw
+#     sim$spinUpCache <- spinUp
+#   }
+#   return(invisible(sim))
+# }
 
 spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species){
   maxAge <- max(cohortData$age) # determine the pre-simulation length
