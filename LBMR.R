@@ -38,7 +38,9 @@ defineModule(sim, list(
                             noDispersal, universalDispersal, and wardDispersal,
                             default is wardDispersal"),
     defineParameter(name = "useCache", class = "logic", default = TRUE,
-                    desc = "use caching for the spinup simulation?")
+                    desc = "use caching for the spinup simulation?"),
+    defineParameter(name = "useParallel", class = "ANY", default = parallel::detectCores(),
+                    desc = "Used only in seed dispersal. If numeric, it will be passed to data.table::setDTthreads, if logical and TRUE, it will be passed to parallel::makeCluster, and if cluster object it will be passed to parallel::parClusterApplyLB")
   ),
   inputObjects = bind_rows(
     expectsInput(objectName = "initialCommunities", objectClass = "data.table",
@@ -73,9 +75,9 @@ defineModule(sim, list(
                  desc = "The number of time units between successive fire events in a fire module",  
                  sourceURL = "NA"),
     expectsInput("spinupMortalityfraction", "numeric", ""),
-    expectsInput("successionTimestep", "numeric", ""), 
     expectsInput("seedingAlgorithm", "character", ""), 
-    expectsInput("useCache", "logical", ""), 
+    #expectsInput("useCache", "logical", ""), 
+    expectsInput("cellSize", "numeric", ""), 
     expectsInput("calibrate", "logical", ""), 
     expectsInput("useParallel", "logical", ""),
     expectsInput("rstCurrentBurn", "RasterLayer", ""), 
@@ -145,7 +147,7 @@ defineModule(sim, list(
 ))
 
 doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
-  a <- setDTthreads(min(6, parallel::detectCores()))
+  a <- setDTthreads(max(6, 0))
   on.exit(setDTthreads(a))
   if (eventType == "init") {
     ### check for more detailed object dependencies:
@@ -291,12 +293,16 @@ Init <- function(sim) {
   if(is.null(sim$calibrate)){
     sim$calibrate <- FALSE
   }
-  sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
+  #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
   message("Running spinup")
-  spinupstage <- sim$spinUpCache(cohortData = cohortData, calibrate = sim$calibrate,
-                                 successionTimestep = P(sim)$successionTimestep,
-                                 spinupMortalityfraction = P(sim)$spinupMortalityfraction,
-                                 species = sim$species, userTags = "stable")
+  spinupstage <- Cache(spinUp, cohortData = cohortData, calibrate = sim$calibrate,
+                        successionTimestep = P(sim)$successionTimestep,
+                        spinupMortalityfraction = P(sim)$spinupMortalityfraction,
+                        species = sim$species, userTags = "stable")
+  # spinupstage <- sim$spinUpCache(cohortData = cohortData, calibrate = sim$calibrate,
+  #                                successionTimestep = P(sim)$successionTimestep,
+  #                                spinupMortalityfraction = P(sim)$spinupMortalityfraction,
+  #                                species = sim$species, userTags = "stable")
   cohortData <- spinupstage$cohortData
   if(sim$calibrate){
     sim$spinupOutput <- spinupstage$spinupOutput
@@ -344,19 +350,19 @@ Init <- function(sim) {
   return(invisible(sim))
 }
 
-cacheSpinUpFunction <- function(sim, cachePath) {
-  # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
-  if(P(sim)$useCache) {
-    sim$spinUpCache <- function(...) {
-      reproducible::Cache(FUN = spinUp, ...)
-    }
-  } else {
-    # Step 3 - create a non-caching version in case caching is not desired
-    #  sim$spinUp <- sim$spinUpRaw
-    sim$spinUpCache <- spinUp
-  }
-  return(invisible(sim))
-}
+# cacheSpinUpFunction <- function(sim, cachePath) {
+#   # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
+#   if(P(sim)$useCache) {
+#     sim$spinUpCache <- function(...) {
+#       reproducible::Cache(FUN = spinUp, ...)
+#     }
+#   } else {
+#     # Step 3 - create a non-caching version in case caching is not desired
+#     #  sim$spinUp <- sim$spinUpRaw
+#     sim$spinUpCache <- spinUp
+#   }
+#   return(invisible(sim))
+# }
 
 spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species){
   maxAge <- max(cohortData$age) # determine the pre-simulation length
