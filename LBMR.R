@@ -150,8 +150,11 @@ defineModule(sim, list(
 ))
 
 doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
-  a <- setDTthreads(max(6, 0))
-  on.exit(setDTthreads(a))
+  if(is.numeric(sim$useParallel)){ 
+    a <- data.table::setDTthreads(P(sim)$useParallel) 
+    message("Mortality and Growth should be using >100% CPU")
+    on.exit(setDTthreads(a))
+  }
   if (eventType == "init") {
     ### check for more detailed object dependencies:
     ### (use `checkObject` or similar)
@@ -470,6 +473,12 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
 }
 ### template for your event1
 MortalityAndGrowth = function(sim) {
+  
+  if(is.numeric(sim$useParallel)){ 
+    data.table::setDTthreads(P(sim)$useParallel) 
+    message("Mortality and Growth should be using >100% CPU")
+  }
+  
   sim$cohortData <- sim$cohortData[,.(pixelGroup, ecoregionGroup,
                                       speciesCode, age, B, mortality,
                                       aNPPAct)]
