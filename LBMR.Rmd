@@ -7,6 +7,11 @@ output:
   pdf_document: default
 ---
 
+```{r}
+knitr::opts_knit$set(root.dir = getwd())
+```
+
+
 # Overview
 A fast and large landscape biomass succession model modified from LANDIS-II.
 
@@ -59,7 +64,7 @@ modules <- list("LBMR")
 objects <- list(successionTimestep = 2)
 paths <- list(
   cachePath = file.path(outputDir, "cache"),
-  modulePath = "~/Documents/GitHub/LandWeb/m/",
+  modulePath = "../",
   inputPath = inputDir,
   outputPath = outputDir
 )

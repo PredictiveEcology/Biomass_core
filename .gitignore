@@ -1,3 +1,4 @@
+# Ignore
 .Rapp.history
 .RData
 .Rhistory
@@ -7,3 +8,6 @@ last.dump.rda
 .Rproj.user/
 data
 .Rproj.user
+
+# Don't ignore:
+!data/CHECKSUMS.txt
