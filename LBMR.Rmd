@@ -46,7 +46,8 @@ Name|Default|Description
 
 ## Usage example
 ```{r module usage example, eval = FALSE}
-library(SpaDES.core)
+library(SpaDES.core, lib.loc = tmplibs)
+library(SpaDES.tools, lib.loc = tmplibs)
 library(magrittr)
 
 inputDir <- file.path(dirname(tempdir()), "LBMR", "inputs") %>% checkPath(create = TRUE)
@@ -54,23 +55,24 @@ outputDir <- file.path(dirname(tempdir()), "LBMR", "outputs")
 times <- list(start = 0, end = 10)
 parameters <- list(
   .globals = list(verbose = FALSE),
-  LBMR = list(.plotInitialTime = NA)
+  LBMR = list(.plotInitialTime = 0, successionTimestep = 2)
   #.progress = list(type = "text", interval = 1), # for a progress bar
   ## If there are further modules, each can have its own set of parameters:
   #module1 = list(param1 = value1, param2 = value2),
   #module2 = list(param1 = value1, param2 = value2)
 )
 modules <- list("LBMR")
-objects <- list(successionTimestep = 2)
-paths <- list(
-  cachePath = file.path(outputDir, "cache"),
-  modulePath = "../",
-  inputPath = inputDir,
-  outputPath = outputDir
-)
+objects <- list()
+
+setPaths(cachePath = file.path(outputDir, "cache"),
+         modulePath = "../",
+         inputPath = inputDir,
+         outputPath = outputDir)
+paths <- getPaths()
 
 mySim <- simInit(times = times, params = parameters, modules = modules, objects = objects, paths = paths)
 
+dev()
 mySimOut <- spades(mySim, debug = TRUE)
 ```
 

@@ -157,26 +157,27 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- Init(sim)
            
            ## schedule events
-           if(P(sim)$successionTimestep != 1){
-             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
-                                  "cohortAgeReclassification", eventPriority = 5.25)
-           }
-           sim <- scheduleEvent(sim, start(sim) + P(sim)$growthInitialTime,
-                                "LBMR", "mortalityAndGrowth", eventPriority = 5)
-           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM", eventPriority = 6)
            if(!is.null(sim$rstCurrentBurn)){ # anything related to fire disturbance
              sim <- scheduleEvent(sim, start(sim) + sim$fireInitialTime,
                                   "LBMR", "fireDisturbance", eventPriority = 3)
            }
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = 4)
+           sim <- scheduleEvent(sim, start(sim) + P(sim)$growthInitialTime,
+                                "LBMR", "mortalityAndGrowth", eventPriority = 5)
+           if(P(sim)$successionTimestep != 1){
+             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
+                                  "cohortAgeReclassification", eventPriority = 5.25)
+           }
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
+           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBGM", eventPriority = 6)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "plot", eventPriority = 7)
            sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "save", eventPriority = 7.5)
+           browser()
          },
          mortalityAndGrowth = {
            sim <- MortalityAndGrowth(sim)
@@ -1434,7 +1435,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   # load the initial community map
   if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
-    sim$initialCommunitiesMap <- Cache(prepInputs, "initial-communities.gis", 
+    sim$initialCommunitiesMap <- prepInputs("initial-communities.gis", 
                                        destinationPath = dataPath)
   }
   
