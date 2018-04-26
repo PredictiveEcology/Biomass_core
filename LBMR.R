@@ -177,7 +177,8 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "plot", eventPriority = 7)
            sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "save", eventPriority = 7.5)
-           browser()
+           sim <- scheduleEvent(sim, end(sim),
+                                "LBMR", "endPlot", eventPriority = 7.75)
          },
          mortalityAndGrowth = {
            sim <- MortalityAndGrowth(sim)
@@ -223,6 +224,10 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- plotFn(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "plot", eventPriority = 7)
+         },
+         endPlot = {
+           ## only occurs once at the end of the simulation
+           sim <- statsPlotFn(sim)
          },
          save = {
            sim <- Save(sim)
@@ -1048,7 +1053,6 @@ WardDispersalSeeding = function(sim) {
   return(invisible(sim))
 }
 
-
 SummaryRegen = function(sim){
   #cohortData <- sim$cohortData
   if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
@@ -1082,6 +1086,31 @@ plotFn <- function(sim) {
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ",round(time(sim))), x = 0.93, y = 0.97)
   #rm(biomassMap, ANPPMap, mortalityMap, reproductionMap)
+  return(invisible(sim))
+}
+
+statsPlotFn <- function(sim) {
+  biomass.stk <- lapply(list.files(outputPath(sim), pattern = "biomassMap", full.names = TRUE),
+                        raster)
+  ANPP.stk <- lapply(list.files(outputPath(sim), pattern = "ANPP", full.names = TRUE),
+                     raster)
+  meanBiomass <- sapply(biomass.stk, FUN = function(x) mean(x[], na.rm = TRUE))
+  names(meanBiomass) = sub(".tif", "", 
+                           sub(".*biomassMap_Year", "", list.files(outputPath(sim), pattern = "biomassMap")))
+  
+  meanANPP <- sapply(ANPP.stk, FUN = function(x) mean(x[], na.rm = TRUE))
+  names(meanANPP) = sub(".tif", "", 
+                        sub(".*ANPP_Year", "", list.files(outputPath(sim), pattern = "ANPP")))
+  
+  means <- cbind(meanBiomass, meanANPP)
+  means <- melt(means)
+  
+  plot1 <- ggplot(data = means, aes(x = Var1, y = value, colour = Var2)) +
+    geom_line(size = 1, show.legend = FALSE) + theme_bw() +
+    facet_wrap(~ Var2, scales = "free_y") +
+    labs(x = "Year", y = "Average value")
+  
+  Plot(plot1, title = c("Average biomass/ANPP"))
   return(invisible(sim))
 }
 

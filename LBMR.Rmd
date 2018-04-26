@@ -46,16 +46,18 @@ Name|Default|Description
 
 ## Usage example
 ```{r module usage example, eval = FALSE}
-library(SpaDES.core, lib.loc = tmplibs)
-library(SpaDES.tools, lib.loc = tmplibs)
+library(SpaDES.core)
+library(SpaDES.tools)
 library(magrittr)
 
 inputDir <- file.path(dirname(tempdir()), "LBMR", "inputs") %>% checkPath(create = TRUE)
 outputDir <- file.path(dirname(tempdir()), "LBMR", "outputs") 
-times <- list(start = 0, end = 10)
+times <- list(start = 0, end = 3)
 parameters <- list(
   .globals = list(verbose = FALSE),
-  LBMR = list(.plotInitialTime = 0, successionTimestep = 2)
+  LBMR = list(.plotInitialTime = 0,
+              successionTimestep = 2,
+              seedingAlgorithm = "wardDispersal")
   #.progress = list(type = "text", interval = 1), # for a progress bar
   ## If there are further modules, each can have its own set of parameters:
   #module1 = list(param1 = value1, param2 = value2),
@@ -65,7 +67,7 @@ modules <- list("LBMR")
 objects <- list()
 
 setPaths(cachePath = file.path(outputDir, "cache"),
-         modulePath = "../",
+         modulePath = "~/m",
          inputPath = inputDir,
          outputPath = outputDir)
 paths <- getPaths()
