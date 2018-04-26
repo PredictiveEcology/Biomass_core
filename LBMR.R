@@ -203,15 +203,15 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            if(P(sim)$seedingAlgorithm=="noDispersal"){
              sim <- NoDispersalSeeding(sim)
              sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "noDispersalSeeding", eventPriority = 4)
+                                  "LBMR", "Dispersal", eventPriority = 4)
            } else if(P(sim)$seedingAlgorithm == "universalDispersal"){
              sim <- UniversalDispersalSeeding(sim)
              sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "universalDispersalSeeding", eventPriority = 4)
+                                  "LBMR", "Dispersal", eventPriority = 4)
            } else if(P(sim)$seedingAlgorithm == "wardDispersal"){
              sim <- WardDispersalSeeding(sim)
              sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "wardDispersalSeeding", eventPriority = 4)
+                                  "LBMR", "Dispersal", eventPriority = 4)
            } else stop("Undefined seed dispersal type!")
          },
          summaryRegen = {
@@ -1562,7 +1562,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     names(speciesEcoregion)[1:6] <- keepColNames
     speciesEcoregion <- speciesEcoregion[, keepColNames, with = FALSE]
     integerCols <- c("year", "establishprob", "maxANPP", "maxB")
-    speciesEcoregion[, (integerCols) := lapply(.SD, as.integer), .SDcols = integerCols, with = FALSE]
+    speciesEcoregion[, (integerCols) := lapply(.SD, as.integer), .SDcols = integerCols]
     sim$speciesEcoregion <- speciesEcoregion
     rm(maxcol)
   }
