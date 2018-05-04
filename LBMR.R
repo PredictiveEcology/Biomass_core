@@ -70,10 +70,10 @@ defineModule(sim, list(
     # For inputs from optional fire module
     expectsInput(objectName = "fireInitialTime", objectClass = "numeric",
                  desc = "The event time that the first fire disturbance event occurs",
-                 sourceURL = "NA"),
+                 sourceURL = NA),
     expectsInput(objectName = "fireTimestep", objectClass = "numeric",
                  desc = "The number of time units between successive fire events in a fire module",
-                 sourceURL = "NA"),
+                 sourceURL = NA),
     expectsInput("spinupMortalityfraction", "numeric", ""),
     expectsInput("seedingAlgorithm", "character", ""), 
     #expectsInput("useCache", "logical", ""), 
@@ -700,6 +700,7 @@ FireDisturbance = function(sim) {
     # light check
     newCohortData <- setkey(newCohortData, speciesCode)[sim$species[,.(speciesCode, shadetolerance)],
                                                         nomatch = 0][,siteShade := 0]
+    browser()
     newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight,
                                      newCohortData)
     newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0, 1),]
@@ -1463,8 +1464,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   }
   
   # load the initial community map
-  if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
-    sim$initialCommunitiesMap <- prepInputs("initial-communities.gis", 
+  if (!suppliedElsewhere("initialCommusufficientLightnitiesMap", sim)) {
+    # browser()
+    sim$initialCommunitiesMap <- prepInputs("initial-communities.gis", useCache=FALSE,
                                        destinationPath = dataPath)
   }
   
