@@ -8,7 +8,7 @@ defineModule(sim, list(
               person(c("Eliot", "J", "B"), "McIntire", email="Eliot.McIntire@canada.ca", role=c("aut", "cre")),
               person(c("Jean"), "Marchal", email="jean.d.marchal@gmail.com", role=c("aut", "cre"))),
   childModules = character(0),
-  version = numeric_version("1.3.0.9000"),
+  version = numeric_version("1.3.0.9001"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
@@ -70,10 +70,10 @@ defineModule(sim, list(
     # For inputs from optional fire module
     expectsInput(objectName = "fireInitialTime", objectClass = "numeric",
                  desc = "The event time that the first fire disturbance event occurs",
-                 sourceURL = "NA"),
+                 sourceURL = NA),
     expectsInput(objectName = "fireTimestep", objectClass = "numeric",
                  desc = "The number of time units between successive fire events in a fire module",
-                 sourceURL = "NA"),
+                 sourceURL = NA),
     expectsInput("spinupMortalityfraction", "numeric", ""),
     expectsInput("seedingAlgorithm", "character", ""), 
     #expectsInput("useCache", "logical", ""), 
@@ -89,7 +89,6 @@ defineModule(sim, list(
     expectsInput("regenerationOutput", "data.table", ""),
     expectsInput("mortalityMap", "RasterLayer", ""),
     expectsInput("reproductionMap", "RasterLayer", "")
-
   ),
   outputObjects = bind_rows(
     createsOutput(objectName = "simulationOutput", objectClass = "data.table",
@@ -111,15 +110,15 @@ defineModule(sim, list(
     createsOutput(objectName = "cutpoint", objectClass = "numeric",
                   desc = "A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks"),
     createsOutput(objectName = "speciesEcoregion", objectClass = "data.table",
-                 desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
+                  desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
     createsOutput(objectName = "species", objectClass = "data.table",
-                 desc = "a table that has species traits such as longevity..."),
+                  desc = "a table that has species traits such as longevity..."),
     createsOutput(objectName = "simulationTreeOutput", objectClass = "data.table",
-                 desc = "Summary of several characteristics about the stands, derived from cohortData"),
+                  desc = "Summary of several characteristics about the stands, derived from cohortData"),
     createsOutput(objectName = "minRelativeB", objectClass = "data.frame",
-                 desc = "define the cut points to classify stand shadeness"),
+                  desc = "define the cut points to classify stand shadeness"),
     createsOutput(objectName = "sufficientLight", objectClass = "data.frame",
-                 desc = "define how the species with different shade tolerance respond to stand shadeness"),
+                  desc = "define how the species with different shade tolerance respond to stand shadeness"),
     createsOutput(objectName = "activePixelIndex", objectClass = "logical",
                   desc = "internal use. Keeps track of which pixels are active"),
     createsOutput(objectName = "inactivePixelIndex", objectClass = "logical",
@@ -131,7 +130,7 @@ defineModule(sim, list(
     createsOutput(objectName = "lastReg", objectClass = "numeric",
                   desc = "an internal counter keeping track of when the last regeneration event occurred"),
     createsOutput(objectName = "initialCommunitiesMap", objectClass = "RasterLayer",
-                 desc = "initial community map that has mapcodes match initial community table"),
+                  desc = "initial community map that has mapcodes match initial community table"),
     createsOutput("calibrate", "logical", ""), 
     createsOutput("rstCurrentBurn", "RasterLayer", ""), 
     createsOutput("burnLoci", "numeric", ""), 
@@ -152,92 +151,101 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
     message("Mortality and Growth should be using >100% CPU")
     on.exit(setDTthreads(a))
   }
-  if (eventType == "init") {
-    ### check for more detailed object dependencies:
-    ### (use `checkObject` or similar)
-    # do stuff for this event
-    sim <- Init(sim)
-    if(P(sim)$successionTimestep != 1){
-      sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
-                           "cohortAgeReclassification", eventPriority = 5.25)
-    }
-    sim <- scheduleEvent(sim, start(sim) + P(sim)$growthInitialTime,
-                         "LBMR", "mortalityAndGrowth", eventPriority = 5)
-    sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                         "LBMR", "summaryBGM", eventPriority = 6)
-    if(!is.null(sim$rstCurrentBurn)){ # anything related to fire disturbance
-      sim <- scheduleEvent(sim, start(sim) + sim$fireInitialTime,
-                           "LBMR", "fireDisturbance", eventPriority = 3)
-    }
-    if(P(sim)$seedingAlgorithm == "noDispersal"){
-      sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                           "LBMR", "noDispersalSeeding", eventPriority = 4)
-    } else if(P(sim)$seedingAlgorithm == "universalDispersal"){
-      sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                           "LBMR", "universalDispersalSeeding", eventPriority = 4)
-    } else if(P(sim)$seedingAlgorithm == "wardDispersal"){
-      sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                           "LBMR", "wardDispersalSeeding", eventPriority = 4)
-    } else {
-      stop("Undefined seed dispersal type!")
-    }
-    sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                         "LBMR", "summaryRegen", eventPriority = 5.5)
-    sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
-                         "LBMR", "plot", eventPriority = 7)
-    sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
-                         "LBMR", "save", eventPriority = 7.5)
-  } else if (eventType == "mortalityAndGrowth") {
-    sim <- MortalityAndGrowth(sim)
-    sim <- scheduleEvent(sim, time(sim) + 1, "LBMR", "mortalityAndGrowth",
-                         eventPriority = 5)
-  } else if (eventType == "summaryBGM"){
-    sim <- SummaryBGM(sim)
-    sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                         "LBMR", "summaryBGM",
-                         eventPriority = 6)
-  } else if (eventType == "fireDisturbance" & !is.null(sim$rstCurrentBurn)) {
-    sim <- FireDisturbance(sim)
-    sim <- scheduleEvent(sim, time(sim) + sim$fireTimestep,
-                         "LBMR", "fireDisturbance",
-                         eventPriority = 3)
-  } else if (eventType == "noDispersalSeeding" | eventType=="universalDispersalSeeding" | eventType=="wardDispersalSeeding") {
-    if(P(sim)$seedingAlgorithm=="noDispersal"){
-      sim <- NoDispersalSeeding(sim)
-      sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                           "LBMR", "noDispersalSeeding", eventPriority = 4)
-    }
-    if(P(sim)$seedingAlgorithm == "universalDispersal"){
-      sim <- UniversalDispersalSeeding(sim)
-      sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                           "LBMR", "universalDispersalSeeding", eventPriority = 4)
-    }
-    if(P(sim)$seedingAlgorithm == "wardDispersal"){
-      sim <- WardDispersalSeeding(sim)
-      sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                           "LBMR", "wardDispersalSeeding", eventPriority = 4)
-    }
-  } else if (eventType == "summaryRegen"){
-    sim <- SummaryRegen(sim)
-    sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                         "LBMR", "summaryRegen", eventPriority = 5.5)
-  } else if (eventType == "plot") {
-    sim <- plotFn(sim)
-    sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                         "LBMR", "plot", eventPriority = 7)
-  } else if (eventType == "save") {
-    sim <- Save(sim)
-    sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                         "LBMR", "save", eventPriority = 7.5)
-  } else if (eventType == "cohortAgeReclassification" & P(sim)$successionTimestep != 1) {
-    sim <- CohortAgeReclassification(sim)
-    sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                         "LBMR", "cohortAgeReclassification",
-                         eventPriority = 5.25)
-  } else {
-    warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
-                  "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
-  }
+  switch(eventType,
+         init = {
+           ## do stuff for this event
+           sim <- Init(sim)
+           
+           ## schedule events
+           if(!is.null(sim$rstCurrentBurn)){ # anything related to fire disturbance
+             sim <- scheduleEvent(sim, start(sim) + sim$fireInitialTime,
+                                  "LBMR", "fireDisturbance", eventPriority = 3)
+           }
+           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+                                "LBMR", "Dispersal", eventPriority = 4)
+           sim <- scheduleEvent(sim, start(sim) + P(sim)$growthInitialTime,
+                                "LBMR", "mortalityAndGrowth", eventPriority = 5)
+           if(P(sim)$successionTimestep != 1){
+             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
+                                  "cohortAgeReclassification", eventPriority = 5.25)
+           }
+           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryRegen", eventPriority = 5.5)
+           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBGM", eventPriority = 6)
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
+                                "LBMR", "plot", eventPriority = 7)
+           sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
+                                "LBMR", "save", eventPriority = 7.5)
+           sim <- scheduleEvent(sim, end(sim),
+                                "LBMR", "endPlot", eventPriority = 7.75)
+         },
+         mortalityAndGrowth = {
+           sim <- MortalityAndGrowth(sim)
+           sim <- scheduleEvent(sim, time(sim) + 1, "LBMR", "mortalityAndGrowth",
+                                eventPriority = 5)
+         }, 
+         summaryBGM = {
+           sim <- SummaryBGM(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBGM",
+                                eventPriority = 6)
+         }, 
+         fireDisturbance = {
+             sim <- FireDisturbance(sim)
+             
+             if(!is.null(sim$rstCurrentBurn)) {   
+             sim <- scheduleEvent(sim, time(sim) + sim$fireTimestep,
+                                  "LBMR", "fireDisturbance",
+                                  eventPriority = 3)
+           }
+         },
+         Dispersal = {
+           if(P(sim)$seedingAlgorithm=="noDispersal"){
+             sim <- NoDispersalSeeding(sim)
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                  "LBMR", "Dispersal", eventPriority = 4)
+           } else if(P(sim)$seedingAlgorithm == "universalDispersal"){
+             sim <- UniversalDispersalSeeding(sim)
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                  "LBMR", "Dispersal", eventPriority = 4)
+           } else if(P(sim)$seedingAlgorithm == "wardDispersal"){
+             sim <- WardDispersalSeeding(sim)
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                  "LBMR", "Dispersal", eventPriority = 4)
+           } else stop("Undefined seed dispersal type!")
+         },
+         summaryRegen = {
+           sim <- SummaryRegen(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryRegen", eventPriority = 5.5)
+         },
+         plot = {
+           sim <- plotFn(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "plot", eventPriority = 7)
+         },
+         endPlot = {
+           ## only occurs once at the end of the simulation
+           sim <- statsPlotFn(sim)
+         },
+         save = {
+           sim <- Save(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "save", eventPriority = 7.5)
+         }, 
+         cohortAgeReclassification = {
+             sim <- CohortAgeReclassification(sim)
+             
+             if(P(sim)$successionTimestep != 1) {
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                  "LBMR", "cohortAgeReclassification",
+                                  eventPriority = 5.25)
+             }
+         },
+         warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
+                       "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
+  )
   return(invisible(sim))
 }
 
@@ -292,16 +300,16 @@ Init <- function(sim) {
   cohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
                                                  time = round(time(sim)), cohortData = cohortData)
   cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
-
+  
   if(is.null(sim$calibrate)){
     sim$calibrate <- FALSE
   }
   #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
   message("Running spinup")
   spinupstage <- Cache(spinUp, cohortData = cohortData, calibrate = sim$calibrate,
-                        successionTimestep = P(sim)$successionTimestep,
-                        spinupMortalityfraction = P(sim)$spinupMortalityfraction,
-                        species = sim$species, userTags = "stable")
+                       successionTimestep = P(sim)$successionTimestep,
+                       spinupMortalityfraction = P(sim)$spinupMortalityfraction,
+                       species = sim$species, userTags = "stable")
   # spinupstage <- sim$spinUpCache(cohortData = cohortData, calibrate = sim$calibrate,
   #                                successionTimestep = P(sim)$successionTimestep,
   #                                spinupMortalityfraction = P(sim)$spinupMortalityfraction,
@@ -325,9 +333,9 @@ Init <- function(sim) {
     #mortalityMap <- setValues(biomassMap, 0L)
     #reproductionMap <- setValues(pixelGroupMap, 0L)
   }
-
+  
   #}
-
+  
   sim$pixelGroupMap <- pixelGroupMap
   sim$cohortData <- cohortData[,.(pixelGroup, ecoregionGroup, speciesCode, age,
                                   B, mortality = 0, aNPPAct = 0)]
@@ -383,13 +391,13 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
   } else {
     presimuT_end <- 1
   }
-
+  
   for(presimuT in (maxAge):presimuT_end) {
     message("Spin up time: year ", -presimuT)
     k <- k+1
     cohortData[origAge == presimuT,     age:=1L]
     cohortData[origAge >= presimuT,     age:=age+1L]
-
+    
     if(successionTimestep !=1 &
        as.integer(k/successionTimestep) == k/successionTimestep){
       cohortData <- ageReclassification(cohortData = cohortData, successionTimestep = successionTimestep,
@@ -433,7 +441,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
                                                   nomatch = 0][
                                                     , speciesCode := species][
                                                       ,species := NULL]
-
+        
         setnames(spoutput, "speciesCode", "species")
         spinupOutput <- rbind(spinupOutput, spoutput)
         rm(spoutput)
@@ -446,7 +454,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
                                                   nomatch = 0][
                                                     , speciesCode := species][
                                                       ,species := NULL]
-
+        
         setnames(spoutput, "speciesCode", "species")
         spinupOutput <- rbind(spinupOutput, spoutput)
         rm(spoutput)
@@ -497,7 +505,7 @@ MortalityAndGrowth = function(sim) {
     subCohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
                                                       time = round(time(sim)), cohortData = subCohortData)
     subCohortData <- updateSpeciesAttributes(species = sim$species, cohortData = subCohortData)
-
+    
     #   if(as.integer(time(sim)/P(sim)$successionTimestep) == time(sim)/P(sim)$successionTimestep){
     #     cohortData <-
     #     cohortData <- cohortData[,.(pixelGroup, ecoregionGroup, species, speciesCode, age,
@@ -544,7 +552,7 @@ MortalityAndGrowth = function(sim) {
       tempcohortdata <- subCohortData[,.(pixelGroup, Year = time(sim), siteBiomass = sumB, speciesCode,
                                          Age = age, iniBiomass = B - deltaB, ANPP = round(aNPPAct, 1),
                                          Mortality = round(mortality,1), deltaB, finBiomass = B)]
-
+      
       tempcohortdata <- setkey(tempcohortdata, speciesCode)[setkey(sim$species[,.(species, speciesCode)],
                                                                    speciesCode),
                                                             nomatch = 0][, ':='(speciesCode = species,
@@ -578,7 +586,7 @@ SummaryBGM = function(sim) {
                               pixelIndex = 1:ncell(sim$ecoregionMap))[
                                 ,.(NofPixelGroup = length(pixelIndex)),
                                 by = c("Ecoregion", "pixelGroup")]
-
+  
   for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")){
     subCohortData <- sim$cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
     if(nrow(subCohortData[age == (successionTimestep+1),])>0){
@@ -594,7 +602,7 @@ SummaryBGM = function(sim) {
                                       by = pixelGroup]
     tempOutput <- setkey(ecoPixelgroup[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ],
                          pixelGroup)[setkey(summarytable_sub, pixelGroup), nomatch = 0]
-
+    
     if(subgroup == "Group1"){
       summaryBGMtable <- summarytable_sub
       tempOutput_All <- tempOutput
@@ -623,10 +631,10 @@ SummaryBGM = function(sim) {
     sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                        "uniqueSumB")
     setColors(sim$biomassMap) <- c("light green", "dark green")
-
+    
     sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
     setColors(sim$ANPPMap) <- c("light green", "dark green")
-
+    
     sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
     setColors(sim$mortalityMap) <- c("light green", "dark green")
   }
@@ -650,7 +658,7 @@ FireDisturbance = function(sim) {
                                            species = character(),
                                            numberOfRegen = numeric())
   }
-
+  
   if(!is.null(sim$rstCurrentBurn)){ # anything related to fire disturbance
     if(extent(sim$rstCurrentBurn) != extent(sim$pixelGroupMap)){
       sim$rstCurrentBurn <- raster::crop(sim$rstCurrentBurn, extent(sim$pixelGroupMap))
@@ -671,7 +679,7 @@ FireDisturbance = function(sim) {
   tempspecies <- sim$species[postfireregen == "serotiny",
                              .(speciesCode, postfireregen)]
   serotinyAssessCohortData <- burnedcohortData[tempspecies, nomatch = 0][, postfireregen := NULL]
-
+  
   rm(tempspecies)
   if(NROW(serotinyAssessCohortData) > 0){
     # assess potential serotiny reg
@@ -683,15 +691,16 @@ FireDisturbance = function(sim) {
     # this is amazing!!!!
     # select the pixels that have potential serotiny regeneration and assess them
     serotinyPixelTable <- firePixelTable[pixelGroup %in% unique(newCohortData$pixelGroup)]
-
+    
     # from now on the regeneration process is assessed for each potential pixel
     setkey(serotinyPixelTable, pixelGroup)
     setkey(newCohortData, pixelGroup)
     newCohortData <- serotinyPixelTable[newCohortData, nomatch = 0, allow.cartesian = TRUE]
-
+    
     # light check
     newCohortData <- setkey(newCohortData, speciesCode)[sim$species[,.(speciesCode, shadetolerance)],
                                                         nomatch = 0][,siteShade := 0]
+    browser()
     newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight,
                                      newCohortData)
     newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0, 1),]
@@ -724,7 +733,7 @@ FireDisturbance = function(sim) {
   } else {
     serotinyPixel <- NULL
   }
-
+  
   #############################################################
   #############################################################
   # from now on, starting assessing resprouting reproduction:
@@ -751,7 +760,7 @@ FireDisturbance = function(sim) {
     newCohortData <- resproutingPixelTable[resproutingAssessCohortData, nomatch = 0, allow.cartesian = TRUE]
     newCohortData <- setkey(newCohortData, speciesCode)[sim$species[,.(speciesCode, shadetolerance)],
                                                         nomatch = 0][, siteShade := 0]
-
+    
     # Light check
     newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight,
                                      newCohortData)
@@ -817,7 +826,7 @@ NoDispersalSeeding = function(sim) {
   sim$cohortData <- setkey(sim$cohortData, speciesCode)[setkey(sim$species[,.(speciesCode, sexualmature)],
                                                                speciesCode),
                                                         nomatch = 0]
-
+  
   newCohortData <- sim$cohortData[age >= sexualmature]
   set(sim$cohortData, ,"sexualmature", NULL)
   set(newCohortData, ,c("sexualmature", "age", "B", "mortality", "aNPPAct"), NULL)
@@ -831,7 +840,7 @@ NoDispersalSeeding = function(sim) {
   newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0, 1),]
   set(newCohortData, ,c("shadetolerance", "lightProb", "siteShade", "sumB"), NULL)
   newCohortData <- unique(newCohortData, by = c("pixelGroup", "speciesCode"))
-
+  
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
                                    pixelGroup = getValues(pixelGroupMap)[tempActivePixel]), pixelGroup)
   pixelsInfor <- setkey(pixelsInfor[pixelGroup %in% unique(newCohortData$pixelGroup)], pixelGroup)
@@ -897,7 +906,7 @@ UniversalDispersalSeeding = function(sim) {
   newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0 , 1),]
   set(newCohortData, , c("siteShade", "lightProb", "shadetolerance"), NULL)
   #   pixelGroupEcoregion <- unique(sim$cohortData, by = c("pixelGroup"))[,'.'(pixelGroup, sumB)]
-
+  
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
                                    pixelGroup = getValues(pixelGroupMap)[tempActivePixel]), pixelGroup)
   pixelsInfor <- setkey(pixelsInfor[pixelGroup %in% unique(newCohortData$pixelGroup)], pixelGroup)
@@ -908,8 +917,8 @@ UniversalDispersalSeeding = function(sim) {
                                                   .(speciesCode, establishprob, ecoregionGroup)],
                                ecoregionGroup, speciesCode)
   newCohortData <- newCohortData[specieseco_current, nomatch = 0]
-
-
+  
+  
   newCohortData <- newCohortData[establishprob %>>% runif(nrow(newCohortData), 0, 1),]
   set(newCohortData, ,"establishprob", NULL)
   if(sim$calibrate == TRUE){
@@ -961,7 +970,7 @@ WardDispersalSeeding = function(sim) {
                           speciesCode)
   matureCohorts <- matureCohorts[,.(pixelGroup, speciesCode)]
   set(sim$cohortData, ,"sexualmature", NULL)
-
+  
   if(NROW(matureCohorts)>0){
     seedSource <- setkey(sim$species[,list(speciesCode, seeddistance_eff, seeddistance_max)], speciesCode) %>%
       .[matureCohorts]
@@ -978,16 +987,16 @@ WardDispersalSeeding = function(sim) {
     seedReceive <- seedReceive[lightProb %>>% runif(nrow(seedReceive), 0, 1), ][
       ,.(pixelGroup, speciesCode, seeddistance_eff, seeddistance_max)]
     setkey(seedReceive, speciesCode)
-
-
+    
+    
     # 3. Remove any species from the seedSource that couldn't regeneration anywhere on the map due to insufficient light
     #    (info contained within seedReceive)
     # this is should be a inner join, needs to specify the nomatch=0, nomatch = NA is default that sugest the full joint.
     seedSource <- seedSource[speciesCode %in% unique(seedReceive$speciesCode),]
-
+    
     # Add inSituReceived data.table from the inSitu seeding function or event
     inSituReceived <- data.table(fromInit = numeric(), species = character())
-
+    
     # it could be more effecient if pixelGroupMap is reduced map by removing the pixels that have successful postdisturbance regeneration
     # and the inactive pixels
     # how to subset the reducedmap
@@ -1004,14 +1013,14 @@ WardDispersalSeeding = function(sim) {
     }
     #source(file.path(modulePath(sim), "LBMR", "R", "seedDispersalLANDIS.R")) # not needed b/c SpaDES already did this
     seedingData <- LANDISDisp(sim, dtRcv=seedReceive, plot.it = FALSE,
-                                  dtSrc = seedSource, inSituReceived = inSituReceived,
-                                  species = sim$species,
-                                  reducedPixelGroupMap,
-                                  maxPotentialsLength = 1e5,
-                                  verbose = FALSE,
-                                  useParallel = sim$useParallel)
+                              dtSrc = seedSource, inSituReceived = inSituReceived,
+                              species = sim$species,
+                              reducedPixelGroupMap,
+                              maxPotentialsLength = 1e5,
+                              verbose = FALSE,
+                              useParallel = sim$useParallel)
     # verbose = globals(sim)$verbose)
-
+    
     rm(seedReceive, seedSource)
     if(NROW(seedingData) > 0) {
       seedingData$ecoregionGroup <- getValues(sim$ecoregionMap)[seedingData$pixelIndex]
@@ -1021,7 +1030,7 @@ WardDispersalSeeding = function(sim) {
                                                       .(speciesCode, establishprob, ecoregionGroup)],
                                    ecoregionGroup, speciesCode)
       seedingData <- seedingData[specieseco_current, nomatch = 0]
-
+      
       seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
       set(seedingData, ,"establishprob", NULL)
       if(sim$calibrate == TRUE){
@@ -1044,7 +1053,6 @@ WardDispersalSeeding = function(sim) {
   sim$lastReg <- round(time(sim))
   return(invisible(sim))
 }
-
 
 SummaryRegen = function(sim){
   #cohortData <- sim$cohortData
@@ -1075,10 +1083,35 @@ plotFn <- function(sim) {
     clearPlot()
   }
   Plot(sim$biomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap,
-                  title = c("Biomass", "ANPP", "mortality", "reproduction"), new = TRUE, speedup = 1)
+       title = c("Biomass", "ANPP", "mortality", "reproduction"), new = TRUE, speedup = 1)
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ",round(time(sim))), x = 0.93, y = 0.97)
   #rm(biomassMap, ANPPMap, mortalityMap, reproductionMap)
+  return(invisible(sim))
+}
+
+statsPlotFn <- function(sim) {
+  biomass.stk <- lapply(list.files(outputPath(sim), pattern = "biomassMap", full.names = TRUE),
+                        raster)
+  ANPP.stk <- lapply(list.files(outputPath(sim), pattern = "ANPP", full.names = TRUE),
+                     raster)
+  meanBiomass <- sapply(biomass.stk, FUN = function(x) mean(x[], na.rm = TRUE))
+  names(meanBiomass) = sub(".tif", "", 
+                           sub(".*biomassMap_Year", "", list.files(outputPath(sim), pattern = "biomassMap")))
+  
+  meanANPP <- sapply(ANPP.stk, FUN = function(x) mean(x[], na.rm = TRUE))
+  names(meanANPP) = sub(".tif", "", 
+                        sub(".*ANPP_Year", "", list.files(outputPath(sim), pattern = "ANPP")))
+  
+  means <- cbind(meanBiomass, meanANPP)
+  means <- melt(means)
+  
+  plot1 <- ggplot(data = means, aes(x = Var1, y = value, colour = Var2)) +
+    geom_line(size = 1, show.legend = FALSE) + theme_bw() +
+    facet_wrap(~ Var2, scales = "free_y") +
+    labs(x = "Year", y = "Average value")
+  
+  Plot(plot1, title = c("Average biomass/ANPP"))
   return(invisible(sim))
 }
 
@@ -1106,13 +1139,13 @@ CohortAgeReclassification = function(sim) {
   if(time(sim) != 0){
     #cohortData <- sim$cohortData
     sim$cohortData <- ageReclassification(cohortData = sim$cohortData, successionTimestep = successionTimestep,
-                                               stage = "mainSimulation")
+                                          stage = "mainSimulation")
     #sim$cohortData <- cohortData
     return(invisible(sim))
   } else {
     return(invisible(sim))
   }
-
+  
 }
 
 updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData){
@@ -1124,7 +1157,7 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData)
                                                     maxB, ecoregionGroup)],
                                speciesCode, ecoregionGroup)
   specieseco_current[, maxB_eco:=max(maxB), by = ecoregionGroup]
-
+  
   cohortData <- setkey(cohortData, speciesCode, ecoregionGroup)[specieseco_current, nomatch=0]
   return(cohortData)
 }
@@ -1351,7 +1384,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   set(newCohortData, ,"B",
       as.integer(pmax(1, newCohortData$maxANPP*exp(-1.6*newCohortData$sumB/newCohortData$maxB_eco))))
   set(newCohortData, ,"B", as.integer(pmin(newCohortData$maxANPP, newCohortData$B)))
-
+  
   newCohortData <- newCohortData[,.(pixelGroup, ecoregionGroup, speciesCode, age, B,
                                     mortality = 0, aNPPAct = 0)]
   newCohortDataExtra2 <- unique(newCohortDataExtra, by = c("pixelGroup", "newpixelGroup"))
@@ -1369,10 +1402,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   cohortData <- setkey(rbindlist(list(cohortData, newCohortData, existingData)),
                        pixelGroup, speciesCode, age)
   pixelGroupMap[as.integer(newCohortDataExtra$pixelIndex)] <- newCohortDataExtra$newpixelGroup
-
+  
   cohortData <- cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)),]
   pixelGroupMap_new <- pixelGroupMap
-
+  
   temppixelIndex11 <- which(!(getValues(pixelGroupMap) %in% c(0, -1)))
   pgmTemp <- getValues(pixelGroupMap)[temppixelIndex11]
   pixelGroupMap_new[temppixelIndex11] <- as.integer(as.factor(pgmTemp))
@@ -1397,7 +1430,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     initialCommunities <- Cache(prepInputs, targetFile = "initial-communities.txt", 
                                 destinationPath = dataPath, 
                                 fun = "read.table", 
-                                pkg = "utils", quickCheck = TRUE, 
+                                pkg = "utils", quick = TRUE, 
                                 fill = TRUE, row.names = NULL,
                                 sep = "",
                                 blank.lines.skip = TRUE,
@@ -1429,10 +1462,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                                          initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
     rm(cutRows, i, maxcol)
   }
-    
+  
   # load the initial community map
-  if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
-    sim$initialCommunitiesMap <- Cache(prepInputs, "initial-communities.gis", 
+  if (!suppliedElsewhere("initialCommusufficientLightnitiesMap", sim)) {
+    # browser()
+    sim$initialCommunitiesMap <- prepInputs("initial-communities.gis", useCache=FALSE,
                                        destinationPath = dataPath)
   }
   
@@ -1446,19 +1480,19 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     maxcol <- 7L
     for (i in 1:2) {
       mainInput <- Cache(prepInputs, 
-            targetFile = "biomass-succession_test.txt", 
-            destinationPath = dataPath, 
-            fun = "read.table", 
-            pkg = "utils", 
-            fill = TRUE, 
-            sep = "",
-            header = FALSE,
-            col.names = c(paste("col",1:maxcol, sep = "")), 
-            blank.lines.skip = TRUE,
-            stringsAsFactors = FALSE)
+                         targetFile = "biomass-succession_test.txt", 
+                         destinationPath = dataPath, 
+                         fun = "read.table", 
+                         pkg = "utils", 
+                         fill = TRUE, 
+                         sep = "",
+                         header = FALSE,
+                         col.names = c(paste("col",1:maxcol, sep = "")), 
+                         blank.lines.skip = TRUE,
+                         stringsAsFactors = FALSE)
       maxcol1 <- max(count.fields(file.path(dataPath, "biomass-succession_test.txt"), sep = "")) 
       if (identical(maxcol1,maxcol)) break
-    
+      
     }
     
     mainInput <- data.table(mainInput)
@@ -1471,7 +1505,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     species <- Cache(prepInputs, targetFile = "species.txt", 
                      destinationPath = dataPath, 
                      fun = "read.table", 
-                     pkg = "utils", quickCheck = TRUE, 
+                     pkg = "utils", quick = TRUE, 
                      fill = TRUE, row.names = NULL,
                      sep = "",
                      header = FALSE,
@@ -1511,15 +1545,15 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   if (!suppliedElsewhere("ecoregion", sim)) {
     maxcol <- max(count.fields(file.path(dataPath, "ecoregions.txt"), sep = ""))
     ecoregion <- Cache(prepInputs, targetFile = "ecoregions.txt", 
-          destinationPath = dataPath, 
-          fun = "read.table", 
-          pkg = "utils", 
-          fill = TRUE, 
-          sep = "",
-          #row.names = NULL,
-          header = FALSE,
-          blank.lines.skip = TRUE,
-          stringsAsFactors = FALSE)
+                       destinationPath = dataPath, 
+                       fun = "read.table", 
+                       pkg = "utils", 
+                       fill = TRUE, 
+                       sep = "",
+                       #row.names = NULL,
+                       header = FALSE,
+                       blank.lines.skip = TRUE,
+                       stringsAsFactors = FALSE)
     colnames(ecoregion) <- c(paste("col",1:maxcol, sep = ""))
     ecoregion <- data.table(ecoregion)
     ecoregion <- ecoregion[col1 != "LandisData",]
@@ -1536,19 +1570,19 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     # load ecoregion map
     sim$ecoregionMap <- raster(file.path(dataPath, "ecoregions.gis"))
   }
-
+  
   # input species ecoregion dynamics table
   if (!suppliedElsewhere("speciesEcoregion", sim)) {
     speciesEcoregion <- Cache(prepInputs, 
-          fun = "read.table", 
-          pkg = "utils", 
-          destinationPath = dataPath, 
-          targetFile = "biomass-succession-dynamic-inputs_test.txt",
-          fill = TRUE,
-          sep = "",
-          header = FALSE,
-          blank.lines.skip = TRUE,
-          stringsAsFactors = FALSE)
+                              fun = "read.table", 
+                              pkg = "utils", 
+                              destinationPath = dataPath, 
+                              targetFile = "biomass-succession-dynamic-inputs_test.txt",
+                              fill = TRUE,
+                              sep = "",
+                              header = FALSE,
+                              blank.lines.skip = TRUE,
+                              stringsAsFactors = FALSE)
     maxcol <- max(count.fields(file.path(dataPath, "biomass-succession-dynamic-inputs_test.txt"), 
                                sep = ""))
     colnames(speciesEcoregion) <- paste("col",1:maxcol, sep = "")
@@ -1559,7 +1593,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     names(speciesEcoregion)[1:6] <- keepColNames
     speciesEcoregion <- speciesEcoregion[, keepColNames, with = FALSE]
     integerCols <- c("year", "establishprob", "maxANPP", "maxB")
-    speciesEcoregion[, (integerCols) := lapply(.SD, as.integer), .SDcols = integerCols, with = FALSE]
+    speciesEcoregion[, (integerCols) := lapply(.SD, as.integer), .SDcols = integerCols]
     sim$speciesEcoregion <- speciesEcoregion
     rm(maxcol)
   }
