@@ -474,8 +474,8 @@ SummaryBGM = function(sim) {
   
   for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")){
     subCohortData <- sim$cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
-    if(nrow(subCohortData[age == (successionTimestep+1),])>0){
-      subCohortData[age == (successionTimestep+1),reproduction:=sum(B), by = pixelGroup]
+    if(nrow(subCohortData[age == (P(sim)$successionTimestep+1),])>0){
+      subCohortData[age == (P(sim)$successionTimestep+1),reproduction:=sum(B), by = pixelGroup]
     } else {
       subCohortData[, reproduction:=0]
     }
