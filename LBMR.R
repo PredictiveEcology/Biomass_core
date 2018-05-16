@@ -37,6 +37,8 @@ defineModule(sim, list(
                     desc = "choose which seeding algorithm will be used among
                             noDispersal, universalDispersal, and wardDispersal,
                             default is wardDispersal"),
+    defineParameter(name = "calibrate", class = "logical", default = FALSE, 
+                    desc = "Do calibration? Defaults to FALSE"),
     defineParameter(name = "useCache", class = "logic", default = TRUE,
                     desc = "use caching for the spinup simulation?"),
     defineParameter(name = "useParallel", class = "ANY", default = parallel::detectCores(),
@@ -75,7 +77,6 @@ defineModule(sim, list(
                  desc = "The number of time units between successive fire events in a fire module",
                  sourceURL = NA),
     expectsInput("cellSize", "numeric", ""), 
-    expectsInput("calibrate", "logical", ""), 
     expectsInput("rstCurrentBurn", "RasterLayer", ""),
     expectsInput("burnLoci", "numeric", ""),
     expectsInput("postFireRegenSummary", "data.table", ""),
@@ -127,7 +128,6 @@ defineModule(sim, list(
                   desc = "an internal counter keeping track of when the last regeneration event occurred"),
     createsOutput(objectName = "initialCommunitiesMap", objectClass = "RasterLayer",
                   desc = "initial community map that has mapcodes match initial community table"),
-    createsOutput("calibrate", "logical", ""), 
     createsOutput("rstCurrentBurn", "RasterLayer", ""), 
     createsOutput("burnLoci", "numeric", ""), 
     createsOutput("postFireRegenSummary", "data.table", ""), 
@@ -297,24 +297,21 @@ Init <- function(sim) {
                                                  time = round(time(sim)), cohortData = cohortData)
   cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
   
-  if(is.null(sim$calibrate)){
-    sim$calibrate <- FALSE
-  }
   #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
   message("Running spinup")
-  spinupstage <- Cache(spinUp, cohortData = cohortData, calibrate = sim$calibrate,
+  spinupstage <- Cache(spinUp, cohortData = cohortData, calibrate = P(sim)$calibrate,
                        successionTimestep = P(sim)$successionTimestep,
                        spinupMortalityfraction = P(sim)$spinupMortalityfraction,
                        species = sim$species, userTags = "stable")
-  # spinupstage <- sim$spinUpCache(cohortData = cohortData, calibrate = sim$calibrate,
+  # spinupstage <- sim$spinUpCache(cohortData = cohortData, calibrate = P(sim)$calibrate,
   #                                successionTimestep = P(sim)$successionTimestep,
   #                                spinupMortalityfraction = P(sim)$spinupMortalityfraction,
   #                                species = sim$species, userTags = "stable")
   cohortData <- spinupstage$cohortData
-  if(sim$calibrate){
+  if(P(sim)$calibrate){
     sim$spinupOutput <- spinupstage$spinupOutput
   }
-  if(sim$calibrate){
+  if(P(sim)$calibrate){
     sim$simulationTreeOutput <- data.table(Year = numeric(), siteBiomass = numeric(), Species = character(),
                                            Age = numeric(), iniBiomass = numeric(), ANPP = numeric(),
                                            Mortality = numeric(), deltaB = numeric(), finBiomass = numeric())
@@ -405,7 +402,7 @@ MortalityAndGrowth = function(sim) {
     set(subCohortData, , c("longevity", "mortalityshape"), NULL)
     subCohortData <- calculateCompetition(cohortData = subCohortData,
                                           stage = "mainsimulation")
-    if(!sim$calibrate){
+    if(!P(sim)$calibrate){
       set(subCohortData, , "sumB", NULL)
     }
     #### the below two lines of codes are to calculate actual ANPP
@@ -425,7 +422,7 @@ MortalityAndGrowth = function(sim) {
     set(subCohortData, ,c("mBio", "mAge", "maxANPP",
                           "maxB", "maxB_eco", "bAP", "bPM"),
         NULL)
-    if(sim$calibrate){
+    if(P(sim)$calibrate){
       set(subCohortData, ,"deltaB",
           as.integer(subCohortData$aNPPAct - subCohortData$mortality))
       set(subCohortData, ,"B",
@@ -533,7 +530,7 @@ FireDisturbance = function(sim) {
   # to a logical map
   postFireReproData <- data.table(pixelGroup = integer(), ecoregionGroup = numeric(),
                                   speciesCode = numeric(), pixelIndex = numeric())
-  if(sim$calibrate){
+  if(P(sim)$calibrate){
     sim$postFireRegenSummary <- data.table(year = numeric(),
                                            regenMode = character(),
                                            species = character(),
@@ -594,7 +591,7 @@ FireDisturbance = function(sim) {
     newCohortData <- unique(newCohortData, by = c("pixelIndex", "speciesCode"))
     if(NROW(newCohortData) > 0) {
       newCohortData <- newCohortData[,.(pixelGroup, ecoregionGroup, speciesCode, pixelIndex)] #
-      if(sim$calibrate){
+      if(P(sim)$calibrate){
         serotinyRegenSummary <- newCohortData[,.(numberOfRegen = length(pixelIndex)), by = speciesCode]
         serotinyRegenSummary <- serotinyRegenSummary[,.(year = time(sim), regenMode = "Serotiny",
                                                         speciesCode, numberOfRegen)]
@@ -652,7 +649,7 @@ FireDisturbance = function(sim) {
     # remove all columns that were used temporarily here
     if(NROW(newCohortData) > 0) {
       newCohortData <- newCohortData[,.(pixelGroup, ecoregionGroup, speciesCode, pixelIndex)]#
-      if(sim$calibrate){
+      if(P(sim)$calibrate){
         resproutRegenSummary <- newCohortData[,.(numberOfRegen = length(pixelIndex)), by = speciesCode]
         resproutRegenSummary <- resproutRegenSummary[,.(year = time(sim), regenMode = "Resprout",
                                                         speciesCode, numberOfRegen)]
@@ -734,7 +731,7 @@ NoDispersalSeeding = function(sim) {
   newCohortData <- newCohortData[specieseco_current, nomatch = 0]
   newCohortData <- newCohortData[establishprob %>>% runif(nrow(newCohortData), 0, 1),]
   set(newCohortData, ,c("establishprob"), NULL)
-  if(sim$calibrate == TRUE & NROW(newCohortData) > 0){
+  if(P(sim)$calibrate == TRUE & NROW(newCohortData) > 0){
     newCohortData_summ <- newCohortData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
@@ -802,7 +799,7 @@ UniversalDispersalSeeding = function(sim) {
   
   newCohortData <- newCohortData[establishprob %>>% runif(nrow(newCohortData), 0, 1),]
   set(newCohortData, ,"establishprob", NULL)
-  if(sim$calibrate == TRUE){
+  if(P(sim)$calibrate == TRUE){
     newCohortData_summ <- newCohortData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
@@ -914,7 +911,7 @@ WardDispersalSeeding = function(sim) {
       
       seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
       set(seedingData, ,"establishprob", NULL)
-      if(sim$calibrate == TRUE){
+      if(P(sim)$calibrate == TRUE){
         seedingData_summ <- seedingData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
@@ -1629,9 +1626,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                                 "X0", "X1", "X2", "X3", "X4", "X5")
     sim$sufficientLight <- data.frame(sufficientLight)
   }
-
-  if (!suppliedElsewhere("calibrate", sim))
-    sim$calibrate <- FALSE
   
   return(invisible(sim))
 }
