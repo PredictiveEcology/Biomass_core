@@ -74,12 +74,8 @@ defineModule(sim, list(
     expectsInput(objectName = "fireTimestep", objectClass = "numeric",
                  desc = "The number of time units between successive fire events in a fire module",
                  sourceURL = NA),
-    expectsInput("spinupMortalityfraction", "numeric", ""),
-    expectsInput("seedingAlgorithm", "character", ""), 
-    #expectsInput("useCache", "logical", ""), 
     expectsInput("cellSize", "numeric", ""), 
     expectsInput("calibrate", "logical", ""), 
-    expectsInput("useParallel", "logical", ""),
     expectsInput("rstCurrentBurn", "RasterLayer", ""),
     expectsInput("burnLoci", "numeric", ""),
     expectsInput("postFireRegenSummary", "data.table", ""),
@@ -146,7 +142,7 @@ defineModule(sim, list(
 ))
 
 doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
-  if(is.numeric(sim$useParallel)){ 
+  if(is.numeric(P(sim)$useParallel){ 
     a <- data.table::setDTthreads(P(sim)$useParallel) 
     message("Mortality and Growth should be using >100% CPU")
     on.exit(setDTthreads(a))
@@ -364,7 +360,7 @@ Init <- function(sim) {
 ### EVENT FUNCTIONS
 MortalityAndGrowth = function(sim) {
   
-  if(is.numeric(sim$useParallel)){ 
+  if(is.numeric(P(sim)$useParallel)){ 
     data.table::setDTthreads(P(sim)$useParallel) 
     message("Mortality and Growth should be using >100% CPU")
   }
@@ -903,7 +899,7 @@ WardDispersalSeeding = function(sim) {
                               reducedPixelGroupMap,
                               maxPotentialsLength = 1e5,
                               verbose = FALSE,
-                              useParallel = sim$useParallel)
+                              useParallel = P(sim)$useParallel)
     # verbose = globals(sim)$verbose)
     
     rm(seedReceive, seedSource)
@@ -1633,19 +1629,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                                 "X0", "X1", "X2", "X3", "X4", "X5")
     sim$sufficientLight <- data.frame(sufficientLight)
   }
-  
-  if (!suppliedElsewhere("spinupMortalityfraction", sim))
-    sim$spinupMortalityfraction <- 0.001
-  if (!suppliedElsewhere("successionTimestep", sim))
-    sim$successionTimestep <- 10
-  if (!suppliedElsewhere("seedingAlgorithm", sim))
-    sim$seedingAlgorithm <- "wardDispersal"
-  if (!suppliedElsewhere("useCache", sim))
-    sim$useCache <- TRUE
+
   if (!suppliedElsewhere("calibrate", sim))
     sim$calibrate <- FALSE
-  if (!suppliedElsewhere("useParallel", sim))
-    sim$useParallel <- FALSE
   
   return(invisible(sim))
 }
