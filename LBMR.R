@@ -361,21 +361,6 @@ Init <- function(sim) {
   return(invisible(sim))
 }
 
-# cacheSpinUpFunction <- function(sim, cachePath) {
-#   # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
-#   if(P(sim)$useCache) {
-#     sim$spinUpCache <- function(...) {
-#       reproducible::Cache(FUN = spinUp, ...)
-#     }
-#   } else {
-#     # Step 3 - create a non-caching version in case caching is not desired
-#     #  sim$spinUp <- sim$spinUpRaw
-#     sim$spinUpCache <- spinUp
-#   }
-#   return(invisible(sim))
-# }
-
-
 ### EVENT FUNCTIONS
 MortalityAndGrowth = function(sim) {
   
@@ -1150,6 +1135,20 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
   }
   return(all)
 }
+
+# cacheSpinUpFunction <- function(sim, cachePath) {
+#   # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
+#   if(P(sim)$useCache) {
+#     sim$spinUpCache <- function(...) {
+#       reproducible::Cache(FUN = spinUp, ...)
+#     }
+#   } else {
+#     # Step 3 - create a non-caching version in case caching is not desired
+#     #  sim$spinUp <- sim$spinUpRaw
+#     sim$spinUpCache <- spinUp
+#   }
+#   return(invisible(sim))
+# }
 
 updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData){
   # the following codes were for updating cohortdata using speciesecoregion data at current simulation year
