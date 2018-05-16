@@ -375,108 +375,8 @@ Init <- function(sim) {
 #   return(invisible(sim))
 # }
 
-spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species){
-  maxAge <- max(cohortData$age) # determine the pre-simulation length
-  set(cohortData, ,"origAge", cohortData$age)
-  set(cohortData, ,c("age","sumB"), as.integer(0L))
-  set(cohortData, ,c("mortality","aNPPAct"), as.numeric(0))
-  if(calibrate){
-    spinupOutput <- data.table(pixelGroup = integer(), species = character(), age = integer(),
-                               iniBiomass = integer(), ANPP = numeric(), Mortality=numeric(),
-                               finBiomass = integer())
-  }
-  k <- 0
-  if(successionTimestep == 1 & maxAge!=1){
-    presimuT_end <- 2
-  } else {
-    presimuT_end <- 1
-  }
-  
-  for(presimuT in (maxAge):presimuT_end) {
-    message("Spin up time: year ", -presimuT)
-    k <- k+1
-    cohortData[origAge == presimuT,     age:=1L]
-    cohortData[origAge >= presimuT,     age:=age+1L]
-    
-    if(successionTimestep !=1 &
-       as.integer(k/successionTimestep) == k/successionTimestep){
-      cohortData <- ageReclassification(cohortData = cohortData, successionTimestep = successionTimestep,
-                                        stage = "spinup")
-    }
-    # 1. assign the biomass for the first cohort
-    if(nrow(cohortData[age == 2,])>0){
-      lastReg <- k-1
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
-                                  successionTimestep = successionTimestep)
-      cohortData[age == 2, B:=as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
-      cohortData[age == 2, B:=as.integer(pmin(maxANPP, B))]
-    }
-    if(maxAge!=1){
-      # 2. calculate age-related mortality
-      cohortData <- calculateAgeMortality(cohortData, stage="spinup",
-                                          spinupMortalityfraction = spinupMortalityfraction)
-      # 3. calculate the actual ANPP
-      # calculate biomass Potential, for each cohort
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k-1,
-                                  successionTimestep = successionTimestep)
-      cohortData <- calculateCompetition(cohortData, stage = "spinup")
-      # calculate ANPP
-      cohortData <- calculateANPP(cohortData, stage = "spinup")
-      cohortData[age > 0, aNPPAct:=pmax(1, aNPPAct - mAge)]
-      # calculate growth related mortality
-      cohortData <- calculateGrowthMortality(cohortData, stage = "spinup")
-      cohortData[age > 0, mBio:=pmax(0,mBio - mAge)]
-      cohortData[age > 0, mBio:=pmin(mBio, aNPPAct)]
-      cohortData[age > 0, mortality:=mBio + mAge]
-      cohortData[age > 0, B:=as.integer(B + as.integer(aNPPAct - mortality))]
-      set(cohortData, ,c("bPM", "mBio"), NULL)
-    }
-    if(calibrate){
-      if(maxAge != 1){
-        spoutput <- cohortData[origAge >= presimuT, .(pixelGroup, speciesCode, age,
-                                                      iniBiomass = B + as.integer(mortality - aNPPAct),
-                                                      ANPP = round(aNPPAct, 1),
-                                                      Mortality = round(mortality, 1),finBiomass = B)]
-        spoutput <- setkey(spoutput, speciesCode)[setkey(species[,.(species, speciesCode)], speciesCode),
-                                                  nomatch = 0][
-                                                    , speciesCode := species][
-                                                      ,species := NULL]
-        
-        setnames(spoutput, "speciesCode", "species")
-        spinupOutput <- rbind(spinupOutput, spoutput)
-        rm(spoutput)
-        cohortData[,':='(bAP = NULL)]
-      } else {
-        spoutput <- cohortData[origAge >= presimuT,.(pixelGroup, speciesCode, age,
-                                                     iniBiomass = 0, ANPP = 0,
-                                                     Mortality = 0, finBiomass = B)]
-        spoutput <- setkey(spoutput, speciesCode)[setkey(species[,.(species, speciesCode)], speciesCode),
-                                                  nomatch = 0][
-                                                    , speciesCode := species][
-                                                      ,species := NULL]
-        
-        setnames(spoutput, "speciesCode", "species")
-        spinupOutput <- rbind(spinupOutput, spoutput)
-        rm(spoutput)
-      }
-    }
-    lastnewcohorts <- which(cohortData$origAge == 1)
-    if(presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1){
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
-                                  successionTimestep = successionTimestep)
-      cohortData[origAge == 1,B:=as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
-      cohortData[origAge == 1,B:=as.integer(pmin(maxANPP, B))]
-    }
-  }
-  cohortData[,':='(age = origAge, origAge = NULL)]
-  if(calibrate){
-    all <- list(cohortData = cohortData, spinupOutput = spinupOutput)
-  } else {
-    all <- list(cohortData = cohortData)
-  }
-  return(all)
-}
-### template for your event1
+
+### EVENT FUNCTIONS
 MortalityAndGrowth = function(sim) {
   
   if(is.numeric(sim$useParallel)){ 
@@ -1148,6 +1048,109 @@ CohortAgeReclassification = function(sim) {
   
 }
 
+### OTHER FUNCTIONS
+spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species){
+  maxAge <- max(cohortData$age) # determine the pre-simulation length
+  set(cohortData, ,"origAge", cohortData$age)
+  set(cohortData, ,c("age","sumB"), as.integer(0L))
+  set(cohortData, ,c("mortality","aNPPAct"), as.numeric(0))
+  if(calibrate){
+    spinupOutput <- data.table(pixelGroup = integer(), species = character(), age = integer(),
+                               iniBiomass = integer(), ANPP = numeric(), Mortality=numeric(),
+                               finBiomass = integer())
+  }
+  k <- 0
+  if(successionTimestep == 1 & maxAge!=1){
+    presimuT_end <- 2
+  } else {
+    presimuT_end <- 1
+  }
+  
+  for(presimuT in (maxAge):presimuT_end) {
+    message("Spin up time: year ", -presimuT)
+    k <- k+1
+    cohortData[origAge == presimuT,     age:=1L]
+    cohortData[origAge >= presimuT,     age:=age+1L]
+    
+    if(successionTimestep !=1 &
+       as.integer(k/successionTimestep) == k/successionTimestep){
+      cohortData <- ageReclassification(cohortData = cohortData, successionTimestep = successionTimestep,
+                                        stage = "spinup")
+    }
+    # 1. assign the biomass for the first cohort
+    if(nrow(cohortData[age == 2,])>0){
+      lastReg <- k-1
+      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
+                                  successionTimestep = successionTimestep)
+      cohortData[age == 2, B:=as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
+      cohortData[age == 2, B:=as.integer(pmin(maxANPP, B))]
+    }
+    if(maxAge!=1){
+      # 2. calculate age-related mortality
+      cohortData <- calculateAgeMortality(cohortData, stage="spinup",
+                                          spinupMortalityfraction = spinupMortalityfraction)
+      # 3. calculate the actual ANPP
+      # calculate biomass Potential, for each cohort
+      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k-1,
+                                  successionTimestep = successionTimestep)
+      cohortData <- calculateCompetition(cohortData, stage = "spinup")
+      # calculate ANPP
+      cohortData <- calculateANPP(cohortData, stage = "spinup")
+      cohortData[age > 0, aNPPAct:=pmax(1, aNPPAct - mAge)]
+      # calculate growth related mortality
+      cohortData <- calculateGrowthMortality(cohortData, stage = "spinup")
+      cohortData[age > 0, mBio:=pmax(0,mBio - mAge)]
+      cohortData[age > 0, mBio:=pmin(mBio, aNPPAct)]
+      cohortData[age > 0, mortality:=mBio + mAge]
+      cohortData[age > 0, B:=as.integer(B + as.integer(aNPPAct - mortality))]
+      set(cohortData, ,c("bPM", "mBio"), NULL)
+    }
+    if(calibrate){
+      if(maxAge != 1){
+        spoutput <- cohortData[origAge >= presimuT, .(pixelGroup, speciesCode, age,
+                                                      iniBiomass = B + as.integer(mortality - aNPPAct),
+                                                      ANPP = round(aNPPAct, 1),
+                                                      Mortality = round(mortality, 1),finBiomass = B)]
+        spoutput <- setkey(spoutput, speciesCode)[setkey(species[,.(species, speciesCode)], speciesCode),
+                                                  nomatch = 0][
+                                                    , speciesCode := species][
+                                                      ,species := NULL]
+        
+        setnames(spoutput, "speciesCode", "species")
+        spinupOutput <- rbind(spinupOutput, spoutput)
+        rm(spoutput)
+        cohortData[,':='(bAP = NULL)]
+      } else {
+        spoutput <- cohortData[origAge >= presimuT,.(pixelGroup, speciesCode, age,
+                                                     iniBiomass = 0, ANPP = 0,
+                                                     Mortality = 0, finBiomass = B)]
+        spoutput <- setkey(spoutput, speciesCode)[setkey(species[,.(species, speciesCode)], speciesCode),
+                                                  nomatch = 0][
+                                                    , speciesCode := species][
+                                                      ,species := NULL]
+        
+        setnames(spoutput, "speciesCode", "species")
+        spinupOutput <- rbind(spinupOutput, spoutput)
+        rm(spoutput)
+      }
+    }
+    lastnewcohorts <- which(cohortData$origAge == 1)
+    if(presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1){
+      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
+                                  successionTimestep = successionTimestep)
+      cohortData[origAge == 1,B:=as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
+      cohortData[origAge == 1,B:=as.integer(pmin(maxANPP, B))]
+    }
+  }
+  cohortData[,':='(age = origAge, origAge = NULL)]
+  if(calibrate){
+    all <- list(cohortData = cohortData, spinupOutput = spinupOutput)
+  } else {
+    all <- list(cohortData = cohortData)
+  }
+  return(all)
+}
+
 updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData){
   # the following codes were for updating cohortdata using speciesecoregion data at current simulation year
   # to assign maxB, maxANPP and maxB_eco to cohortData
@@ -1271,7 +1274,6 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep){
   rm(cohortData, pixelGroups, cutpoints)
   return(newcohortData)
 }
-
 
 calculateCompetition <- function(cohortData,stage){
   # two competition indics are calculated bAP and bPM
@@ -1648,5 +1650,5 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   return(invisible(sim))
 }
-### add additional events as needed by copy/pasting from above
+
 
