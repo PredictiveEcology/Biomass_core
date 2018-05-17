@@ -176,21 +176,10 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, end(sim),
                                 "LBMR", "endPlot", eventPriority = 7.75)
          },
-         mortalityAndGrowth = {
-           sim <- MortalityAndGrowth(sim)
-           sim <- scheduleEvent(sim, time(sim) + 1, "LBMR", "mortalityAndGrowth",
-                                eventPriority = 5)
-         }, 
-         summaryBGM = {
-           sim <- SummaryBGM(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM",
-                                eventPriority = 6)
-         }, 
          fireDisturbance = {
-             sim <- FireDisturbance(sim)
-             
-             if(!is.null(sim$rstCurrentBurn)) {   
+           sim <- FireDisturbance(sim)
+           
+           if(!is.null(sim$rstCurrentBurn)) {   
              sim <- scheduleEvent(sim, time(sim) + sim$fireTimestep,
                                   "LBMR", "fireDisturbance",
                                   eventPriority = 3)
@@ -211,33 +200,44 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
                                   "LBMR", "Dispersal", eventPriority = 4)
            } else stop("Undefined seed dispersal type!")
          },
+         mortalityAndGrowth = {
+           sim <- MortalityAndGrowth(sim)
+           sim <- scheduleEvent(sim, time(sim) + 1, "LBMR", "mortalityAndGrowth",
+                                eventPriority = 5)
+         },
+         cohortAgeReclassification = {
+           sim <- CohortAgeReclassification(sim)
+           
+           if(P(sim)$successionTimestep != 1) {
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                  "LBMR", "cohortAgeReclassification",
+                                  eventPriority = 5.25)
+           }
+         },
          summaryRegen = {
            sim <- SummaryRegen(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
          },
+         summaryBGM = {
+           sim <- SummaryBGM(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBGM",
+                                eventPriority = 6)
+         }, 
          plot = {
            sim <- plotFn(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "plot", eventPriority = 7)
-         },
-         endPlot = {
-           ## only occurs once at the end of the simulation
-           sim <- statsPlotFn(sim)
          },
          save = {
            sim <- Save(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "save", eventPriority = 7.5)
          }, 
-         cohortAgeReclassification = {
-             sim <- CohortAgeReclassification(sim)
-             
-             if(P(sim)$successionTimestep != 1) {
-             sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "cohortAgeReclassification",
-                                  eventPriority = 5.25)
-             }
+         endPlot = {
+           ## only occurs once at the end of the simulation
+           sim <- statsPlotFn(sim)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
