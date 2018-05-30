@@ -89,25 +89,6 @@ Events are scheduled as follows:
 - Plot
 - Save
 
-## Plotting
-
-Write what is plotted.
-
-## Saving
-
-Write what is saved.
-
-# Data dependencies
-
-## Input data
-
-How to obtain input data, and a description of the data required by the module.
-If `sourceURL` is specified, `downloadData("LBMR", "path/to/modules/dir")` may be sufficient.
-
-## Output data
-
-Description of the module outputs.
-
 # Links to other modules
 
-Describe any anticipated linkages to other modules.
+Intended to be used with the LandWeb suite of modules.
