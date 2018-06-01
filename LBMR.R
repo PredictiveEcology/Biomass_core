@@ -178,8 +178,10 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "plot", eventPriority = 7)
            sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "save", eventPriority = 7.5)
-           sim <- scheduleEvent(sim, end(sim),
-                                "LBMR", "endPlot", eventPriority = 7.75)
+           if (!is.na(P(sim)$.plotInitialTime)) {
+            sim <- scheduleEvent(sim, end(sim),
+                                  "LBMR", "endPlot", eventPriority = 7.75)
+           }
          },
          mortalityAndGrowth = {
            sim <- MortalityAndGrowth(sim)
