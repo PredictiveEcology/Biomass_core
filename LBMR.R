@@ -147,7 +147,7 @@ defineModule(sim, list(
 ))
 
 doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
-  if(is.numeric(sim$useParallel)){
+  if (is.numeric(sim$useParallel)) {
     a <- data.table::setDTthreads(P(sim)$useParallel)
     message("Mortality and Growth should be using >100% CPU")
     on.exit(setDTthreads(a))
@@ -158,7 +158,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- Init(sim)
 
            ## schedule events
-           if(!is.null(sim$rstCurrentBurn)){ # anything related to fire disturbance
+           if (!is.null(sim$rstCurrentBurn)) { # anything related to fire disturbance
              sim <- scheduleEvent(sim, start(sim) + sim$fireInitialTime,
                                   "LBMR", "fireDisturbance", eventPriority = 3)
            }
@@ -166,7 +166,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "Dispersal", eventPriority = 4)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$growthInitialTime,
                                 "LBMR", "mortalityAndGrowth", eventPriority = 5)
-           if(P(sim)$successionTimestep != 1){
+           if (P(sim)$successionTimestep != 1) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
                                   "cohortAgeReclassification", eventPriority = 5.25)
            }
@@ -195,22 +195,22 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
          fireDisturbance = {
              sim <- FireDisturbance(sim)
 
-             if(!is.null(sim$rstCurrentBurn)) {
+             if (!is.null(sim$rstCurrentBurn)) {
              sim <- scheduleEvent(sim, time(sim) + sim$fireTimestep,
                                   "LBMR", "fireDisturbance",
                                   eventPriority = 3)
            }
          },
          Dispersal = {
-           if(P(sim)$seedingAlgorithm=="noDispersal"){
+           if (P(sim)$seedingAlgorithm=="noDispersal") {
              sim <- NoDispersalSeeding(sim)
              sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                   "LBMR", "Dispersal", eventPriority = 4)
-           } else if(P(sim)$seedingAlgorithm == "universalDispersal"){
+           } else if(P(sim)$seedingAlgorithm == "universalDispersal") {
              sim <- UniversalDispersalSeeding(sim)
              sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                   "LBMR", "Dispersal", eventPriority = 4)
-           } else if(P(sim)$seedingAlgorithm == "wardDispersal"){
+           } else if(P(sim)$seedingAlgorithm == "wardDispersal") {
              sim <- WardDispersalSeeding(sim)
              sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                   "LBMR", "Dispersal", eventPriority = 4)
@@ -238,7 +238,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
          cohortAgeReclassification = {
              sim <- CohortAgeReclassification(sim)
 
-             if(P(sim)$successionTimestep != 1) {
+             if (P(sim)$successionTimestep != 1) {
              sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                   "LBMR", "cohortAgeReclassification",
                                   eventPriority = 5.25)
@@ -295,14 +295,14 @@ Init <- function(sim) {
   cohortData <- cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)[activePixelIndex]),]
   rm(nrowCommunities, pixelGroupFactor)
   # pixels with -1 in the pixelGroupMap are inactive
-  if(length(inactivePixelIndex) > 0){
+  if (length(inactivePixelIndex) > 0) {
     pixelGroupMap[inactivePixelIndex] <- -1L
   }
   cohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
                                                  time = round(time(sim)), cohortData = cohortData)
   cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
 
-  if(is.null(sim$calibrate)){
+  if (is.null(sim$calibrate)) {
     sim$calibrate <- FALSE
   }
   #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
@@ -316,10 +316,10 @@ Init <- function(sim) {
   #                                spinupMortalityfraction = P(sim)$spinupMortalityfraction,
   #                                species = sim$species, userTags = "stable")
   cohortData <- spinupstage$cohortData
-  if(sim$calibrate){
+  if (sim$calibrate) {
     sim$spinupOutput <- spinupstage$spinupOutput
   }
-  if(sim$calibrate){
+  if (sim$calibrate) {
     sim$simulationTreeOutput <- data.table(Year = numeric(), siteBiomass = numeric(), Species = character(),
                                            Age = numeric(), iniBiomass = numeric(), ANPP = numeric(),
                                            Mortality = numeric(), deltaB = numeric(), finBiomass = numeric())
@@ -328,7 +328,7 @@ Init <- function(sim) {
   }
   names(pixelGroupMap) <- "pixelGroup"
   pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE))), by=pixelGroup]
-  if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
+  if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
     #ANPPMap <- setValues(biomassMap, 0L)
     #mortalityMap <- setValues(biomassMap, 0L)
@@ -364,7 +364,7 @@ Init <- function(sim) {
 
 # cacheSpinUpFunction <- function(sim, cachePath) {
 #   # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
-#   if(P(sim)$useCache) {
+#   if (P(sim)$useCache) {
 #     sim$spinUpCache <- function(...) {
 #       reproducible::Cache(FUN = spinUp, ...)
 #     }
@@ -376,18 +376,18 @@ Init <- function(sim) {
 #   return(invisible(sim))
 # }
 
-spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species){
+spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species) {
   maxAge <- max(cohortData$age) # determine the pre-simulation length
   set(cohortData, ,"origAge", cohortData$age)
   set(cohortData, ,c("age","sumB"), as.integer(0L))
   set(cohortData, ,c("mortality","aNPPAct"), as.numeric(0))
-  if(calibrate){
+  if (calibrate) {
     spinupOutput <- data.table(pixelGroup = integer(), species = character(), age = integer(),
                                iniBiomass = integer(), ANPP = numeric(), Mortality=numeric(),
                                finBiomass = integer())
   }
   k <- 0
-  if(successionTimestep == 1 & maxAge!=1){
+  if (successionTimestep == 1 & maxAge!=1) {
     presimuT_end <- 2
   } else {
     presimuT_end <- 1
@@ -399,20 +399,20 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     cohortData[origAge == presimuT,     age:=1L]
     cohortData[origAge >= presimuT,     age:=age+1L]
 
-    if(successionTimestep !=1 &
-       as.integer(k/successionTimestep) == k/successionTimestep){
+    if (successionTimestep !=1 &
+       as.integer(k/successionTimestep) == k/successionTimestep) {
       cohortData <- ageReclassification(cohortData = cohortData, successionTimestep = successionTimestep,
                                         stage = "spinup")
     }
     # 1. assign the biomass for the first cohort
-    if(nrow(cohortData[age == 2,])>0){
+    if (nrow(cohortData[age == 2,])>0) {
       lastReg <- k-1
       cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                   successionTimestep = successionTimestep)
       cohortData[age == 2, B:=as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
       cohortData[age == 2, B:=as.integer(pmin(maxANPP, B))]
     }
-    if(maxAge!=1){
+    if (maxAge!=1) {
       # 2. calculate age-related mortality
       cohortData <- calculateAgeMortality(cohortData, stage="spinup",
                                           spinupMortalityfraction = spinupMortalityfraction)
@@ -432,8 +432,8 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
       cohortData[age > 0, B:=as.integer(B + as.integer(aNPPAct - mortality))]
       set(cohortData, ,c("bPM", "mBio"), NULL)
     }
-    if(calibrate){
-      if(maxAge != 1){
+    if (calibrate) {
+      if (maxAge != 1) {
         spoutput <- cohortData[origAge >= presimuT, .(pixelGroup, speciesCode, age,
                                                       iniBiomass = B + as.integer(mortality - aNPPAct),
                                                       ANPP = round(aNPPAct, 1),
@@ -462,7 +462,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
       }
     }
     lastnewcohorts <- which(cohortData$origAge == 1)
-    if(presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1){
+    if (presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1) {
       cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                   successionTimestep = successionTimestep)
       cohortData[origAge == 1,B:=as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
@@ -470,7 +470,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     }
   }
   cohortData[,':='(age = origAge, origAge = NULL)]
-  if(calibrate){
+  if (calibrate) {
     all <- list(cohortData = cohortData, spinupOutput = spinupOutput)
   } else {
     all <- list(cohortData = cohortData)
@@ -480,7 +480,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
 ### template for your event1
 MortalityAndGrowth = function(sim) {
 
-  if(is.numeric(sim$useParallel)){
+  if (is.numeric(sim$useParallel)) {
     data.table::setDTthreads(P(sim)$useParallel)
     message("Mortality and Growth should be using >100% CPU")
   }
@@ -494,12 +494,12 @@ MortalityAndGrowth = function(sim) {
                             temID = 1:length(unique(cohortData$pixelGroup)))
   cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = sim$cutpoint), max(pixelGroups$temID))))
   #cutpoints <- c(1,max(pixelGroups$temID))
-  if(length(cutpoints) == 1){cutpoints <- c(cutpoints, cutpoints+1)}
+  if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups:=cut(temID, breaks = cutpoints,
                             labels = paste("Group", 1:(length(cutpoints)-1),
                                            sep = ""),
                             include.lowest = T)]
-  for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")){
+  for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")) {
     subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
     #   cohortData <- sim$cohortData
     set(subCohortData, ,"age", subCohortData$age + 1)
@@ -507,7 +507,7 @@ MortalityAndGrowth = function(sim) {
                                                       time = round(time(sim)), cohortData = subCohortData)
     subCohortData <- updateSpeciesAttributes(species = sim$species, cohortData = subCohortData)
 
-    #   if(as.integer(time(sim)/P(sim)$successionTimestep) == time(sim)/P(sim)$successionTimestep){
+    #   if (as.integer(time(sim)/P(sim)$successionTimestep) == time(sim)/P(sim)$successionTimestep) {
     #     cohortData <-
     #     cohortData <- cohortData[,.(pixelGroup, ecoregionGroup, species, speciesCode, age,
     #                                 B, maxANPP, maxB,  establishprob, maxB_eco,longevity, mortalityshape,
@@ -525,7 +525,7 @@ MortalityAndGrowth = function(sim) {
     set(subCohortData, , c("longevity", "mortalityshape"), NULL)
     subCohortData <- calculateCompetition(cohortData = subCohortData,
                                           stage = "mainsimulation")
-    if(!sim$calibrate){
+    if (!sim$calibrate) {
       set(subCohortData, , "sumB", NULL)
     }
     #### the below two lines of codes are to calculate actual ANPP
@@ -545,7 +545,7 @@ MortalityAndGrowth = function(sim) {
     set(subCohortData, ,c("mBio", "mAge", "maxANPP",
                           "maxB", "maxB_eco", "bAP", "bPM"),
         NULL)
-    if(sim$calibrate){
+    if (sim$calibrate) {
       set(subCohortData, ,"deltaB",
           as.integer(subCohortData$aNPPAct - subCohortData$mortality))
       set(subCohortData, ,"B",
@@ -577,7 +577,7 @@ SummaryBGM = function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup),
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
   cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = sim$cutpoint), max(pixelGroups$temID))))
-  if(length(cutpoints) == 1){cutpoints <- c(cutpoints, cutpoints+1)}
+  if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups:=cut(temID, breaks = cutpoints,
                             labels = paste("Group", 1:(length(cutpoints)-1),
                                            sep = ""),
@@ -588,9 +588,9 @@ SummaryBGM = function(sim) {
                                 ,.(NofPixelGroup = length(pixelIndex)),
                                 by = c("Ecoregion", "pixelGroup")]
 
-  for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")){
+  for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")) {
     subCohortData <- sim$cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
-    if(nrow(subCohortData[age == (successionTimestep+1),])>0){
+    if (nrow(subCohortData[age == (successionTimestep+1),])>0) {
       subCohortData[age == (successionTimestep+1),reproduction:=sum(B), by = pixelGroup]
     } else {
       subCohortData[, reproduction:=0]
@@ -604,7 +604,7 @@ SummaryBGM = function(sim) {
     tempOutput <- setkey(ecoPixelgroup[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ],
                          pixelGroup)[setkey(summarytable_sub, pixelGroup), nomatch = 0]
 
-    if(subgroup == "Group1"){
+    if (subgroup == "Group1") {
       summaryBGMtable <- summarytable_sub
       tempOutput_All <- tempOutput
     } else {
@@ -628,7 +628,7 @@ SummaryBGM = function(sim) {
                                                            Regeneration = as.integer(Regeneration/NofCell))]))
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively.
   names(sim$pixelGroupMap) <- "pixelGroup"
-  if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
+  if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                        "uniqueSumB")
     setColors(sim$biomassMap) <- c("light green", "dark green")
@@ -653,20 +653,20 @@ FireDisturbance = function(sim) {
   # to a logical map
   postFireReproData <- data.table(pixelGroup = integer(), ecoregionGroup = numeric(),
                                   speciesCode = numeric(), pixelIndex = numeric())
-  if(sim$calibrate){
+  if (sim$calibrate) {
     sim$postFireRegenSummary <- data.table(year = numeric(),
                                            regenMode = character(),
                                            species = character(),
                                            numberOfRegen = numeric())
   }
 
-  if(!is.null(sim$rstCurrentBurn)){ # anything related to fire disturbance
-    if(extent(sim$rstCurrentBurn) != extent(sim$pixelGroupMap)){
+  if (!is.null(sim$rstCurrentBurn)) { # anything related to fire disturbance
+    if (extent(sim$rstCurrentBurn) != extent(sim$pixelGroupMap)) {
       sim$rstCurrentBurn <- raster::crop(sim$rstCurrentBurn, extent(sim$pixelGroupMap))
     }
   }
   sim$burnLoci <- which(sim$rstCurrentBurn[] == 1)
-  if(length(sim$inactivePixelIndex) > 0){
+  if (length(sim$inactivePixelIndex) > 0) {
     sim$burnLoci <- sim$burnLoci[!(sim$burnLoci %in% sim$inactivePixelIndex)] # this is to prevent avaluating the pixels that are inactive
   }
   firePixelTable <- data.table(cbind(pixelIndex = sim$burnLoci,
@@ -682,10 +682,10 @@ FireDisturbance = function(sim) {
   serotinyAssessCohortData <- burnedcohortData[tempspecies, nomatch = 0][, postfireregen := NULL]
 
   rm(tempspecies)
-  if(NROW(serotinyAssessCohortData) > 0){
+  if (NROW(serotinyAssessCohortData) > 0) {
     # assess potential serotiny reg
-    serotinyAssessCohortData <- setkey(serotinyAssessCohortData, speciesCode)[sim$species[,.(speciesCode, sexualmature)],
-                                                                              nomatch = 0]
+    serotinyAssessCohortData <- setkey(serotinyAssessCohortData, speciesCode)[
+      sim$species[, .(speciesCode, sexualmature)], nomatch = 0]
     newCohortData <- serotinyAssessCohortData[age >= sexualmature] %>% # NOTE should be in mortalityFromDisturbance module or event
       unique(., by = c("pixelGroup", "speciesCode"))
     set(newCohortData, ,"sexualmature", NULL)
@@ -701,7 +701,6 @@ FireDisturbance = function(sim) {
     # light check
     newCohortData <- setkey(newCohortData, speciesCode)[sim$species[,.(speciesCode, shadetolerance)],
                                                         nomatch = 0][,siteShade := 0]
-    browser()
     newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight,
                                      newCohortData)
     newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0, 1),]
@@ -712,9 +711,9 @@ FireDisturbance = function(sim) {
     newCohortData <- setkey(newCohortData, ecoregionGroup, speciesCode)[specieseco_current, nomatch = 0]
     newCohortData <- newCohortData[(runif(nrow(newCohortData), 0, 1)) %<<% establishprob][, establishprob := NULL]
     newCohortData <- unique(newCohortData, by = c("pixelIndex", "speciesCode"))
-    if(NROW(newCohortData) > 0) {
+    if (NROW(newCohortData) > 0) {
       newCohortData <- newCohortData[,.(pixelGroup, ecoregionGroup, speciesCode, pixelIndex)] #
-      if(sim$calibrate){
+      if (sim$calibrate) {
         serotinyRegenSummary <- newCohortData[,.(numberOfRegen = length(pixelIndex)), by = speciesCode]
         serotinyRegenSummary <- serotinyRegenSummary[,.(year = time(sim), regenMode = "Serotiny",
                                                         speciesCode, numberOfRegen)]
@@ -740,7 +739,7 @@ FireDisturbance = function(sim) {
   # from now on, starting assessing resprouting reproduction:
   # basically same thing as serotiny
   # remove the pixels that had successful serotiny regeneration
-  if(is.null(serotinyPixel)){
+  if (is.null(serotinyPixel)) {
     resproutingPixelTable <- setkey(firePixelTable, pixelGroup)
   } else {
     resproutingPixelTable <- setkey(data.table(dplyr::anti_join(firePixelTable,
@@ -755,7 +754,7 @@ FireDisturbance = function(sim) {
   resproutingAssessCohortData <- burnedcohortData[species_temp, nomatch = 0][age >= resproutage_min & age <= resproutage_max]
   set(resproutingAssessCohortData, ,c("resproutage_min", "resproutage_max", "postfireregen", "age"), NULL)
   rm(species_temp)
-  if(NROW(resproutingAssessCohortData) > 0){
+  if (NROW(resproutingAssessCohortData) > 0) {
     resproutingAssessCohortData <- unique(resproutingAssessCohortData, by = c("pixelGroup", "speciesCode"))
     setkey(resproutingAssessCohortData, pixelGroup)
     newCohortData <- resproutingPixelTable[resproutingAssessCohortData, nomatch = 0, allow.cartesian = TRUE]
@@ -770,9 +769,9 @@ FireDisturbance = function(sim) {
     newCohortData <- unique(newCohortData, by = c("pixelIndex", "speciesCode"))
     set(newCohortData, ,c("resproutprob", "shadetolerance", "siteShade", "lightProb"), NULL)
     # remove all columns that were used temporarily here
-    if(NROW(newCohortData) > 0) {
+    if (NROW(newCohortData) > 0) {
       newCohortData <- newCohortData[,.(pixelGroup, ecoregionGroup, speciesCode, pixelIndex)]#
-      if(sim$calibrate){
+      if (sim$calibrate) {
         resproutRegenSummary <- newCohortData[,.(numberOfRegen = length(pixelIndex)), by = speciesCode]
         resproutRegenSummary <- resproutRegenSummary[,.(year = time(sim), regenMode = "Resprout",
                                                         speciesCode, numberOfRegen)]
@@ -794,9 +793,9 @@ FireDisturbance = function(sim) {
     postFireReproData <- postFireReproData
     sim$postFirePixel <- serotinyPixel
   }
-  if(NROW(postFireReproData) > 0) {
+  if (NROW(postFireReproData) > 0) {
     maxPixelGroup <- as.integer(maxValue(sim$pixelGroupMap))
-    if(!is.null(sim$postFirePixel)){
+    if (!is.null(sim$postFirePixel)) {
       sim$pixelGroupMap[sim$postFirePixel] <- maxPixelGroup +
         as.integer(as.factor(sim$ecoregionMap[sim$postFirePixel]))
       postFireReproData[, pixelGroup := maxPixelGroup +
@@ -815,7 +814,8 @@ FireDisturbance = function(sim) {
 
 NoDispersalSeeding = function(sim) {
   pixelGroupMap <- sim$pixelGroupMap
-  if(sim$lastFireYear == round(time(sim))){ # if current year is both fire year and succession year
+  if (sim$lastFireYear == round(time(sim))) {
+    # if current year is both fire year and succession year
     # find new active pixel that remove successful postfire regeneration
     # since this is on site regeneration, all the burnt pixels can not seeding
     tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$firePixelTable$pixelIndex)]
@@ -833,8 +833,8 @@ NoDispersalSeeding = function(sim) {
   set(newCohortData, ,c("sexualmature", "age", "B", "mortality", "aNPPAct"), NULL)
   siteShade <- setkey(data.table(calcSiteShade(time = round(time(sim)), sim$cohortData,
                                                sim$speciesEcoregion, sim$minRelativeB)), pixelGroup)
-  newCohortData <- setkey(newCohortData, pixelGroup)[siteShade, nomatch=0]
-  newCohortData <- setkey(newCohortData, speciesCode)[setkey(sim$species[,.(speciesCode, shadetolerance)],
+  newCohortData <- setkey(newCohortData, pixelGroup)[siteShade, nomatch = 0]
+  newCohortData <- setkey(newCohortData, speciesCode)[setkey(sim$species[, .(speciesCode, shadetolerance)],
                                                              speciesCode),
                                                       nomatch = 0]
   newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight, newCohortData)
@@ -854,7 +854,7 @@ NoDispersalSeeding = function(sim) {
   newCohortData <- newCohortData[specieseco_current, nomatch = 0]
   newCohortData <- newCohortData[establishprob %>>% runif(nrow(newCohortData), 0, 1),]
   set(newCohortData, ,c("establishprob"), NULL)
-  if(sim$calibrate == TRUE & NROW(newCohortData) > 0){
+  if (sim$calibrate == TRUE & NROW(newCohortData) > 0) {
     newCohortData_summ <- newCohortData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
@@ -863,7 +863,7 @@ NoDispersalSeeding = function(sim) {
                                                                                   Year, numberOfReg)]
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
-  if(NROW(newCohortData) > 0) {
+  if (NROW(newCohortData) > 0) {
     addnewcohort <- addNewCohorts(newCohortData, sim$cohortData, pixelGroupMap,
                                   time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
     sim$cohortData <- addnewcohort$cohortData
@@ -876,10 +876,11 @@ NoDispersalSeeding = function(sim) {
 UniversalDispersalSeeding = function(sim) {
   pixelGroupMap <- sim$pixelGroupMap
   fire_nonRegPixels <- which(getValues(pixelGroupMap) == 0)
-  if(length(fire_nonRegPixels) > 0){
+  if (length(fire_nonRegPixels) > 0) {
     pixelGroupMap[fire_nonRegPixels] <- as.integer(as.factor(getValues(sim$ecoregionMap)[fire_nonRegPixels])) + maxValue(pixelGroupMap)
   }
-  if(sim$lastFireYear == round(time(sim))){ # the current year is both fire year and succession year
+  if (sim$lastFireYear == round(time(sim))) {
+    # the current year is both fire year and succession year
     tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
   } else {
     tempActivePixel <- sim$activePixelIndex
@@ -922,7 +923,7 @@ UniversalDispersalSeeding = function(sim) {
 
   newCohortData <- newCohortData[establishprob %>>% runif(nrow(newCohortData), 0, 1),]
   set(newCohortData, ,"establishprob", NULL)
-  if(sim$calibrate == TRUE){
+  if (sim$calibrate == TRUE) {
     newCohortData_summ <- newCohortData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
@@ -931,7 +932,7 @@ UniversalDispersalSeeding = function(sim) {
                                                                                   Year, numberOfReg)]
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
-  if(NROW(newCohortData)>0) {
+  if (NROW(newCohortData)>0) {
     addnewcohort <- addNewCohorts(newCohortData, sim$cohortData, pixelGroupMap,
                                   time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
     sim$cohortData <- addnewcohort$cohortData
@@ -945,10 +946,10 @@ WardDispersalSeeding = function(sim) {
   #   cohortData <- sim$cohortData
   pixelGroupMap <- sim$pixelGroupMap
   fire_nonRegPixels <- which(getValues(pixelGroupMap) == 0)
-  if(length(fire_nonRegPixels) > 0){
+  if (length(fire_nonRegPixels) > 0) {
     pixelGroupMap[fire_nonRegPixels] <- as.integer(as.factor(getValues(sim$ecoregionMap)[fire_nonRegPixels])) + max(sim$cohortData$pixelGroup)
   }
-  if(sim$lastFireYear == round(time(sim))){ # the current year is both fire year and succession year
+  if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
     tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
   } else {
     tempActivePixel <- sim$activePixelIndex
@@ -972,7 +973,7 @@ WardDispersalSeeding = function(sim) {
   matureCohorts <- matureCohorts[,.(pixelGroup, speciesCode)]
   set(sim$cohortData, ,"sexualmature", NULL)
 
-  if(NROW(matureCohorts)>0){
+  if (NROW(matureCohorts)>0) {
     seedSource <- setkey(sim$species[,list(speciesCode, seeddistance_eff, seeddistance_max)], speciesCode) %>%
       .[matureCohorts]
     setkey(seedSource, speciesCode)
@@ -1001,12 +1002,12 @@ WardDispersalSeeding = function(sim) {
     # it could be more effecient if pixelGroupMap is reduced map by removing the pixels that have successful postdisturbance regeneration
     # and the inactive pixels
     # how to subset the reducedmap
-    if(sim$lastFireYear == round(time(sim))){ # the current year is both fire year and succession year
+    if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
       inactivePixelIndex <- c(sim$inactivePixelIndex, sim$postFirePixel)
     } else {
       inactivePixelIndex <- sim$inactivePixelIndex
     }
-    if(length(inactivePixelIndex) > 0){
+    if (length(inactivePixelIndex) > 0) {
       reducedPixelGroupMap <- pixelGroupMap
       reducedPixelGroupMap[inactivePixelIndex] <- NA
     } else {
@@ -1023,7 +1024,7 @@ WardDispersalSeeding = function(sim) {
     # verbose = globals(sim)$verbose)
 
     rm(seedReceive, seedSource)
-    if(NROW(seedingData) > 0) {
+    if (NROW(seedingData) > 0) {
       seedingData$ecoregionGroup <- getValues(sim$ecoregionMap)[seedingData$pixelIndex]
       seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
       specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
@@ -1034,7 +1035,7 @@ WardDispersalSeeding = function(sim) {
 
       seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
       set(seedingData, ,"establishprob", NULL)
-      if(sim$calibrate == TRUE){
+      if (sim$calibrate == TRUE) {
         seedingData_summ <- seedingData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
@@ -1043,7 +1044,7 @@ WardDispersalSeeding = function(sim) {
                                                                                   Year, numberOfReg)]
         sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, seedingData_summ))
       }
-      if(nrow(seedingData)>0){
+      if (nrow(seedingData)>0) {
         addnewcohort <- addNewCohorts(seedingData, cohortData = sim$cohortData, pixelGroupMap,
                                       time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
         sim$cohortData <- addnewcohort$cohortData
@@ -1055,16 +1056,16 @@ WardDispersalSeeding = function(sim) {
   return(invisible(sim))
 }
 
-SummaryRegen = function(sim){
+SummaryRegen = function(sim) {
   #cohortData <- sim$cohortData
-  if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
+  if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     pixelGroupMap <- sim$pixelGroupMap
     names(pixelGroupMap) <- "pixelGroup"
     # please note that the calculation of reproduction is based on successioinTime step interval,
     pixelAll <- sim$cohortData[age <= P(sim)$successionTimestep+1,
                                .(uniqueSumReproduction = as.integer(sum(B, na.rm=TRUE))),
                                by = pixelGroup]
-    if(NROW(pixelAll)>0){
+    if (NROW(pixelAll)>0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
       setColors(reproductionMap) <- c("light green", "dark green")
     } else {
@@ -1079,7 +1080,7 @@ SummaryRegen = function(sim){
 }
 
 plotFn <- function(sim) {
-  if(time(sim) == P(sim)$successionTimestep){
+  if (time(sim) == P(sim)$successionTimestep) {
     #dev(4)
     clearPlot()
   }
@@ -1137,7 +1138,7 @@ Save = function(sim) {
 }
 
 CohortAgeReclassification = function(sim) {
-  if(time(sim) != 0){
+  if (time(sim) != 0) {
     #cohortData <- sim$cohortData
     sim$cohortData <- ageReclassification(cohortData = sim$cohortData, successionTimestep = successionTimestep,
                                           stage = "mainSimulation")
@@ -1149,7 +1150,7 @@ CohortAgeReclassification = function(sim) {
 
 }
 
-updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData){
+updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData) {
   # the following codes were for updating cohortdata using speciesecoregion data at current simulation year
   # to assign maxB, maxANPP and maxB_eco to cohortData
   specieseco_current <- speciesEcoregion[year <= time]
@@ -1163,7 +1164,7 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData)
   return(cohortData)
 }
 
-updateSpeciesAttributes <- function(species, cohortData){
+updateSpeciesAttributes <- function(species, cohortData) {
   # to assign longevity, mortalityshape, growthcurve to cohortData
   species_temp <- setkey(species[,.(speciesCode, longevity, mortalityshape,
                                     growthcurve)], speciesCode)
@@ -1172,8 +1173,8 @@ updateSpeciesAttributes <- function(species, cohortData){
   return(cohortData)
 }
 
-ageReclassification <- function(cohortData, successionTimestep, stage){
-  if(stage == "spinup"){
+ageReclassification <- function(cohortData, successionTimestep, stage) {
+  if (stage == "spinup") {
     # for spin up stage
     cohortData[age == successionTimestep+1, age:=successionTimestep]
   } else {
@@ -1193,9 +1194,9 @@ ageReclassification <- function(cohortData, successionTimestep, stage){
   return(cohortData)
 }
 
-calculateAgeMortality <- function(cohortData, stage, spinupMortalityfraction){
+calculateAgeMortality <- function(cohortData, stage, spinupMortalityfraction) {
   # for age-related mortality calculation
-  if(stage == "spinup"){
+  if (stage == "spinup") {
     cohortData[age > 0, mAge:=B*(exp((age)/longevity*mortalityshape)/exp(mortalityshape))]
     cohortData[age > 0, mAge:=mAge+B*spinupMortalityfraction]
     cohortData[age > 0, mAge:=pmin(B,mAge)]
@@ -1208,8 +1209,8 @@ calculateAgeMortality <- function(cohortData, stage, spinupMortalityfraction){
   return(cohortData)
 }
 
-calculateANPP <- function(cohortData,stage){
-  if(stage=="spinup"){
+calculateANPP <- function(cohortData,stage) {
+  if (stage=="spinup") {
     cohortData[age>0,aNPPAct:=maxANPP*exp(1)*(bAP^growthcurve)*exp(-(bAP^growthcurve))*bPM]
     cohortData[age>0,aNPPAct:=pmin(maxANPP*bPM,aNPPAct)]
   } else {
@@ -1221,8 +1222,8 @@ calculateANPP <- function(cohortData,stage){
   return(cohortData)
 }
 
-calculateGrowthMortality <- function(cohortData, stage){
-  if(stage == "spinup"){
+calculateGrowthMortality <- function(cohortData, stage) {
+  if (stage == "spinup") {
     cohortData[age > 0 & bAP %>>% 1.0, mBio := maxANPP*bPM]
     cohortData[age > 0 & bAP %<=% 1.0, mBio := maxANPP*(2*bAP)/(1+bAP)*bPM]
     cohortData[age > 0, mBio := pmin(B, mBio)]
@@ -1238,22 +1239,22 @@ calculateGrowthMortality <- function(cohortData, stage){
   return(cohortData)
 }
 
-calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep){
+calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
   # this function is used to calculate total stand biomass that does not include the new cohorts
   # the new cohorts are defined as the age younger than simulation time step
   # reset sumB
   pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
                             temID = 1:length(unique(cohortData$pixelGroup)))
   cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 10^4), max(pixelGroups$temID))))
-  if(length(cutpoints) == 1){cutpoints <- c(cutpoints, cutpoints+1)}
+  if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups:=cut(temID, breaks = cutpoints,
                             labels = paste("Group", 1:(length(cutpoints)-1),
                                            sep = ""),
                             include.lowest = T)]
-  for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")){
+  for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")) {
     subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
     set(subCohortData, ,"sumB", 0L)
-    if(simuTime == lastReg + successionTimestep - 2){
+    if (simuTime == lastReg + successionTimestep - 2) {
       sumBtable <- subCohortData[age > successionTimestep,
                                  .(tempsumB = as.integer(sum(B, na.rm=TRUE))), by = pixelGroup]
     } else {
@@ -1262,7 +1263,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep){
     }
     subCohortData <- merge(subCohortData, sumBtable, by = "pixelGroup", all.x = TRUE)
     subCohortData[is.na(tempsumB), tempsumB:=as.integer(0L)][,':='(sumB = tempsumB, tempsumB = NULL)]
-    if(subgroup == "Group1"){
+    if (subgroup == "Group1") {
       newcohortData <- subCohortData
     } else {
       newcohortData <- rbindlist(list(newcohortData, subCohortData))
@@ -1274,9 +1275,9 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep){
 }
 
 
-calculateCompetition <- function(cohortData,stage){
+calculateCompetition <- function(cohortData,stage) {
   # two competition indics are calculated bAP and bPM
-  if(stage=="spinup"){
+  if (stage=="spinup") {
     cohortData[age > 0, bPot := pmax(1, maxB - sumB + B)]
     cohortData[age > 0, bAP := B/bPot]
     set(cohortData, , "bPot", NULL)
@@ -1299,7 +1300,7 @@ calculateCompetition <- function(cohortData,stage){
 calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   # the siteshade was calculated based on the codes:
   # https://github.com/LANDIS-II-Foundation/Extensions-Succession/blob/master/biomass-succession/trunk/src/PlugIn.cs
-  if(nrow(cohortData[age > 5,]) > 0){
+  if (nrow(cohortData[age > 5,]) > 0) {
     bAMterm1 <- cohortData [age > 5, ':='(prevMortality = sum(mortality, na.rm = TRUE),
                                           sumB = sum(B, na.rm = TRUE)),
                             by = .(pixelGroup, ecoregionGroup)]
@@ -1331,11 +1332,11 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   return(bAMterm1)
 }
 
-assignLightProb <- function(sufficientLight, newCohortData){
+assignLightProb <- function(sufficientLight, newCohortData) {
   newCohortData[ , lightProb := sufficientLight[cbind(shadetolerance, siteShade + 2)]]
 }
 
-addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, speciesEcoregion){
+addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, speciesEcoregion) {
   # this function is for 1) adding new cohort data into cohortdata
   # 2) assign initial biomass and age for new cohort
   # 3) assign the new pixelgroup to the pixels that have new cohort
@@ -1352,7 +1353,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   set(newCohortData, , c("temppixelGroup", "speciesposition"), NULL)
   set(newCohortDataExtra, , "community",
       as.integer(as.factor(newCohortDataExtra$community)))
-  if(max(newCohortDataExtra$community) > max(newCohortDataExtra$temppixelGroup)){
+  if (max(newCohortDataExtra$community) > max(newCohortDataExtra$temppixelGroup)) {
     set(newCohortDataExtra, ,  "community",
         newCohortDataExtra$community + max(newCohortDataExtra$community)*newCohortDataExtra$temppixelGroup)
   } else {
@@ -1445,7 +1446,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                                            description = NA), initialCommunities)
     initialCommunities <- initialCommunities[species != "LandisData",]
     cutRows <- grep(">>", initialCommunities$species)
-    for(i in cutRows){
+    for(i in cutRows) {
       initialCommunities[i,
                          desc:=paste(initialCommunities[i, 3:maxcol, with = FALSE],
                                      collapse = " ")]
@@ -1650,4 +1651,3 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   return(invisible(sim))
 }
 ### add additional events as needed by copy/pasting from above
-
