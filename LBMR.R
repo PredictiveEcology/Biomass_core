@@ -179,7 +179,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "save", eventPriority = 7.5)
            if (!is.na(P(sim)$.plotInitialTime)) {
-            sim <- scheduleEvent(sim, end(sim),
+             sim <- scheduleEvent(sim, end(sim),
                                   "LBMR", "endPlot", eventPriority = 7.75)
            }
          },
