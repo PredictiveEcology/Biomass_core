@@ -75,10 +75,10 @@ defineModule(sim, list(
                  desc = "The number of time units between successive fire events in a fire module",
                  sourceURL = "NA"),
     expectsInput("spinupMortalityfraction", "numeric", ""),
-    expectsInput("seedingAlgorithm", "character", ""), 
-    #expectsInput("useCache", "logical", ""), 
-    expectsInput("cellSize", "numeric", ""), 
-    expectsInput("calibrate", "logical", ""), 
+    expectsInput("seedingAlgorithm", "character", ""),
+    #expectsInput("useCache", "logical", ""),
+    expectsInput("cellSize", "numeric", ""),
+    expectsInput("calibrate", "logical", ""),
     expectsInput("useParallel", "logical", ""),
     expectsInput("rstCurrentBurn", "RasterLayer", ""),
     expectsInput("burnLoci", "numeric", ""),
@@ -132,10 +132,10 @@ defineModule(sim, list(
                   desc = "an internal counter keeping track of when the last regeneration event occurred"),
     createsOutput(objectName = "initialCommunitiesMap", objectClass = "RasterLayer",
                  desc = "initial community map that has mapcodes match initial community table"),
-    createsOutput("calibrate", "logical", ""), 
-    createsOutput("rstCurrentBurn", "RasterLayer", ""), 
-    createsOutput("burnLoci", "numeric", ""), 
-    createsOutput("postFireRegenSummary", "data.table", ""), 
+    createsOutput("calibrate", "logical", ""),
+    createsOutput("rstCurrentBurn", "RasterLayer", ""),
+    createsOutput("burnLoci", "numeric", ""),
+    createsOutput("postFireRegenSummary", "data.table", ""),
     createsOutput("postFirePixel", "numeric", ""),
     createsOutput("spinUpCache", "logical", ""),
     createsOutput("firePixelTable", "data.table", ""),
@@ -147,8 +147,8 @@ defineModule(sim, list(
 ))
 
 doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
-  if(is.numeric(sim$useParallel)){ 
-    a <- data.table::setDTthreads(P(sim)$useParallel) 
+  if(is.numeric(sim$useParallel)){
+    a <- data.table::setDTthreads(P(sim)$useParallel)
     message("Mortality and Growth should be using >100% CPU")
     on.exit(setDTthreads(a))
   }
@@ -470,12 +470,12 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
 }
 ### template for your event1
 MortalityAndGrowth = function(sim) {
-  
-  if(is.numeric(sim$useParallel)){ 
-    data.table::setDTthreads(P(sim)$useParallel) 
+
+  if(is.numeric(sim$useParallel)){
+    data.table::setDTthreads(P(sim)$useParallel)
     message("Mortality and Growth should be using >100% CPU")
   }
-  
+
   sim$cohortData <- sim$cohortData[,.(pixelGroup, ecoregionGroup,
                                       speciesCode, age, B, mortality,
                                       aNPPAct)]
@@ -1391,13 +1391,13 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
 .inputObjects = function(sim) {
   dataPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
-  
+
   if (!suppliedElsewhere("initialCommunities", sim)) {
     maxcol <- 7 #max(count.fields(file.path(dataPath, "initial-communities.txt"), sep = ""))
-    initialCommunities <- Cache(prepInputs, targetFile = "initial-communities.txt", 
-                                destinationPath = dataPath, 
-                                fun = "read.table", 
-                                pkg = "utils", quickCheck = TRUE, 
+    initialCommunities <- Cache(prepInputs, targetFile = "initial-communities.txt",
+                                destinationPath = dataPath,
+                                fun = "read.table",
+                                pkg = "utils", quickCheck = TRUE,
                                 fill = TRUE, row.names = NULL,
                                 sep = "",
                                 blank.lines.skip = TRUE,
@@ -1405,14 +1405,14 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                                 stringsAsFactors = FALSE)
     # correct the typo in the original txt
     initialCommunities[14,1:4] <- initialCommunities[14,2:5]
-    
+
     initialCommunities <- data.table(initialCommunities)
     initialCommunities <- cbind(data.table(mapcode = 1:nrow(initialCommunities),
                                            description = NA), initialCommunities)
     initialCommunities <- initialCommunities[species != "LandisData",]
     cutRows <- grep(">>", initialCommunities$species)
     for(i in cutRows){
-      initialCommunities[i, 
+      initialCommunities[i,
                          desc:=paste(initialCommunities[i, 3:maxcol, with = FALSE],
                                      collapse = " ")]
     }
@@ -1422,56 +1422,56 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                               description = cut(rowN, breaks = c(cutRows, max(rowN)),
                                                 labels = initialCommunities[cutRows,]$desc))]
     initialCommunities <- initialCommunities[!c(cutRows, cutRows+1),][,':='(desc = NULL, rowN = NULL)]
-    initialCommunities[, ':='(description = gsub(">>", "", description), 
+    initialCommunities[, ':='(description = gsub(">>", "", description),
                               mapcode = as.integer(as.character(mapcode)))]
-    
+
     sim$initialCommunities <- data.table(initialCommunities[,1:3, with=FALSE],
                                          initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
     rm(cutRows, i, maxcol)
   }
-    
+
   # load the initial community map
   if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
-    sim$initialCommunitiesMap <- Cache(prepInputs, "initial-communities.gis", 
+    sim$initialCommunitiesMap <- Cache(prepInputs, "initial-communities.gis",
                                        destinationPath = dataPath)
   }
-  
+
   ######################################################
-  #   # load the biomass succession txt and obtain 1) minRelativeB, 
-  #                                                2) sufficientLight, and 
+  #   # load the biomass succession txt and obtain 1) minRelativeB,
+  #                                                2) sufficientLight, and
   #                                                3) additional species traits
   if (!suppliedElsewhere("sufficientLight", sim) |
       (!suppliedElsewhere("species", sim)) |
       (!suppliedElsewhere("minRelativeB", sim))) {
     maxcol <- 7L
     for (i in 1:2) {
-      mainInput <- Cache(prepInputs, 
-            targetFile = "biomass-succession_test.txt", 
-            destinationPath = dataPath, 
-            fun = "read.table", 
-            pkg = "utils", 
-            fill = TRUE, 
+      mainInput <- Cache(prepInputs,
+            targetFile = "biomass-succession_test.txt",
+            destinationPath = dataPath,
+            fun = "read.table",
+            pkg = "utils",
+            fill = TRUE,
             sep = "",
             header = FALSE,
-            col.names = c(paste("col",1:maxcol, sep = "")), 
+            col.names = c(paste("col",1:maxcol, sep = "")),
             blank.lines.skip = TRUE,
             stringsAsFactors = FALSE)
-      maxcol1 <- max(count.fields(file.path(dataPath, "biomass-succession_test.txt"), sep = "")) 
+      maxcol1 <- max(count.fields(file.path(dataPath, "biomass-succession_test.txt"), sep = ""))
       if (identical(maxcol1,maxcol)) break
-    
+
     }
-    
+
     mainInput <- data.table(mainInput)
     mainInput <- mainInput[col1 != ">>",]
   }
-  
+
   # read species txt and convert it to data table
   if (!suppliedElsewhere("species", sim)) {
     maxcol <- 13#max(count.fields(file.path(dataPath, "species.txt"), sep = ""))
-    species <- Cache(prepInputs, targetFile = "species.txt", 
-                     destinationPath = dataPath, 
-                     fun = "read.table", 
-                     pkg = "utils", quickCheck = TRUE, 
+    species <- Cache(prepInputs, targetFile = "species.txt",
+                     destinationPath = dataPath,
+                     fun = "read.table",
+                     pkg = "utils", quickCheck = TRUE,
                      fill = TRUE, row.names = NULL,
                      sep = "",
                      header = FALSE,
@@ -1481,8 +1481,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     species <- data.table(species[,1:11])
     species <- species[col1!= "LandisData",]
     species <- species[col1!= ">>",]
-    colNames <- c("species", "longevity", "sexualmature", "shadetolerance", 
-                  "firetolerance", "seeddistance_eff", "seeddistance_max", 
+    colNames <- c("species", "longevity", "sexualmature", "shadetolerance",
+                  "firetolerance", "seeddistance_eff", "seeddistance_max",
                   "resproutprob", "resproutage_min", "resproutage_max",
                   "postfireregen")
     names(species) <- colNames
@@ -1491,7 +1491,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     # change all columns to integer
     species <- species[, lapply(.SD, as.integer), .SDcols = names(species)[-c(1,NCOL(species))], by = "species,postfireregen"]
     setcolorder(species, colNames)
-    
+
     # get additional species traits
     speciesAddon <- mainInput
     startRow <- which(speciesAddon$col1 == "SpeciesParameters")
@@ -1505,16 +1505,16 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                         leafLignin = as.numeric(leafLignin))]
     sim$species <- setkey(species, species)[setkey(speciesAddon, species), nomatch = 0]
     rm(maxcol)
-    
+
   }
-  
+
   if (!suppliedElsewhere("ecoregion", sim)) {
     maxcol <- max(count.fields(file.path(dataPath, "ecoregions.txt"), sep = ""))
-    ecoregion <- Cache(prepInputs, targetFile = "ecoregions.txt", 
-          destinationPath = dataPath, 
-          fun = "read.table", 
-          pkg = "utils", 
-          fill = TRUE, 
+    ecoregion <- Cache(prepInputs, targetFile = "ecoregions.txt",
+          destinationPath = dataPath,
+          fun = "read.table",
+          pkg = "utils",
+          fill = TRUE,
           sep = "",
           #row.names = NULL,
           header = FALSE,
@@ -1529,7 +1529,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     sim$ecoregion <- ecoregion
     rm(maxcol)
   }
-  
+
   ######################################################
   ######################################################
   if (!suppliedElsewhere("ecoregionMap", sim )) {
@@ -1539,17 +1539,17 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
   # input species ecoregion dynamics table
   if (!suppliedElsewhere("speciesEcoregion", sim)) {
-    speciesEcoregion <- Cache(prepInputs, 
-          fun = "read.table", 
-          pkg = "utils", 
-          destinationPath = dataPath, 
+    speciesEcoregion <- Cache(prepInputs,
+          fun = "read.table",
+          pkg = "utils",
+          destinationPath = dataPath,
           targetFile = "biomass-succession-dynamic-inputs_test.txt",
           fill = TRUE,
           sep = "",
           header = FALSE,
           blank.lines.skip = TRUE,
           stringsAsFactors = FALSE)
-    maxcol <- max(count.fields(file.path(dataPath, "biomass-succession-dynamic-inputs_test.txt"), 
+    maxcol <- max(count.fields(file.path(dataPath, "biomass-succession-dynamic-inputs_test.txt"),
                                sep = ""))
     colnames(speciesEcoregion) <- paste("col",1:maxcol, sep = "")
     speciesEcoregion <- data.table(speciesEcoregion)
@@ -1563,8 +1563,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     sim$speciesEcoregion <- speciesEcoregion
     rm(maxcol)
   }
-  
-  
+
+
   if (!suppliedElsewhere("minRelativeB", sim)) {
     minRelativeB <- mainInput %>%
       data.frame
@@ -1572,12 +1572,12 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     minRelativeB <- minRelativeB[(startRow+1):(startRow+6),]
     minRelativeB[1,2:ncol(minRelativeB)] <- minRelativeB[1,1:(ncol(minRelativeB)-1)]
     names(minRelativeB) <- NULL
-    minRelativeB <- minRelativeB[,apply(minRelativeB, 2, function(x) all(nzchar(x)))] 
+    minRelativeB <- minRelativeB[,apply(minRelativeB, 2, function(x) all(nzchar(x)))]
     minRelativeB <- minRelativeB[,-1] %>%
       t(.) %>%
       gsub(pattern="%",replacement="") %>%
       data.table
-    
+
     colNames <- c("ecoregion", "X1", "X2", "X3", "X4", "X5")
     names(minRelativeB) <- colNames
     minRelativeB[, (colNames[-1]) := lapply(.SD, function(x) as.numeric(as.character(x))), .SDcols = colNames[-1]]
@@ -1585,7 +1585,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     #   mutate_at(funs(as.numeric(as.character(.))/100), .vars=-ecoregion)
     sim$minRelativeB <- minRelativeB
   }
-  
+
   if (!suppliedElsewhere("sufficientLight", sim)) {
     sufficientLight <- mainInput %>%
       data.frame
@@ -1593,12 +1593,12 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     sufficientLight <- sufficientLight[(startRow+1):(startRow+5), 1:7]
     sufficientLight <- data.table(sufficientLight)
     sufficientLight <- sufficientLight[, lapply(.SD, function(x) as.numeric(x))]
-    
+
     names(sufficientLight) <- c("speciesshadetolerance",
                                 "X0", "X1", "X2", "X3", "X4", "X5")
     sim$sufficientLight <- data.frame(sufficientLight)
   }
-  
+
   if (!suppliedElsewhere("spinupMortalityfraction", sim))
     sim$spinupMortalityfraction <- 0.001
   if (!suppliedElsewhere("successionTimestep", sim))
@@ -1611,7 +1611,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     sim$calibrate <- FALSE
   if (!suppliedElsewhere("useParallel", sim))
     sim$useParallel <- FALSE
-  
+
   return(invisible(sim))
 }
 ### add additional events as needed by copy/pasting from above
