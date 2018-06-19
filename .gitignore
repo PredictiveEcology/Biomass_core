@@ -1,3 +1,4 @@
+# Ignore
 .Rapp.history
 .RData
 .Rhistory
@@ -5,4 +6,4 @@
 .csv
 last.dump.rda
 .Rproj.user/
-data
+.Rproj.user
