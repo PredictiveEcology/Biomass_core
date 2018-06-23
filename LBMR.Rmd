@@ -14,15 +14,24 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 
 # Overview
 
-A fast and large landscape biomass succession model modified from LANDIS-II.
+A biomass succession model derived and modified from LANDIS-II.
 
 # Download the module
 
 ```{r download module, eval = FALSE, echo = TRUE}
 library(SpaDES)
 moduleName <- "LBMR"
-spadesModulesDirectory <- tempdir() # where the module will be downloaded
+spadesModulesDirectory <- "modules" # where the module will be downloaded
+
+# Simple way to download module
 downloadModule(moduleName, path = spadesModulesDirectory)
+
+# More advanced use is to fork the github repository, clone, and load.
+# The most powerful way is to make a new, empty project of your own name in github,
+#  Make a submfolder called "modules" (same as the above name), 
+#  then add this module as a submodule inside "modules". This module 
+#  then becomes one of many inside your project
+
 ```
 
 # Usage
@@ -44,28 +53,25 @@ Name                      | Default           | Description
 ## Usage example
 
 ```{r module usage example, eval = FALSE}
-library(SpaDES.core)
-library(SpaDES.tools)
-library(magrittr)
 
-inputDir <- file.path(dirname(tempdir()), "LBMR", "inputs") %>% checkPath(create = TRUE)
-outputDir <- file.path(dirname(tempdir()), "LBMR", "outputs") 
-times <- list(start = 0, end = 3)
+inputDir <- file.path(dirname(spadesModulesDirectory), "inputs") %>% checkPath(create = TRUE)
+outputDir <- file.path(dirname(spadesModulesDirectory), "outputs") 
+times <- list(start = 0, end = 10)
 parameters <- list(
   .globals = list(verbose = FALSE),
   LBMR = list(.plotInitialTime = 0,
-              successionTimestep = 2,
+              successionTimestep = 5,
               seedingAlgorithm = "wardDispersal")
   #.progress = list(type = "text", interval = 1), # for a progress bar
   ## If there are further modules, each can have its own set of parameters:
   #module1 = list(param1 = value1, param2 = value2),
   #module2 = list(param1 = value1, param2 = value2)
 )
-modules <- list("LBMR")
+modules <- list(moduleName)
 objects <- list()
 
 setPaths(cachePath = file.path(outputDir, "cache"),
-         modulePath = "~/m",
+         modulePath = spadesModulesDirectory,
          inputPath = inputDir,
          outputPath = outputDir)
 paths <- getPaths()
@@ -91,4 +97,4 @@ Events are scheduled as follows:
 
 # Links to other modules
 
-Intended to be used with the LandWeb suite of modules.
+Intended to be used with other landscape modules, such as LandMine, FireSense, Boreal_LBMRDataPrep, and possibly many others.
