@@ -16,21 +16,24 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 
 A biomass succession model derived and modified from LANDIS-II.
 
-# Download the module
+# Load SpaDES
 
-```{r download module, eval = FALSE, echo = TRUE}
+```{r load-SpaDES, eval=TRUE}
 library(SpaDES)
 moduleName <- "LBMR"
 spadesModulesDirectory <- "modules" # where the module will be downloaded
+```
 
+# Get the module
+
+You can either get the module using `downloadModule`, which will download the code, but will disconnect that code from the original GitHub sources, or you can fork, clone and load the repository. Doing this forking will keep the source code connected with the original.  The most powerful way is to make a new, empty project of your own name in github, Make a subfolder called "modules" (same as the above name), then add this module as a submodule inside "modules". This module then becomes one of many inside your project.
+
+
+```{r download module, eval = FALSE, echo = TRUE}
 # Simple way to download module
 downloadModule(moduleName, path = spadesModulesDirectory)
 
-# More advanced use is to fork the github repository, clone, and load.
-# The most powerful way is to make a new, empty project of your own name in github,
-#  Make a submfolder called "modules" (same as the above name), 
-#  then add this module as a submodule inside "modules". This module 
-#  then becomes one of many inside your project
+# OR Advanced is to use GitHub
 
 ```
 
