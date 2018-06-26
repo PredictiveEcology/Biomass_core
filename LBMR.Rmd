@@ -33,7 +33,7 @@ You can either get the module using `downloadModule`, which will download the co
 # Simple way to download module
 downloadModule(moduleName, path = spadesModulesDirectory)
 
-# OR Advanced is to use GitHub
+# OR Advanced for developers is to use GitHub
 
 ```
 
