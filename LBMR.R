@@ -141,7 +141,8 @@ defineModule(sim, list(
     createsOutput("regenerationOutput", "data.table", ""),
     createsOutput("mortalityMap", "RasterLayer", ""),
     createsOutput("reproductionMap", "RasterLayer", ""),
-    createsOutput("spinupOutput", "data.table", "")
+    createsOutput("spinupOutput", "data.table", ""),
+    createsOutput("summaryBySpecies", "data.table", "The average biomass in a pixel, by species")
   )
 ))
 
@@ -169,8 +170,10 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
                                   "cohortAgeReclassification", eventPriority = 5.25)
            }
-           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
+                                "LBMR", "summaryBySpecies", eventPriority = 5.5)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryBGM", eventPriority = 6)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
@@ -217,9 +220,14 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            } else stop("Undefined seed dispersal type!")
          },
          summaryRegen = {
-           sim <- SummaryRegen(sim)
+           sim <- summaryRegen(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
+         },
+         summaryBySpecies = {
+           sim <- summaryBySpecies(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBySpecies", eventPriority = 5.5)
          },
          plot = {
            sim <- plotFn(sim)
@@ -1056,7 +1064,7 @@ WardDispersalSeeding = function(sim) {
   return(invisible(sim))
 }
 
-SummaryRegen = function(sim){
+summaryRegen = function(sim){
   #cohortData <- sim$cohortData
   if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     pixelGroupMap <- sim$pixelGroupMap
@@ -1076,6 +1084,37 @@ SummaryRegen = function(sim){
     #rm(cohortData, pixelGroupMap)
     rm(pixelGroupMap)
   }
+  return(invisible(sim))
+}
+
+summaryBySpecies = function(sim){
+  thisPeriod <- sim$cohortData[, list(year = time(sim), BiomassBySpecies=mean(B)), by = speciesCode]
+  if (is.null(sim$summaryBySpecies)) {
+    sim$summaryBySpecies <- thisPeriod
+  } else {
+    sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
+  }
+  
+  df <- sim@.envir$species[,list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
+  
+  plot2 <- 
+    ggplot(data = df, 
+           aes(x = year, y = BiomassBySpecies, fill = species)) + 
+    geom_area(position = 'stack') +
+    labs(x = "Year", y = "Biomass by species")
+  
+  Plot(plot2, title = c("Average biomass by species"))
+  # 
+  # 
+  # means <- cbind(meanBiomass, meanANPP)
+  # means <- melt(means)
+  # 
+  # plot1 <- ggplot(data = means, aes(x = Var1, y = value, colour = Var2)) +
+  #   geom_line(size = 1, show.legend = FALSE) + theme_bw() +
+  #   facet_wrap(~ Var2, scales = "free_y") +
+  #   labs(x = "Year", y = "Average value")
+  # 
+  # Plot(plot1, title = c("Average biomass/ANPP"))
   return(invisible(sim))
 }
 
