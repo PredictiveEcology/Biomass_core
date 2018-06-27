@@ -177,10 +177,9 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "plot", eventPriority = 7)
            sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "save", eventPriority = 7.5)
-           if (!is.na(P(sim)$.plotInitialTime)) { 
-             sim <- scheduleEvent(sim, end(sim), 
-                                  "LBMR", "endPlot", eventPriority = 7.75) 
-           } 
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep, # start on second time around b/c ggplot doesn't like 1 data point
+                                  "LBMR", "statsPlot", eventPriority = 7.75) 
+            
          },
          mortalityAndGrowth = {
            sim <- MortalityAndGrowth(sim)
@@ -227,9 +226,11 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "plot", eventPriority = 7)
          },
-         endPlot = {
+         statsPlot = {
            ## only occurs once at the end of the simulation
            sim <- statsPlotFn(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "statsPlot", eventPriority = 7.75)
          },
          save = {
            sim <- Save(sim)
@@ -1092,17 +1093,24 @@ plotFn <- function(sim) {
 }
 
 statsPlotFn <- function(sim) {
-  biomass.stk <- lapply(list.files(outputPath(sim), pattern = "biomassMap", full.names = TRUE),
-                        raster)
-  ANPP.stk <- lapply(list.files(outputPath(sim), pattern = "ANPP", full.names = TRUE),
+  # only take the files in outputPath(sim) that were new since the startClockTime of the spades call
+  biomassFiles <- list.files(outputPath(sim), pattern = "biomassMap", full.names = TRUE)
+  biomassKeepers <- file.info(biomassFiles)$atime > sim@.envir$._startClockTime
+  
+  biomass.stk <- lapply(biomassFiles[biomassKeepers], raster)
+  
+  ANPPFiles <- list.files(outputPath(sim), pattern = "ANPP", full.names = TRUE)
+  ANPPKeepers <- file.info(ANPPFiles)$atime > sim@.envir$._startClockTime
+  
+  ANPP.stk <- lapply(ANPPFiles[ANPPKeepers],
                      raster)
   meanBiomass <- sapply(biomass.stk, FUN = function(x) mean(x[], na.rm = TRUE))
-  names(meanBiomass) = sub(".tif", "", 
-                           sub(".*biomassMap_Year", "", list.files(outputPath(sim), pattern = "biomassMap")))
+  names(meanBiomass) = sub(".tif", "",  sub(".*biomassMap_Year", "", 
+                                            basename(biomassFiles[biomassKeepers])))
   
   meanANPP <- sapply(ANPP.stk, FUN = function(x) mean(x[], na.rm = TRUE))
   names(meanANPP) = sub(".tif", "", 
-                        sub(".*ANPP_Year", "", list.files(outputPath(sim), pattern = "ANPP")))
+                        sub(".*ANPP_Year", "", basename(ANPPFiles[ANPPKeepers])))
   
   means <- cbind(meanBiomass, meanANPP)
   means <- melt(means)
