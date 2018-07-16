@@ -578,7 +578,6 @@ FireDisturbance = function(sim) {
     # light check
     newCohortData <- setkey(newCohortData, speciesCode)[sim$species[,.(speciesCode, shadetolerance)],
                                                         nomatch = 0][,siteShade := 0]
-    browser()
     newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight,
                                      newCohortData)
     newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0, 1),]
@@ -1459,7 +1458,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   # load the initial community map
   if (!suppliedElsewhere("initialCommusufficientLightnitiesMap", sim)) {
-    # browser()
     sim$initialCommunitiesMap <- prepInputs("initial-communities.gis", useCache=FALSE,
                                        destinationPath = dataPath)
   }
