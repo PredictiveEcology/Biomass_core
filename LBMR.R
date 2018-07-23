@@ -14,9 +14,11 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "LBMR.Rmd"),
-  reqdPkgs = list("raster", "sp", "data.table", "dplyr", "ggplot2", "purrr", "PredictiveEcology/SpaDES.tools@prepInputs",
-                  "fpCompare", "grid", "tidyr", "Rcpp", "scales", "PredictiveEcology/quickPlot@development",
-                  "reproducible"),
+  reqdPkgs = list("raster", "sp", "data.table", "dplyr", "ggplot2", "purrr", 
+                  "fpCompare", "grid", "tidyr", "Rcpp", "scales", "quickPlot",
+                  "PredictiveEcology/SpaDES.core@development",
+                  "PredictiveEcology/SpaDES.tools@development",
+                  "PredictiveEcology/reproducible@development"),
   parameters = rbind(
     defineParameter(name = "growthInitialTime", class = "numeric", default = 0,
                     min = NA_real_, max = NA_real_,
@@ -61,13 +63,13 @@ defineModule(sim, list(
                  desc = "ecoregion look up table",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt"),
     expectsInput(objectName = "speciesEcoregion", objectClass = "data.table",
-                 desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time",
+                 desc = "table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession-dynamic-inputs_test.txt"),
     expectsInput(objectName = "minRelativeB", objectClass = "data.frame",
-                 desc = "define the cut points to classify stand shadeness",
+                 desc = "table defining the cut points to classify stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     expectsInput(objectName = "sufficientLight", objectClass = "data.frame",
-                 desc = "define how the species with different shade tolerance respond to stand shadeness",
+                 desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     # For inputs from optional fire module
     expectsInput(objectName = "fireInitialTime", objectClass = "numeric",
@@ -137,7 +139,8 @@ defineModule(sim, list(
     createsOutput("regenerationOutput", "data.table", ""),
     createsOutput("mortalityMap", "RasterLayer", ""),
     createsOutput("reproductionMap", "RasterLayer", ""),
-    createsOutput("spinupOutput", "data.table", "")
+    createsOutput("spinupOutput", "data.table", ""),
+    createsOutput("summaryBySpecies", "data.table", "The average biomass in a pixel, by species")
   )
 ))
 
@@ -165,16 +168,19 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
                                   "cohortAgeReclassification", eventPriority = 5.25)
            }
-           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
+                                "LBMR", "summaryBySpecies", eventPriority = 5.5)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryBGM", eventPriority = 6)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "plot", eventPriority = 7)
            sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "save", eventPriority = 7.5)
-           sim <- scheduleEvent(sim, end(sim),
-                                "LBMR", "endPlot", eventPriority = 7.75)
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep, # start on second time around b/c ggplot doesn't like 1 data point
+                                  "LBMR", "statsPlot", eventPriority = 7.75) 
+            
          },
          fireDisturbance = {
            sim <- FireDisturbance(sim)
@@ -215,7 +221,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            }
          },
          summaryRegen = {
-           sim <- SummaryRegen(sim)
+           sim <- summaryRegen(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
          },
@@ -225,10 +231,21 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "summaryBGM",
                                 eventPriority = 6)
          }, 
+         summaryBySpecies = {
+           sim <- summaryBySpecies(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBySpecies", eventPriority = 5.5)
+         },
          plot = {
            sim <- plotFn(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "plot", eventPriority = 7)
+         },
+         statsPlot = {
+           ## only occurs once at the end of the simulation
+           sim <- statsPlotFn(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "statsPlot", eventPriority = 7.75)
          },
          save = {
            sim <- Save(sim)
@@ -931,7 +948,7 @@ WardDispersalSeeding = function(sim) {
   return(invisible(sim))
 }
 
-SummaryRegen = function(sim){
+summaryRegen = function(sim){
   #cohortData <- sim$cohortData
   if(!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     pixelGroupMap <- sim$pixelGroupMap
@@ -954,6 +971,37 @@ SummaryRegen = function(sim){
   return(invisible(sim))
 }
 
+summaryBySpecies = function(sim){
+  thisPeriod <- sim$cohortData[, list(year = time(sim), BiomassBySpecies=mean(B)), by = speciesCode]
+  if (is.null(sim$summaryBySpecies)) {
+    sim$summaryBySpecies <- thisPeriod
+  } else {
+    sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
+  }
+  
+  df <- sim@.envir$species[,list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
+  
+  plot2 <- 
+    ggplot(data = df, 
+           aes(x = year, y = BiomassBySpecies, fill = species)) + 
+    geom_area(position = 'stack') +
+    labs(x = "Year", y = "Biomass by species")
+  
+  Plot(plot2, title = c("Average biomass by species"))
+  # 
+  # 
+  # means <- cbind(meanBiomass, meanANPP)
+  # means <- melt(means)
+  # 
+  # plot1 <- ggplot(data = means, aes(x = Var1, y = value, colour = Var2)) +
+  #   geom_line(size = 1, show.legend = FALSE) + theme_bw() +
+  #   facet_wrap(~ Var2, scales = "free_y") +
+  #   labs(x = "Year", y = "Average value")
+  # 
+  # Plot(plot1, title = c("Average biomass/ANPP"))
+  return(invisible(sim))
+}
+
 plotFn <- function(sim) {
   if(time(sim) == P(sim)$successionTimestep){
     #dev(4)
@@ -968,17 +1016,24 @@ plotFn <- function(sim) {
 }
 
 statsPlotFn <- function(sim) {
-  biomass.stk <- lapply(list.files(outputPath(sim), pattern = "biomassMap", full.names = TRUE),
-                        raster)
-  ANPP.stk <- lapply(list.files(outputPath(sim), pattern = "ANPP", full.names = TRUE),
+  # only take the files in outputPath(sim) that were new since the startClockTime of the spades call
+  biomassFiles <- list.files(outputPath(sim), pattern = "biomassMap", full.names = TRUE)
+  biomassKeepers <- file.info(biomassFiles)$atime > sim@.envir$._startClockTime
+  
+  biomass.stk <- lapply(biomassFiles[biomassKeepers], raster)
+  
+  ANPPFiles <- list.files(outputPath(sim), pattern = "ANPP", full.names = TRUE)
+  ANPPKeepers <- file.info(ANPPFiles)$atime > sim@.envir$._startClockTime
+  
+  ANPP.stk <- lapply(ANPPFiles[ANPPKeepers],
                      raster)
   meanBiomass <- sapply(biomass.stk, FUN = function(x) mean(x[], na.rm = TRUE))
-  names(meanBiomass) = sub(".tif", "", 
-                           sub(".*biomassMap_Year", "", list.files(outputPath(sim), pattern = "biomassMap")))
+  names(meanBiomass) = sub(".tif", "",  sub(".*biomassMap_Year", "", 
+                                            basename(biomassFiles[biomassKeepers])))
   
   meanANPP <- sapply(ANPP.stk, FUN = function(x) mean(x[], na.rm = TRUE))
   names(meanANPP) = sub(".tif", "", 
-                        sub(".*ANPP_Year", "", list.files(outputPath(sim), pattern = "ANPP")))
+                        sub(".*ANPP_Year", "", basename(ANPPFiles[ANPPKeepers])))
   
   means <- cbind(meanBiomass, meanANPP)
   means <- melt(means)
@@ -1420,10 +1475,13 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   if (!suppliedElsewhere("initialCommunities", sim)) {
     maxcol <- 7 #max(count.fields(file.path(dataPath, "initial-communities.txt"), sep = ""))
-    initialCommunities <- Cache(prepInputs, targetFile = "initial-communities.txt", 
+    initialCommunities <- Cache(prepInputs, 
+                                url <- extractURL("initialCommunities", sim),
+                                #url = SpaDES.core
+                                targetFile = "initial-communities.txt", 
                                 destinationPath = dataPath, 
-                                fun = "read.table", 
-                                pkg = "utils", quick = TRUE, 
+                                fun = "utils::read.table", #purge = 2,
+                                #pkg = "utils", quick = TRUE, 
                                 fill = TRUE, row.names = NULL,
                                 sep = "",
                                 blank.lines.skip = TRUE,
@@ -1458,8 +1516,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   # load the initial community map
   if (!suppliedElsewhere("initialCommusufficientLightnitiesMap", sim)) {
-    sim$initialCommunitiesMap <- prepInputs("initial-communities.gis", useCache=FALSE,
-                                       destinationPath = dataPath)
+    sim$initialCommunitiesMap <- prepInputs(extractURL("initialCommunitiesMap"),
+                                            "initial-communities.gis", 
+                                            useCache=FALSE,
+                                            destinationPath = dataPath)
   }
   
   ######################################################
@@ -1472,11 +1532,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     maxcol <- 7L
     for (i in 1:2) {
       mainInput <- Cache(prepInputs, 
+                         extractURL("initialCommunitiesMap"),
                          targetFile = "biomass-succession_test.txt", 
                          destinationPath = dataPath, 
-                         fun = "read.table", 
-                         pkg = "utils", 
-                         fill = TRUE, 
+                         fun = "utils::read.table", 
+                         fill = TRUE,  #purge = 2,
                          sep = "",
                          header = FALSE,
                          col.names = c(paste("col",1:maxcol, sep = "")), 
@@ -1494,10 +1554,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   # read species txt and convert it to data table
   if (!suppliedElsewhere("species", sim)) {
     maxcol <- 13#max(count.fields(file.path(dataPath, "species.txt"), sep = ""))
-    species <- Cache(prepInputs, targetFile = "species.txt", 
+    species <- Cache(prepInputs, 
+                     url = extractURL("species"), 
+                     targetFile = "species.txt", 
                      destinationPath = dataPath, 
-                     fun = "read.table", 
-                     pkg = "utils", quick = TRUE, 
+                     fun = "utils::read.table", 
                      fill = TRUE, row.names = NULL,
                      sep = "",
                      header = FALSE,
@@ -1536,10 +1597,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   if (!suppliedElsewhere("ecoregion", sim)) {
     maxcol <- max(count.fields(file.path(dataPath, "ecoregions.txt"), sep = ""))
-    ecoregion <- Cache(prepInputs, targetFile = "ecoregions.txt", 
+    ecoregion <- Cache(prepInputs, 
+                       url = extractURL("ecoregion"), 
+                       targetFile = "ecoregions.txt", 
                        destinationPath = dataPath, 
-                       fun = "read.table", 
-                       pkg = "utils", 
+                       fun = "utils::read.table", 
                        fill = TRUE, 
                        sep = "",
                        #row.names = NULL,
@@ -1566,11 +1628,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   # input species ecoregion dynamics table
   if (!suppliedElsewhere("speciesEcoregion", sim)) {
     speciesEcoregion <- Cache(prepInputs, 
-                              fun = "read.table", 
-                              pkg = "utils", 
+                              url = extractURL("speciesEcoregion"),
+                              fun = "utils::read.table", 
                               destinationPath = dataPath, 
                               targetFile = "biomass-succession-dynamic-inputs_test.txt",
-                              fill = TRUE,
+                              fill = TRUE, 
                               sep = "",
                               header = FALSE,
                               blank.lines.skip = TRUE,
