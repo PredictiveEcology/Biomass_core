@@ -14,8 +14,10 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "LBMR.Rmd"),
-  reqdPkgs = list("raster", "sp", "data.table", "dplyr", "ggplot2", "purrr", "PredictiveEcology/SpaDES.tools@development",
+  reqdPkgs = list("raster", "sp", "data.table", "dplyr", "ggplot2", "purrr", 
                   "fpCompare", "grid", "tidyr", "Rcpp", "scales", "quickPlot",
+                  "PredictiveEcology/SpaDES.core@development",
+                  "PredictiveEcology/SpaDES.tools@development",
                   "PredictiveEcology/reproducible@development"),
   parameters = rbind(
     defineParameter(name = "growthInitialTime", class = "numeric", default = 0,
