@@ -26,26 +26,26 @@ defineModule(sim, list(
     defineParameter(name = ".plotInitialTime", class = "numeric", default = 0,
                     min = NA, max = NA,
                     desc = "This describes the simulation time at which the
-                            first plot event should occur"),
+                    first plot event should occur"),
     defineParameter(name = ".saveInitialTime", class = "numeric", default = 0,
                     min = NA, max = NA,
                     desc = "This describes the simulation time at which the
-                            first save event should occur"),
+                    first save event should occur"),
     defineParameter(name = "spinupMortalityfraction", class = "numeric", default = 0.001,
                     desc = "defines the mortality loss fraction in spin up-stage simulation"),
     defineParameter(name = "successionTimestep", class = "numeric", default = 10,
                     desc = "defines the simulation time step, default is 10 years"),
     defineParameter(name = "seedingAlgorithm", class = "character", default = "wardDispersal",
                     desc = "choose which seeding algorithm will be used among
-                            noDispersal, universalDispersal, and wardDispersal,
-                            default is wardDispersal"),
+                    noDispersal, universalDispersal, and wardDispersal,
+                    default is wardDispersal"),
     defineParameter(name = "calibrate", class = "logical", default = FALSE, 
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter(name = "useCache", class = "logic", default = TRUE,
                     desc = "use caching for the spinup simulation?"),
     defineParameter(name = "useParallel", class = "ANY", default = parallel::detectCores(),
                     desc = "Used only in seed dispersal. If numeric, it will be passed to data.table::setDTthreads, if logical and TRUE, it will be passed to parallel::makeCluster, and if cluster object it will be passed to parallel::parClusterApplyLB")
-  ),
+    ),
   inputObjects = bind_rows(
     expectsInput(objectName = "initialCommunities", objectClass = "data.table",
                  desc = "initial community table",
@@ -141,8 +141,8 @@ defineModule(sim, list(
     createsOutput("reproductionMap", "RasterLayer", ""),
     createsOutput("spinupOutput", "data.table", ""),
     createsOutput("summaryBySpecies", "data.table", "The average biomass in a pixel, by species")
-  )
-))
+    )
+  ))
 
 doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
   if(is.numeric(P(sim)$useParallel)){ 
@@ -179,8 +179,8 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "save", eventPriority = 7.5)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep, # start on second time around b/c ggplot doesn't like 1 data point
-                                  "LBMR", "statsPlot", eventPriority = 7.75) 
-            
+                                "LBMR", "statsPlot", eventPriority = 7.75) 
+           
          },
          fireDisturbance = {
            sim <- FireDisturbance(sim)
@@ -1516,10 +1516,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   # load the initial community map
   if (!suppliedElsewhere("initialCommusufficientLightnitiesMap", sim)) {
-    sim$initialCommunitiesMap <- prepInputs(extractURL("initialCommunitiesMap"),
-                                            "initial-communities.gis", 
-                                            useCache=FALSE,
-                                            destinationPath = dataPath)
+    sim$initialCommunitiesMap <- Cache(prepInputs,
+                                       targetFile = "initial-communities.gis", 
+                                       url = extractURL("initialCommunitiesMap"),
+                                       destinationPath = dataPath,
+                                       fun = "raster::raster")
   }
   
   ######################################################
