@@ -18,7 +18,7 @@ defineModule(sim, list(
                   "fpCompare", "grid", "tidyr", "Rcpp", "scales", "quickPlot",
                   "PredictiveEcology/SpaDES.core@development",
                   "PredictiveEcology/SpaDES.tools@development",
-                  "PredictiveEcology/reproducible@development"),
+                  "CeresBarros/reproducible@development"),
   parameters = rbind(
     defineParameter(name = "growthInitialTime", class = "numeric", default = 0,
                     min = NA_real_, max = NA_real_,
