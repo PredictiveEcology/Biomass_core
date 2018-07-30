@@ -1515,11 +1515,12 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   }
   
   # load the initial community map
-  if (!suppliedElsewhere("initialCommusufficientLightnitiesMap", sim)) {
+  if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
     sim$initialCommunitiesMap <- prepInputs(extractURL("initialCommunitiesMap"),
                                             "initial-communities.gis", 
                                             useCache=FALSE,
-                                            destinationPath = dataPath)
+                                            destinationPath = dataPath, 
+                                            fun = raster::raster)
   }
   
   ######################################################
