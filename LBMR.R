@@ -37,10 +37,10 @@ defineModule(sim, list(
                     desc = "choose which seeding algorithm will be used among
                             noDispersal, universalDispersal, and wardDispersal,
                             default is wardDispersal"),
-    defineParameter(name = "useCache", class = "logic", default = TRUE,
-                    desc = "use caching for the spinup simulation?"),
-    defineParameter(name = "useParallel", class = "ANY", default = parallel::detectCores(),
-                    desc = "Used only in seed dispersal. If numeric, it will be passed to data.table::setDTthreads, if logical and TRUE, it will be passed to parallel::makeCluster, and if cluster object it will be passed to parallel::parClusterApplyLB")
+    defineParameter(name = "useCache", class = "logic", TRUE, NA, NA, "use caching for the spinup simulation?"),
+    defineParameter(name = "useParallel", class = "ANY", default = parallel::detectCores(), NA, NA, 
+                    desc = "Used only in seed dispersal. If numeric, it will be passed to data.table::setDTthreads, if logical and TRUE, it will be passed to parallel::makeCluster, and if cluster object it will be passed to parallel::parClusterApplyLB"),
+    defineParamter(name = "calibrate", "logical", TRUE, NA, NA, "should the model have detailed outputs?")
   ),
   inputObjects = bind_rows(
     expectsInput(objectName = "initialCommunities", objectClass = "data.table",
@@ -74,12 +74,7 @@ defineModule(sim, list(
     expectsInput(objectName = "fireTimestep", objectClass = "numeric",
                  desc = "The number of time units between successive fire events in a fire module",
                  sourceURL = NA),
-    expectsInput("spinupMortalityfraction", "numeric", ""),
-    expectsInput("seedingAlgorithm", "character", ""), 
-    #expectsInput("useCache", "logical", ""), 
     expectsInput("cellSize", "numeric", ""), 
-    expectsInput("calibrate", "logical", ""), 
-    expectsInput("useParallel", "logical", ""),
     expectsInput("rstCurrentBurn", "RasterLayer", ""),
     expectsInput("burnLoci", "numeric", ""),
     expectsInput("postFireRegenSummary", "data.table", ""),
@@ -131,7 +126,6 @@ defineModule(sim, list(
                   desc = "an internal counter keeping track of when the last regeneration event occurred"),
     createsOutput(objectName = "initialCommunitiesMap", objectClass = "RasterLayer",
                   desc = "initial community map that has mapcodes match initial community table"),
-    createsOutput("calibrate", "logical", ""), 
     createsOutput("rstCurrentBurn", "RasterLayer", ""), 
     createsOutput("burnLoci", "numeric", ""), 
     createsOutput("postFireRegenSummary", "data.table", ""), 
@@ -306,7 +300,7 @@ Init <- function(sim) {
                                                  time = round(time(sim)), cohortData = cohortData)
   cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData) #line 226 in Yong's code
   
-  if(is.null(sim$calibrate)){
+  if(is.null(P(sim)$calibrate)){
     sim$calibrate <- FALSE
   }
   #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
@@ -323,7 +317,7 @@ Init <- function(sim) {
   if(sim$calibrate){
     sim$spinupOutput <- spinupstage$spinupOutput
   }
-  if(sim$calibrate){
+  if(P(sim)$calibrate){
     sim$simulationTreeOutput <- data.table(Year = numeric(), siteBiomass = numeric(), Species = character(),
                                            Age = numeric(), iniBiomass = numeric(), ANPP = numeric(),
                                            Mortality = numeric(), deltaB = numeric(), finBiomass = numeric())
@@ -623,7 +617,7 @@ FireDisturbance = function(sim) {
     newCohortData <- unique(newCohortData, by = c("pixelIndex", "speciesCode"))
     if(NROW(newCohortData) > 0) {
       newCohortData <- newCohortData[,.(pixelGroup, ecoregionGroup, speciesCode, pixelIndex)] #
-      if(sim$calibrate){
+      if(P(sim)$calibrate){
         serotinyRegenSummary <- newCohortData[,.(numberOfRegen = length(pixelIndex)), by = speciesCode]
         serotinyRegenSummary <- serotinyRegenSummary[,.(year = time(sim), regenMode = "Serotiny",
                                                         speciesCode, numberOfRegen)]
@@ -681,7 +675,7 @@ FireDisturbance = function(sim) {
     # remove all columns that were used temporarily here
     if(NROW(newCohortData) > 0) {
       newCohortData <- newCohortData[,.(pixelGroup, ecoregionGroup, speciesCode, pixelIndex)]#
-      if(sim$calibrate){
+      if(P(sim)$calibrate){
         resproutRegenSummary <- newCohortData[,.(numberOfRegen = length(pixelIndex)), by = speciesCode]
         resproutRegenSummary <- resproutRegenSummary[,.(year = time(sim), regenMode = "Resprout",
                                                         speciesCode, numberOfRegen)]
@@ -763,7 +757,7 @@ NoDispersalSeeding = function(sim) {
   newCohortData <- newCohortData[specieseco_current, nomatch = 0]
   newCohortData <- newCohortData[establishprob %>>% runif(nrow(newCohortData), 0, 1),]
   set(newCohortData, ,c("establishprob"), NULL)
-  if(sim$calibrate == TRUE & NROW(newCohortData) > 0){
+  if(P(sim)$calibrate == TRUE & NROW(newCohortData) > 0){
     newCohortData_summ <- newCohortData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
@@ -831,7 +825,7 @@ UniversalDispersalSeeding = function(sim) {
   
   newCohortData <- newCohortData[establishprob %>>% runif(nrow(newCohortData), 0, 1),]
   set(newCohortData, ,"establishprob", NULL)
-  if(sim$calibrate == TRUE){
+  if(P(sim)$calibrate == TRUE){
     newCohortData_summ <- newCohortData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
@@ -943,7 +937,7 @@ WardDispersalSeeding = function(sim) {
       
       seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
       set(seedingData, ,"establishprob", NULL)
-      if(sim$calibrate == TRUE){
+      if(P(sim)$calibrate == TRUE){
         seedingData_summ <- seedingData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
@@ -1288,11 +1282,12 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   # 3) assign the new pixelgroup to the pixels that have new cohort
   # 4) update the pixelgroup map
   # newCohortData must have the original pixelgroup, regenerated species and pixelindex
-  # it also would be better if it has the collums of cohortData plus pixelindex
+  # it also would be better if it has the columns of cohortData plus pixelIndex
   newCohortData$pixelGroup <- getValues(pixelGroupMap)[newCohortData$pixelIndex]
   set(newCohortData, , "temppixelGroup", as.integer(as.factor(newCohortData$pixelGroup)))
   set(newCohortData, , "speciesposition", 2^(newCohortData$speciesCode))
   # newCohortDataExtra is used to connect the original pixelGroup to the newPixelGroup
+ 
   newCohortDataExtra <- newCohortData[, .(community = sum(speciesposition),
                                           pixelGroup = mean(pixelGroup),
                                           temppixelGroup = mean(temppixelGroup)), by = pixelIndex]
@@ -1591,16 +1586,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   if (!suppliedElsewhere("spinupMortalityfraction", sim))
     sim$spinupMortalityfraction <- 0.001
-  if (!suppliedElsewhere("successionTimestep", sim))
-    sim$successionTimestep <- 10
   if (!suppliedElsewhere("seedingAlgorithm", sim))
     sim$seedingAlgorithm <- "wardDispersal"
-  if (!suppliedElsewhere("useCache", sim))
-    sim$useCache <- TRUE
-  if (!suppliedElsewhere("calibrate", sim))
-    sim$calibrate <- FALSE
-  if (!suppliedElsewhere("useParallel", sim))
-    sim$useParallel <- FALSE
+
   
   return(invisible(sim))
 }
