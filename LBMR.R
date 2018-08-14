@@ -80,14 +80,6 @@ defineModule(sim, list(
     # For inputs from optional fire module
     expectsInput("cellSize", "numeric", ""), 
     expectsInput("rstCurrentBurn", "RasterLayer", ""),
-    expectsInput("burnLoci", "numeric", ""),
-    expectsInput("postFireRegenSummary", "data.table", ""),
-    expectsInput("postFirePixel", "numeric", ""),
-    expectsInput("spinUpCache", "logical", ""),
-    expectsInput("firePixelTable", "data.table", ""),
-    expectsInput("regenerationOutput", "data.table", ""),
-    expectsInput("mortalityMap", "RasterLayer", ""),
-    expectsInput("reproductionMap", "RasterLayer", "")
   ),
   outputObjects = bind_rows(
     createsOutput(objectName = "simulationOutput", objectClass = "data.table",
