@@ -180,7 +180,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- FireDisturbance(sim)
            
            if(!is.null(sim$rstCurrentBurn)) {   
-             sim <- scheduleEvent(sim, time(sim) + sim$fireTimestep,
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$fireTimestep,
                                   "LBMR", "fireDisturbance",
                                   eventPriority = 3)
            }
@@ -1053,7 +1053,7 @@ Save = function(sim) {
               file.path(outputPath(sim), paste("mortalityMap_Year", round(time(sim)), ".tif",sep="")), datatype='INT4S',
               overwrite = TRUE)
   writeRaster(sim$reproductionMap,
-              file.path(outputPath(sim), paste("regenerationMap_Year", round(time(sim)), ".tif",sep="")), datatype='INT4S',
+              file.path(outputPath(sim), paste("reproductionMap_Year", round(time(sim)), ".tif",sep="")), datatype='INT4S',
               overwrite = TRUE)
   return(invisible(sim))
 }
