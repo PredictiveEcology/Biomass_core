@@ -20,6 +20,8 @@ defineModule(sim, list(
                   "PredictiveEcology/SpaDES.tools@development",
                   "CeresBarros/reproducible@development"),
   parameters = rbind(
+    defineParameter(".crsUsed", "character", "+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0",
+                    NA, NA, "CRS to be used. Defaults to the biomassMap projection"),
     defineParameter(name = "growthInitialTime", class = "numeric", default = 0,
                     min = NA_real_, max = NA_real_,
                     desc = "Initial time for the growth event to occur"),
