@@ -80,6 +80,7 @@ defineModule(sim, list(
     # For inputs from optional fire module
     expectsInput("cellSize", "numeric", ""), 
     expectsInput("rstCurrentBurn", objectClass = "list", desc = "List of rasters of fire spread"),
+    expectsInput("spinUpCache", "logical", "")
   ),
   outputObjects = bind_rows(
     createsOutput(objectName = "simulationOutput", objectClass = "data.table",
@@ -94,9 +95,9 @@ defineModule(sim, list(
                   desc = "Biomass map at each succession time step"),
     createsOutput(objectName = "ANPPMap", objectClass = "RasterLayer",
                   desc = "ANPP map at each succession time step"),
-    createsOutput(objectName = "MortalityMap", objectClass = "RasterLayer",
+    createsOutput(objectName = "mortalityMap", objectClass = "RasterLayer",
                   desc = "Mortality map at each succession time step"),
-    createsOutput(objectName = "RegenerationMap", objectClass = "RasterLayer",
+    createsOutput(objectName = "reproductionMap", objectClass = "RasterLayer",
                   desc = "Regeneration map at each succession time step"),
     createsOutput(objectName = "cutpoint", objectClass = "numeric",
                   desc = "A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks"),
@@ -129,8 +130,6 @@ defineModule(sim, list(
     createsOutput("spinUpCache", "logical", ""),
     createsOutput("firePixelTable", "data.table", ""),
     createsOutput("regenerationOutput", "data.table", ""),
-    createsOutput("mortalityMap", "RasterLayer", ""),
-    createsOutput("reproductionMap", "RasterLayer", ""),
     createsOutput("spinupOutput", "data.table", ""),
     createsOutput("summaryBySpecies", "data.table", "The average biomass in a pixel, by species")
     )
