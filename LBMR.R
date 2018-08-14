@@ -1462,15 +1462,15 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
 
 .inputObjects = function(sim) {
-  dataPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
+  dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
   
   if (!suppliedElsewhere("initialCommunities", sim)) {
-    maxcol <- 7 #max(count.fields(file.path(dataPath, "initial-communities.txt"), sep = ""))
+    maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
     initialCommunities <- Cache(prepInputs, 
                                 url <- extractURL("initialCommunities", sim),
                                 #url = SpaDES.core
                                 targetFile = "initial-communities.txt", 
-                                destinationPath = dataPath, 
+                                destinationPath = dPath, 
                                 fun = "utils::read.table", #purge = 2,
                                 #pkg = "utils", quick = TRUE, 
                                 fill = TRUE, row.names = NULL,
@@ -1510,7 +1510,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     sim$initialCommunitiesMap <- Cache(prepInputs,
                                        targetFile = "initial-communities.gis", 
                                        url = extractURL("initialCommunitiesMap"),
-                                       destinationPath = dataPath,
+                                       destinationPath = dPath,
                                        fun = "raster::raster")
   }
   
@@ -1526,7 +1526,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
       mainInput <- Cache(prepInputs, 
                          extractURL("initialCommunitiesMap"),
                          targetFile = "biomass-succession_test.txt", 
-                         destinationPath = dataPath, 
+                         destinationPath = dPath, 
                          fun = "utils::read.table", 
                          fill = TRUE,  #purge = 2,
                          sep = "",
@@ -1534,7 +1534,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                          col.names = c(paste("col",1:maxcol, sep = "")), 
                          blank.lines.skip = TRUE,
                          stringsAsFactors = FALSE)
-      maxcol1 <- max(count.fields(file.path(dataPath, "biomass-succession_test.txt"), sep = "")) 
+      maxcol1 <- max(count.fields(file.path(dPath, "biomass-succession_test.txt"), sep = "")) 
       if (identical(maxcol1,maxcol)) break
       
     }
@@ -1545,11 +1545,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   # read species txt and convert it to data table
   if (!suppliedElsewhere("species", sim)) {
-    maxcol <- 13#max(count.fields(file.path(dataPath, "species.txt"), sep = ""))
+    maxcol <- 13#max(count.fields(file.path(dPath, "species.txt"), sep = ""))
     species <- Cache(prepInputs, 
                      url = extractURL("species"), 
                      targetFile = "species.txt", 
-                     destinationPath = dataPath, 
+                     destinationPath = dPath, 
                      fun = "utils::read.table", 
                      fill = TRUE, row.names = NULL,
                      sep = "",
@@ -1588,11 +1588,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   }
   
   if (!suppliedElsewhere("ecoregion", sim)) {
-    maxcol <- max(count.fields(file.path(dataPath, "ecoregions.txt"), sep = ""))
+    maxcol <- max(count.fields(file.path(dPath, "ecoregions.txt"), sep = ""))
     ecoregion <- Cache(prepInputs, 
                        url = extractURL("ecoregion"), 
                        targetFile = "ecoregions.txt", 
-                       destinationPath = dataPath, 
+                       destinationPath = dPath, 
                        fun = "utils::read.table", 
                        fill = TRUE, 
                        sep = "",
@@ -1614,7 +1614,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   ######################################################
   if (!suppliedElsewhere("ecoregionMap", sim )) {
     # load ecoregion map
-    sim$ecoregionMap <- raster(file.path(dataPath, "ecoregions.gis"))
+    sim$ecoregionMap <- raster(file.path(dPath, "ecoregions.gis"))
   }
   
   # input species ecoregion dynamics table
@@ -1622,14 +1622,14 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     speciesEcoregion <- Cache(prepInputs, 
                               url = extractURL("speciesEcoregion"),
                               fun = "utils::read.table", 
-                              destinationPath = dataPath, 
+                              destinationPath = dPath, 
                               targetFile = "biomass-succession-dynamic-inputs_test.txt",
                               fill = TRUE, 
                               sep = "",
                               header = FALSE,
                               blank.lines.skip = TRUE,
                               stringsAsFactors = FALSE)
-    maxcol <- max(count.fields(file.path(dataPath, "biomass-succession-dynamic-inputs_test.txt"), 
+    maxcol <- max(count.fields(file.path(dPath, "biomass-succession-dynamic-inputs_test.txt"), 
                                sep = ""))
     colnames(speciesEcoregion) <- paste("col",1:maxcol, sep = "")
     speciesEcoregion <- data.table(speciesEcoregion)
