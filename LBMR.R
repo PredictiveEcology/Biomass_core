@@ -148,7 +148,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            
            ## schedule events
            if(!is.null(sim$rstCurrentBurn)){ # anything related to fire disturbance
-             sim <- scheduleEvent(sim, start(sim) + sim$fireInitialTime,
+             sim <- scheduleEvent(sim, P(sim)$fireInitialTime,
                                   "LBMR", "fireDisturbance", eventPriority = 3)
            }
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
