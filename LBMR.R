@@ -167,11 +167,14 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "summaryBGM", eventPriority = 6)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "plot", eventPriority = 7)
-           sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
-                                "LBMR", "save", eventPriority = 7.5)
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep, # start on second time around b/c ggplot doesn't like 1 data point
-                                "LBMR", "statsPlot", eventPriority = 7.75) 
            
+           if(!any(is.na(P(sim)$.saveInitialTime))) {
+             sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
+                                  "LBMR", "save", eventPriority = 7.5)
+             ## stats plot is retrieving saved rasters so needs data to be saved
+             sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep, # start on second time around b/c ggplot doesn't like 1 data point
+                                  "LBMR", "statsPlot", eventPriority = 7.75) 
+           }
          },
          fireDisturbance = {
            sim <- FireDisturbance(sim)
