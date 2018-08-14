@@ -550,6 +550,8 @@ FireDisturbance = function(sim) {
       sim$rstCurrentBurn <- raster::crop(sim$rstCurrentBurn, extent(sim$pixelGroupMap))
     }
   }
+  
+  ## extract burn pixel indices/groups and remve potentially innactive pixels
   sim$burnLoci <- which(sim$rstCurrentBurn[] == 1)
   if(length(sim$inactivePixelIndex) > 0){
     sim$burnLoci <- sim$burnLoci[!(sim$burnLoci %in% sim$inactivePixelIndex)] # this is to prevent avaluating the pixels that are inactive
@@ -557,6 +559,8 @@ FireDisturbance = function(sim) {
   firePixelTable <- data.table(cbind(pixelIndex = sim$burnLoci,
                                      pixelGroup = getValues(sim$pixelGroupMap)[sim$burnLoci]))
   burnPixelGroup <- unique(firePixelTable$pixelGroup)
+  
+  ## reclassify pixel groups as burnt (0L) 
   sim$pixelGroupMap[sim$burnLoci] <- 0L # 0 is the fire burnt pixels without regenerations
   burnedcohortData <- sim$cohortData[pixelGroup %in% burnPixelGroup]
   set(burnedcohortData, ,c("B", "mortality", "aNPPAct"), NULL)
@@ -574,7 +578,6 @@ FireDisturbance = function(sim) {
     newCohortData <- serotinyAssessCohortData[age >= sexualmature] %>% # NOTE should be in mortalityFromDisturbance module or event
       unique(., by = c("pixelGroup", "speciesCode"))
     set(newCohortData, ,"sexualmature", NULL)
-    # this is amazing!!!!
     # select the pixels that have potential serotiny regeneration and assess them
     serotinyPixelTable <- firePixelTable[pixelGroup %in% unique(newCohortData$pixelGroup)]
     
