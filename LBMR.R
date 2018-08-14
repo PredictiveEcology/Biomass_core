@@ -162,7 +162,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
-                                "LBMR", "summaryBySpecies", eventPriority = 5.5)
+                                "LBMR", "summaryBySpecies", eventPriority = 5.75)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryBGM", eventPriority = 6)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
@@ -185,17 +185,14 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
          Dispersal = {
            if(P(sim)$seedingAlgorithm=="noDispersal"){
              sim <- NoDispersalSeeding(sim)
-             sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "Dispersal", eventPriority = 4)
            } else if(P(sim)$seedingAlgorithm == "universalDispersal"){
              sim <- UniversalDispersalSeeding(sim)
-             sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "Dispersal", eventPriority = 4)
            } else if(P(sim)$seedingAlgorithm == "wardDispersal"){
              sim <- WardDispersalSeeding(sim)
-             sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "Dispersal", eventPriority = 4)
            } else stop("Undefined seed dispersal type!")
+           
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "Dispersal", eventPriority = 4)
          },
          mortalityAndGrowth = {
            sim <- MortalityAndGrowth(sim)
@@ -216,32 +213,32 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
          },
+         summaryBySpecies = {
+           sim <- summaryBySpecies(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBySpecies", eventPriority = 5.75)
+         },
          summaryBGM = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryBGM",
                                 eventPriority = 6)
          }, 
-         summaryBySpecies = {
-           sim <- summaryBySpecies(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBySpecies", eventPriority = 5.5)
-         },
          plot = {
            sim <- plotFn(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "plot", eventPriority = 7)
+         },
+         save = {
+           sim <- Save(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "save", eventPriority = 7.5)
          },
          statsPlot = {
            ## only occurs once at the end of the simulation
            sim <- statsPlotFn(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "statsPlot", eventPriority = 7.75)
-         },
-         save = {
-           sim <- Save(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "save", eventPriority = 7.5)
          }, 
          endPlot = {
            ## only occurs once at the end of the simulation
