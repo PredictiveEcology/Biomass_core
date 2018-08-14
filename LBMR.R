@@ -41,6 +41,10 @@ defineModule(sim, list(
                     desc = "choose which seeding algorithm will be used among
                     noDispersal, universalDispersal, and wardDispersal,
                     default is wardDispersal"),
+    defineParameter(name = "fireInitialTime", class = "numeric", default = 2L, 
+                    desc = "The event time that the first fire disturbance event occurs"),
+    defineParameter(name = "fireTimestep", class = "numeric", default = 2L,
+                    desc = "The number of time units between successive fire events in a fire module"),
     defineParameter(name = "calibrate", class = "logical", default = FALSE, 
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter(name = "useCache", class = "logic", default = TRUE,
@@ -74,12 +78,6 @@ defineModule(sim, list(
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     # For inputs from optional fire module
-    expectsInput(objectName = "fireInitialTime", objectClass = "numeric",
-                 desc = "The event time that the first fire disturbance event occurs",
-                 sourceURL = NA),
-    expectsInput(objectName = "fireTimestep", objectClass = "numeric",
-                 desc = "The number of time units between successive fire events in a fire module",
-                 sourceURL = NA),
     expectsInput("cellSize", "numeric", ""), 
     expectsInput("rstCurrentBurn", "RasterLayer", ""),
     expectsInput("burnLoci", "numeric", ""),
