@@ -31,8 +31,8 @@ defineModule(sim, list(
                     first plot event should occur"),
     defineParameter(name = ".saveInitialTime", class = "numeric", default = 0,
                     min = NA, max = NA,
-                    desc = "This describes the simulation time at which the
-                    first save event should occur"),
+                    desc = "This describes the simulation time at which the first save event should occur.
+                    Set to NA if no saving is desired."),
     defineParameter(name = "spinupMortalityfraction", class = "numeric", default = 0.001,
                     desc = "defines the mortality loss fraction in spin up-stage simulation"),
     defineParameter(name = "successionTimestep", class = "numeric", default = 10,
@@ -79,7 +79,7 @@ defineModule(sim, list(
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     # For inputs from optional fire module
     expectsInput("cellSize", "numeric", ""), 
-    expectsInput("rstCurrentBurn", "RasterLayer", ""),
+    expectsInput("rstCurrentBurn", objectClass = "list", desc = "List of rasters of fire spread"),
   ),
   outputObjects = bind_rows(
     createsOutput(objectName = "simulationOutput", objectClass = "data.table",
@@ -91,7 +91,7 @@ defineModule(sim, list(
     createsOutput(objectName = "pixelGroupMap", objectClass = "RasterLayer",
                   desc = "updated community map at each succession time step"),
     createsOutput(objectName = "biomassMap", objectClass = "RasterLayer",
-                  desc = "Bioimass map at each succession time step"),
+                  desc = "Biomass map at each succession time step"),
     createsOutput(objectName = "ANPPMap", objectClass = "RasterLayer",
                   desc = "ANPP map at each succession time step"),
     createsOutput(objectName = "MortalityMap", objectClass = "RasterLayer",
@@ -122,8 +122,8 @@ defineModule(sim, list(
                   desc = "an internal counter keeping track of when the last regeneration event occurred"),
     createsOutput(objectName = "initialCommunitiesMap", objectClass = "RasterLayer",
                   desc = "initial community map that has mapcodes match initial community table"),
-    createsOutput("rstCurrentBurn", "RasterLayer", ""), 
-    createsOutput("burnLoci", "numeric", ""), 
+    createsOutput("rstCurrentBurn", objectClass = "list", desc = "List of rasters of fire spread"),
+    createsOutput("burnLoci", "numeric", desc = "Fire pixel IDs"), 
     createsOutput("postFireRegenSummary", "data.table", ""), 
     createsOutput("postFirePixel", "numeric", ""),
     createsOutput("spinUpCache", "logical", ""),
