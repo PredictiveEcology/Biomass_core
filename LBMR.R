@@ -243,10 +243,6 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "statsPlot", eventPriority = 7.75)
          }, 
-         endPlot = {
-           ## only occurs once at the end of the simulation
-           sim <- statsPlotFn(sim)
-         },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
   )
