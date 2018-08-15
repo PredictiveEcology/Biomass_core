@@ -1504,7 +1504,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   }
 
   # load the initial community map
-  if (!suppliedElsewhere("initialCommusufficientLightnitiesMap", sim)) {
+  if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
     sim$initialCommunitiesMap <- Cache(prepInputs,
                                        targetFile = "initial-communities.gis", 
                                        url = extractURL("initialCommunitiesMap"),
