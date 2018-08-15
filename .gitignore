@@ -7,4 +7,10 @@
 last.dump.rda
 .Rproj.user/
 .Rproj.user
-*.pdf
+
+
+*.tif
+
+*.rda
+
+outputs/cache/

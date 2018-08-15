@@ -40,7 +40,7 @@ defineModule(sim, list(
     defineParameter(name = "useCache", class = "logic", TRUE, NA, NA, "use caching for the spinup simulation?"),
     defineParameter(name = "useParallel", class = "ANY", default = parallel::detectCores(), NA, NA, 
                     desc = "Used only in seed dispersal. If numeric, it will be passed to data.table::setDTthreads, if logical and TRUE, it will be passed to parallel::makeCluster, and if cluster object it will be passed to parallel::parClusterApplyLB"),
-    defineParamter(name = "calibrate", "logical", TRUE, NA, NA, "should the model have detailed outputs?")
+    defineParameter(name = "calibrate", "logical", TRUE, NA, NA, "should the model have detailed outputs?")
   ),
   inputObjects = bind_rows(
     expectsInput(objectName = "initialCommunities", objectClass = "data.table",
@@ -249,6 +249,7 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
 }
 
 Init <- function(sim) {
+  
   sim$cutpoint <- 1e10
   communities <- sim$initialCommunities %>%
     gather(key=cohort, value=age, -mapcode,-description,-species,na.rm=TRUE) %>%
@@ -301,11 +302,11 @@ Init <- function(sim) {
   cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData) #line 226 in Yong's code
   
   if(is.null(P(sim)$calibrate)){
-    sim$calibrate <- FALSE
+    P(sim)$calibrate <- FALSE
   }
   #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
   message("Running spinup")
-  spinupstage <- Cache(spinUp, cohortData = cohortData, calibrate = sim$calibrate,
+  spinupstage <- Cache(spinUp, cohortData = cohortData, calibrate = P(sim)$calibrate,
                        successionTimestep = P(sim)$successionTimestep,
                        spinupMortalityfraction = P(sim)$spinupMortalityfraction,
                        species = sim$species, userTags = "stable")
@@ -314,7 +315,7 @@ Init <- function(sim) {
   #                                spinupMortalityfraction = P(sim)$spinupMortalityfraction,
   #                                species = sim$species, userTags = "stable")
   cohortData <- spinupstage$cohortData
-  if(sim$calibrate){
+  if(P(sim)$calibrate){
     sim$spinupOutput <- spinupstage$spinupOutput
   }
   if(P(sim)$calibrate){
@@ -423,7 +424,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
       cohortData <- calculateANPP(cohortData, stage = "spinup")
       cohortData[age > 0, aNPPAct:=pmax(1, aNPPAct - mAge)]
       # calculate growth related mortality
-      cohortData <- calculateGrowthMortality(cohortData, stage = "spinup") #Line 339 Yong code
+      cohortData <- calculateGrowthMortality(cohortData, stage = "spinup") 
       cohortData[age > 0, mBio:=pmax(0,mBio - mAge)]
       cohortData[age > 0, mBio:=pmin(mBio, aNPPAct)]
       cohortData[age > 0, mortality:=mBio + mAge]
@@ -494,8 +495,8 @@ SummaryBGM = function(sim) {
   
   for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")){
     subCohortData <- sim$cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
-    if(nrow(subCohortData[age == (successionTimestep+1),])>0){
-      subCohortData[age == (successionTimestep+1),reproduction:=sum(B), by = pixelGroup]
+    if(nrow(subCohortData[age == (P(sim)$successionTimestep+1),])>0){
+      subCohortData[age == (P(sim)$successionTimestep+1),reproduction:=sum(B), by = pixelGroup]
     } else {
       subCohortData[, reproduction:=0]
     }
@@ -557,7 +558,7 @@ FireDisturbance = function(sim) {
   # to a logical map
   postFireReproData <- data.table(pixelGroup = integer(), ecoregionGroup = numeric(),
                                   speciesCode = numeric(), pixelIndex = numeric())
-  if(sim$calibrate){
+  if(P(sim)$calibrate){
     sim$postFireRegenSummary <- data.table(year = numeric(),
                                            regenMode = character(),
                                            species = character(),
@@ -922,7 +923,7 @@ WardDispersalSeeding = function(sim) {
                               reducedPixelGroupMap,
                               maxPotentialsLength = 1e5,
                               verbose = FALSE,
-                              useParallel = sim$useParallel)
+                              useParallel = P(sim)$useParallel)
     # verbose = globals(sim)$verbose)
     
     rm(seedReceive, seedSource)
@@ -1080,7 +1081,8 @@ Save = function(sim) {
 CohortAgeReclassification = function(sim) {
   if(time(sim) != 0){
     #cohortData <- sim$cohortData
-    sim$cohortData <- ageReclassification(cohortData = sim$cohortData, successionTimestep = successionTimestep,
+    sim$cohortData <- ageReclassification(cohortData = sim$cohortData, 
+                                          successionTimestep = P(sim)$successionTimestep,
                                           stage = "mainSimulation")
     #sim$cohortData <- cohortData
     return(invisible(sim))
