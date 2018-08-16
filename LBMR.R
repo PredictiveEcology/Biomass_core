@@ -1612,7 +1612,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   ######################################################
   if (!suppliedElsewhere("ecoregionMap", sim )) {
     # load ecoregion map
-    sim$ecoregionMap <- raster(file.path(dPath, "ecoregions.gis"))
+    sim$ecoregionMap <- Cache(prepInputs,
+                              url = extractURL("ecoregionMap"),
+                              destinationPath = dPath,
+                              targetFile = "ecoregions.gis")
   }
 
   # input species ecoregion dynamics table
