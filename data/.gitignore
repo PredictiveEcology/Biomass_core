@@ -1,2 +1,5 @@
+# ignore:
+./*
+
 # Don't ignore:
 !./CHECKSUMS.txt
