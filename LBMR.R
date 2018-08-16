@@ -1522,7 +1522,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     maxcol <- 7L
     for (i in 1:2) {
       mainInput <- Cache(prepInputs,
-                         extractURL("initialCommunitiesMap"),
+                         extractURL("sufficientLight"),
                          targetFile = "biomass-succession_test.txt", 
                          destinationPath = dPath, 
                          fun = "utils::read.table", 
