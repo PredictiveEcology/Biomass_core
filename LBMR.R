@@ -78,7 +78,6 @@ defineModule(sim, list(
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     # For inputs from optional fire module
-    expectsInput("cellSize", "numeric", ""), 
     expectsInput("rstCurrentBurn", objectClass = "list", desc = "List of rasters of fire spread"),
     expectsInput("spinUpCache", "logical", "")
   ),
@@ -109,8 +108,6 @@ defineModule(sim, list(
                   desc = "Summary of several characteristics about the stands, derived from cohortData"),
     createsOutput(objectName = "minRelativeB", objectClass = "data.frame",
                   desc = "define the cut points to classify stand shadeness"),
-    createsOutput(objectName = "sufficientLight", objectClass = "data.frame",
-                  desc = "define how the species with different shade tolerance respond to stand shadeness"),
     createsOutput(objectName = "activePixelIndex", objectClass = "logical",
                   desc = "internal use. Keeps track of which pixels are active"),
     createsOutput(objectName = "inactivePixelIndex", objectClass = "logical",
@@ -1465,7 +1462,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   if (!suppliedElsewhere("initialCommunities", sim)) {
     maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
     initialCommunities <- Cache(prepInputs, 
-                                url <- extractURL("initialCommunities"),
+                                url = extractURL("initialCommunities"),
                                 targetFile = "initial-communities.txt", 
                                 destinationPath = dPath, 
                                 fun = "utils::read.table", #purge = 7,
