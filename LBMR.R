@@ -195,11 +195,6 @@ doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = 4)
          },
-         mortalityAndGrowth = {
-           sim <- MortalityAndGrowth(sim)
-           sim <- scheduleEvent(sim, time(sim) + 1, "LBMR", "mortalityAndGrowth",
-                                eventPriority = 5)
-         },
          cohortAgeReclassification = {
            sim <- CohortAgeReclassification(sim)
            
@@ -1528,9 +1523,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   # load the initial community map
   if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
     sim$initialCommunitiesMap <- prepInputs(url = extractURL("initialCommunitiesMap"),
-                                            "initial-communities.gis", 
+                                            targetFile = "initial-communities.gis", 
                                             useCache=FALSE,
-                                            destinationPath = dataPath,
+                                            destinationPath = dPath,
                                             fun = raster::raster
                                             )
   }
@@ -1545,7 +1540,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     maxcol <- 7L
     for (i in 1:2) {
       mainInput <- Cache(prepInputs,
-                         extractURL("initialCommunitiesMap"),
+                         extractURL("sufficientLight"),
                          targetFile = "biomass-succession_test.txt", 
                          destinationPath = dPath, 
                          fun = "utils::read.table", 
@@ -1589,7 +1584,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     species[,':='(seeddistance_eff = gsub(",", "", seeddistance_eff),
                   seeddistance_max = gsub(",", "", seeddistance_max))]
     # change all columns to integer
-    species <- species[, lapply(.SD, as.integer), .SDcols = names(species)[-c(1,NCOL(species))], by = "species,postfireregen"]
+    species <- species[, lapply(.SD, as.integer), .SDcols = names(species)[-c(1,NCOL(species))], 
+                       by = "species,postfireregen"]
     setcolorder(species, colNames)
 
     # get additional species traits
@@ -1607,9 +1603,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     rm(maxcol)
 
   }
-
+  
   if (!suppliedElsewhere("ecoregion", sim)) {
-    maxcol <- max(count.fields(file.path(dPath, "ecoregions.txt"), sep = ""))
     ecoregion <- Cache(prepInputs, 
                        url = extractURL("ecoregion"), 
                        targetFile = "ecoregions.txt", 
@@ -1621,6 +1616,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                        header = FALSE,
                        blank.lines.skip = TRUE,
                        stringsAsFactors = FALSE)
+    maxcol <- max(count.fields(file.path(dPath, "ecoregions.txt"), sep = ""))
     colnames(ecoregion) <- c(paste("col", 1:maxcol, sep = ""))
     ecoregion <- data.table(ecoregion)
     ecoregion <- ecoregion[col1 != "LandisData",]
@@ -1635,7 +1631,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   ######################################################
   if (!suppliedElsewhere("ecoregionMap", sim )) {
     # load ecoregion map
-    sim$ecoregionMap <- raster(file.path(dPath, "ecoregions.gis"))
+    sim$ecoregionMap <- prepInputs(url = extractURL("ecoregionMap"),
+                                              targetFile = "ecoregions.gis", 
+                                              useCache=FALSE,
+                                              destinationPath = dPath,
+                                              fun = raster::raster)
   }
 
   # input species ecoregion dynamics table
