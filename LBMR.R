@@ -78,7 +78,6 @@ defineModule(sim, list(
                   desc = "Pixels that were affected by fire"),
     expectsInput(objectName = "firePixelTable", objectClass = "data.table",
                   desc = "table with pixels IDs that had fire and their corresponding pixel groups"),
-    expectsInput("cellSize", "numeric", ""), 
     expectsInput("spinUpCache", "logical", "")
   ),
   outputObjects = bind_rows(
@@ -108,8 +107,6 @@ defineModule(sim, list(
                   desc = "Summary of several characteristics about the stands, derived from cohortData"),
     createsOutput(objectName = "minRelativeB", objectClass = "data.frame",
                   desc = "define the cut points to classify stand shadeness"),
-    createsOutput(objectName = "sufficientLight", objectClass = "data.frame",
-                  desc = "define how the species with different shade tolerance respond to stand shadeness"),
     createsOutput(objectName = "activePixelIndex", objectClass = "logical",
                   desc = "internal use. Keeps track of which pixels are active"),
     createsOutput(objectName = "inactivePixelIndex", objectClass = "logical",
@@ -1275,7 +1272,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   if (!suppliedElsewhere("initialCommunities", sim)) {
     maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
     initialCommunities <- Cache(prepInputs, 
-                                url <- extractURL("initialCommunities"),
+                                url = extractURL("initialCommunities"),
                                 targetFile = "initial-communities.txt", 
                                 destinationPath = dPath, 
                                 fun = "utils::read.table", #purge = 7,
