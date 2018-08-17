@@ -1268,6 +1268,36 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
 .inputObjects = function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
+  browser()
+  if (!suppliedElsewhere("shpStudyRegionFull", sim)) {
+    message("'shpStudyRegionFull' was not provided by user. Using a polygon in Southwestern Alberta, Canada")
+    
+    canadaMap <- Cache(getData, 'GADM', country = 'CAN', level = 1, path = asPath(dPath),
+                       cacheRepo = getPaths()$cachePath, quick = FALSE) 
+    smallPolygonCoords = list(coords = data.frame(x = c(-115.9022,-114.9815,-114.3677,-113.4470,-113.5084,-114.4291,-115.3498,-116.4547,-117.1298,-117.3140), 
+                                                  y = c(50.45516,50.45516,50.51654,50.51654,51.62139,52.72624,52.54210,52.48072,52.11243,51.25310)))
+    
+    sim$shpStudyRegionFull <- SpatialPolygons(list(Polygons(list(Polygon(smallPolygonCoords$coords)), ID = "swAB_polygon")),
+                                              proj4string = crs(canadaMap))
+    
+    ## use CRS of biomassMap
+    sim$shpStudyRegionFull <- spTransform(sim$shpStudyRegionFull,
+                                          CRSobj = P(sim)$.crsUsed)
+    
+  }
+  
+  if (!suppliedElsewhere("shpStudySubRegion", sim)) {
+    message("'shpStudySubRegion' was not provided by user. Using the same as 'shpStudyRegionFull'")
+    sim$shpStudySubRegion <- sim$shpStudyRegionFull
+  }
+  
+  if (!identical(P(sim)$.crsUsed, crs(sim$shpStudyRegionFull))) {
+    sim$shpStudyRegionFull <- spTransform(sim$shpStudyRegionFull, P(sim)$.crsUsed) #faster without Cache
+  }
+  
+  if (!identical(P(sim)$.crsUsed, crs(sim$shpStudySubRegion))) {
+    sim$shpStudySubRegion <- spTransform(sim$shpStudySubRegion, P(sim)$.crsUsed) #faster without Cache
+  }
   
   if (!suppliedElsewhere("initialCommunities", sim)) {
     maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
@@ -1308,13 +1338,24 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     rm(cutRows, i, maxcol)
   }
   
-  # load the initial community map
+  ## load the initial community map
   if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
-    sim$initialCommunitiesMap <- Cache(prepInputs,
-                                       targetFile = "initial-communities.gis", 
-                                       url = extractURL("initialCommunitiesMap"),
-                                       destinationPath = dPath,
-                                       fun = "raster::raster")
+    ## LANDIS-II demo data:
+    # sim$initialCommunitiesMap <- Cache(prepInputs,
+    #                                    targetFile = "initial-communities.gis",
+    #                                    url = extractURL("initialCommunitiesMap"),
+    #                                    destinationPath = dPath,
+    #                                    fun = "raster::raster")
+
+    ## Dummy version with spatial location in Canada
+    ras <- projectExtent(sim$shpStudySubRegion, crs = sim$shpStudySubRegion)
+    res(ras) = 250
+    initialCommunitiesMap <- rasterize(sim$shpStudySubRegion, ras)
+    
+    initialCommunitiesMap[!is.na(getValues(initialCommunitiesMap))][] <- sample(initialCommunities$mapcode, 
+                                                                                size = sum(!is.na(getValues(initialCommunitiesMap))), 
+                                                                                replace = TRUE) 
+    sim$initialCommunitiesMap <- initialCommunitiesMap
   }
   
   ######################################################
@@ -1409,7 +1450,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                        fun = "utils::read.table", 
                        fill = TRUE, 
                        sep = "",
-                       #purge = 7,
+                       # purge = 7,
                        header = FALSE,
                        blank.lines.skip = TRUE,
                        stringsAsFactors = FALSE)
@@ -1424,14 +1465,25 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   }
   
   ######################################################
-  ######################################################
   ## load ecoregion map
   if (!suppliedElsewhere("ecoregionMap", sim )) {
-    sim$ecoregionMap <- Cache(prepInputs,
-                              url = extractURL("ecoregionMap"),
-                              destinationPath = dPath,
-                              targetFile = "ecoregions.gis",
-                              fun = "raster::raster")
+    ## LANDIS-II demo data:
+    
+    # sim$ecoregionMap <- Cache(prepInputs,
+    #                           url = extractURL("ecoregionMap"),
+    #                           destinationPath = dPath,
+    #                           targetFile = "ecoregions.gis",
+    #                           fun = "raster::raster")
+    
+    ## Dummy version with spatial location in Canada
+    ras <- projectExtent(sim$shpStudySubRegion, crs = sim$shpStudySubRegion)
+    res(ras) = 250
+    ecoregionMap <- rasterize(sim$shpStudySubRegion, ras)
+    
+    ecoregionMap[!is.na(getValues(ecoregionMap))][] <- sample(ecoregion$mapcode, 
+                                                              size = sum(!is.na(getValues(ecoregionMap))), 
+                                                              replace = TRUE) 
+    sim$ecoregionMap <- ecoregionMap
   }
   
   # input species ecoregion dynamics table

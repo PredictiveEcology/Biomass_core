@@ -21,7 +21,7 @@ A biomass succession model derived and modified from LANDIS-II.
 ```{r load-SpaDES, eval=TRUE}
 library(SpaDES)
 moduleName <- "LBMR"
-spadesModulesDirectory <- "modules" # where the module will be downloaded
+spadesModulesDirectory <- "../" # where the module will be downloaded
 ```
 
 # Get the module
