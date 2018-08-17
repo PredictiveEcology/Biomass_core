@@ -1482,7 +1482,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     for(i in cutRows) {
       initialCommunities[i,
                          desc := paste(initialCommunities[i, 3:maxcol, with = FALSE],
-                                     collapse = " ")]
+                                       collapse = " ")]
     }
     initialCommunities[, rowN := 1:nrow(initialCommunities)]
     initialCommunities[, ':='(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
@@ -1493,8 +1493,18 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     initialCommunities[, ':='(description = gsub(">>", "", description), 
                               mapcode = as.integer(as.character(mapcode)))]
     
-    sim$initialCommunities <- data.table(initialCommunities[,1:3, with=FALSE],
-                                         initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
+    initialCommunities <- data.table(initialCommunities[,1:3, with=FALSE],
+                                     initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
+    
+    ## rename species for compatibility across modules (Xxxx_xxx)
+    initialCommunities$species1 <- as.character(substring(initialCommunities$species, 1, 4))
+    initialCommunities$species2 <- as.character(substring(initialCommunities$species, 5, 7))
+    initialCommunities[, ':='(species = paste0(toupper(substring(species1, 1, 1)), substring(species1, 2, 4), "_",
+                                               species2))]
+    
+    initialCommunities[, ':='(species1 = NULL, species2 = NULL)]
+    
+    sim$initialCommunities <- initialCommunities
     rm(cutRows, i, maxcol)
   }
   
@@ -1575,9 +1585,19 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                         mortalityshape = as.numeric(mortalityshape),
                         growthcurve = as.numeric(growthcurve),
                         leafLignin = as.numeric(leafLignin))]
-    sim$species <- setkey(species, species)[setkey(speciesAddon, species), nomatch = 0]
-    rm(maxcol)
     
+    species <- setkey(species, species)[setkey(speciesAddon, species), nomatch = 0]
+    
+    ## rename species for compatibility across modules (Xxxx_xxx)
+    species$species1 <- as.character(substring(species$species, 1, 4))
+    species$species2 <- as.character(substring(species$species, 5, 7))
+    species[, ':='(species = paste0(toupper(substring(species1, 1, 1)), substring(species1, 2, 4), "_",
+                                    species2))]
+    
+    species[, ':='(species1 = NULL, species2 = NULL)]
+    
+    sim$species <- species
+    rm(maxcol)
   }
   
   if (!suppliedElsewhere("ecoregion", sim)) {
@@ -1605,8 +1625,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   ######################################################
   ######################################################
+  ## load ecoregion map
   if (!suppliedElsewhere("ecoregionMap", sim )) {
-    # load ecoregion map
     sim$ecoregionMap <- Cache(prepInputs,
                               url = extractURL("ecoregionMap"),
                               destinationPath = dPath,
@@ -1637,6 +1657,15 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     speciesEcoregion <- speciesEcoregion[, keepColNames, with = FALSE]
     integerCols <- c("year", "establishprob", "maxANPP", "maxB")
     speciesEcoregion[, (integerCols) := lapply(.SD, as.integer), .SDcols = integerCols]
+    
+    ## rename species for compatibility across modules (Xxxx_xxx)
+    speciesEcoregion$species1 <- as.character(substring(speciesEcoregion$species, 1, 4))
+    speciesEcoregion$species2 <- as.character(substring(speciesEcoregion$species, 5, 7))
+    speciesEcoregion[, ':='(species = paste0(toupper(substring(species1, 1, 1)), substring(species1, 2, 4), "_",
+                                             species2))]
+    
+    speciesEcoregion[, ':='(species1 = NULL, species2 = NULL)]
+    
     sim$speciesEcoregion <- speciesEcoregion
     rm(maxcol)
   }
@@ -1662,6 +1691,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     sim$minRelativeB <- minRelativeB
   }
   
+  ## make light requirements table
   if (!suppliedElsewhere("sufficientLight", sim)) {
     sufficientLight <- mainInput %>%
       data.frame
