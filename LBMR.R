@@ -1514,6 +1514,15 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     speciesEcoregion <- speciesEcoregion[, keepColNames, with = FALSE]
     integerCols <- c("year", "establishprob", "maxANPP", "maxB")
     speciesEcoregion[, (integerCols) := lapply(.SD, as.integer), .SDcols = integerCols]
+    
+    ## rename species for compatibility across modules (Xxxx_xxx)
+    speciesEcoregion$species1 <- as.character(substring(speciesEcoregion$species, 1, 4))
+    speciesEcoregion$species2 <- as.character(substring(speciesEcoregion$species, 5, 7))
+    speciesEcoregion[, ':='(species = paste0(toupper(substring(species1, 1, 1)), substring(species1, 2, 4), "_",
+                                             species2))]
+    
+    speciesEcoregion[, ':='(species1 = NULL, species2 = NULL)]
+    
     sim$speciesEcoregion <- speciesEcoregion
     rm(maxcol)
   }
