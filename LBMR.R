@@ -56,11 +56,11 @@ defineModule(sim, list(
                  desc = "a table that has species traits such as longevity...",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt"),
     expectsInput(objectName = "ecoregionMap", objectClass = "RasterLayer",
-                 desc = "ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table",
-                 sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.gis"),
+                 desc = "ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table.
+                 Defaults to a small polygon in Alberta, Canada, with randomly assigned mapcodes", sourceURL = ""),
     expectsInput(objectName = "initialCommunitiesMap", objectClass = "RasterLayer",
-                 desc = "initial community map that has mapcodes match initial community table",
-                 sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
+                 desc = "initial community map that has mapcodes match initial community table. 
+                 Defaults to a small polygon Alberta, Canada, with randomly assigned mapcodes", sourceURL = ""),
     expectsInput(objectName = "ecoregion", objectClass = "data.table",
                  desc = "ecoregion look up table",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt"),
