@@ -1338,8 +1338,18 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     initialCommunities[, ':='(description = gsub(">>", "", description), 
                               mapcode = as.integer(as.character(mapcode)))]
     
-    sim$initialCommunities <- data.table(initialCommunities[,1:3, with=FALSE],
-                                         initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
+    initialCommunities <- data.table(initialCommunities[,1:3, with=FALSE],
+                                     initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
+    
+    ## rename species for compatibility across modules (Xxxx_xxx)
+    initialCommunities$species1 <- as.character(substring(initialCommunities$species, 1, 4))
+    initialCommunities$species2 <- as.character(substring(initialCommunities$species, 5, 7))
+    initialCommunities[, ':='(species = paste0(toupper(substring(species1, 1, 1)), substring(species1, 2, 4), "_",
+                                               species2))]
+    
+    initialCommunities[, ':='(species1 = NULL, species2 = NULL)]
+    
+    sim$initialCommunities <- initialCommunities
     rm(cutRows, i, maxcol)
   }
   
@@ -1514,6 +1524,15 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     speciesEcoregion <- speciesEcoregion[, keepColNames, with = FALSE]
     integerCols <- c("year", "establishprob", "maxANPP", "maxB")
     speciesEcoregion[, (integerCols) := lapply(.SD, as.integer), .SDcols = integerCols]
+    
+    ## rename species for compatibility across modules (Xxxx_xxx)
+    speciesEcoregion$species1 <- as.character(substring(speciesEcoregion$species, 1, 4))
+    speciesEcoregion$species2 <- as.character(substring(speciesEcoregion$species, 5, 7))
+    speciesEcoregion[, ':='(species = paste0(toupper(substring(species1, 1, 1)), substring(species1, 2, 4), "_",
+                                             species2))]
+    
+    speciesEcoregion[, ':='(species1 = NULL, species2 = NULL)]
+    
     sim$speciesEcoregion <- speciesEcoregion
     rm(maxcol)
   }
