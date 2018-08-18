@@ -73,13 +73,19 @@ defineModule(sim, list(
     expectsInput(objectName = "sufficientLight", objectClass = "data.frame",
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
+    expectsInput(objectName = "shpStudySubRegion", objectClass = "SpatialPolygonsDataFrame",
+                 desc = "this shape file contains two informaton: Sub study area with fire return interval attribute. 
+                 Defaults to a shapefile in Southwestern Alberta, Canada", sourceURL = ""),
+    expectsInput(objectName = "shpStudyRegionFull", objectClass = "SpatialPolygonsDataFrame",
+                 desc = "this shape file contains two informaton: Full study area with fire return interval attribute.
+                 Defaults to a shapefile in Southwestern Alberta, Canada", sourceURL = ""),
     # For inputs from optional fire module
     expectsInput(objectName = "postFirePixel", objectClass = "numeric",
                  desc = "Pixels that were affected by fire"),
     expectsInput(objectName = "firePixelTable", objectClass = "data.table",
                  desc = "table with pixels IDs that had fire and their corresponding pixel groups"),
     expectsInput("spinUpCache", "logical", "")
-  ),
+    ),
   outputObjects = bind_rows(
     createsOutput(objectName = "simulationOutput", objectClass = "data.table",
                   desc = "contains simulation results by ecoregion",
@@ -124,7 +130,7 @@ defineModule(sim, list(
     createsOutput("spinupOutput", "data.table", ""),
     createsOutput("summaryBySpecies", "data.table", "The average biomass in a pixel, by species")
     )
-  ))
+    ))
 
 doEvent.LBMR = function(sim, eventTime, eventType, debug = FALSE) {
   if(is.numeric(P(sim)$useParallel)){ 
@@ -1268,7 +1274,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
 .inputObjects = function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
-  browser()
   if (!suppliedElsewhere("shpStudyRegionFull", sim)) {
     message("'shpStudyRegionFull' was not provided by user. Using a polygon in Southwestern Alberta, Canada")
     
@@ -1346,7 +1351,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     #                                    url = extractURL("initialCommunitiesMap"),
     #                                    destinationPath = dPath,
     #                                    fun = "raster::raster")
-
+    
     ## Dummy version with spatial location in Canada
     ras <- projectExtent(sim$shpStudySubRegion, crs = sim$shpStudySubRegion)
     res(ras) = 250
@@ -1372,7 +1377,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                          targetFile = "biomass-succession_test.txt", 
                          destinationPath = dPath, 
                          fun = "utils::read.table", 
-                         fill = TRUE,  #purge = 7,
+                         fill = TRUE, #purge = 7,
                          sep = "",
                          header = FALSE,
                          col.names = c(paste("col",1:maxcol, sep = "")), 
