@@ -1275,22 +1275,16 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
 .inputObjects = function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
+  
+  browser()
   if (!suppliedElsewhere("shpStudyRegionFull", sim)) {
     message("'shpStudyRegionFull' was not provided by user. Using a polygon in Southwestern Alberta, Canada")
     
-    canadaMap <- Cache(getData, 'GADM', country = 'CAN', level = 1, path = asPath(dPath),
-                       cacheRepo = getPaths()$cachePath, quick = FALSE) 
-    smallPolygonCoords = list(coords = data.frame(x = c(-115.9022,-114.9815,-114.3677,-113.4470,-113.5084,-114.4291,-115.3498,-116.4547,-117.1298,-117.3140), 
-                                                  y = c(50.45516,50.45516,50.51654,50.51654,51.62139,52.72624,52.54210,52.48072,52.11243,51.25310)))
-    
-    sim$shpStudyRegionFull <- SpatialPolygons(list(Polygons(list(Polygon(smallPolygonCoords$coords)), ID = "swAB_polygon")),
-                                              proj4string = crs(canadaMap))
-    
-    ## use CRS of biomassMap
-    sim$shpStudyRegionFull <- spTransform(sim$shpStudyRegionFull,
-                                          CRSobj = P(sim)$.crsUsed)
-    
+    polyCenter <- SpatialPoints(coords = data.frame(x = c(-1349980),y = c(6986895)),
+                                proj4string = crs(P(sim)$.crsUsed))
+    sim$shpStudyRegionFull <- SpaDES.tools::randomPolygon(x = polyCenter, hectares = 10000)
   }
+  
   
   if (!suppliedElsewhere("shpStudySubRegion", sim)) {
     message("'shpStudySubRegion' was not provided by user. Using the same as 'shpStudyRegionFull'")
@@ -1368,9 +1362,13 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     res(ras) = 250
     initialCommunitiesMap <- rasterize(sim$shpStudySubRegion, ras)
     
-    initialCommunitiesMap[!is.na(getValues(initialCommunitiesMap))][] <- sample(initialCommunities$mapcode, 
-                                                                                size = sum(!is.na(getValues(initialCommunitiesMap))), 
-                                                                                replace = TRUE) 
+    ## make uniform communities (well structured in space)
+    mapvals <- rep(unique(initialCommunities$mapcode),
+                   each = ceiling(sum(!is.na(getValues(initialCommunitiesMap)))/length(unique(initialCommunities$mapcode))))
+    mapvals <- mapvals[1:sum(!is.na(getValues(initialCommunitiesMap)))]   ## remove any extra values
+    
+    ## assign communities to map and export to sim
+    initialCommunitiesMap[!is.na(getValues(initialCommunitiesMap))][] <- mapvals
     sim$initialCommunitiesMap <- initialCommunitiesMap
   }
   
@@ -1492,13 +1490,18 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     #                           fun = "raster::raster")
     
     ## Dummy version with spatial location in Canada
+    ## Dummy version with spatial location in Canada
     ras <- projectExtent(sim$shpStudySubRegion, crs = sim$shpStudySubRegion)
     res(ras) = 250
     ecoregionMap <- rasterize(sim$shpStudySubRegion, ras)
     
-    ecoregionMap[!is.na(getValues(ecoregionMap))][] <- sample(ecoregion$mapcode, 
-                                                              size = sum(!is.na(getValues(ecoregionMap))), 
-                                                              replace = TRUE) 
+    ## make uniform communities (well structured in space)
+    mapvals <- rep(unique(ecoregion$mapcode),
+                   each = ceiling(sum(!is.na(getValues(ecoregionMap)))/length(unique(ecoregion$mapcode))))
+    mapvals <- mapvals[1:sum(!is.na(getValues(ecoregionMap)))]   ## remove any extra values
+    
+    ## assign communities to map and export to sim
+    ecoregionMap[!is.na(getValues(ecoregionMap))][] <- mapvals
     sim$ecoregionMap <- ecoregionMap
   }
   
