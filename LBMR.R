@@ -309,6 +309,7 @@ Init <- function(sim) {
   names(pixelGroupMap) <- "pixelGroup"
   pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE))), by=pixelGroup]
   sim$biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
+  crs(sim$biomassMap) <- crs(P(sim)$.crsUsed)
   
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     #ANPPMap <- setValues(biomassMap, 0L)
@@ -496,14 +497,19 @@ SummaryBGM = function(sim) {
   names(sim$pixelGroupMap) <- "pixelGroup"
   sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                      "uniqueSumB")
+  crs(sim$biomassMap) <- crs(P(sim)$.crsUsed)
+  
   setColors(sim$biomassMap) <- c("light green", "dark green")
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     
     sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
+    crs(sim$ANPPMap) <- crs(P(sim)$.crsUsed)
     setColors(sim$ANPPMap) <- c("light green", "dark green")
     
     sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
+    crs(sim$mortalityMap) <- crs(P(sim)$.crsUsed)
     setColors(sim$mortalityMap) <- c("light green", "dark green")
+    
   }
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
