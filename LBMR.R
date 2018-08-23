@@ -854,7 +854,7 @@ WardDispersalSeeding <- function(sim) {
     # seed receive just for the species that are seed source
     tempspecies1 <- sim$species[speciesCode %in% unique(matureCohorts$speciesCode),][
       ,.(speciesCode, shadetolerance, seeddistance_eff, seeddistance_max)]
-    seedReceive = setkey(tempspecies1[,c(k = 1, .SD)], k)[setkey(siteShade[,c(k = 1, .SD)], k), allow.cartesian=TRUE][
+    seedReceive <- setkey(tempspecies1[, c(k = 1, .SD)], k)[setkey(siteShade[, c(k = 1, .SD)], k), allow.cartesian = TRUE][
       , k:=NULL]
     seedReceive <- assignLightProb(sufficientLight = sim$sufficientLight, seedReceive)
     set(seedReceive, NULL, "siteShade", NULL)
