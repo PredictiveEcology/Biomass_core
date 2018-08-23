@@ -775,6 +775,7 @@ summaryRegen = function(sim) {
     }
     rm(pixelAll)
     sim$reproductionMap <- reproductionMap
+    crs(sim$reproductionMap) <- crs(P(sim)$.crsUsed)
     #rm(cohortData, pixelGroupMap)
     rm(pixelGroupMap)
   }
