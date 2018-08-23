@@ -874,7 +874,7 @@ Save <- function(sim) {
 CohortAgeReclassification = function(sim) {
   if (time(sim) != 0) {
     #cohortData <- sim$cohortData
-    sim$cohortData <- ageReclassification(cohortData = sim$cohortData, successionTimestep = successionTimestep,
+    sim$cohortData <- ageReclassification(cohortData = sim$cohortData, successionTimestep = P(sim)$successionTimestep,
                                           stage = "mainSimulation")
     #sim$cohortData <- cohortData
     return(invisible(sim))
@@ -1276,7 +1276,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 .inputObjects = function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
   
-  browser()
   if (!suppliedElsewhere("shpStudyRegionFull", sim)) {
     message("'shpStudyRegionFull' was not provided by user. Using a polygon in Southwestern Alberta, Canada")
     
