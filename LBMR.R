@@ -183,7 +183,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            }
          },
          Dispersal = {
-           if (P(sim)$seedingAlgorithm=="noDispersal") {
+           if (P(sim)$seedingAlgorithm == "noDispersal") {
              sim <- NoDispersalSeeding(sim)
            } else if (P(sim)$seedingAlgorithm == "universalDispersal") {
              sim <- UniversalDispersalSeeding(sim)
@@ -728,12 +728,12 @@ NoDispersalSeeding <- function(sim) {
   newCohortData <- newCohortData[establishprob %>>% runif (nrow(newCohortData), 0, 1),]
   set(newCohortData, NULL, c("establishprob"), NULL)
   if (P(sim)$calibrate == TRUE & NROW(newCohortData) > 0) {
-    newCohortData_summ <- newCohortData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
-                                           numberOfReg = length(pixelIndex)),
+    newCohortData_summ <- newCohortData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
+                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
     newCohortData_summ <- setkey(newCohortData_summ, speciesCode)[setkey(sim$species[,.(species,speciesCode)], speciesCode),
-                                                                  nomatch = 0][,.(species, seedingAlgorithm,
-                                                                                  Year, numberOfReg)]
+                                                                  nomatch = 0][, .(species, seedingAlgorithm,
+                                                                                   Year, numberOfReg)]
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
   if (NROW(newCohortData) > 0) {
@@ -761,13 +761,13 @@ UniversalDispersalSeeding <- function(sim) {
                                   successionTimestep = P(sim)$successionTimestep)
   species <- sim$species
   # all species can provide seed source, i.e. age>=sexualmature
-  speciessource <- setkey(sim$species[,.(speciesCode, k = 1)], k)
+  speciessource <- setkey(sim$species[, .(speciesCode, k = 1)], k)
   siteShade <- data.table(calcSiteShade(time = round(time(sim)), sim$cohortData,
                                         sim$speciesEcoregion, sim$minRelativeB))
   activePixelGroup <- unique(data.table(pixelGroup = getValues(pixelGroupMap)[tempActivePixel],
                                         ecoregionGroup = sim$ecoregionMap[tempActivePixel]),
                              by = "pixelGroup")
-  siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table
+  siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
   siteShade[is.na(siteShade), siteShade := 0]
   setkey(siteShade[, k := 1], k)
   # i believe this is the latest version how the landis guys calculate sufficient light
@@ -791,17 +791,15 @@ UniversalDispersalSeeding <- function(sim) {
                                                   .(speciesCode, establishprob, ecoregionGroup)],
                                ecoregionGroup, speciesCode)
   newCohortData <- newCohortData[specieseco_current, nomatch = 0]
-
-
   newCohortData <- newCohortData[establishprob %>>% runif (nrow(newCohortData), 0, 1),]
   set(newCohortData, NULL, "establishprob", NULL)
   if (P(sim)$calibrate == TRUE) {
-    newCohortData_summ <- newCohortData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
-                                           numberOfReg = length(pixelIndex)),
+    newCohortData_summ <- newCohortData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
+                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
-    newCohortData_summ <- setkey(newCohortData_summ, speciesCode)[setkey(sim$species[,.(species,speciesCode)], speciesCode),
-                                                                  nomatch = 0][,.(species, seedingAlgorithm,
-                                                                                  Year, numberOfReg)]
+    newCohortData_summ <- setkey(newCohortData_summ, speciesCode)[setkey(sim$species[, .(species, speciesCode)], speciesCode),
+                                                                  nomatch = 0][, .(species, seedingAlgorithm,
+                                                                                   Year, numberOfReg)]
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
   if (NROW(newCohortData) > 0) {
@@ -832,20 +830,21 @@ WardDispersalSeeding <- function(sim) {
   siteShade <- calcSiteShade(time = round(time(sim)), cohortData = sim$cohortData,
                              sim$speciesEcoregion, sim$minRelativeB)
   activePixelGroup <- data.table(pixelGroup = unique(getValues(pixelGroupMap)[tempActivePixel]))
-  siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table
+  siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
   siteShade[is.na(siteShade),siteShade := 0]
   # Seed source cells:
   # 1. Select only sexually mature cohorts, then
   # 2. collapse to pixelGroup by species, i.e,. doesn't matter that there is >1 cohort of same species
-  sim$cohortData <- setkey(sim$cohortData, speciesCode)[setkey(sim$species[,.(speciesCode, sexualmature)],
+  sim$cohortData <- setkey(sim$cohortData, speciesCode)[setkey(sim$species[, .(speciesCode, sexualmature)],
                                                                speciesCode),
                                                         nomatch = 0]
-  matureCohorts <- setkey(sim$cohortData[age >= sexualmature] %>% unique(by = c("pixelGroup", "speciesCode")),
-                          speciesCode)
-  matureCohorts <- matureCohorts[,.(pixelGroup, speciesCode)]
+  matureCohorts <- sim$cohortData[age >= sexualmature] %>%
+    unique(by = c("pixelGroup", "speciesCode")) %>%
+    setkey(., speciesCode)
+  matureCohorts <- matureCohorts[, .(pixelGroup, speciesCode)]
   set(sim$cohortData, NULL, "sexualmature", NULL)
 
-  if (NROW(matureCohorts)>0) {
+  if (NROW(matureCohorts) > 0) {
     seedSource <- setkey(sim$species[,list(speciesCode, seeddistance_eff, seeddistance_max)], speciesCode) %>%
       .[matureCohorts]
     setkey(seedSource, speciesCode)
@@ -853,9 +852,9 @@ WardDispersalSeeding <- function(sim) {
     #  1. Must be sufficient light
     # seed receive just for the species that are seed source
     tempspecies1 <- sim$species[speciesCode %in% unique(matureCohorts$speciesCode),][
-      ,.(speciesCode, shadetolerance, seeddistance_eff, seeddistance_max)]
+      , .(speciesCode, shadetolerance, seeddistance_eff, seeddistance_max)]
     seedReceive <- setkey(tempspecies1[, c(k = 1, .SD)], k)[setkey(siteShade[, c(k = 1, .SD)], k), allow.cartesian = TRUE][
-      , k:=NULL]
+      , k := NULL]
     seedReceive <- assignLightProb(sufficientLight = sim$sufficientLight, seedReceive)
     set(seedReceive, NULL, "siteShade", NULL)
     seedReceive <- seedReceive[lightProb %>>% runif (nrow(seedReceive), 0, 1), ][
@@ -907,10 +906,10 @@ WardDispersalSeeding <- function(sim) {
       seedingData <- seedingData[establishprob >= runif (nrow(seedingData), 0, 1), ]
       set(seedingData, NULL, "establishprob", NULL)
       if (P(sim)$calibrate == TRUE) {
-        seedingData_summ <- seedingData[,.(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
-                                           numberOfReg = length(pixelIndex)),
+        seedingData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
+                                            numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
-        seedingData_summ <- setkey(seedingData_summ, speciesCode)[setkey(sim$species[,.(species,speciesCode)], speciesCode),
+        seedingData_summ <- setkey(seedingData_summ, speciesCode)[setkey(sim$species[, .(species,speciesCode)], speciesCode),
                                                                   nomatch = 0][,.(species, seedingAlgorithm,
                                                                                   Year, numberOfReg)]
         sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, seedingData_summ))
@@ -1064,7 +1063,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
   set(cohortData, NULL, c("mortality","aNPPAct"), as.numeric(0))
   if (calibrate) {
     spinupOutput <- data.table(pixelGroup = integer(), species = character(), age = integer(),
-                               iniBiomass = integer(), ANPP = numeric(), Mortality=numeric(),
+                               iniBiomass = integer(), ANPP = numeric(), Mortality = numeric(),
                                finBiomass = integer())
   }
   k <- 0
@@ -1077,8 +1076,8 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
   for(presimuT in (maxAge):presimuT_end) {
     message("Spin up time: year ", -presimuT)
     k <- k+1
-    cohortData[origAge == presimuT,     age:=1L]
-    cohortData[origAge >= presimuT,     age:=age+1L]
+    cohortData[origAge == presimuT, age := 1L]
+    cohortData[origAge >= presimuT, age := age+1L]
 
     if (successionTimestep !=1 &
        as.integer(k/successionTimestep) == k/successionTimestep) {
@@ -1104,13 +1103,13 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
       cohortData <- calculateCompetition(cohortData, stage = "spinup")
       # calculate ANPP
       cohortData <- calculateANPP(cohortData, stage = "spinup")
-      cohortData[age > 0, aNPPAct:=pmax(1, aNPPAct - mAge)]
+      cohortData[age > 0, aNPPAct := pmax(1, aNPPAct - mAge)]
       # calculate growth related mortality
       cohortData <- calculateGrowthMortality(cohortData, stage = "spinup")
-      cohortData[age > 0, mBio:=pmax(0,mBio - mAge)]
-      cohortData[age > 0, mBio:=pmin(mBio, aNPPAct)]
-      cohortData[age > 0, mortality:=mBio + mAge]
-      cohortData[age > 0, B:=as.integer(B + as.integer(aNPPAct - mortality))]
+      cohortData[age > 0, mBio := pmax(0,mBio - mAge)]
+      cohortData[age > 0, mBio := pmin(mBio, aNPPAct)]
+      cohortData[age > 0, mortality := mBio + mAge]
+      cohortData[age > 0, B := as.integer(B + as.integer(aNPPAct - mortality))]
       set(cohortData, NULL, c("bPM", "mBio"), NULL)
     }
     if (calibrate) {
@@ -1181,7 +1180,7 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData)
                                                   .(speciesCode, maxANPP,
                                                     maxB, ecoregionGroup)],
                                speciesCode, ecoregionGroup)
-  specieseco_current[, maxB_eco:=max(maxB), by = ecoregionGroup]
+  specieseco_current[, maxB_eco := max(maxB), by = ecoregionGroup]
 
   cohortData <- setkey(cohortData, speciesCode, ecoregionGroup)[specieseco_current, nomatch=0]
   return(cohortData)
@@ -1192,7 +1191,7 @@ updateSpeciesAttributes <- function(species, cohortData) {
   species_temp <- setkey(species[,.(speciesCode, longevity, mortalityshape,
                                     growthcurve)], speciesCode)
   setkey(cohortData, speciesCode)
-  cohortData <- cohortData[species_temp, nomatch=0]
+  cohortData <- cohortData[species_temp, nomatch = 0]
   return(cohortData)
 }
 
