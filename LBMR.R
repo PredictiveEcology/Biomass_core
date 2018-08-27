@@ -841,7 +841,8 @@ WardDispersalSeeding <- function(sim) {
   set(sim$cohortData, NULL, "sexualmature", NULL)
 
   if (NROW(matureCohorts) > 0) {
-    seedSource <- setkey(sim$species[,list(speciesCode, seeddistance_eff, seeddistance_max)], speciesCode) %>%
+    seedSource <- sim$species[, list(speciesCode, seeddistance_eff, seeddistance_max)] %>%
+      setkey(., speciesCode) %>%
       .[matureCohorts]
     setkey(seedSource, speciesCode)
     #  Seed Receiving cells:
