@@ -149,7 +149,12 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                        verbose = FALSE,
                        useParallel, ...) {
 
-  cellSize <- unique(res(pixelGroupMap))
+  cellSize <- res(pixelGroupMap) %>% unique()
+  if (length(cellSize) > 1) {
+    ## check for equal cell sizes that "aren't" due to floating point error
+    res <- vapply(cellSize, function(x) isTRUE(all.equal(x, cellSize[1])), logical(1))
+    if (all(res)) cellSize <- cellSize[1]
+  }
   seedsReceived <- raster(pixelGroupMap)
   seedsReceived[] <- 0L
   sc <- species %>%
