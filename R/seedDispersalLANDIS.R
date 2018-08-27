@@ -180,7 +180,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   seedSourceMaps <- lapply(seedSourceMaps, function(x) setValues(x, as.integer(x[])))
 
   seedRcvOrig <- which(!is.na(seedSourceMaps$speciesRcvPool[]))
-  seedSrcOrig <- which(seedSourceMaps$speciesSrcPool[]>0)
+  seedSrcOrig <- which(seedSourceMaps$speciesSrcPool[] > 0)
 
   xysAll <- xyFromCell(seedSourceMaps$speciesSrcPool, 1:ncell(seedSourceMaps$speciesSrcPool))
 
@@ -188,26 +188,26 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
     # start it in the centre cell
     activeCell <- (nrow(seedSrcOrig)/2L + 0.5) * ncol(seedSrcOrig)
   }
-  if(length(cellSize)>1) stop("pixelGroupMap resolution must be same in x and y dimension")
+  if (length(cellSize) > 1) stop("pixelGroupMap resolution must be same in x and y dimension")
   ### should sanity check map extents
-  if(plot.it) {
+  if (plot.it) {
     wardSeedDispersalHab1 <- raster(seedSourceMaps$speciesSrcPool)
     wardSeedDispersalHab1[] <- NA
-    Plot(wardSeedDispersalHab1, new=TRUE)
+    Plot(wardSeedDispersalHab1, new = TRUE)
   }
 
   seedSourceMaps$speciesSrcPool <- NULL # don't need once xysAll are gotten
 
-  lociReturn <- data.table(fromInit=seedRcvOrig,key="fromInit")
-
+  lociReturn <- data.table(fromInit = seedRcvOrig, key = "fromInit")
 
   #            scFull <- sc[speciesComm(getValues(seedSourceMap))] %>%
   #              setkey(.,pixelIndex)
-  potentialsOrig <- data.table("fromInit"=seedRcvOrig,"RcvCommunity"=seedSourceMaps$speciesRcvPool[][seedRcvOrig],
-                               key="fromInit")
+  potentialsOrig <- data.table("fromInit" = seedRcvOrig,
+                               "RcvCommunity" = seedSourceMaps$speciesRcvPool[][seedRcvOrig],
+                               key = "fromInit")
   potentialsOrig[,from:=fromInit]
 
-  #maxPotentialsLength=3e3
+  #maxPotentialsLength <- 3e3
   nPotentials <- length(seedRcvOrig)
 
   if(nPotentials>maxPotentialsLength) {
@@ -217,8 +217,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   }
   ultimateMaxDist <- max(dtRcv$seeddistance_max)
   splitFactor <- sort(rep(seq_len(subSamp), length.out = nPotentials))
-  subSampList <- purrr::transpose(list(activeCell=split(seedRcvOrig, splitFactor),
-                                       potentials=split(potentialsOrig, splitFactor)))
+  subSampList <- purrr::transpose(list(activeCell = split(seedRcvOrig, splitFactor),
+                                       potentials = split(potentialsOrig, splitFactor)))
   if(is.logical(useParallel) | is.numeric(useParallel)){
     if(isTRUE(useParallel)) {
       numCores <- min(length(subSampList), parallel::detectCores()-1)

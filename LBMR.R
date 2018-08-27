@@ -249,21 +249,21 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 Init <- function(sim) {
   sim$cutpoint <- 1e10
   communities <- sim$initialCommunities %>%
-    gather(key=cohort, value=age, -mapcode,-description,-species,na.rm=TRUE) %>%
-    data.table %>%
-    .[,`:=`(age = as.integer(ceiling(as.numeric(age)/P(sim)$successionTimestep) * P(sim)$successionTimestep),
-            communityGroup = as.integer(mapcode),
-            mapcode = NULL)] %>%
+    gather(key = cohort, value = age, -mapcode, -description, -species, na.rm = TRUE) %>%
+    data.table() %>%
+    .[, `:=`(age = as.integer(ceiling(as.numeric(age)/P(sim)$successionTimestep) * P(sim)$successionTimestep),
+             communityGroup = as.integer(mapcode),
+             mapcode = NULL)] %>%
     unique(., by = c("communityGroup", "species", "age"))
-  species <- data.table(sim$species)[,speciesCode:=as.integer(as.factor(species))]
-  tempspecies <- setkey(species[,.(species,speciesCode)], species)
-  communities <- setkey(communities, species)[tempspecies, nomatch=0]
-  speciesEcoregion <- setkey(data.table(sim$speciesEcoregion), species)[tempspecies, nomatch=0]
+  species <- data.table(sim$species)[, speciesCode := as.integer(as.factor(species))]
+  tempspecies <- setkey(species[, .(species, speciesCode)], species)
+  communities <- setkey(communities, species)[tempspecies, nomatch = 0]
+  speciesEcoregion <- setkey(data.table(sim$speciesEcoregion), species)[tempspecies, nomatch = 0]
   sim$species <- setkey(species, speciesCode)
   ecoregion <- data.table(sim$ecoregion)[, ecoregionGroup := as.integer(mapcode)]
   ecoregion_temp <- setkey(ecoregion[, .(ecoregion,ecoregionGroup)], ecoregion)
   sim$minRelativeB <- data.table(sim$minRelativeB, key = "ecoregion")[ecoregion_temp, nomatch = 0]
-  speciesEcoregion <- setkey(speciesEcoregion, ecoregion)[ecoregion_temp, nomatch=0]
+  speciesEcoregion <- setkey(speciesEcoregion, ecoregion)[ecoregion_temp, nomatch = 0]
   sim$speciesEcoregion <- setkey(speciesEcoregion, ecoregionGroup, speciesCode)
   nrowCommunities <- nrow(communities)
   initialCommunitiesMap <- setValues(sim$initialCommunitiesMap, as.integer(sim$initialCommunitiesMap[]))
@@ -274,11 +274,11 @@ Init <- function(sim) {
   pixelGroupMap <- setValues(initialCommunitiesMap, as.integer((initialCommunitiesMap +
                                                                   sim$ecoregionMap*pixelGroupFactor)[]))
   sim$initialCommunitiesMap <- NULL
-  active_ecoregion <- setkey(ecoregion[active=="yes" ,.(k=1,ecoregionGroup)], k)
-  cohortData <- setkey(communities[, k:=1], k)[active_ecoregion, allow.cartesian=TRUE][, k:=NULL]
+  active_ecoregion <- setkey(ecoregion[active == "yes", .(k = 1, ecoregionGroup)], k)
+  cohortData <- setkey(communities[, k := 1], k)[active_ecoregion, allow.cartesian = TRUE][, k := NULL]
   set(cohortData, NULL, "pixelGroup", cohortData$communityGroup + cohortData$ecoregionGroup*pixelGroupFactor)
   set(cohortData, NULL, "B", as.integer(0L))
-  cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B)] # removed the collumn cummunityGroup
+  cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B)] # removed the column communityGroup
   # the cohortData here is a full joint table of community Group and ecoregion Group
   # some redundant pixelGroups are removed, because they are not present on the pixelGroupMap
   # we are dealing with the case that all the ecoregion is active, how about some ecoregion is not active
@@ -317,10 +317,10 @@ Init <- function(sim) {
                                            Age = numeric(), iniBiomass = numeric(), ANPP = numeric(),
                                            Mortality = numeric(), deltaB = numeric(), finBiomass = numeric())
     sim$regenerationOutput <- data.table(seedingAlgorithm = character(), species = character(),
-                                         Year = numeric(), numberOfReg=  numeric())
+                                         Year = numeric(), numberOfReg = numeric())
   }
   names(pixelGroupMap) <- "pixelGroup"
-  pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE))), by=pixelGroup]
+  pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE))), by = pixelGroup]
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
     #ANPPMap <- setValues(biomassMap, 0L)
@@ -331,14 +331,14 @@ Init <- function(sim) {
   #}
 
   sim$pixelGroupMap <- pixelGroupMap
-  sim$cohortData <- cohortData[,.(pixelGroup, ecoregionGroup, speciesCode, age,
-                                  B, mortality = 0, aNPPAct = 0)]
+  sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age,
+                                   B, mortality = 0, aNPPAct = 0)]
   simulationOutput <- data.table(Ecoregion = getValues(sim$ecoregionMap),
                                  pixelGroup = getValues(pixelGroupMap),
                                  pixelIndex = 1:ncell(sim$ecoregionMap))[
-                                   ,.(NofPixel = length(pixelIndex)), by = c("Ecoregion", "pixelGroup")]
+                                   , .(NofPixel = length(pixelIndex)), by = c("Ecoregion", "pixelGroup")]
   simulationOutput <- setkey(simulationOutput, pixelGroup)[setkey(pixelAll, pixelGroup), nomatch = 0][
-    ,.(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = Ecoregion] # needs to be numeric because of integer overflow -- returned to integer in 2 lines
+    , .(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = Ecoregion] # needs to be numeric because of integer overflow -- returned to integer in 2 lines
   simulationOutput <- setkey(simulationOutput, Ecoregion)[setkey(sim$activeEcoregionLength, Ecoregion),
                                                           nomatch = 0]
   sim$simulationOutput <- simulationOutput[,.(Ecoregion, NofCell, Year = as.integer(time(sim)),
@@ -350,34 +350,31 @@ Init <- function(sim) {
   speciesEcoregion_False <- speciesEcoregion[identifier == "FALSE",]
   speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(speciesEcoregion_False$year),]
   sim$speciesEcoregion <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))[
-    ,':='(year = year - min(year), identifier = NULL)]
+    , `:=`(year = year - min(year), identifier = NULL)]
   sim$lastFireYear <- "noFire"
   return(invisible(sim))
 }
 
 ### EVENT FUNCTIONS
 MortalityAndGrowth <- function(sim) {
-
   if (is.numeric(P(sim)$useParallel)) {
     data.table::setDTthreads(P(sim)$useParallel)
     message("Mortality and Growth should be using >100% CPU")
   }
 
-  sim$cohortData <- sim$cohortData[,.(pixelGroup, ecoregionGroup,
-                                      speciesCode, age, B, mortality,
-                                      aNPPAct)]
+  sim$cohortData <- sim$cohortData[, .(pixelGroup, ecoregionGroup,
+                                       speciesCode, age, B, mortality, aNPPAct)]
   cohortData <- sim$cohortData
-  sim$cohortData <- cohortData[0,]
+  sim$cohortData <- cohortData[0, ]
   pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
                             temID = 1:length(unique(cohortData$pixelGroup)))
   cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = sim$cutpoint), max(pixelGroups$temID))))
   #cutpoints <- c(1,max(pixelGroups$temID))
-  if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints+1)}
+  if (length(cutpoints) == 1) cutpoints <- c(cutpoints, cutpoints + 1)
   pixelGroups[, groups := cut(temID, breaks = cutpoints,
-                            labels = paste("Group", 1:(length(cutpoints)-1),
-                                           sep = ""),
+                            labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
                             include.lowest = T)]
-  for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")) {
+  for(subgroup in paste("Group", 1:(length(cutpoints)-1), sep = "")) {
     subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
     #   cohortData <- sim$cohortData
     set(subCohortData, NULL, "age", subCohortData$age + 1)
@@ -536,7 +533,7 @@ FireDisturbance <- function(sim) {
     }
   }
 
-  ## extract burn pixel indices/groups and remve potentially innactive pixels
+  ## extract burn pixel indices/groups and remve potentially inactive pixels
   sim$burnLoci <- which(sim$rstCurrentBurn[] == 1)
   if (length(sim$inactivePixelIndex) > 0) {
     sim$burnLoci <- sim$burnLoci[!(sim$burnLoci %in% sim$inactivePixelIndex)] # this is to prevent avaluating the pixels that are inactive
@@ -558,7 +555,7 @@ FireDisturbance <- function(sim) {
   rm(tempspecies)
   if (NROW(serotinyAssessCohortData) > 0) {
     # assess potential serotiny reg
-    serotinyAssessCohortData <- setkey(serotinyAssessCohortData, speciesCode)[sim$species[,.(speciesCode, sexualmature)],
+    serotinyAssessCohortData <- setkey(serotinyAssessCohortData, speciesCode)[sim$species[, .(speciesCode, sexualmature)],
                                                                               nomatch = 0]
     newCohortData <- serotinyAssessCohortData[age >= sexualmature] %>% # NOTE should be in mortalityFromDisturbance module or event
       unique(., by = c("pixelGroup", "speciesCode"))
@@ -572,10 +569,9 @@ FireDisturbance <- function(sim) {
     newCohortData <- serotinyPixelTable[newCohortData, nomatch = 0, allow.cartesian = TRUE]
 
     # light check
-    newCohortData <- setkey(newCohortData, speciesCode)[sim$species[,.(speciesCode, shadetolerance)],
-                                                        nomatch = 0][,siteShade := 0]
-    newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight,
-                                     newCohortData)
+    newCohortData <- setkey(newCohortData, speciesCode)[sim$species[, .(speciesCode, shadetolerance)],
+                                                        nomatch = 0][, siteShade := 0]
+    newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight, newCohortData)
     newCohortData <- newCohortData[lightProb %>>% runif (nrow(newCohortData), 0, 1),]
     set(newCohortData, NULL, c("shadetolerance", "siteShade", "lightProb"), NULL)
     specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
@@ -632,14 +628,13 @@ FireDisturbance <- function(sim) {
     resproutingAssessCohortData <- unique(resproutingAssessCohortData, by = c("pixelGroup", "speciesCode"))
     setkey(resproutingAssessCohortData, pixelGroup)
     newCohortData <- resproutingPixelTable[resproutingAssessCohortData, nomatch = 0, allow.cartesian = TRUE]
-    newCohortData <- setkey(newCohortData, speciesCode)[sim$species[,.(speciesCode, shadetolerance)],
+    newCohortData <- setkey(newCohortData, speciesCode)[sim$species[, .(speciesCode, shadetolerance)],
                                                         nomatch = 0][, siteShade := 0]
 
     # Light check
-    newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight,
-                                     newCohortData)
-    newCohortData <- newCohortData[lightProb %>>% runif (nrow(newCohortData), 0, 1),]
-    newCohortData <- newCohortData[runif (nrow(newCohortData), 0, 1) %<<% newCohortData$resproutprob]
+    newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight, newCohortData)
+    newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0, 1),]
+    newCohortData <- newCohortData[newCohortData$resproutprob %>>% runif(nrow(newCohortData), 0, 1)]
     newCohortData <- unique(newCohortData, by = c("pixelIndex", "speciesCode"))
     set(newCohortData, NULL, c("resproutprob", "shadetolerance", "siteShade", "lightProb"), NULL)
     # remove all columns that were used temporarily here
@@ -675,7 +670,7 @@ FireDisturbance <- function(sim) {
       postFireReproData[, pixelGroup := maxPixelGroup +
                           as.integer(as.factor(postFireReproData$ecoregionGroup))]
     }
-    sim$cohortData[,sumB := sum(B, na.rm = TRUE), by = pixelGroup]
+    sim$cohortData[, sumB := sum(B, na.rm = TRUE), by = pixelGroup]
     addnewcohort <- addNewCohorts(postFireReproData, sim$cohortData, sim$pixelGroupMap,
                                   time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
     sim$cohortData <- addnewcohort$cohortData
@@ -750,7 +745,8 @@ UniversalDispersalSeeding <- function(sim) {
   pixelGroupMap <- sim$pixelGroupMap
   fire_nonRegPixels <- which(getValues(pixelGroupMap) == 0)
   if (length(fire_nonRegPixels) > 0) {
-    pixelGroupMap[fire_nonRegPixels] <- as.integer(as.factor(getValues(sim$ecoregionMap)[fire_nonRegPixels])) + maxValue(pixelGroupMap)
+    pixelGroupMap[fire_nonRegPixels] <- as.integer(as.factor(getValues(sim$ecoregionMap)[fire_nonRegPixels])) +
+      maxValue(pixelGroupMap)
   }
   if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
     tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
@@ -1387,19 +1383,17 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   set(newCohortDataExtra, NULL, c("community", "temppixelGroup"), NULL)
   setkey(newCohortData, pixelIndex)
   setkey(newCohortDataExtra, pixelIndex)
-  newCohortData <- newCohortData[,pixelGroup:=NULL][newCohortDataExtra][,pixelIndex := NULL]
+  newCohortData <- newCohortData[,pixelGroup := NULL][newCohortDataExtra][,pixelIndex := NULL]
   newCohortData <- unique(newCohortData, by = c("newpixelGroup", "speciesCode"))
-  sumTable <- cohortData[, .(pixelGroup,sumB)] %>%
-    unique(., by = c("pixelGroup"))
-  newCohortData <- dplyr::left_join(newCohortData, sumTable, by = "pixelGroup") %>% data.table
-  newCohortData[is.na(sumB),sumB:=0]
+  sumTable <- cohortData[, .(pixelGroup,sumB)] %>% unique(., by = c("pixelGroup"))
+  newCohortData <- dplyr::left_join(newCohortData, sumTable, by = "pixelGroup") %>% data.table()
+  newCohortData[is.na(sumB), sumB := 0]
   set(cohortData, NULL, "sumB", NULL)
   set(newCohortData, NULL, "pixelGroup", newCohortData$newpixelGroup)
   set(newCohortData, NULL, c("newpixelGroup"), NULL)
   specieseco_current <- speciesEcoregion[year <= time]
   specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
-                                                  .(speciesCode, maxANPP,
-                                                    maxB, ecoregionGroup)],
+                                                  .(speciesCode, maxANPP, maxB, ecoregionGroup)],
                                speciesCode, ecoregionGroup)
   specieseco_current[, maxB_eco := max(maxB), by = ecoregionGroup]
   newCohortData <- setkey(newCohortData, speciesCode, ecoregionGroup)[specieseco_current, nomatch = 0]
@@ -1408,8 +1402,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
       as.integer(pmax(1, newCohortData$maxANPP * exp(-1.6 * newCohortData$sumB / newCohortData$maxB_eco))))
   set(newCohortData, NULL, "B", as.integer(pmin(newCohortData$maxANPP, newCohortData$B)))
 
-  newCohortData <- newCohortData[,.(pixelGroup, ecoregionGroup, speciesCode, age, B,
-                                    mortality = 0, aNPPAct = 0)]
+  newCohortData <- newCohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B,
+                                     mortality = 0, aNPPAct = 0)]
   newCohortDataExtra2 <- unique(newCohortDataExtra, by = c("pixelGroup", "newpixelGroup"))
   # newCohortDataExtra2 is further simplified form
   # identify which pixelGroups in cohortData have new regeneration
@@ -1443,7 +1437,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   pixelGroupMap <- setValues(pixelGroupMap_new, as.integer(pixelGroupMap_new[]))
   return(list(cohortData = cohortData,pixelGroupMap = pixelGroupMap))
 }
-
 
 .inputObjects <- function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
