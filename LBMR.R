@@ -352,9 +352,7 @@ MortalityAndGrowth = function(sim) {
     message("Mortality and Growth should be using >100% CPU")
   }
   
-  sim$cohortData <- sim$cohortData[,.(pixelGroup, ecoregionGroup,
-                                      speciesCode, age, B, mortality,
-                                      aNPPAct)]
+  sim$cohortData <- sim$cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality, aNPPAct)]
   cohortData <- sim$cohortData
   sim$cohortData <- cohortData[0,]
   pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
@@ -715,6 +713,7 @@ WardDispersalSeeding = function(sim) {
     } else {
       reducedPixelGroupMap <- pixelGroupMap
     }
+    
     #source(file.path(modulePath(sim), "LBMR", "R", "seedDispersalLANDIS.R")) # not needed b/c SpaDES already did this
     seedingData <- LANDISDisp(sim, dtRcv=seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
@@ -915,7 +914,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     cohortData[origAge >= presimuT,     age:=age+1L]
     
     if (successionTimestep !=1 &
-       as.integer(k/successionTimestep) == k/successionTimestep){
+        as.integer(k/successionTimestep) == k/successionTimestep){
       cohortData <- ageReclassification(cohortData = cohortData, successionTimestep = successionTimestep,
                                         stage = "spinup")
     }
@@ -1224,7 +1223,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     set(newCohortDataExtra, , "community",
         newCohortDataExtra$temppixelGroup + max(newCohortDataExtra$temppixelGroup)*newCohortDataExtra$community)
   }
-
+  
   ## make new pixel groups by adding community IDs to previous max pix group ID
   maxPixelGroup <- max(max(cohortData$pixelGroup), maxValue(pixelGroupMap))
   set(newCohortDataExtra, ,  "newpixelGroup",
@@ -1480,6 +1479,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   }
   
   if (!suppliedElsewhere("ecoregion", sim)) {
+    ## Get the dummy ecoregion table from LANDIS-II examples.
     maxcol <- 5 #max(count.fields(file.path(dPath, "ecoregions.txt"), sep = ""))
     ecoregion <- Cache(prepInputs, 
                        url = extractURL("ecoregion"), 

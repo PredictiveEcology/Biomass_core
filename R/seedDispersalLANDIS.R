@@ -148,7 +148,6 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
                        maxPotentialsLength=1e3, 
                        verbose=FALSE,
                        useParallel, ...) {
-  
   cellSize=unique(res(pixelGroupMap))
   seedsReceived <- raster(pixelGroupMap) 
   seedsReceived[] <- 0L
@@ -178,7 +177,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   #seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", newRasterCols="speciesSrcPool")
   #seedReceiveMap <- rasterizeReduced(speciesRcvPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", newRasterCols="speciesRcvPool")
   seedSourceMaps <- lapply(seedSourceMaps, function(x) setValues(x, as.integer(x[])))
-
+  
   seedRcvOrig <- which(!is.na(seedSourceMaps$speciesRcvPool[]))
   seedSrcOrig <- which(seedSourceMaps$speciesSrcPool[]>0)
   
@@ -288,17 +287,17 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
     parallel::clusterExport(useParallel, c("reqdPkgs"), envir=environment())
     clusterEvalQ(cl=useParallel, {SpaDES.core:::.modifySearchPath(reqdPkgs, removeOthers = FALSE)})
     seedsArrived <- parallel::parLapplyLB(useParallel, subSampList,
-                                        function(y) seedDispInnerFn(activeCell = y[[1]],
-                                                                    potentials = y[[2]], 
-                                                                    n = cellSize,
-                                                                    speciesRcvPool, sc,
-                                                                    seedSourceMaps$speciesRcvPool, ultimateMaxDist, 
-                                                                    cellSize, xysAll, 
-                                                                    dtSrc, 
-                                                                    dispersalFn,
-                                                                    k, b, lociReturn, 
-                                                                    speciesComm, 
-                                                                    pointDistance)) %>%
+                                          function(y) seedDispInnerFn(activeCell = y[[1]],
+                                                                      potentials = y[[2]], 
+                                                                      n = cellSize,
+                                                                      speciesRcvPool, sc,
+                                                                      seedSourceMaps$speciesRcvPool, ultimateMaxDist, 
+                                                                      cellSize, xysAll, 
+                                                                      dtSrc, 
+                                                                      dispersalFn,
+                                                                      k, b, lociReturn, 
+                                                                      speciesComm, 
+                                                                      pointDistance)) %>%
       rbindlist()
   } else {
     stop("Please specify the useParallel argument correctly. Currently, it takes either numeric, logical or cluster object")
