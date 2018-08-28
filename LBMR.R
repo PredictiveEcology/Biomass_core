@@ -322,13 +322,12 @@ Init <- function(sim) {
   names(pixelGroupMap) <- "pixelGroup"
   pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE))), by=pixelGroup]
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
-    biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
-    crs(sim$biomassMap) <- crs(P(sim)$.crsUsed)
+    biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, 
+                                   "uniqueSumB", crs = crs(pixelGroupMap))
     #ANPPMap <- setValues(biomassMap, 0L)
     #mortalityMap <- setValues(biomassMap, 0L)
     #reproductionMap <- setValues(pixelGroupMap, 0L)
   }
-
   #}
 
   sim$pixelGroupMap <- pixelGroupMap
@@ -501,16 +500,15 @@ SummaryBGM <- function(sim) {
   names(sim$pixelGroupMap) <- "pixelGroup"
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                       "uniqueSumB")
-    crs(sim$biomassMap) <- crs(P(sim)$.crsUsed)
+                                       "uniqueSumB", crs = crs(sim$pixelGroupMap))
     setColors(sim$biomassMap) <- c("light green", "dark green")
 
-    sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
-    crs(sim$ANPPMap) <- crs(P(sim)$.crsUsed)
+    sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, 
+                                    "uniqueSumANPP", crs = crs(sim$pixelGroupMap))
     setColors(sim$ANPPMap) <- c("light green", "dark green")
 
-    sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
-    crs(sim$mortalityMap) <- crs(P(sim)$.crsUsed)
+    sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, 
+                                         "uniqueSumMortality", crs = crs(sim$pixelGroupMap))
     setColors(sim$mortalityMap) <- c("light green", "dark green")
   }
   # the following codes for preparing the data table for saving
@@ -941,14 +939,14 @@ summaryRegen <- function(sim) {
                                .(uniqueSumReproduction = as.integer(sum(B, na.rm=TRUE))),
                                by = pixelGroup]
     if (NROW(pixelAll)>0) {
-      reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
+      reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap,
+                                          "uniqueSumReproduction", crs = crs(pixelGroupMap))
       setColors(reproductionMap) <- c("light green", "dark green")
     } else {
       reproductionMap <- setValues(pixelGroupMap, 0L)
     }
     rm(pixelAll)
     sim$reproductionMap <- reproductionMap
-    crs(sim$reproductionMap) <- crs(P(sim)$.crsUsed)
     #rm(cohortData, pixelGroupMap)
     rm(pixelGroupMap)
   }
