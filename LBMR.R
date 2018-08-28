@@ -492,8 +492,8 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     all <- list(cohortData = cohortData)
   }
   return(all)
+  }
 }
-
 SummaryBGM <- function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup),
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
