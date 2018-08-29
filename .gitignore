@@ -7,5 +7,9 @@
 last.dump.rda
 .Rproj.user/
 .Rproj.user
+*.tif
+*.rda
 
 outputs/
+
+
