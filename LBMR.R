@@ -15,10 +15,7 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("README.txt", "LBMR.Rmd"),
   reqdPkgs = list("raster", "sp", "data.table", "dplyr", "ggplot2", "purrr",
-                  "fpCompare", "grid", "tidyr", "Rcpp", "scales", "quickPlot",
-                  "PredictiveEcology/SpaDES.core@development",
-                  "PredictiveEcology/SpaDES.tools@development",
-                  "PredictiveEcology/reproducible@development"),
+                  "fpCompare", "grid", "tidyr", "Rcpp", "scales", "quickPlot"),
   parameters = rbind(
     defineParameter(".crsUsed", "character",
                     paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
@@ -147,7 +144,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            ## schedule events
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = 4)
-           if(P(sim)$successionTimestep != 1){
+           if (P(sim)$successionTimestep != 1) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
                                   "cohortAgeReclassification", eventPriority = 5.25)
            }
@@ -228,7 +225,6 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 }
 
 Init <- function(sim) {
-  
   sim$cutpoint <- 1e10
   communities <- sim$initialCommunities %>%
     gather(key = cohort, value = age, -mapcode, -description, -species, na.rm = TRUE) %>%
@@ -335,7 +331,7 @@ Init <- function(sim) {
 
 # cacheSpinUpFunction <- function(sim, cachePath) {
 #   # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
-#   if(P(sim)$useCache) {
+#   if (P(sim)$useCache) {
 #     sim$spinUpCache <- function(...) {
 #       reproducible::Cache(FUN = spinUp, ...)
 #     }
@@ -347,18 +343,18 @@ Init <- function(sim) {
 #   return(invisible(sim))
 # }
 
-spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species){
+spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species) {
   maxAge <- max(cohortData$age) # determine the pre-simulation length
-  set(cohortData, ,"origAge", cohortData$age)
-  set(cohortData, ,c("age","sumB"), as.integer(0L))
-  set(cohortData, ,c("mortality","aNPPAct"), as.numeric(0))
-  if(calibrate){
+  set(cohortData, NULL,"origAge", cohortData$age)
+  set(cohortData, NULL,c("age","sumB"), as.integer(0L))
+  set(cohortData, NULL,c("mortality","aNPPAct"), as.numeric(0))
+  if (calibrate) {
     spinupOutput <- data.table(pixelGroup = integer(), species = character(), age = integer(),
                                iniBiomass = integer(), ANPP = numeric(), Mortality=numeric(),
                                finBiomass = integer())
   }
   k <- 0
-  if(successionTimestep == 1 & maxAge!=1){
+  if (successionTimestep == 1 & maxAge!=1) {
     presimuT_end <- 2
   } else {
     presimuT_end <- 1
@@ -370,13 +366,13 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     cohortData[origAge == presimuT,     age:=1L]
     cohortData[origAge >= presimuT,     age:=age+1L]
     
-    if(successionTimestep !=1 &
-       as.integer(k/successionTimestep) == k/successionTimestep){
+    if (successionTimestep !=1 &
+       as.integer(k/successionTimestep) == k/successionTimestep) {
       cohortData <- ageReclassification(cohortData = cohortData, successionTimestep = successionTimestep,
                                         stage = "spinup") #line 315 in Yong code
     }
     # 1. assign the biomass for the first cohort
-    if(nrow(cohortData[age == 2,])>0){
+    if (nrow(cohortData[age == 2,])>0) {
       lastReg <- k-1
       cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                   successionTimestep = successionTimestep)
@@ -412,7 +408,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
       set(subCohortData, NULL, "B",
           subCohortData$B + as.integer(subCohortData$aNPPAct - subCohortData$mortality))
     }
-    if(maxAge!=1){
+    if (maxAge!=1) {
       # 2. calculate age-related mortality
       cohortData <- calculateAgeMortality(cohortData, stage="spinup",
                                           spinupMortalityfraction = spinupMortalityfraction)
@@ -430,10 +426,10 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
       cohortData[age > 0, mBio:=pmin(mBio, aNPPAct)]
       cohortData[age > 0, mortality:=mBio + mAge]
       cohortData[age > 0, B:=as.integer(B + as.integer(aNPPAct - mortality))]
-      set(cohortData, ,c("bPM", "mBio"), NULL)
+      set(cohortData, NULL,c("bPM", "mBio"), NULL)
     }
-    if(calibrate){
-      if(maxAge != 1){
+    if (calibrate) {
+      if (maxAge != 1) {
         spoutput <- cohortData[origAge >= presimuT, .(pixelGroup, speciesCode, age,
                                                       iniBiomass = B + as.integer(mortality - aNPPAct),
                                                       ANPP = round(aNPPAct, 1),
@@ -462,7 +458,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
       }
     }
     lastnewcohorts <- which(cohortData$origAge == 1)
-    if(presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1){
+    if (presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1) {
       cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                   successionTimestep = successionTimestep)
       cohortData[origAge == 1,B:=as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
@@ -470,7 +466,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     }
   }
   cohortData[,':='(age = origAge, origAge = NULL)]
-  if(calibrate){
+  if (calibrate) {
     all <- list(cohortData = cohortData, spinupOutput = spinupOutput)
   } else {
     all <- list(cohortData = cohortData)
@@ -553,7 +549,7 @@ SummaryBGM <- function(sim) {
   return(invisible(sim))
 }
 
-NoDispersalSeeding = function(sim) {
+NoDispersalSeeding <- function(sim) {
   pixelGroupMap <- sim$pixelGroupMap
   if (sim$lastFireYear == round(time(sim))) { # if current year is both fire year and succession year
     # find new active pixel that remove successful postfire regeneration
@@ -1276,9 +1272,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     unique(, by = c("pixelGroup"))
   newCohortData <- dplyr::left_join(newCohortData, sumTable, by = "pixelGroup") %>% data.table()
   newCohortData[is.na(sumB),sumB:=0]
-  set(cohortData, ,"sumB", NULL)
-  set(newCohortData, , "pixelGroup", newCohortData$newpixelGroup)
-  set(newCohortData, , c("newpixelGroup"), NULL)
+  set(cohortData, NULL,"sumB", NULL)
+  set(newCohortData, NULL, "pixelGroup", newCohortData$newpixelGroup)
+  set(newCohortData, NULL, c("newpixelGroup"), NULL)
   
   ## get spp "productivity traits" per ecoregion/present year
   ## calculate maximum biomass per ecoregion, join to new cohort data
@@ -1288,11 +1284,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                                speciesCode, ecoregionGroup)
   specieseco_current[, maxB_eco:=max(maxB), by = ecoregionGroup]
   newCohortData <- setkey(newCohortData, speciesCode, ecoregionGroup)[specieseco_current, nomatch=0]
-  set(newCohortData, , "age", 1)  ## set age to 1
+  set(newCohortData, NULL, "age", 1)  ## set age to 1
   ## set biomass - if B=0, it's getting maxANPP ???
-  set(newCohortData, ,"B",
+  set(newCohortData, NULL,"B",
       as.integer(pmax(1, newCohortData$maxANPP*exp(-1.6*newCohortData$sumB/newCohortData$maxB_eco))))
-  set(newCohortData, ,"B", as.integer(pmin(newCohortData$maxANPP, newCohortData$B)))
+  set(newCohortData, NULL,"B", as.integer(pmin(newCohortData$maxANPP, newCohortData$B)))
   
   newCohortData <- newCohortData[,.(pixelGroup, ecoregionGroup, speciesCode, age, B,
                                     mortality = 0, aNPPAct = 0)]
@@ -1333,9 +1329,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 }
 
 .inputObjects <- function(sim) {
-  dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
-
-.inputObjects = function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
   
   if (!suppliedElsewhere("shpStudyRegionFull", sim)) {
