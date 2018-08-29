@@ -880,15 +880,14 @@ WardDispersalSeeding <- function(sim) {
     } else {
       reducedPixelGroupMap <- pixelGroupMap
     }
-    #source(file.path(modulePath(sim), "LBMR", "R", "seedDispersalLANDIS.R")) # not needed b/c SpaDES already did this
+
     seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
                               reducedPixelGroupMap,
                               maxPotentialsLength = 1e5,
-                              verbose = FALSE,
+                              verbose = FALSE,#globals(sim)$verbose,
                               useParallel = P(sim)$useParallel)
-    # verbose = globals(sim)$verbose)
 
     rm(seedReceive, seedSource)
     if (NROW(seedingData) > 0) {
@@ -907,7 +906,7 @@ WardDispersalSeeding <- function(sim) {
                                             numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
         seedingData_summ <- setkey(seedingData_summ, speciesCode)[setkey(sim$species[, .(species,speciesCode)], speciesCode),
-                                                                  nomatch = 0][,.(species, seedingAlgorithm,
+                                                                  nomatch = 0][, .(species, seedingAlgorithm,
                                                                                   Year, numberOfReg)]
         sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, seedingData_summ))
       }
@@ -929,8 +928,8 @@ summaryRegen <- function(sim) {
     pixelGroupMap <- sim$pixelGroupMap
     names(pixelGroupMap) <- "pixelGroup"
     # please note that the calculation of reproduction is based on successioinTime step interval,
-    pixelAll <- sim$cohortData[age <= P(sim)$successionTimestep+1,
-                               .(uniqueSumReproduction = as.integer(sum(B, na.rm=TRUE))),
+    pixelAll <- sim$cohortData[age <= P(sim)$successionTimestep + 1,
+                               .(uniqueSumReproduction = as.integer(sum(B, na.rm = TRUE))),
                                by = pixelGroup]
     if (NROW(pixelAll)>0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
@@ -1026,17 +1025,17 @@ Save <- function(sim) {
   raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$reproductionMap) <- raster::projection(sim$ecoregionMap)
   writeRaster(sim$biomassMap,
-              file.path(outputPath(sim), paste("biomassMap_Year", round(time(sim)), ".tif",sep="")), datatype='INT4S',
-              overwrite = TRUE)
+              file.path(outputPath(sim), paste("biomassMap_Year", round(time(sim)), ".tif", sep = "")),
+              datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$ANPPMap,
-              file.path(outputPath(sim), paste("ANPP_Year", round(time(sim)), ".tif",sep="")), datatype='INT4S',
-              overwrite = TRUE)
+              file.path(outputPath(sim), paste("ANPP_Year", round(time(sim)), ".tif", sep = "")),
+              datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$mortalityMap,
-              file.path(outputPath(sim), paste("mortalityMap_Year", round(time(sim)), ".tif",sep="")), datatype='INT4S',
-              overwrite = TRUE)
+              file.path(outputPath(sim), paste("mortalityMap_Year", round(time(sim)), ".tif", sep = "")),
+              datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$reproductionMap,
-              file.path(outputPath(sim), paste("reproductionMap_Year", round(time(sim)), ".tif",sep="")), datatype='INT4S',
-              overwrite = TRUE)
+              file.path(outputPath(sim), paste("reproductionMap_Year", round(time(sim)), ".tif", sep = "")),
+              datatype = 'INT4S', overwrite = TRUE)
   return(invisible(sim))
 }
 
@@ -1074,20 +1073,21 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     message("Spin up time: year ", -presimuT)
     k <- k+1
     cohortData[origAge == presimuT, age := 1L]
-    cohortData[origAge >= presimuT, age := age+1L]
+    cohortData[origAge >= presimuT, age := age + 1L]
 
     if (successionTimestep !=1 &
        as.integer(k/successionTimestep) == k/successionTimestep) {
-      cohortData <- ageReclassification(cohortData = cohortData, successionTimestep = successionTimestep,
+      cohortData <- ageReclassification(cohortData = cohortData,
+                                        successionTimestep = successionTimestep,
                                         stage = "spinup")
     }
     # 1. assign the biomass for the first cohort
-    if (nrow(cohortData[age == 2,])>0) {
+    if (nrow(cohortData[age == 2, ]) > 0) {
       lastReg <- k-1
       cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                   successionTimestep = successionTimestep)
-      cohortData[age == 2, B:=as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
-      cohortData[age == 2, B:=as.integer(pmin(maxANPP, B))]
+      cohortData[age == 2, B := as.integer(pmax(1, maxANPP*exp(-1.6 * sumB / maxB_eco)))]
+      cohortData[age == 2, B := as.integer(pmin(maxANPP, B))]
     }
     if (maxAge!=1) {
       # 2. calculate age-related mortality
@@ -1114,7 +1114,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
         spoutput <- cohortData[origAge >= presimuT, .(pixelGroup, speciesCode, age,
                                                       iniBiomass = B + as.integer(mortality - aNPPAct),
                                                       ANPP = round(aNPPAct, 1),
-                                                      Mortality = round(mortality, 1),finBiomass = B)]
+                                                      Mortality = round(mortality, 1), finBiomass = B)]
         spoutput <- setkey(spoutput, speciesCode)[setkey(species[,.(species, speciesCode)], speciesCode),
                                                   nomatch = 0][
                                                     , speciesCode := species][
@@ -1131,7 +1131,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
         spoutput <- setkey(spoutput, speciesCode)[setkey(species[,.(species, speciesCode)], speciesCode),
                                                   nomatch = 0][
                                                     , speciesCode := species][
-                                                      ,species := NULL]
+                                                      , species := NULL]
 
         setnames(spoutput, "speciesCode", "species")
         spinupOutput <- rbind(spinupOutput, spoutput)
@@ -1142,11 +1142,11 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     if (presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1) {
       cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                   successionTimestep = successionTimestep)
-      cohortData[origAge == 1,B:=as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
-      cohortData[origAge == 1,B:=as.integer(pmin(maxANPP, B))]
+      cohortData[origAge == 1, B := as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
+      cohortData[origAge == 1, B := as.integer(pmin(maxANPP, B))]
     }
   }
-  cohortData[,':='(age = origAge, origAge = NULL)]
+  cohortData[, ':='(age = origAge, origAge = NULL)]
   if (calibrate) {
     all <- list(cohortData = cohortData, spinupOutput = spinupOutput)
   } else {
@@ -1179,7 +1179,7 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData)
                                speciesCode, ecoregionGroup)
   specieseco_current[, maxB_eco := max(maxB), by = ecoregionGroup]
 
-  cohortData <- setkey(cohortData, speciesCode, ecoregionGroup)[specieseco_current, nomatch=0]
+  cohortData <- setkey(cohortData, speciesCode, ecoregionGroup)[specieseco_current, nomatch = 0]
   return(cohortData)
 }
 
@@ -1199,14 +1199,14 @@ ageReclassification <- function(cohortData, successionTimestep, stage) {
   } else {
     # non- spinup stage
     targetData <- cohortData[age <= (successionTimestep+1), ]
-    targetData <- targetData[,.(ecoregionGroup = mean(ecoregionGroup),
-                                age = successionTimestep + 1,
-                                B = sum(B, na.rm = TRUE),
-                                mortality = sum(mortality, na.rm = TRUE),
-                                aNPPAct = sum(aNPPAct, na.rm = TRUE)),
+    targetData <- targetData[, .(ecoregionGroup = mean(ecoregionGroup),
+                                 age = successionTimestep + 1,
+                                 B = sum(B, na.rm = TRUE),
+                                 mortality = sum(mortality, na.rm = TRUE),
+                                 aNPPAct = sum(aNPPAct, na.rm = TRUE)),
                              by = .(pixelGroup, speciesCode)]
-    targetData <- targetData[,.(pixelGroup, ecoregionGroup, speciesCode, age,
-                                B, mortality, aNPPAct)]
+    targetData <- targetData[, .(pixelGroup, ecoregionGroup, speciesCode, age,
+                                 B, mortality, aNPPAct)]
     cohortData <- cohortData[age >= successionTimestep + 2]
     cohortData <- rbindlist(list(cohortData, targetData))
   }
@@ -1216,27 +1216,29 @@ ageReclassification <- function(cohortData, successionTimestep, stage) {
 calculateAgeMortality <- function(cohortData, stage, spinupMortalityfraction) {
   # for age-related mortality calculation
   if (stage == "spinup") {
-    cohortData[age > 0, mAge:=B*(exp((age)/longevity*mortalityshape)/exp(mortalityshape))]
-    cohortData[age > 0, mAge:=mAge+B*spinupMortalityfraction]
-    cohortData[age > 0, mAge:=pmin(B,mAge)]
+    cohortData[age > 0, mAge := B*(exp((age)/longevity*mortalityshape)/exp(mortalityshape))]
+    cohortData[age > 0, mAge := mAge + B*spinupMortalityfraction]
+    cohortData[age > 0, mAge := pmin(B, mAge)]
   } else {
     set(cohortData, NULL, "mAge",
-        cohortData$B*(exp((cohortData$age)/cohortData$longevity*cohortData$mortalityshape)/exp(cohortData$mortalityshape)))
+        cohortData$B*(exp((cohortData$age) / cohortData$longevity * cohortData$mortalityshape) /
+                        exp(cohortData$mortalityshape)))
     set(cohortData, NULL, "mAge",
-        pmin(cohortData$B,cohortData$mAge))
+        pmin(cohortData$B, cohortData$mAge))
   }
   return(cohortData)
 }
 
-calculateANPP <- function(cohortData,stage) {
+calculateANPP <- function(cohortData, stage) {
   if (stage=="spinup") {
-    cohortData[age>0,aNPPAct:=maxANPP*exp(1)*(bAP^growthcurve)*exp(-(bAP^growthcurve))*bPM]
-    cohortData[age>0,aNPPAct:=pmin(maxANPP*bPM,aNPPAct)]
+    cohortData[age > 0, aNPPAct := maxANPP*exp(1)*(bAP^growthcurve)*exp(-(bAP^growthcurve))*bPM]
+    cohortData[age > 0, aNPPAct := pmin(maxANPP*bPM,aNPPAct)]
   } else {
     set(cohortData, NULL, "aNPPAct",
-        cohortData$maxANPP*exp(1)*(cohortData$bAP^cohortData$growthcurve)*exp(-(cohortData$bAP^cohortData$growthcurve))*cohortData$bPM)
+        cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
+          exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM)
     set(cohortData, NULL, "aNPPAct",
-        pmin(cohortData$maxANPP*cohortData$bPM,cohortData$aNPPAct))
+        pmin(cohortData$maxANPP*cohortData$bPM, cohortData$aNPPAct))
   }
   return(cohortData)
 }
@@ -1319,7 +1321,7 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   # the siteshade was calculated based on the codes:
   # https://github.com/LANDIS-II-Foundation/Extensions-Succession/blob/master/biomass-succession/trunk/src/PlugIn.cs
   if (nrow(cohortData[age > 5,]) > 0) {
-    bAMterm1 <- cohortData [age > 5, ':='(prevMortality = sum(mortality, na.rm = TRUE),
+    bAMterm1 <- cohortData [age > 5, `:=`(prevMortality = sum(mortality, na.rm = TRUE),
                                           sumB = sum(B, na.rm = TRUE)),
                             by = .(pixelGroup, ecoregionGroup)]
     bAMterm1[is.na(sumB), sumB := 0]
@@ -1327,9 +1329,9 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
     bAMterm1 <- unique(bAMterm1, by = c("pixelGroup", "ecoregionGroup"))
     set(cohortData, NULL, "prevMortality", NULL)
   } else {
-    bAMterm1 <- unique(cohortData, by=c("pixelGroup", "ecoregionGroup"))[
-      ,.(pixelGroup, ecoregionGroup)][
-        ,':='(prevMortality = 0, sumB = 0)]
+    bAMterm1 <- unique(cohortData, by = c("pixelGroup", "ecoregionGroup"))[
+      , .(pixelGroup, ecoregionGroup)][
+        , `:=`(prevMortality = 0, sumB = 0)]
   }
   #bAM <- data.table(speciesEcoregion)[year <= time(sim) & (year > (time(sim)-P(sim)$successionTimestep))]
   bAM <- speciesEcoregion[year <= time]
@@ -1476,14 +1478,14 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     initialCommunities[, ':='(description = gsub(">>", "", description),
                               mapcode = as.integer(as.character(mapcode)))]
 
-    initialCommunities <- data.table(initialCommunities[,1:3, with=FALSE],
+    initialCommunities <- data.table(initialCommunities[, 1:3, with = FALSE],
                                      initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
 
     ## rename species for compatibility across modules (Xxxx_xxx)
     initialCommunities$species1 <- as.character(substring(initialCommunities$species, 1, 4))
     initialCommunities$species2 <- as.character(substring(initialCommunities$species, 5, 7))
-    initialCommunities[, ':='(species = paste0(toupper(substring(species1, 1, 1)), substring(species1, 2, 4), "_",
-                                               species2))]
+    initialCommunities[, ':='(species = paste0(toupper(substring(species1, 1, 1)),
+                                               substring(species1, 2, 4), "_", species2))]
 
     initialCommunities[, ':='(species1 = NULL, species2 = NULL)]
 
