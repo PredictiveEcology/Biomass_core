@@ -383,17 +383,17 @@ SummaryBGM <- function(sim) {
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively.
   names(sim$pixelGroupMap) <- "pixelGroup"
   sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                     "uniqueSumB", crs = crs(sim$pixelGroupMap))
+                                     "uniqueSumB")
   setColors(sim$biomassMap) <- c("light green", "dark green")
   
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     
     sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                    "uniqueSumANPP", crs = crs(sim$pixelGroupMap))
+                                    "uniqueSumANPP")
     setColors(sim$ANPPMap) <- c("light green", "dark green")
     
     sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                         "uniqueSumMortality", crs = crs(sim$pixelGroupMap))
+                                         "uniqueSumMortality")
     setColors(sim$mortalityMap) <- c("light green", "dark green")
     
   }
@@ -656,7 +656,7 @@ summaryRegen <- function(sim) {
                                by = pixelGroup]
     if (NROW(pixelAll)>0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap,
-                                          "uniqueSumReproduction", crs = crs(pixelGroupMap))
+                                          "uniqueSumReproduction")
       setColors(reproductionMap) <- c("light green", "dark green")
     } else {
       reproductionMap <- setValues(pixelGroupMap, 0L)
