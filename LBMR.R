@@ -323,7 +323,7 @@ Init <- function(sim) {
   pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm=TRUE))), by=pixelGroup]
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, 
-                                   "uniqueSumB", crs = crs(pixelGroupMap))
+                                   "uniqueSumB")
     #ANPPMap <- setValues(biomassMap, 0L)
     #mortalityMap <- setValues(biomassMap, 0L)
     #reproductionMap <- setValues(pixelGroupMap, 0L)
@@ -500,15 +500,15 @@ SummaryBGM <- function(sim) {
   names(sim$pixelGroupMap) <- "pixelGroup"
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                       "uniqueSumB", crs = crs(sim$pixelGroupMap))
+                                       "uniqueSumB")
     setColors(sim$biomassMap) <- c("light green", "dark green")
 
     sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, 
-                                    "uniqueSumANPP", crs = crs(sim$pixelGroupMap))
+                                    "uniqueSumANPP")
     setColors(sim$ANPPMap) <- c("light green", "dark green")
 
     sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, 
-                                         "uniqueSumMortality", crs = crs(sim$pixelGroupMap))
+                                         "uniqueSumMortality")
     setColors(sim$mortalityMap) <- c("light green", "dark green")
   }
   # the following codes for preparing the data table for saving
@@ -940,7 +940,7 @@ summaryRegen <- function(sim) {
                                by = pixelGroup]
     if (NROW(pixelAll)>0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap,
-                                          "uniqueSumReproduction", crs = crs(pixelGroupMap))
+                                          "uniqueSumReproduction")
       setColors(reproductionMap) <- c("light green", "dark green")
     } else {
       reproductionMap <- setValues(pixelGroupMap, 0L)
