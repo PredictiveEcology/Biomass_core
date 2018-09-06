@@ -1249,7 +1249,7 @@ calculateANPP <- function(cohortData, stage) {
 calculateGrowthMortality <- function(cohortData, stage) {
   if (stage == "spinup") {
     cohortData[age > 0 & bAP %>>% 1.0, mBio := maxANPP*bPM]
-    cohortData[age > 0 & bAP %<=% 1.0, mBio := maxANPP*(2*bAP)/(1+bAP)*bPM]
+    cohortData[age > 0 & bAP %<=% 1.0, mBio := maxANPP*(2*bAP) / (1 + bAP)*bPM]
     cohortData[age > 0, mBio := pmin(B, mBio)]
     cohortData[age > 0, mBio := pmin(maxANPP*bPM, mBio)]
   } else {
@@ -1271,10 +1271,9 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
                             temID = 1:length(unique(cohortData$pixelGroup)))
   cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 10^4), max(pixelGroups$temID))))
   if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints+1)}
-  pixelGroups[, groups:=cut(temID, breaks = cutpoints,
-                            labels = paste("Group", 1:(length(cutpoints)-1),
-                                           sep = ""),
-                            include.lowest = T)]
+  pixelGroups[, groups := cut(temID, breaks = cutpoints,
+                              labels = paste("Group", 1:(length(cutpoints)-1), sep = ""),
+                            include.lowest = TRUE)]
   for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")) {
     subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
     set(subCohortData, NULL, "sumB", 0L)
