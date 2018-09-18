@@ -136,6 +136,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   if (is.numeric(P(sim)$useParallel)) {
     a <- data.table::setDTthreads(P(sim)$useParallel)
     message("Mortality and Growth should be using >100% CPU")
+    if (data.table::getDTthreads() == 1L) crayon::red(message("Only using 1 thread."))
     on.exit(setDTthreads(a))
   }
   switch(eventType,
@@ -285,7 +286,8 @@ Init <- function(sim) {
   # some redundant pixelGroups are removed, because they are not present on the pixelGroupMap
   # we are dealing with the case that all the ecoregion is active, how about some ecoregion is not active
   activePixelIndex <- which(getValues(sim$ecoregionMap) %in% active_ecoregion$ecoregionGroup)
-  inactivePixelIndex <- seq(from=1, to=ncell(sim$ecoregionMap))[(seq(from=1, to=ncell(sim$ecoregionMap)) %in% activePixelIndex) == FALSE]
+  inactivePixelIndex <- seq(from = 1, to = ncell(sim$ecoregionMap))[
+    (seq(from = 1, to = ncell(sim$ecoregionMap)) %in% activePixelIndex) == FALSE]
   sim$activeEcoregionLength <- data.table(Ecoregion = getValues(sim$ecoregionMap), pixelIndex = 1:ncell(sim$ecoregionMap))[
     Ecoregion %in% active_ecoregion$ecoregionGroup, .(NofCell = length(pixelIndex)), by = Ecoregion]
   sim$activePixelIndex <- activePixelIndex # store this for future use
