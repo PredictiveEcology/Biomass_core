@@ -141,26 +141,26 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            
            ## schedule events
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                "LBMR", "Dispersal", eventPriority = 4)
+                                "LBMR", "Dispersal", eventPriority = 5)
            if (P(sim)$successionTimestep != 1) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
-                                  "cohortAgeReclassification", eventPriority = 5.25)
+                                  "cohortAgeReclassification", eventPriority = 6.25)
            }
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
-                                "LBMR", "summaryRegen", eventPriority = 5.5)
+                                "LBMR", "summaryRegen", eventPriority = 6.5)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
-                                "LBMR", "summaryBySpecies", eventPriority = 5.75)
+                                "LBMR", "summaryBySpecies", eventPriority = 6.75)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM", eventPriority = 6)
+                                "LBMR", "summaryBGM", eventPriority = 7)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
-                                "LBMR", "plot", eventPriority = 7)
+                                "LBMR", "plot", eventPriority = 8)
            
            if (!any(is.na(P(sim)$.saveInitialTime))) {
              sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
-                                  "LBMR", "save", eventPriority = 7.5)
+                                  "LBMR", "save", eventPriority = 8.5)
              ## stats plot is retrieving saved rasters so needs data to be saved
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep, # start on second time around b/c ggplot doesn't like 1 data point
-                                  "LBMR", "statsPlot", eventPriority = 7.75)
+                                  "LBMR", "statsPlot", eventPriority = 8.75)
            }
          },
          Dispersal = {
