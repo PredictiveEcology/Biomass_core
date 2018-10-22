@@ -21,9 +21,9 @@ defineModule(sim, list(
       paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
             "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
     ), NA, NA, "CRS to be used. Currently unimplemented"), ## TODO: add/use this?
-    defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
+    defineParameter(".plotInitialTime", "numeric", NA, NA, NA,
                     desc = "This describes the simulation time at which the first plot event should occur"),
-    defineParameter(".saveInitialTime", "numeric", 0, NA, NA,
+    defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
                     desc = paste("This describes the simulation time at which the first save event should occur.",
                                  "Set to NA if no saving is desired.")),
     defineParameter("calibrate", "logical", FALSE,
@@ -756,6 +756,8 @@ statsPlotFn <- function(sim) {
 }
 
 Save <- function(sim) {
+  message("This Save event needs fixing. It does not work. It is short and should not take long to fix")
+  browser()
   raster::projection(sim$simulatedBiomass) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$ANPPMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
