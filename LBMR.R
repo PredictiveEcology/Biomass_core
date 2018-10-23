@@ -23,12 +23,12 @@ defineModule(sim, list(
     defineParameter(".crsUsed", "character",
                     paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
                           "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"),
-                    NA, NA, desc = "CRS to be used. Defaults to the biomassMap projection"),
+                    NA, NA, desc = "CRS to be used. Defaults to the simulatedBiomassMap projection"),
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
-    defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
+    defineParameter(".plotInitialTime", "numeric", NA, NA, NA,
                     desc = "This describes the simulation time at which the first plot event should occur"),
-    defineParameter(".saveInitialTime", "numeric", 0, NA, NA,
+    defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
                     desc = paste("This describes the simulation time at which the first save event should occur.",
                                  "Set to NA if no saving is desired.")),
     defineParameter("spinupMortalityfraction", "numeric", 0.001,
@@ -90,7 +90,7 @@ defineModule(sim, list(
                   succession time step"),
     createsOutput(objectName = "pixelGroupMap", objectClass = "RasterLayer",
                   desc = "updated community map at each succession time step"),
-    createsOutput(objectName = "biomassMap", objectClass = "RasterLayer",
+    createsOutput(objectName = "simulatedBiomassMap", objectClass = "RasterLayer",
                   desc = "Biomass map at each succession time step"),
     createsOutput(objectName = "ANPPMap", objectClass = "RasterLayer",
                   desc = "ANPP map at each succession time step"),
@@ -322,10 +322,10 @@ Init <- function(sim) {
   names(pixelGroupMap) <- "pixelGroup"
   pixelAll <- cohortData[,.(uniqueSumB = as.integer(sum(B, na.rm = TRUE))), by = pixelGroup]
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
-    biomassMap <- rasterizeReduced(pixelAll, pixelGroupMap,
+    simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap,
                                    "uniqueSumB")
-    #ANPPMap <- setValues(biomassMap, 0L)
-    #mortalityMap <- setValues(biomassMap, 0L)
+    #ANPPMap <- setValues(simulatedBiomassMap, 0L)
+    #mortalityMap <- setValues(simulatedBiomassMap, 0L)
     #reproductionMap <- setValues(pixelGroupMap, 0L)
   }
   #}
@@ -496,9 +496,9 @@ SummaryBGM <- function(sim) {
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively.
   names(sim$pixelGroupMap) <- "pixelGroup"
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
-    sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
+    sim$simulatedBiomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                        "uniqueSumB")
-    setColors(sim$biomassMap) <- c("light green", "dark green")
+    setColors(sim$simulatedBiomassMap) <- c("light green", "dark green")
 
     sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                     "uniqueSumANPP")
@@ -982,17 +982,17 @@ plotFn <- function(sim) {
     #dev(4)
     clearPlot()
   }
-  Plot(sim$biomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap,
+  Plot(sim$simulatedBiomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap,
        title = c("Biomass", "ANPP", "mortality", "reproduction"), new = TRUE, speedup = 1)
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ",round(time(sim))), x = 0.93, y = 0.97)
-  #rm(biomassMap, ANPPMap, mortalityMap, reproductionMap)
+  #rm(simulatedBiomassMap, ANPPMap, mortalityMap, reproductionMap)
   return(invisible(sim))
 }
 
 statsPlotFn <- function(sim) {
   # only take the files in outputPath(sim) that were new since the startClockTime of the spades call
-  biomassFiles <- list.files(outputPath(sim), pattern = "biomassMap", full.names = TRUE)
+  biomassFiles <- list.files(outputPath(sim), pattern = "simulatedBiomassMap", full.names = TRUE)
   biomassKeepers <- file.info(biomassFiles)$atime > sim@.envir$._startClockTime
 
   biomass.stk <- lapply(biomassFiles[biomassKeepers], raster)
@@ -1023,11 +1023,11 @@ statsPlotFn <- function(sim) {
 }
 
 Save <- function(sim) {
-  raster::projection(sim$biomassMap) <- raster::projection(sim$ecoregionMap)
+  raster::projection(sim$simulatedBiomassMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$ANPPMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$reproductionMap) <- raster::projection(sim$ecoregionMap)
-  writeRaster(sim$biomassMap,
+  writeRaster(sim$simulatedBiomassMap,
               file.path(outputPath(sim), paste("biomassMap_Year", round(time(sim)), ".tif", sep = "")),
               datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$ANPPMap,
