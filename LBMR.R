@@ -20,11 +20,6 @@ defineModule(sim, list(
                   "PredictiveEcology/SpaDES.tools@development",
                   "PredictiveEcology/reproducible@development"),
   parameters = rbind(
-    defineParameter(".crsUsed", "CRS", raster::crs(
-      paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
-            "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
-    ), NA, NA, "CRS to be used. Currently unimplemented"), ## TODO: add/use this?
-    defineParameter(".plotInitialTime", "numeric", NA, NA, NA,
     defineParameter(".crsUsed", "character",
                     paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
                           "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"),
@@ -96,8 +91,6 @@ defineModule(sim, list(
                   desc = "internal use. Keeps track of which pixels are active"),
     createsOutput("ANPPMap", "RasterLayer",
                   desc = "ANPP map at each succession time step"),
-    createsOutput("simulatedBiomass", "RasterLayer",
-                  desc = "Biomass map at each succession time step"),
     createsOutput("burnLoci", "numeric", desc = "Fire pixel IDs"),
     createsOutput("cohortData", "data.table",
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at
@@ -147,6 +140,7 @@ defineModule(sim, list(
     createsOutput("spinUpCache", "logical", desc = ""),
     createsOutput("spinupOutput", "data.table", desc = ""),
     createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species")
+    )
   )
 ))
 
