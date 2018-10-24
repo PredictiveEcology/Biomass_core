@@ -11,21 +11,19 @@
 #'
 #' @name Ward
 #' @rdname Ward
-Ward <- expression(if(cellSize<=effDist) {
-  ifelse(dis<=effDist,
+Ward <- expression(if (cellSize <= effDist) {
+  ifelse(dis <= effDist,
          exp((dis-cellSize)*log(1-k)/effDist)-
            exp(dis*log(1-k)/effDist),
          (1-k)*exp((dis-cellSize-effDist)*log(b)/maxDist)-
            (1-k)*exp((dis-effDist)*log(b)/maxDist))
 } else {
-  ifelse(dis<=cellSize,
+  ifelse(dis <= cellSize,
          exp((dis-cellSize)*log(1-k)/effDist)-(1-k)*
            exp((dis-effDist)*log(b)/maxDist),
          (1-k)*exp((dis-cellSize-effDist)*log(b)/maxDist)-
            (1-k)*exp((dis-effDist)*log(b)/maxDist))
 })
-
-
 
 ##############################################################
 #' WardFast Seed Dispersal kernel
@@ -39,8 +37,8 @@ Ward <- expression(if(cellSize<=effDist) {
 #'
 #' @name WardFast
 #' @rdname WardFast
-WardFast <- expression(ifelse(cellSize<=effDist, {
-  ifelse(dis<=effDist,
+WardFast <- expression(ifelse(cellSize <= effDist, {
+  ifelse(dis <= effDist,
          exp((dis-cellSize)*log(1-k)/effDist)-
            exp(dis*log(1-k)/effDist),
          (1-k)*exp((dis-cellSize-effDist)*log(b)/maxDist)-
@@ -52,8 +50,6 @@ WardFast <- expression(ifelse(cellSize<=effDist, {
          (1-k)*exp((dis-cellSize-effDist)*log(b)/maxDist)-
            (1-k)*exp((dis-effDist)*log(b)/maxDist))
 }))
-
-
 
 ##############################################################
 #' Simulate a LANDISDisp process on a landscape.
@@ -111,8 +107,8 @@ WardFast <- expression(ifelse(cellSize<=effDist, {
 #' \code{seedSrc} raster.
 #'
 #' @import data.table
-#' @import raster
 #' @import dplyr
+#' @import raster
 #' @importFrom R.utils intToBin
 #' @export
 #' @docType methods
@@ -514,9 +510,9 @@ seedDispInnerFn <- function(activeCell, potentials, n,
         potentialsWithSeedDT[#is.na(receivesSeeds) &
           dis!=0,
           dispersalProb:=eval(dispersalFn)]
-        potentialsWithSeedDT <- potentialsWithSeedDT[,.(receivesSeeds=runif(nr)<dispersalProb,
-                                                        fromInit,speciesCode)]
-        receivedSeeds <- potentialsWithSeedDT[,any(receivesSeeds), by=c("fromInit,speciesCode")]
+        potentialsWithSeedDT <- potentialsWithSeedDT[, .(receivesSeeds = runif(nr)<dispersalProb,
+                                                         fromInit, speciesCode)]
+        receivedSeeds <- potentialsWithSeedDT[,any(receivesSeeds), by = c("fromInit,speciesCode")]
         setkey(receivedSeeds, fromInit, speciesCode)
 
         #drop any that received seeds from potentials, as they are now in lociReturn

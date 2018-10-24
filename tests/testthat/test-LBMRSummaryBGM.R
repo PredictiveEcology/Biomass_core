@@ -30,7 +30,7 @@ test_that("test summary aboveground biomass, growth, mortality. ",{
   ecoregionMap[c(16:18, 21:23)] <- 2
   ecoregionMap[c(19:20, 24:25)] <- 3
   activePixelIndex <- c(1:18, 21:23)
-  reproductionData <- data.table(pixelGroup = getValues(pixelGroupMap)[c(1, 3, 5, 7, 9, 16, 22)], 
+  reproductionData <- data.table(pixelGroup = getValues(pixelGroupMap)[c(1, 3, 5, 7, 9, 16, 22)],
                                  ecoregionGroup = getValues(ecoregionMap)[c(1, 3, 5, 7, 9, 16, 22)],
                                  speciesCode = c(1, 2, 3, 1, 2, 3, 1),
                                  age = 1,
@@ -39,20 +39,20 @@ test_that("test summary aboveground biomass, growth, mortality. ",{
   cohortData <- rbind(cohortData, reproductionData)
   simulationOutput <- data.table(Ecoregion = numeric(), NofCell = numeric(), Year = numeric(), Biomass = numeric(),
                                  ANPP = numeric(), Mortality = numeric(), Regeneration = numeric())
-  simulationOutput_byspecies <- data.table(Ecoregion = numeric(), Species = character(), Year = numeric(), 
+  simulationOutput_byspecies <- data.table(Ecoregion = numeric(), Species = character(), Year = numeric(),
                                            Biomass = numeric(), ANPP = numeric(), Mortality = numeric())
   cellSize <- 100
   activeEcoregionLength <- data.table(Ecoregion = getValues(ecoregionMap), pixelIndex = 1:ncell(ecoregionMap))[
     ,.(NofCell = length(pixelIndex)), by = Ecoregion]
-  
+
   objects <- list("cohortData" = cohortData,
-                  "pixelGroupMap" = pixelGroupMap, 
+                  "pixelGroupMap" = pixelGroupMap,
                   "ecoregionMap" = ecoregionMap,
                   "simulationOutput" = simulationOutput,
                   "cellSize" = cellSize,
                   "activeEcoregionLength" = activeEcoregionLength)
   mySim <- simInit(times=list(start=0, end=2),
-                   params=parameters, 
+                   params=parameters,
                    modules=module,
                    objects=objects,
                    paths=path)
@@ -62,29 +62,29 @@ test_that("test summary aboveground biomass, growth, mortality. ",{
     simOutput <- mySim$LBMRSummaryBGM(mySim)
   }
   # check the maps
-  expect_is(simOutput$biomassMap, "RasterLayer")
-  expect_equal(getValues(simOutput$biomassMap),
+  expect_is(simOutput$simulatedBiomass, "RasterLayer")
+  expect_equal(getValues(simOutput$simulatedBiomass),
                c(rep(4950, 5), rep(5200, 5), rep(3150, 5),
                  rep(2850, 3), NA, NA, rep(2470, 3), NA, NA))
-  
+
   expect_is(simOutput$ANPPMap, "RasterLayer")
   expect_equal(getValues(simOutput$ANPPMap),
                c(rep(1080, 5), rep(900, 5), rep(720, 5),
                  rep(540, 3), NA, NA, rep(360, 3), NA, NA))
-  
+
   expect_is(simOutput$mortalityMap, "RasterLayer")
   expect_equal(getValues(simOutput$mortalityMap),
                c(rep(1380, 5), rep(1200, 5), rep(1020, 5),
                  rep(840, 3), NA, NA, rep(660, 3), NA, NA))
-  
+
   # check the outputs
   expect_is(simOutput$simulationOutput, "data.table")
   expect_equal(simOutput$simulationOutput,
-               data.table(Ecoregion = c(1, 2), 
-                          NofCell = c(15, 6), 
-                          Year = c(0, 0), 
-                          Biomass = c(4433, 2660), 
-                          ANPP = c(900, 450), 
+               data.table(Ecoregion = c(1, 2),
+                          NofCell = c(15, 6),
+                          Year = c(0, 0),
+                          Biomass = c(4433, 2660),
+                          ANPP = c(900, 450),
                           Mortality = c(1200, 750),
                           Regeneration = c(1967, 185)))
 })
