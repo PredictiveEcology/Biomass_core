@@ -95,17 +95,8 @@ defineModule(sim, list(
     createsOutput("cohortData", "data.table",
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at
                   succession time step"),
-    createsOutput("cutpoint", "numeric",
-    createsOutput(objectName = "pixelGroupMap", objectClass = "RasterLayer",
-                  desc = "updated community map at each succession time step"),
     createsOutput(objectName = "simulatedBiomassMap", objectClass = "RasterLayer",
                   desc = "Biomass map at each succession time step"),
-    createsOutput(objectName = "ANPPMap", objectClass = "RasterLayer",
-                  desc = "ANPP map at each succession time step"),
-    createsOutput(objectName = "mortalityMap", objectClass = "RasterLayer",
-                  desc = "Mortality map at each succession time step"),
-    createsOutput(objectName = "reproductionMap", objectClass = "RasterLayer",
-                  desc = "Regeneration map at each succession time step"),
     createsOutput(objectName = "cutpoint", objectClass = "numeric",
                   desc = "A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks"),
     createsOutput("firePixelTable", "data.table", ""),
@@ -142,7 +133,7 @@ defineModule(sim, list(
     createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species")
     )
   )
-))
+)
 
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   if (is.numeric(P(sim)$useParallel)) {
