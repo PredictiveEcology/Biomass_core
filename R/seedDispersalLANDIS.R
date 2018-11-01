@@ -445,17 +445,14 @@ seedDispInnerFn <- function(activeCell, potentials, n,
   # Make potentials have all Rcv pixels, with each species as unique line
   potentials = spRcvCommCodes[potentials, allow.cartesian=TRUE][,`:=`(RcvCommunity=NULL)]
   setkey(potentials,"from")
-  # identify which are 8 neighbours from each "active cell"
-  adjCells <- adj(pixelGroupMap, unique(activeCell), directions=8, pairs=TRUE,include=TRUE) %>%
+  # identify which are 8 neighbours from each "active cell", don't need internal sort because data.table will do in 2nd line
+  adjCells <- adj(pixelGroupMap, unique(activeCell), directions=8, pairs=TRUE, include=TRUE, sort = FALSE) %>%
     data.table(key=c("from"))
   set(adjCells, , "from", as.integer(adjCells$from))
   set(adjCells, , "to", as.integer(adjCells$to))
   #adjCells[,':='(from = as.integer(from), to = as.integer(to))]
-  while (NROW(potentials) & ((n-cellSize)%<=%ultimateMaxDist)) { # while there are active cells and less than maxDistance
-    #                  browser(expr=round(time(sim))>=20)
-    # If this is second or greater time through this while loop, make active cells (i.e., the "from")
-    #  be the previous round's "to" column. Also, delete "to" and "dis" columns
-    #                  browser()
+  startTime <- Sys.time()
+  while (NROW(potentials) && ((n-cellSize)%<=%ultimateMaxDist)) { # while there are active cells and less than maxDistance
 
     if(n>cellSize) {
       potentials[,`:=`(from=NULL)][,from:=to][,`:=`(to=NULL,dis=NULL)]
@@ -463,14 +460,16 @@ seedDispInnerFn <- function(activeCell, potentials, n,
     }
     ################ original
     # join these to the potentials object
-    potentials <- potentials[adjCells, allow.cartesian=TRUE] %>%
+    potentials <- potentials[adjCells, allow.cartesian=TRUE, nomatch = 0] %>%
       unique(by=c("fromInit", "to", "speciesCode"))
-    potentials <- potentials[!is.na(fromInit),]
+    # if (anyNA(potentials$fromInit)) {
+    #   potentials <- potentials[!is.na(fromInit),]
+    # }
 
     # because there will be duplicate "from - to" pairs, say from 2 different species, only calculate
     #   distance once, then re-join the shorter version back to longer version by species
     shortPotentials <- setkey(potentials, fromInit, to) %>% unique(., by = c("fromInit", "to")) %>% .[,list(fromInit, to)]
-    set(shortPotentials, , "dis", as.integer(pointDistance(xysAll[shortPotentials[,fromInit],], xysAll[shortPotentials[,to],],
+    set(shortPotentials, , "dis", as.integer(pointDistance(xysAll[shortPotentials$fromInit,], xysAll[shortPotentials$to,],
                                                            lonlat=FALSE)))
 
     # merge shorter object with no duplicate from-to pairs back with potentials, which does have duplicate from-to pairs
@@ -487,19 +486,13 @@ seedDispInnerFn <- function(activeCell, potentials, n,
 
     if(NROW(potentials)>0) {
       dtSrcShort <- dtSrc[,list(pixelGroup,speciesCode)]
-      set(potentials,,"pixelGroup",pixelGroupMap[][potentials[,to]])
+      set(potentials,,"pixelGroup",pixelGroupMap[][potentials$to])
       setkey(dtSrcShort, speciesCode, pixelGroup)
       setkey(potentials, speciesCode, pixelGroup)
 
 
       potentialsWithSeedDT <- potentials[dtSrcShort, nomatch=0]
       if(NROW(potentialsWithSeedDT)>0) {
-        #                     cat("\n Year:",round(time(sim)),"\n")
-        #                     dd <- potentialsWithSeedDT[,.(NumberofCell=length(from)),by=c("dis","to")]
-        #                     print(dd)
-        #potentialsWithSeedDT  <- potentials[potentialsWithSeed,]
-        #setkey(potentialsWithSeedDT, "fromInit")
-
 
         set(potentialsWithSeedDT,,"receivesSeeds",NA)
         nr <- NROW(potentialsWithSeedDT)
