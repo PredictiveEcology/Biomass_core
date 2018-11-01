@@ -220,6 +220,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   splitFactor <- sort(rep(seq_len(subSamp), length.out = nPotentials))
   subSampList <- purrr::transpose(list(activeCell = split(seedRcvOrig, splitFactor),
                                        potentials = split(potentialsOrig, splitFactor)))
+  message("  Seed dispersal: starting ", length(subSampList), " groups")
   if(is.logical(useParallel) | is.numeric(useParallel)){
     if(isTRUE(useParallel)) {
       numCores <- min(length(subSampList), parallel::detectCores()-1)
@@ -432,6 +433,7 @@ seedDispInnerFn <- function(activeCell, potentials, n,
                             k, b, lociReturn,
                             speciesComm,
                             pointDistance){
+  message("  Dispersal for pixels ", min(activeCell), " to ", max(activeCell))
   seedsArrived <- data.table(fromInit=integer(),speciesCode=integer(),
                              key=c("fromInit","speciesCode"))
   # Go to species level
@@ -527,6 +529,8 @@ seedDispInnerFn <- function(activeCell, potentials, n,
         #potentials <- specPotentials[,list(RcvCommunity=sum(2^speciesCode)), by=c("fromInit","from","to")]
       }
     }
+    midTime <- Sys.time()
+    message("    Dispersal for ", n, " m from source. Elapsed time: ", midTime - startTime)
     n <- n+cellSize
     # refresh so that "to" cells become new "from" cells
     activeCell <- potentials[,to]
