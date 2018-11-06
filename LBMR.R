@@ -163,11 +163,11 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            }
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
-                                "LBMR", "summaryBySpecies", eventPriority = 5.75)
-           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM", eventPriority = 6)
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
+           sim <- scheduleEvent(sim, start(sim),
+                                "LBMR", "summaryBGM", eventPriority = 5.75)
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
+                                "LBMR", "summaryBySpecies", eventPriority = 6)
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "LBMR", "plot", eventPriority = 7)
 
            if (!any(is.na(P(sim)$.saveInitialTime))) {
@@ -233,18 +233,18 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
          plot = {
            sim <- plotFn(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plot", eventPriority = 7)
+                                "LBMR", "plot", eventPriority = 8)
          },
          save = {
            sim <- Save(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "save", eventPriority = 7.5)
+                                "LBMR", "save", eventPriority = 8.5)
          },
          statsPlot = {
            ## only occurs once at the end of the simulation
            sim <- statsPlotFn(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "statsPlot", eventPriority = 7.75)
+                                "LBMR", "statsPlot", eventPriority = 8.75)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
@@ -475,6 +475,7 @@ SummaryBGM <- function(sim) {
                                           uniqueSumMortality = as.integer(sum(mortality, na.rm = TRUE)),
                                           uniqueSumRege = as.integer(mean(reproduction, na.rm = TRUE))),
                                       by = pixelGroup]
+
     tempOutput <- setkey(ecoPixelgroup[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ],
                          pixelGroup)[setkey(summarytable_sub, pixelGroup), nomatch = 0]
 
@@ -514,6 +515,8 @@ SummaryBGM <- function(sim) {
     sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                          "uniqueSumMortality")
     setColors(sim$mortalityMap) <- c("light green", "dark green")
+
+    sim$vegTypeMap <- sim$vegTypeMapGenerator(sim$species, sim$cohortData, sim$pixelGroupMap, sim$vegLeadingProportion)
   }
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
@@ -963,13 +966,50 @@ summaryBySpecies <- function(sim) {
     sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
 
-  df <- sim@.envir$species[,list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
+  freqs <- table(na.omit(factorValues(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor")[[1]]))
+  tabl <- as.vector(freqs)
+  summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)), leadingType = names(freqs),
+                                      #freqs = freqs,
+                                      counts = tabl, stringsAsFactors = FALSE)
+  names1 <- c("Black spruce leading", "White spruce leading", "Deciduous leading", "Mixed", "Pine leading", "Fir leading")
+  names2 <- c("Pice_mar", "Pice_gla", "Popu_tre", "", "Pinu_sp", "Abie_sp")
+  shortNames <- c("Bl spruce", "Wh spruce", "Decid", "Mixed", "Pine", "Fir")
+  cols <- RColorBrewer::brewer.pal(6, "Accent")
+  namesDF <- data.frame(names1, names2, shortNames, cols, stringsAsFactors = FALSE)
+  summaryBySpecies1$leadingType <- namesDF$shortNames[match(summaryBySpecies1$leadingType, namesDF$names1)]
+  summaryBySpecies1$cols <- namesDF$cols[match(summaryBySpecies1$leadingType, namesDF$shortNames)]
+  if (is.null(sim$summaryBySpecies1)) {
+    sim$summaryBySpecies1 <- summaryBySpecies1
+  } else {
+    sim$summaryBySpecies1 <- rbindlist(list(sim$summaryBySpecies1,
+                                            summaryBySpecies1))
+  }
 
-  plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species)) +
-    geom_area(position = 'stack') +
-    labs(x = "Year", y = "Biomass by species")
+  if (length(unique(sim$summaryBySpecies1$year)) > 1) {
+    df <- sim$species[,list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
+    df$species <- namesDF$shortNames[match(df$species, namesDF$names2)]
+    df$cols <- namesDF$cols[match(df$species, namesDF$shortNames)]
 
-  Plot(plot2, title = c("Average biomass by species"))
+
+    cols2 <- df$cols
+    names(cols2) <- df$species
+    plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species)) +
+      scale_fill_manual(values=cols2) +
+      geom_area(position = 'stack') +
+      labs(x = "Year", y = "Biomass by species") +
+      theme(legend.text=element_text(size=6), legend.title = element_blank())
+
+    Plot(plot2, title = c("Average biomass by species"))
+
+    cols3 <- sim$summaryBySpecies1$cols
+    names(cols3) <- sim$summaryBySpecies1$leadingType
+    plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
+      scale_fill_manual(values=cols3) +
+      geom_area() +
+      theme(legend.text=element_text(size=6), legend.title = element_blank())
+
+    Plot(plot3, title = c("Number of pixels, by leading type"), new = TRUE)
+  }
 
   # means <- cbind(meanBiomass, meanANPP)
   # means <- melt(means)
@@ -985,15 +1025,16 @@ summaryBySpecies <- function(sim) {
 }
 
 plotFn <- function(sim) {
-  if (time(sim) == P(sim)$successionTimestep) {
-    #dev(4)
-    clearPlot()
-  }
-  Plot(sim$simulatedBiomassMap, sim$ANPPMap, sim$mortalityMap, sim$reproductionMap,
-       title = c("Biomass", "ANPP", "mortality", "reproduction"), new = TRUE, speedup = 1)
+  objsToPlot <- list(Biomass = sim$simulatedBiomassMap,
+       ANPP = sim$ANPPMap,
+       mortality = sim$mortalityMap,
+       reproduction = sim$reproducitionMap)
+  objsToPlot <- objsToPlot[!sapply(objsToPlot, is.null)]
+  Plot(objsToPlot, new = TRUE)
+  # not sure why, but errors if all 5 are put into one command
+  Plot(sim$vegTypeMap, new = TRUE, title = "Leading vegetation")
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ",round(time(sim))), x = 0.93, y = 0.97)
-  #rm(simulatedBiomassMap, ANPPMap, mortalityMap, reproductionMap)
   return(invisible(sim))
 }
 
