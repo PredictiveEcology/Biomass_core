@@ -80,7 +80,7 @@ defineModule(sim, list(
     ## for inputs from optional fire module:
     expectsInput("rstCurrentBurn", "list", desc = "List of rasters of fire spread"),
     expectsInput("spinUpCache", "logical", ""),
-    expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a map"),
+    expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species"),
     expectsInput("speciesEquivalency", "data.frame", "")
   ),
   outputObjects = bind_rows(
@@ -697,7 +697,7 @@ summaryBySpecies <- function(sim) {
     sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
   
-  freqs <- table(na.omit(factorValues(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor")[[1]]))
+  freqs <- table(pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor"))
   tabl <- as.vector(freqs)
   summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)), leadingType = names(freqs),
                                   #freqs = freqs,
@@ -716,10 +716,7 @@ summaryBySpecies <- function(sim) {
   if (length(unique(sim$summaryBySpecies1$year)) > 1) {
     df <- sim$species[,list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
     df$species <- equivalentName(df$species, sim$speciesEquivalency, "shortNames")
-    #df$species <- sim$speciesEquivalency$shortNames[match(df$species, sim$speciesEquivalency$names2)]
     df$cols <- equivalentName(df$species, sim$speciesEquivalency, "cols")
-    #sim$speciesEquivalency$cols[match(df$species, sim$speciesEquivalency$shortNames)]
-    
     
     cols2 <- df$cols
     names(cols2) <- df$species
@@ -762,6 +759,12 @@ plotFn <- function(sim) {
   objsToPlot <- objsToPlot[!sapply(objsToPlot, is.null)]
   Plot(objsToPlot, new = TRUE)
   # not sure why, but errors if all 5 are put into one command
+  facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor")
+  levs <- raster::levels(sim$vegTypeMap)[[1]]
+  setColors(sim$vegTypeMap, levs) <- 
+    equivalentName(levs$Factor, sim$speciesEquivalency, "cols")
+  levs$Factor <- equivalentName(levs$Factor, sim$speciesEquivalency, "shortNames")
+  levels(sim$vegTypeMap) <- levs 
   Plot(sim$vegTypeMap, new = TRUE, title = "Leading vegetation")
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ",round(time(sim))), x = 0.93, y = 0.97)
@@ -1521,9 +1524,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   
   if (!suppliedElsewhere("speciesEquivalency")) {
     leadingNames <- c("Black spruce leading", "White spruce leading", "Deciduous leading", "Mixed", "Pine leading", "Fir leading")
-    latinNames <- c("Pice_mar", "Pice_gla", "Popu_tre", "", "Pinu_sp", "Abie_sp")
+    latinNames <- c("Pice_mar", "Pice_gla", "Popu_tre", "Mixed", "Pinu_sp", "Abie_sp")
     shortNames <- c("Bl spruce", "Wh spruce", "Decid", "Mixed", "Pine", "Fir")
-    fullNames <- c("Black.Spruce", "White.Spruce", "Deciduous", "", "Pine", "Fir")
+    fullNames <- c("Black.Spruce", "White.Spruce", "Deciduous", "Mixed", "Pine", "Fir")
     
     cols <- RColorBrewer::brewer.pal(6, "Accent")
     sim$speciesEquivalency <- data.frame(leadingNames, latinNames, shortNames, fullNames, cols, stringsAsFactors = FALSE)
