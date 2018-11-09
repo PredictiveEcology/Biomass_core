@@ -985,7 +985,8 @@ summaryBySpecies <- function(sim) {
     sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
   
-  freqs <- table(pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor"))
+  freqs <- table(pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor",
+                                       na.rm = TRUE))
   tabl <- as.vector(freqs)
   summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)), leadingType = names(freqs),
                                   #freqs = freqs,
@@ -1047,7 +1048,8 @@ plotFn <- function(sim) {
   objsToPlot <- objsToPlot[!sapply(objsToPlot, is.null)]
   Plot(objsToPlot, new = TRUE)
   # not sure why, but errors if all 5 are put into one command
-  facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor")
+  facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor",
+                                   na.rm = TRUE)
   levs <- raster::levels(sim$vegTypeMap)[[1]]
   setColors(sim$vegTypeMap, levs) <- 
     equivalentName(levs$Factor, sim$speciesEquivalency, "cols")
