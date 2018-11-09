@@ -703,7 +703,6 @@ summaryBySpecies <- function(sim) {
   summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)), leadingType = names(freqs),
                                   #freqs = freqs,
                                   counts = tabl, stringsAsFactors = FALSE)
-  summaryBySpecies1$leadingType <- sim$speciesEquivalency$shortNames[match(summaryBySpecies1$leadingType, sim$speciesEquivalency$leadingNames)]
   summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType, sim$speciesEquivalency, "shortNames")
   summaryBySpecies1$cols <- equivalentName(summaryBySpecies1$leadingType, sim$speciesEquivalency, "cols")
   
