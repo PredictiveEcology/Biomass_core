@@ -417,7 +417,7 @@ SummaryBGM <- function(sim) {
                                          "uniqueSumMortality")
     setColors(sim$mortalityMap) <- c("light green", "dark green")
 
-    sim$vegTypeMap <- sim$vegTypeMapGenerator(sim$species, sim$cohortData, sim$pixelGroupMap, sim$vegLeadingProportion)
+    sim$vegTypeMap <- vegTypeMapGenerator(sim$species, sim$cohortData, sim$pixelGroupMap, sim$vegLeadingProportion)
   }
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
