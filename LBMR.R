@@ -88,8 +88,6 @@ defineModule(sim, list(
                   desc = "internal use. Keeps track of which pixels are active"),
     createsOutput("ANPPMap", "RasterLayer",
                   desc = "ANPP map at each succession time step"),
-    createsOutput("simulatedBiomass", "RasterLayer",
-                  desc = "Biomass map at each succession time step"),
     createsOutput("burnLoci", "numeric", desc = "Fire pixel IDs"),
     createsOutput("cohortData", "data.table",
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at
@@ -138,6 +136,7 @@ defineModule(sim, list(
     createsOutput("spinUpCache", "logical", desc = ""),
     createsOutput("spinupOutput", "data.table", desc = ""),
     createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species")
+    )
   )
 ))
 
