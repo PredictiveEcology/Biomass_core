@@ -76,7 +76,7 @@ defineModule(sim, list(
     expectsInput("sufficientLight", "data.frame",
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
-
+    
     ## for inputs from optional fire module:
     expectsInput("rstCurrentBurn", "list", desc = "List of rasters of fire spread"),
     expectsInput("spinUpCache", "logical", "")
@@ -129,7 +129,7 @@ defineModule(sim, list(
     createsOutput("spinupOutput", "data.table", desc = ""),
     createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species")
     )
-  )
+)
 )
 
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
@@ -163,7 +163,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryBGM", eventPriority = 7)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
-                                "LBMR", "plot", eventPriority = 8)
+                                "LBMR", "plot", eventPriority = 7)
            
            if (!any(is.na(P(sim)$.saveInitialTime))) {
              sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
@@ -308,7 +308,7 @@ Init <- function(sim) {
   pixelAll <- cohortData[, .(uniqueSumB = as.integer(sum(B, na.rm = TRUE))), by = pixelGroup]
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap,
-                                   "uniqueSumB")
+                                            "uniqueSumB")
     #ANPPMap <- setValues(simulatedBiomassMap, 0L)
     #mortalityMap <- setValues(simulatedBiomassMap, 0L)
     #reproductionMap <- setValues(pixelGroupMap, 0L)
@@ -353,8 +353,9 @@ SummaryBGM <- function(sim) {
                               include.lowest = T)]
   ecoPixelgroup <- data.table(Ecoregion = getValues(sim$ecoregionMap),
                               pixelGroup = getValues(sim$pixelGroupMap),
-                              pixelIndex = 1:ncell(sim$ecoregionMap))[, .(NofPixelGroup = length(pixelIndex)),
-                                                                      by = c("Ecoregion", "pixelGroup")]
+                              pixelIndex = 1:ncell(sim$ecoregionMap))[
+                                ,.(NofPixelGroup = length(pixelIndex)),
+                                by = c("Ecoregion", "pixelGroup")]
   
   for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")) {
     subCohortData <- sim$cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
@@ -402,9 +403,9 @@ SummaryBGM <- function(sim) {
   
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     sim$simulatedBiomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                       "uniqueSumB")
+                                                "uniqueSumB")
     setColors(sim$simulatedBiomassMap) <- c("light green", "dark green")
-
+    
     sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                     "uniqueSumANPP")
     setColors(sim$ANPPMap) <- c("light green", "dark green")
@@ -619,7 +620,6 @@ WardDispersalSeeding <- function(sim) {
       reducedPixelGroupMap <- pixelGroupMap
     }
     
-    #source(file.path(modulePath(sim), "LBMR", "R", "seedDispersalLANDIS.R")) # not needed b/c SpaDES already did this
     seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
@@ -627,7 +627,6 @@ WardDispersalSeeding <- function(sim) {
                               maxPotentialsLength = 1e5,
                               verbose = FALSE,
                               useParallel = P(sim)$useParallel)
-    # verbose = globals(sim)$verbose)
     
     rm(seedReceive, seedSource)
     if (NROW(seedingData) > 0) {
@@ -819,7 +818,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     
     if (successionTimestep !=1 &
         as.integer(k/successionTimestep) == k/successionTimestep) {
-      cohortData <- ageReclassification(cohortData = cohortData, 
+      cohortData <- ageReclassification(cohortData = cohortData,
                                         successionTimestep = successionTimestep,
                                         stage = "spinup")
     }
@@ -873,7 +872,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
         spoutput <- setkey(spoutput, speciesCode)[setkey(species[, .(species, speciesCode)], speciesCode),
                                                   nomatch = 0][
                                                     , speciesCode := species][
-                                                      ,species := NULL]
+                                                      , species := NULL]
         
         setnames(spoutput, "speciesCode", "species")
         spinupOutput <- rbind(spinupOutput, spoutput)
@@ -1010,7 +1009,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
   if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints+1)}
   pixelGroups[, groups := cut(temID, breaks = cutpoints,
                               labels = paste("Group", 1:(length(cutpoints)-1), sep = ""),
-                            include.lowest = TRUE)]
+                              include.lowest = TRUE)]
   for(subgroup in paste("Group",  1:(length(cutpoints)-1), sep = "")) {
     subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
     set(subCohortData, NULL, "sumB", 0L)
@@ -1181,7 +1180,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   cohortData <- cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)),]
   pixelGroupMap_new <- pixelGroupMap
   
-  ## re-write pixel groups from 1 to the number of unique IDs
   temppixelIndex11 <- which(!(getValues(pixelGroupMap) %in% c(0, -1)))
   pgmTemp <- getValues(pixelGroupMap)[temppixelIndex11]
   pixelGroupMap_new[temppixelIndex11] <- as.integer(as.factor(pgmTemp))
@@ -1199,28 +1197,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
 .inputObjects <- function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
-  
-  if (!suppliedElsewhere("shpStudyRegionFull", sim)) {
-    message("'shpStudyRegionFull' was not provided by user. Using a polygon in Southwestern Alberta, Canada")
-    
-    polyCenter <- SpatialPoints(coords = data.frame(x = c(-1349980),y = c(6986895)),
-                                proj4string = crs(P(sim)$.crsUsed))
-    sim$shpStudyRegionFull <- SpaDES.tools::randomPolygon(x = polyCenter, hectares = 10000)
-  }
-  
-  
-  if (!suppliedElsewhere("shpStudySubRegion", sim)) {
-    message("'shpStudySubRegion' was not provided by user. Using the same as 'shpStudyRegionFull'")
-    sim$shpStudySubRegion <- sim$shpStudyRegionFull
-  }
-  
-  if (!identical(P(sim)$.crsUsed, crs(sim$shpStudyRegionFull))) {
-    sim$shpStudyRegionFull <- spTransform(sim$shpStudyRegionFull, P(sim)$.crsUsed) #faster without Cache
-  }
-  
-  if (!identical(P(sim)$.crsUsed, crs(sim$shpStudySubRegion))) {
-    sim$shpStudySubRegion <- spTransform(sim$shpStudySubRegion, P(sim)$.crsUsed) #faster without Cache
-  }
   
   if (!suppliedElsewhere("initialCommunities", sim)) {
     maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
@@ -1256,14 +1232,14 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     initialCommunities[, `:=`(description = gsub(">>", "", description),
                               mapcode = as.integer(as.character(mapcode)))]
     
-    initialCommunities <- data.table(initialCommunities[,1:3, with=FALSE],
+    initialCommunities <- data.table(initialCommunities[, 1:3, with = FALSE],
                                      initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
     
     ## rename species for compatibility across modules (Xxxx_xxx)
     initialCommunities$species1 <- as.character(substring(initialCommunities$species, 1, 4))
     initialCommunities$species2 <- as.character(substring(initialCommunities$species, 5, 7))
-    initialCommunities[, `:=`(species = paste0(toupper(substring(species1, 1, 1)), substring(species1, 2, 4), "_",
-                                               species2))]
+    initialCommunities[, `:=`(species = paste0(toupper(substring(species1, 1, 1)),
+                                               substring(species1, 2, 4), "_", species2))]
     
     initialCommunities[, `:=`(species1 = NULL, species2 = NULL)]
     
@@ -1271,7 +1247,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     rm(cutRows, i, maxcol)
   }
   
-  ## load the initial community map
+  # load the initial community map
   if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
     ## LANDIS-II demo data:
     # sim$initialCommunitiesMap <- Cache(prepInputs,
@@ -1316,7 +1292,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                          blank.lines.skip = TRUE,
                          stringsAsFactors = FALSE)
       maxcol1 <- max(count.fields(file.path(dPath, "biomass-succession_test.txt"), sep = ""))
-      if (identical(maxcol1, maxcol)) break
+      if (identical(maxcol1,maxcol)) break
       
     }
     
@@ -1458,8 +1434,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     ## rename species for compatibility across modules (Xxxx_xxx)
     speciesEcoregion$species1 <- as.character(substring(speciesEcoregion$species, 1, 4))
     speciesEcoregion$species2 <- as.character(substring(speciesEcoregion$species, 5, 7))
-    speciesEcoregion[, `:=`(species = paste0(toupper(substring(species1, 1, 1)), substring(species1, 2, 4), "_",
-                                             species2))]
+    speciesEcoregion[, `:=`(species = paste0(toupper(substring(species1, 1, 1)),
+                                             substring(species1, 2, 4), "_", species2))]
     
     speciesEcoregion[, `:=`(species1 = NULL, species2 = NULL)]
     
