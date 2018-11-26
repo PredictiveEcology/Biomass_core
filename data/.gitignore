@@ -1,5 +1,6 @@
-# ignore:
+## ignore all
 *
 
-# Don't ignore:
-!./CHECKSUMS.txt
+## don't ignore
+!CHECKSUMS.txt
+!.gitignore
