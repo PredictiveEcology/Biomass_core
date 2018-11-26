@@ -14,8 +14,12 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "LBMR.Rmd"),
-  reqdPkgs = list("raster", "sp", "data.table", "dplyr", "ggplot2", "purrr",
-                  "fpCompare", "grid", "tidyr", "Rcpp", "scales", "quickPlot"),
+  reqdPkgs = list("data.table", "dplyr", "fpCompare", "ggplot2", "grid",
+                  "purrr", "quickPlot", "raster", "Rcpp", "scales", "sp", "tidyr",
+                  "PredictiveEcology/pemisc",
+                  "PredictiveEcology/reproducible@development",
+                  "PredictiveEcology/SpaDES.core@development",
+                  "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
     defineParameter(".crsUsed", "character",
                     paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
@@ -385,19 +389,21 @@ SummaryBGM <- function(sim) {
     }
     rm(summarytable_sub, tempOutput, subCohortData)
   }
-  tempOutput_All <- tempOutput_All[, .(Biomass = sum(as.numeric(uniqueSumB*NofPixelGroup)), # need as.numeric because of integer overflow -- returned to integer in 2 lines
-                                       ANPP = sum(uniqueSumANPP*NofPixelGroup),
-                                       Mortality = sum(uniqueSumMortality*NofPixelGroup),
-                                       Regeneration = sum(uniqueSumRege*NofPixelGroup)),
+
+  # need as.numeric below because of integer overflow -- returned to integer in 2 lines
+  tempOutput_All <- tempOutput_All[, .(Biomass = sum(as.numeric(uniqueSumB * NofPixelGroup)),
+                                       ANPP = sum(uniqueSumANPP * NofPixelGroup),
+                                       Mortality = sum(uniqueSumMortality * NofPixelGroup),
+                                       Regeneration = sum(uniqueSumRege * NofPixelGroup)),
                                    by = Ecoregion]
   tempOutput_All <- setkey(tempOutput_All, Ecoregion)[setkey(sim$activeEcoregionLength,
                                                              Ecoregion), nomatch = 0]
   sim$simulationOutput <- rbindlist(list(sim$simulationOutput,
                                          tempOutput_All[, .(Ecoregion, NofCell, Year = as.integer(time(sim)),
-                                                            Biomass = as.integer(Biomass/NofCell),
-                                                            ANPP = as.integer(ANPP/NofCell),
-                                                            Mortality = as.integer(Mortality/NofCell),
-                                                            Regeneration = as.integer(Regeneration/NofCell))]))
+                                                            Biomass = as.integer(Biomass / NofCell),
+                                                            ANPP = as.integer(ANPP / NofCell),
+                                                            Mortality = as.integer(Mortality / NofCell),
+                                                            Regeneration = as.integer(Regeneration / NofCell))]))
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively.
   names(sim$pixelGroupMap) <- "pixelGroup"
   sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
@@ -417,7 +423,8 @@ SummaryBGM <- function(sim) {
                                          "uniqueSumMortality")
     setColors(sim$mortalityMap) <- c("light green", "dark green")
 
-    sim$vegTypeMap <- vegTypeMapGenerator(sim$species, sim$cohortData, sim$pixelGroupMap, sim$vegLeadingProportion)
+    sim$vegTypeMap <- vegTypeMapGenerator(sim$species, sim$cohortData, sim$pixelGroupMap,
+                                          sim$vegLeadingProportion)
   }
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
