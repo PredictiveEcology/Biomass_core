@@ -26,16 +26,21 @@ defineModule(sim, list(
     defineParameter(".saveInitialTime", "numeric", 0, NA, NA,
                     desc = paste("This describes the simulation time at which the first save event should occur.",
                                  "Set to NA if no saving is desired.")),
+    defineParameter("calibrate", "logical", FALSE,
+                    desc = "Do calibration? Defaults to FALSE"),
+    defineParameter("fireInitialTime", "numeric", 2L,
+                    desc = "The event time that the first fire disturbance event occurs"),
+    defineParameter("fireTimestep", "numeric", 2L,
+                    desc = "The number of time units between successive fire events in a fire module"),
+    defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
+                    desc = "Initial time for the growth event to occur"),
+    defineParameter("seedingAlgorithm", "character", "wardDispersal",
+                    desc = paste("choose which seeding algorithm will be used among",
+                                 "noDispersal, universalDispersal, and wardDispersal (default).")),
     defineParameter("spinupMortalityfraction", "numeric", 0.001,
                     desc = "defines the mortality loss fraction in spin up-stage simulation"),
     defineParameter("successionTimestep", "numeric", 10,
                     desc = "defines the simulation time step, default is 10 years"),
-    defineParameter(name = "seedingAlgorithm", class = "character", default = "wardDispersal",
-                    desc = "choose which seeding algorithm will be used among
-                    noDispersal, universalDispersal, and wardDispersal,
-                    default is wardDispersal"),
-    defineParameter(name = "calibrate", class = "logical", default = FALSE, 
-                    desc = "Do calibration? Defaults to FALSE"),
     defineParameter("useCache", "logic", TRUE,
                     desc = "use caching for the spinup simulation?"),
     defineParameter("useParallel", "ANY", parallel::detectCores(),
@@ -43,90 +48,86 @@ defineModule(sim, list(
                                  "If numeric, it will be passed to data.table::setDTthreads, ",
                                  "if logical and TRUE, it will be passed to parallel::makeCluster, ",
                                  "and if cluster object it will be passed to parallel::parClusterApplyLB."))
-    ),
+  ),
   inputObjects = bind_rows(
-    expectsInput(objectName = "initialCommunities", objectClass = "data.table",
-                 desc = "initial community table",
-                 sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.txt"),
-    expectsInput(objectName = "species", objectClass = "data.table",
-                 desc = "a table that has species traits such as longevity...",
-                 sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt"),
-    expectsInput(objectName = "ecoregionMap", objectClass = "RasterLayer",
-                 desc = "ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table.
-                 Defaults to a small polygon in Alberta, Canada, with randomly assigned mapcodes", sourceURL = ""),
-    expectsInput(objectName = "initialCommunitiesMap", objectClass = "RasterLayer",
-                 desc = "initial community map that has mapcodes match initial community table. 
-                 Defaults to a small polygon Alberta, Canada, with randomly assigned mapcodes", sourceURL = ""),
-    expectsInput(objectName = "ecoregion", objectClass = "data.table",
+    expectsInput("ecoregion", "data.table",
                  desc = "ecoregion look up table",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt"),
-    expectsInput(objectName = "speciesEcoregion", objectClass = "data.table",
-                 desc = "table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time",
-                 sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession-dynamic-inputs_test.txt"),
-    expectsInput(objectName = "minRelativeB", objectClass = "data.frame",
+    expectsInput("ecoregionMap", "RasterLayer",
+                 desc = "ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table",
+                 sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.gis"),
+    expectsInput("initialCommunities", "data.table",
+                 desc = "initial community table",
+                 sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.txt"),
+    expectsInput("initialCommunitiesMap", "RasterLayer",
+                 desc = "initial community map that has mapcodes match initial community table",
+                 sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
+    expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
-    expectsInput(objectName = "sufficientLight", objectClass = "data.frame",
+    expectsInput("species", "data.table",
+                 desc = "a table that has species traits such as longevity...",
+                 sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt"),
+    expectsInput("speciesEcoregion", "data.table",
+                 desc = "table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time",
+                 sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession-dynamic-inputs_test.txt"),
+    expectsInput("sufficientLight", "data.frame",
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
-    expectsInput(objectName = "shpStudySubRegion", objectClass = "SpatialPolygonsDataFrame",
-                 desc = "this shape file contains two informaton: Sub study area with fire return interval attribute. 
-                 Defaults to a shapefile in Southwestern Alberta, Canada", sourceURL = ""),
-    expectsInput(objectName = "shpStudyRegionFull", objectClass = "SpatialPolygonsDataFrame",
-                 desc = "this shape file contains two informaton: Full study area with fire return interval attribute.
-                 Defaults to a shapefile in Southwestern Alberta, Canada", sourceURL = ""),
-    # For inputs from optional fire module
-    expectsInput(objectName = "postFirePixel", objectClass = "numeric",
-                 desc = "Pixels that were affected by fire"),
-    expectsInput(objectName = "firePixelTable", objectClass = "data.table",
-                 desc = "table with pixels IDs that had fire and their corresponding pixel groups"),
+
+    ## for inputs from optional fire module:
+    expectsInput("rstCurrentBurn", "list", desc = "List of rasters of fire spread"),
     expectsInput("spinUpCache", "logical", "")
     ),
   outputObjects = bind_rows(
-    createsOutput(objectName = "simulationOutput", objectClass = "data.table",
-                  desc = "contains simulation results by ecoregion",
-                  other = "this is main output"),
-    createsOutput(objectName = "cohortData", objectClass = "data.table",
+    createsOutput("activeEcoregionLength", "data.table",
+                  desc = "internal use. Keeps track of the length of the ecoregion"),
+    createsOutput("activePixelIndex", "logical",
+                  desc = "internal use. Keeps track of which pixels are active"),
+    createsOutput("ANPPMap", "RasterLayer",
+                  desc = "ANPP map at each succession time step"),
+    createsOutput("biomassMap", "RasterLayer",
+                  desc = "Biomass map at each succession time step"),
+    createsOutput("burnLoci", "numeric", desc = "Fire pixel IDs"),
+    createsOutput("cohortData", "data.table",
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at
                   succession time step"),
-    createsOutput(objectName = "pixelGroupMap", objectClass = "RasterLayer",
-                  desc = "updated community map at each succession time step"),
-    createsOutput(objectName = "biomassMap", objectClass = "RasterLayer",
-                  desc = "Biomass map at each succession time step"),
-    createsOutput(objectName = "ANPPMap", objectClass = "RasterLayer",
-                  desc = "ANPP map at each succession time step"),
-    createsOutput(objectName = "mortalityMap", objectClass = "RasterLayer",
-                  desc = "Mortality map at each succession time step"),
-    createsOutput(objectName = "reproductionMap", objectClass = "RasterLayer",
-                  desc = "Regeneration map at each succession time step"),
-    createsOutput(objectName = "cutpoint", objectClass = "numeric",
+    createsOutput("cutpoint", "numeric",
                   desc = "A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks"),
-    createsOutput(objectName = "speciesEcoregion", objectClass = "data.table",
-                  desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
-    createsOutput(objectName = "species", objectClass = "data.table",
-                  desc = "a table that has species traits such as longevity..."),
-    createsOutput(objectName = "simulationTreeOutput", objectClass = "data.table",
-                  desc = "Summary of several characteristics about the stands, derived from cohortData"),
-    createsOutput(objectName = "minRelativeB", objectClass = "data.frame",
-                  desc = "define the cut points to classify stand shadeness"),
-    createsOutput(objectName = "activePixelIndex", objectClass = "logical",
-                  desc = "internal use. Keeps track of which pixels are active"),
-    createsOutput(objectName = "inactivePixelIndex", objectClass = "logical",
+    createsOutput("firePixelTable", "data.table", ""),
+    createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
-    createsOutput(objectName = "activeEcoregionLength", objectClass = "data.table",
-                  desc = "internal use. Keeps track of the length of the ecoregion"),
-    createsOutput(objectName = "lastFireYear", objectClass = "numeric",
-                  desc = "Year of the most recent fire year"),
-    createsOutput(objectName = "lastReg", objectClass = "numeric",
-                  desc = "an internal counter keeping track of when the last regeneration event occurred"),
-    createsOutput(objectName = "initialCommunitiesMap", objectClass = "RasterLayer",
+    createsOutput("initialCommunitiesMap", "RasterLayer",
                   desc = "initial community map that has mapcodes match initial community table"),
-    createsOutput("spinUpCache", "logical", ""),
-    createsOutput("regenerationOutput", "data.table", ""),
-    createsOutput("spinupOutput", "data.table", ""),
-    createsOutput("summaryBySpecies", "data.table", "The average biomass in a pixel, by species")
-    )
-    ))
+    createsOutput("lastFireYear", "numeric",
+                  desc = "Year of the most recent fire year"),
+    createsOutput("lastReg", "numeric",
+                  desc = "an internal counter keeping track of when the last regeneration event occurred"),
+    createsOutput("minRelativeB", "data.frame",
+                  desc = "define the cut points to classify stand shadeness"),
+    createsOutput("mortalityMap", "RasterLayer",
+                  desc = "Mortality map at each succession time step"),
+    createsOutput("pixelGroupMap", "RasterLayer",
+                  desc = "updated community map at each succession time step"),
+    createsOutput("postFireRegenSummary", "data.table", desc = ""),
+    createsOutput("postFirePixel", "numeric", desc = ""),
+    createsOutput("regenerationOutput", "data.table", desc = ""),
+    createsOutput("reproductionMap", "RasterLayer",
+                  desc = "Regeneration map at each succession time step"),
+    createsOutput("rstCurrentBurn", "list", desc = "List of rasters of fire spread"),
+    createsOutput("simulationOutput", "data.table",
+                  desc = "contains simulation results by ecoregion (main output)"),
+    createsOutput("simulationTreeOutput", "data.table",
+                  desc = "Summary of several characteristics about the stands, derived from cohortData"),
+    createsOutput("species", "data.table",
+                  desc = "a table that has species traits such as longevity..."),
+    createsOutput("speciesEcoregion", "data.table",
+                  desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
+    createsOutput("spinUpCache", "logical", desc = ""),
+    createsOutput("spinupOutput", "data.table", desc = ""),
+    createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species")
+  )
+))
 
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   if (is.numeric(P(sim)$useParallel)) {
@@ -140,6 +141,11 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- Init(sim)
            
            ## schedule events
+           if (!is.null(sim$rstCurrentBurn)) {
+             # anything related to fire disturbance
+             sim <- scheduleEvent(sim, P(sim)$fireInitialTime,
+                                  "LBMR", "fireDisturbance", eventPriority = 3)
+           }
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = 5)
            if (P(sim)$successionTimestep != 1) {
@@ -159,8 +165,9 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
                                   "LBMR", "save", eventPriority = 8.5)
              ## stats plot is retrieving saved rasters so needs data to be saved
-             sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep, # start on second time around b/c ggplot doesn't like 1 data point
-                                  "LBMR", "statsPlot", eventPriority = 8.75)
+             # start on second time around b/c ggplot doesn't like 1 data point
+             tPlotInit <- P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep
+             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "statsPlot", eventPriority = 7.75)
            }
          },
          Dispersal = {
