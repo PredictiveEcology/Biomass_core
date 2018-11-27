@@ -1555,7 +1555,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                          desc := paste(initialCommunities[i, 3:maxcol, with = FALSE],
                                        collapse = " ")]
     }
-  browser()
+
     initialCommunities[, rowN := 1:nrow(initialCommunities)]
     initialCommunities[, ':='(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
                                             labels = initialCommunities[cutRows + 1,]$age1),
