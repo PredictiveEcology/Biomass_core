@@ -260,8 +260,9 @@ Init <- function(sim) {
   sim$cutpoint <- 1e10
   communities <- sim$initialCommunities %>%
     gather(key = cohort, value = age, -mapcode, -description, -species, na.rm = TRUE) %>%
-    data.table() %>%
-    .[, `:=`(age = as.integer(ceiling(as.numeric(age)/P(sim)$successionTimestep) * P(sim)$successionTimestep),
+    data.table() %>% ## this needs to be here to appease the data.table gods
+    .[, ':='(age = as.integer(ceiling(as.numeric(age) / P(sim)$successionTimestep) *
+                                P(sim)$successionTimestep),
              communityGroup = as.integer(mapcode),
              mapcode = NULL)] %>%
     unique(., by = c("communityGroup", "species", "age"))
@@ -363,7 +364,7 @@ Init <- function(sim) {
   speciesEcoregion_False <- speciesEcoregion[identifier == "FALSE",]
   speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(speciesEcoregion_False$year),]
   sim$speciesEcoregion <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))[
-    , `:=`(year = year - min(year), identifier = NULL)]
+    , ':='(year = year - min(year), identifier = NULL)]
   sim$lastFireYear <- "noFire"
   return(invisible(sim))
 }
@@ -436,7 +437,7 @@ MortalityAndGrowth <- function(sim) {
 
       tempcohortdata <- setkey(tempcohortdata, speciesCode)[setkey(sim$species[,.(species, speciesCode)],
                                                                    speciesCode),
-                                                            nomatch = 0][, `:=`(speciesCode = species,
+                                                            nomatch = 0][, ':='(speciesCode = species,
                                                                                 species = NULL,
                                                                                 pixelGroup = NULL)]
       setnames(tempcohortdata, "speciesCode", "Species")
@@ -629,7 +630,7 @@ FireDisturbance <- function(sim) {
                                                          speciesCode, numberOfRegen)]
         serotinyRegenSummary <- setkey(serotinyRegenSummary, speciesCode)[
           sim$species[, .(species, speciesCode)], nomatch = 0]
-        serotinyRegenSummary[, `:=`(speciesCode = species, species = NULL)]
+        serotinyRegenSummary[, ':='(speciesCode = species, species = NULL)]
         setnames(serotinyRegenSummary, "speciesCode", "species")
         sim$postFireRegenSummary <- rbindlist(list(sim$postFireRegenSummary, serotinyRegenSummary))
       }
@@ -689,7 +690,7 @@ FireDisturbance <- function(sim) {
                                                          speciesCode, numberOfRegen)]
         resproutRegenSummary <- setkey(resproutRegenSummary, speciesCode)[sim$species[,.(species, speciesCode)],
                                                                           nomatch = 0]
-        resproutRegenSummary[,`:=`(speciesCode = species, species = NULL)]
+        resproutRegenSummary[,':='(speciesCode = species, species = NULL)]
         setnames(resproutRegenSummary, "speciesCode", "species")
         sim$postFireRegenSummary <- rbindlist(list(sim$postFireRegenSummary, resproutRegenSummary))
       }
@@ -1209,7 +1210,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
         setnames(spoutput, "speciesCode", "species")
         spinupOutput <- rbind(spinupOutput, spoutput)
         rm(spoutput)
-        cohortData[,`:=`(bAP = NULL)]
+        cohortData[,':='(bAP = NULL)]
       } else {
         spoutput <- cohortData[origAge >= presimuT,.(pixelGroup, speciesCode, age,
                                                      iniBiomass = 0, ANPP = 0,
@@ -1232,7 +1233,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
       cohortData[origAge == 1, B := as.integer(pmin(maxANPP, B))]
     }
   }
-  cohortData[, `:=`(age = origAge, origAge = NULL)]
+  cohortData[, ':='(age = origAge, origAge = NULL)]
   if (calibrate) {
     all <- list(cohortData = cohortData, spinupOutput = spinupOutput)
   } else {
@@ -1368,7 +1369,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
                                  .(tempsumB = as.integer(sum(B, na.rm = TRUE))), by = pixelGroup]
     }
     subCohortData <- merge(subCohortData, sumBtable, by = "pixelGroup", all.x = TRUE)
-    subCohortData[is.na(tempsumB), tempsumB := as.integer(0L)][, `:=`(sumB = tempsumB, tempsumB = NULL)]
+    subCohortData[is.na(tempsumB), tempsumB := as.integer(0L)][, ':='(sumB = tempsumB, tempsumB = NULL)]
     if (subgroup == "Group1") {
       newcohortData <- subCohortData
     } else {
@@ -1406,7 +1407,7 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   # the siteshade was calculated based on the codes:
   # https://github.com/LANDIS-II-Foundation/Extensions-Succession/blob/master/biomass-succession/trunk/src/PlugIn.cs
   if (nrow(cohortData[age > 5,]) > 0) {
-    bAMterm1 <- cohortData[age > 5, `:=`(prevMortality = sum(mortality, na.rm = TRUE),
+    bAMterm1 <- cohortData[age > 5, ':='(prevMortality = sum(mortality, na.rm = TRUE),
                                          sumB = sum(B, na.rm = TRUE)),
                             by = .(pixelGroup, ecoregionGroup)]
     bAMterm1[is.na(sumB), sumB := 0]
@@ -1416,7 +1417,7 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   } else {
     bAMterm1 <- unique(cohortData, by = c("pixelGroup", "ecoregionGroup"))[
       , .(pixelGroup, ecoregionGroup)][
-        , `:=`(prevMortality = 0, sumB = 0)]
+        , ':='(prevMortality = 0, sumB = 0)]
   }
   #bAM <- data.table(speciesEcoregion)[year <= time(sim) & (year > (time(sim)-P(sim)$successionTimestep))]
   bAM <- speciesEcoregion[year <= time]
@@ -1554,13 +1555,14 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                          desc := paste(initialCommunities[i, 3:maxcol, with = FALSE],
                                        collapse = " ")]
     }
+  browser()
     initialCommunities[, rowN := 1:nrow(initialCommunities)]
-    initialCommunities[, `:=`(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
+    initialCommunities[, ':='(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
                                             labels = initialCommunities[cutRows + 1,]$age1),
                               description = cut(rowN, breaks = c(cutRows, max(rowN)),
                                                 labels = initialCommunities[cutRows,]$desc))]
-    initialCommunities <- initialCommunities[!c(cutRows, cutRows + 1), ][, `:=`(desc = NULL, rowN = NULL)]
-    initialCommunities[, `:=`(description = gsub(">>", "", description),
+    initialCommunities <- initialCommunities[!c(cutRows, cutRows + 1), ][, ':='(desc = NULL, rowN = NULL)]
+    initialCommunities[, ':='(description = gsub(">>", "", description),
                               mapcode = as.integer(as.character(mapcode)))]
 
     initialCommunities <- data.table(initialCommunities[, 1:3, with = FALSE],
@@ -1569,10 +1571,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     ## rename species for compatibility across modules (Xxxx_xxx)
     initialCommunities$species1 <- as.character(substring(initialCommunities$species, 1, 4))
     initialCommunities$species2 <- as.character(substring(initialCommunities$species, 5, 7))
-    initialCommunities[, `:=`(species = paste0(toupper(substring(species1, 1, 1)),
+    initialCommunities[, ':='(species = paste0(toupper(substring(species1, 1, 1)),
                                                substring(species1, 2, 4), "_", species2))]
 
-    initialCommunities[, `:=`(species1 = NULL, species2 = NULL)]
+    initialCommunities[, ':='(species1 = NULL, species2 = NULL)]
 
     sim$initialCommunities <- initialCommunities
     rm(cutRows, i, maxcol)
@@ -1637,7 +1639,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                   "resproutprob", "resproutage_min", "resproutage_max",
                   "postfireregen")
     names(species) <- colNames
-    species[, `:=`(seeddistance_eff = gsub(",", "", seeddistance_eff),
+    species[, ':='(seeddistance_eff = gsub(",", "", seeddistance_eff),
                    seeddistance_max = gsub(",", "", seeddistance_max))]
     # change all columns to integer
     species <- species[, lapply(.SD, as.integer), .SDcols = names(species)[-c(1, NCOL(species))],
@@ -1650,7 +1652,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     speciesAddon <- speciesAddon[(startRow + 1):(startRow + nrow(species)), 1:6, with = FALSE]
     names(speciesAddon) <- c("species", "leaflongevity", "wooddecayrate",
                              "mortalityshape", "growthcurve", "leafLignin")
-    speciesAddon[, `:=`(leaflongevity = as.numeric(leaflongevity),
+    speciesAddon[, ':='(leaflongevity = as.numeric(leaflongevity),
                         wooddecayrate = as.numeric(wooddecayrate),
                         mortalityshape = as.numeric(mortalityshape),
                         growthcurve = as.numeric(growthcurve),
@@ -1661,11 +1663,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     ## rename species for compatibility across modules (Xxxx_xxx)
     species$species1 <- as.character(substring(species$species, 1, 4))
     species$species2 <- as.character(substring(species$species, 5, 7))
-    species[, `:=`(species = paste0(toupper(substring(species1, 1, 1)),
+    species[, ':='(species = paste0(toupper(substring(species1, 1, 1)),
                                     substring(species1, 2, 4), "_",
                                     species2))]
 
-    species[, `:=`(species1 = NULL, species2 = NULL)]
+    species[, ':='(species1 = NULL, species2 = NULL)]
 
     sim$species <- species
     rm(maxcol)
@@ -1732,10 +1734,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     ## rename species for compatibility across modules (Xxxx_xxx)
     speciesEcoregion$species1 <- as.character(substring(speciesEcoregion$species, 1, 4))
     speciesEcoregion$species2 <- as.character(substring(speciesEcoregion$species, 5, 7))
-    speciesEcoregion[, `:=`(species = paste0(toupper(substring(species1, 1, 1)),
+    speciesEcoregion[, ':='(species = paste0(toupper(substring(species1, 1, 1)),
                                              substring(species1, 2, 4), "_", species2))]
 
-    speciesEcoregion[, `:=`(species1 = NULL, species2 = NULL)]
+    speciesEcoregion[, ':='(species1 = NULL, species2 = NULL)]
 
     sim$speciesEcoregion <- speciesEcoregion
     rm(maxcol)
@@ -1778,7 +1780,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   }
 
   if (!suppliedElsewhere("speciesEquivalency")) {
-    leadingNames <- c("Black spruce leading", "White spruce leading", "Deciduous leading", "Mixed", "Pine leading", "Fir leading")
+    leadingNames <- c("Black spruce leading", "White spruce leading", "Deciduous leading",
+                      "Mixed", "Pine leading", "Fir leading")
     latinNames <- c("Pice_mar", "Pice_gla", "Popu_tre", "Mixed", "Pinu_sp", "Abie_sp")
     shortNames <- c("Bl spruce", "Wh spruce", "Decid", "Mixed", "Pine", "Fir")
     fullNames <- c("Black.Spruce", "White.Spruce", "Deciduous", "Mixed", "Pine", "Fir")
