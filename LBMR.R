@@ -79,7 +79,6 @@ defineModule(sim, list(
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
 
     ## for inputs from optional fire module:
-    expectsInput("rstCurrentBurn", "list", desc = "List of rasters of fire spread"),
     expectsInput("spinUpCache", "logical", ""),
     expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species"),
     expectsInput("speciesEquivalency", "data.frame", "")
@@ -99,7 +98,6 @@ defineModule(sim, list(
                   desc = "Biomass map at each succession time step"),
     createsOutput(objectName = "cutpoint", objectClass = "numeric",
                   desc = "A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks"),
-    createsOutput("firePixelTable", "data.table", ""),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
     createsOutput("initialCommunitiesMap", "RasterLayer",
@@ -114,12 +112,9 @@ defineModule(sim, list(
                   desc = "Mortality map at each succession time step"),
     createsOutput("pixelGroupMap", "RasterLayer",
                   desc = "updated community map at each succession time step"),
-    createsOutput("postFireRegenSummary", "data.table", desc = ""),
-    createsOutput("postFirePixel", "numeric", desc = ""),
     createsOutput("regenerationOutput", "data.table", desc = ""),
     createsOutput("reproductionMap", "RasterLayer",
                   desc = "Regeneration map at each succession time step"),
-    createsOutput("rstCurrentBurn", "list", desc = "List of rasters of fire spread"),
     createsOutput("simulationOutput", "data.table",
                   desc = "contains simulation results by ecoregion (main output)"),
     createsOutput("simulationTreeOutput", "data.table",
@@ -148,11 +143,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- Init(sim)
 
            ## schedule events
-           if (!is.null(sim$rstCurrentBurn)) {
-             # anything related to fire disturbance
-             sim <- scheduleEvent(sim, P(sim)$fireInitialTime,
-                                  "LBMR", "fireDisturbance", eventPriority = 3)
-           }
+
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = 5)
            if (P(sim)$successionTimestep != 1) {
