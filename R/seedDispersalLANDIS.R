@@ -1,4 +1,3 @@
-
 ##############################################################
 #' Ward Seed Dispersal kernel
 #'
@@ -13,16 +12,16 @@
 #' @rdname Ward
 Ward <- expression(if (cellSize <= effDist) {
   ifelse(dis <= effDist,
-         exp((dis-cellSize)*log(1-k)/effDist)-
-           exp(dis*log(1-k)/effDist),
-         (1-k)*exp((dis-cellSize-effDist)*log(b)/maxDist)-
-           (1-k)*exp((dis-effDist)*log(b)/maxDist))
+         exp((dis - cellSize)*log(1 - k)/effDist) -
+           exp(dis*log(1 - k)/effDist),
+         (1 - k)*exp((dis - cellSize - effDist)*log(b)/maxDist) -
+           (1 - k)*exp((dis - effDist)*log(b)/maxDist))
 } else {
   ifelse(dis <= cellSize,
-         exp((dis-cellSize)*log(1-k)/effDist)-(1-k)*
-           exp((dis-effDist)*log(b)/maxDist),
-         (1-k)*exp((dis-cellSize-effDist)*log(b)/maxDist)-
-           (1-k)*exp((dis-effDist)*log(b)/maxDist))
+         exp((dis - cellSize)*log(1 - k)/effDist) - (1 - k) *
+           exp((dis - effDist)*log(b)/maxDist),
+         (1 - k) * exp((dis - cellSize - effDist) * log(b) / maxDist) -
+           (1 - k) * exp((dis - effDist) * log(b) / maxDist))
 })
 
 ##############################################################
@@ -39,16 +38,16 @@ Ward <- expression(if (cellSize <= effDist) {
 #' @rdname WardFast
 WardFast <- expression(ifelse(cellSize <= effDist, {
   ifelse(dis <= effDist,
-         exp((dis-cellSize)*log(1-k)/effDist)-
-           exp(dis*log(1-k)/effDist),
-         (1-k)*exp((dis-cellSize-effDist)*log(b)/maxDist)-
-           (1-k)*exp((dis-effDist)*log(b)/maxDist))
+         exp((dis - cellSize)*log(1 - k)/effDist) -
+           exp(dis*log(1 - k)/effDist),
+         (1 - k)*exp((dis - cellSize - effDist)*log(b)/maxDist) -
+           (1 - k)*exp((dis - effDist)*log(b)/maxDist))
 } , {
   ifelse(dis<=cellSize,
-         exp((dis-cellSize)*log(1-k)/effDist)-(1-k)*
-           exp((dis-effDist)*log(b)/maxDist),
-         (1-k)*exp((dis-cellSize-effDist)*log(b)/maxDist)-
-           (1-k)*exp((dis-effDist)*log(b)/maxDist))
+         exp((dis - cellSize)*log(1 - k)/effDist) - (1 - k)*
+           exp((dis - effDist)*log(b)/maxDist),
+         (1 - k)*exp((dis - cellSize - effDist)*log(b)/maxDist) -
+           (1 - k)*exp((dis - effDist)*log(b)/maxDist))
 }))
 
 ##############################################################
@@ -353,18 +352,18 @@ ringCells <- function(x, index, minDist, maxDist) {
 # }
 #
 WardEqn <- function(dis, cellSize, effDist, maxDist, k, b) {
-  if(cellSize%<=%effDist) {
-    ifelse(dis%<=%effDist,
-           exp((dis-cellSize)*log(1-k)/effDist)-
-             exp(dis*log(1-k)/effDist),
-           (1-k)*exp((dis-cellSize-effDist)*log(b)/maxDist)-
-             (1-k)*exp((dis-effDist)*log(b)/maxDist))
+  if (cellSize %<=% effDist) {
+    ifelse(dis %<=% effDist,
+           exp((dis - cellSize) * log(1 - k)/effDist) -
+             exp(dis*log(1 - k)/effDist),
+           (1 - k)*exp((dis - cellSize - effDist)*log(b)/maxDist) -
+             (1 - k)*exp((dis - effDist)*log(b)/maxDist))
   } else {
-    ifelse(dis%<=%cellSize,
-           exp((dis-cellSize)*log(1-k)/effDist)-(1-k)*
-             exp((dis-effDist)*log(b)/maxDist),
-           (1-k)*exp((dis-cellSize-effDist)*log(b)/maxDist)-
-             (1-k)*exp((dis-effDist)*log(b)/maxDist))
+    ifelse(dis %<=% cellSize,
+           exp((dis - cellSize)*log(1 - k)/effDist) - (1 - k)*
+             exp((dis - effDist)*log(b)/maxDist),
+           (1 - k)*exp((dis - cellSize - effDist)*log(b)/maxDist) -
+             (1 - k)*exp((dis - effDist)*log(b)/maxDist))
   }
 }
 #

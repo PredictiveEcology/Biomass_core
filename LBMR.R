@@ -684,8 +684,7 @@ summaryRegen <- function(sim) {
                                .(uniqueSumReproduction = as.integer(sum(B, na.rm=TRUE))),
                                by = pixelGroup]
     if (NROW(pixelAll) > 0) {
-      reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap,
-                                          "uniqueSumReproduction")
+      reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
       setColors(reproductionMap) <- c("light green", "dark green")
     } else {
       reproductionMap <- setValues(pixelGroupMap, 0L)
