@@ -1001,10 +1001,11 @@ summaryBySpecies <- function(sim) {
     sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
 
-  freqs <- table(pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor",
-                                       na.rm = TRUE))
+  freqs <- table(pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
+                                       att = "Factor", na.rm = TRUE))
   tabl <- as.vector(freqs)
-  summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)), leadingType = names(freqs),
+  summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)),
+                                  leadingType = names(freqs),
                                   #freqs = freqs,
                                   counts = tabl, stringsAsFactors = FALSE)
   summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType, sim$speciesEquivalency, "shortNames")
@@ -1017,7 +1018,7 @@ summaryBySpecies <- function(sim) {
   }
 
   if (length(unique(sim$summaryBySpecies1$year)) > 1) {
-    df <- sim$species[,list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
+    df <- sim$species[, list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
     df$species <- equivalentName(df$species, sim$speciesEquivalency, "shortNames")
     df$cols <- equivalentName(df$species, sim$speciesEquivalency, "cols")
 
@@ -1528,7 +1529,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 }
 
 .inputObjects <- function(sim) {
-  dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
+  dPath <- asPath(dataPath(sim))
 
   if (!suppliedElsewhere("initialCommunities", sim)) {
     maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
@@ -1568,7 +1569,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     initialCommunities <- data.table(initialCommunities[, 1:3, with = FALSE],
                                      initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
 
-    ## rename species for compatibility across modules (Xxxx_xxx)
+    ## rename species for compatibility across modules (Genu_spe)
     initialCommunities$species1 <- as.character(substring(initialCommunities$species, 1, 4))
     initialCommunities$species2 <- as.character(substring(initialCommunities$species, 5, 7))
     initialCommunities[, ':='(species = paste0(toupper(substring(species1, 1, 1)),
@@ -1589,10 +1590,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                                        fun = "raster::raster")
   }
 
-  ######################################################
-  #   # load the biomass succession txt and obtain 1) minRelativeB,
-  #                                                2) sufficientLight, and
-  #                                                3) additional species traits
+  ## load the biomass_succession.txt and obtain:
+  ##    1) minRelativeB;
+  ##    2) sufficientLight; and
+  ##    3) additional species traits.
   if (!suppliedElsewhere("sufficientLight", sim) |
       (!suppliedElsewhere("species", sim)) |
       (!suppliedElsewhere("minRelativeB", sim))) {
@@ -1696,8 +1697,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     rm(maxcol)
   }
 
-  ######################################################
-  ######################################################
   ## load ecoregion map
   if (!suppliedElsewhere("ecoregionMap", sim )) {
     sim$ecoregionMap <- Cache(prepInputs,
