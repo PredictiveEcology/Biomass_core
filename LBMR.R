@@ -387,7 +387,7 @@ MortalityAndGrowth <- function(sim) {
   pixelGroups[, groups := cut(temID, breaks = cutpoints,
                               labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
                               include.lowest = T)]
-  for(subgroup in paste("Group", 1:(length(cutpoints)-1), sep = "")) {
+  for (subgroup in paste("Group", 1:(length(cutpoints) - 1), sep = "")) {
     subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
     #   cohortData <- sim$cohortData
     set(subCohortData, NULL, "age", subCohortData$age + 1)
@@ -979,8 +979,7 @@ summaryRegen <- function(sim) {
                                .(uniqueSumReproduction = as.integer(sum(B, na.rm = TRUE))),
                                by = pixelGroup]
     if (NROW(pixelAll) > 0) {
-      reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap,
-                                          "uniqueSumReproduction")
+      reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
       setColors(reproductionMap) <- c("light green", "dark green")
     } else {
       reproductionMap <- setValues(pixelGroupMap, 0L)
