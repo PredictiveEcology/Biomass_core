@@ -68,6 +68,9 @@ defineModule(sim, list(
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
+    expectsInput("shpStudyArea", "SpatialPolygonsDataFrame",
+                 desc = "Study area used to source any objects that are not supplied",
+                 sourceURL = NA), 
     expectsInput("species", "data.table",
                  desc = "a table that has species traits such as longevity...",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt"),
@@ -1241,7 +1244,21 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
 .inputObjects <- function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
-
+  
+  if (!suppliedElsewhere("shpStudyArea", sim)) {
+    
+    message("'shpStudyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
+    
+    polyCenter <- SpatialPoints(coords = data.frame(x = c(-1349980), y = c(6986895)),
+                                proj4string = CRS(paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
+            "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")))
+    
+    seedToKeep <- .GlobalEnv$.Random.seed
+    set.seed(1234)
+    sim$shpStudyArea <- SpaDES.tools::randomPolygon(x = polyCenter, hectares = 10000)
+    .GlobalEnv$.Random.seed <- seedToKeep
+  }
+  
   if (!suppliedElsewhere("initialCommunities", sim)) {
     maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
     initialCommunities <- Cache(prepInputs, 
@@ -1253,7 +1270,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                                 sep = "",
                                 blank.lines.skip = TRUE,
                                 col.names = c("species", paste("age", 1:(maxcol - 1), sep = "")),
-                                stringsAsFactors = FALSE)
+                                stringsAsFactors = FALSE,
+                                overwrite = TRUE)
     # correct the typo in the original txt
     initialCommunities[14, 1:4] <- initialCommunities[14, 2:5]
 
@@ -1267,7 +1285,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                          desc := paste(initialCommunities[i, 3:maxcol, with = FALSE],
                                        collapse = " ")]
     }
-  browser()
+  
     initialCommunities[, rowN := 1:nrow(initialCommunities)]
     initialCommunities[, ':='(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
                                             labels = initialCommunities[cutRows + 1,]$age1),
@@ -1302,9 +1320,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     #                                    fun = "raster::raster")
     
     ## Dummy version with spatial location in Canada
-    ras <- projectExtent(sim$shpStudySubRegion, crs = sim$shpStudySubRegion)
+    ras <- projectExtent(sim$shpStudyArea, crs = sim$shpStudyArea)
     res(ras) = 250
-    initialCommunitiesMap <- rasterize(sim$shpStudySubRegion, ras)
+    initialCommunitiesMap <- rasterize(sim$shpStudyArea, ras)
     
     ## make uniform communities (well structured in space)
     mapvals <- rep(unique(initialCommunities$mapcode),
@@ -1335,7 +1353,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                          header = FALSE,
                          col.names = c(paste("col",1:maxcol, sep = "")),
                          blank.lines.skip = TRUE,
-                         stringsAsFactors = FALSE)
+                         stringsAsFactors = FALSE,
+                         overwrite = TRUE)
       maxcol1 <- max(count.fields(file.path(dPath, "biomass-succession_test.txt"), sep = ""))
       if (identical(maxcol1,maxcol)) break
     }
@@ -1357,7 +1376,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                      header = FALSE,
                      blank.lines.skip = TRUE,
                      col.names = c(paste("col",1:maxcol, sep = "")),
-                     stringsAsFactors = FALSE)
+                     stringsAsFactors = FALSE,
+                     overwrite = TRUE)
     species <- data.table(species[,1:11])
     species <- species[col1!= "LandisData",]
     species <- species[col1!= ">>",]
@@ -1438,9 +1458,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     
     ## Dummy version with spatial location in Canada
     ## Dummy version with spatial location in Canada
-    ras <- projectExtent(sim$shpStudySubRegion, crs = sim$shpStudySubRegion)
+    ras <- projectExtent(sim$shpStudyArea, crs = sim$shpStudyArea)
     res(ras) = 250
-    ecoregionMap <- rasterize(sim$shpStudySubRegion, ras)
+    ecoregionMap <- rasterize(sim$shpStudyArea, ras)
     
     ## make uniform communities (well structured in space)
     mapvals <- rep(unique(ecoregion$mapcode),
