@@ -21,10 +21,6 @@ defineModule(sim, list(
                   "PredictiveEcology/SpaDES.core@development",
                   "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
-    defineParameter(".crsUsed", "character",
-                    paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
-                          "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0"),
-                    NA, NA, desc = "CRS to be used. Defaults to the simulatedBiomassMap projection"),
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
@@ -733,6 +729,7 @@ summaryBySpecies <- function(sim) {
     names(cols3) <- sim$summaryBySpecies1$leadingType
     plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
       scale_fill_manual(values = cols3) +
+      labs(x = "Year", y = "Count") +
       geom_area() +
       theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
@@ -1456,7 +1453,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     #                           targetFile = "ecoregions.gis",
     #                           fun = "raster::raster")
     
-    ## Dummy version with spatial location in Canada
     ## Dummy version with spatial location in Canada
     ras <- projectExtent(sim$shpStudyArea, crs = sim$shpStudyArea)
     res(ras) = 250
