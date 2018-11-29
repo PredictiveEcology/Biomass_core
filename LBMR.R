@@ -1531,6 +1531,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 }
 
 .inputObjects <- function(sim) {
+  cacheTags <- c(currentModule(sim), "function:.inputObjects", "function:spades")
   dPath <- asPath(dataPath(sim))
 
   if (!suppliedElsewhere("initialCommunities", sim)) {
