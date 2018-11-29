@@ -48,6 +48,8 @@ defineModule(sim, list(
     defineParameter("speciesEstablishmentProbAsMap", "logical", FALSE,
                     desc = paste("Should species establishment probability be represented at the pixel level,",
                                  "as a rescaled map of original species percent cover")),
+    defineParameter("speciesEquivalency", "data.frame", NA,
+                    desc = "species equivalency table as in pemisc::sppEquivalencies_CA TODO: descitpion needed"),
     defineParameter("useCache", "logic", TRUE,
                     desc = "use caching for the spinup simulation?"),
     defineParameter("useParallel", "ANY", parallel::detectCores(),
@@ -1782,13 +1784,14 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   }
 
   if (!suppliedElsewhere("speciesEquivalency")) {
+    ## TODO: this is in pemisc@development
     leadingNames <- c("Black spruce leading", "White spruce leading", "Deciduous leading",
                       "Mixed", "Pine leading", "Fir leading")
     latinNames <- c("Pice_mar", "Pice_gla", "Popu_tre", "Mixed", "Pinu_sp", "Abie_sp")
     shortNames <- c("Bl spruce", "Wh spruce", "Decid", "Mixed", "Pine", "Fir")
     fullNames <- c("Black.Spruce", "White.Spruce", "Deciduous", "Mixed", "Pine", "Fir")
-
     cols <- RColorBrewer::brewer.pal(6, "Accent")
+
     sim$speciesEquivalency <- data.frame(leadingNames, latinNames, shortNames, fullNames, cols, stringsAsFactors = FALSE)
   }
   return(invisible(sim))
