@@ -1242,7 +1242,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
 .inputObjects <- function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
-
+  cacheTags <- c(currentModule(sim), "function:.inputObjects", "function:spades")
   if (!suppliedElsewhere("shpStudyArea", sim)) {
 
     message("'shpStudyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
@@ -1378,9 +1378,10 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                      stringsAsFactors = FALSE,
                      userTags = c(cacheTags, "species")) %>%
       data.table()
-    species[, 1:11]
+    species <- species[, 1:11]
     species <- species[col1 != "LandisData",]
     species <- species[col1 != ">>",]
+    
     colNames <- c("species", "longevity", "sexualmature", "shadetolerance",
                   "firetolerance", "seeddistance_eff", "seeddistance_max",
                   "resproutprob", "resproutage_min", "resproutage_max",
