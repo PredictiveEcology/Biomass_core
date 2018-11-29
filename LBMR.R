@@ -1638,7 +1638,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                      stringsAsFactors = FALSE,
                      userTags = c(cacheTags, "species")) %>%
       data.table()
-    species[, 1:11]
+    species <- species[, 1:11]
     species <- species[col1 != "LandisData",]
     species <- species[col1 != ">>",]
     colNames <- c("species", "longevity", "sexualmature", "shadetolerance",
