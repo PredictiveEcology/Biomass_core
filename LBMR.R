@@ -1357,26 +1357,28 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
     mainInput <- data.table(mainInput)
     mainInput <- mainInput[col1 != ">>",]
-  }
 
-  # read species txt and convert it to data table
-  if (!suppliedElsewhere("species", sim)) {
-    maxcol <- 13#max(count.fields(file.path(dPath, "species.txt"), sep = ""))
+    # read species.txt and convert it to data.table
+    maxcol <- 13 #max(count.fields(file.path(dPath, "species.txt"), sep = ""))
+    url <- paste0("https://raw.githubusercontent.com/LANDIS-II-Foundation/",
+                  "Extensions-Succession/master/biomass-succession-archive/",
+                  "trunk/tests/v6.0-2.0/species.txt")
     species <- Cache(prepInputs,
-                     url = extractURL("species"),
+                     url = url,
                      targetFile = "species.txt",
-                     destinationPath = dPath,
+                     destinationPath = asPath(dPath),
                      fun = "utils::read.table",
                      fill = TRUE, row.names = NULL, #purge = 7,
                      sep = "",
                      header = FALSE,
                      blank.lines.skip = TRUE,
-                     col.names = c(paste("col",1:maxcol, sep = "")),
+                     col.names = c(paste("col", 1:maxcol, sep = "")),
                      stringsAsFactors = FALSE,
-                     overwrite = TRUE)
-    species <- data.table(species[,1:11])
-    species <- species[col1!= "LandisData",]
-    species <- species[col1!= ">>",]
+                     userTags = c(cacheTags, "species")) %>%
+      data.table()
+    species[, 1:11]
+    species <- species[col1 != "LandisData",]
+    species <- species[col1 != ">>",]
     colNames <- c("species", "longevity", "sexualmature", "shadetolerance",
                   "firetolerance", "seeddistance_eff", "seeddistance_max",
                   "resproutprob", "resproutage_min", "resproutage_max",
@@ -1403,7 +1405,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
     species <- setkey(species, species)[setkey(speciesAddon, species), nomatch = 0]
 
-    ## rename species for compatibility across modules (Xxxx_xxx)
+    ## rename species for compatibility across modules (Genu_spe)
     species$species1 <- as.character(substring(species$species, 1, 4))
     species$species2 <- as.character(substring(species$species, 5, 7))
     species[, ':='(species = paste0(toupper(substring(species1, 1, 1)),
