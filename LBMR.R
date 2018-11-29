@@ -4,9 +4,9 @@ defineModule(sim, list(
   name = "LBMR",
   description = "A fast and large landscape biomass succession model modified from LANDIS II",
   keywords = c("forest succession", "LANDIS II", "Biomass"),
-  authors = c(person(c("Yong"), "Luo", email="Yong.Luo@canada.ca", role=c("aut", "cre")),
-              person(c("Eliot", "J", "B"), "McIntire", email="Eliot.McIntire@canada.ca", role=c("aut", "cre")),
-              person(c("Jean"), "Marchal", email="jean.d.marchal@gmail.com", role=c("aut", "cre"))),
+  authors = c(person(c("Yong"), "Luo", email = "Yong.Luo@canada.ca", role = c("aut", "cre")),
+              person(c("Eliot", "J", "B"), "McIntire", email = "Eliot.McIntire@canada.ca", role = c("aut", "cre")),
+              person(c("Jean"), "Marchal", email = "jean.d.marchal@gmail.com", role = c("aut", "cre"))),
   childModules = character(0),
   version = numeric_version("1.3.0.9001"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
@@ -70,7 +70,7 @@ defineModule(sim, list(
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     expectsInput("shpStudyArea", "SpatialPolygonsDataFrame",
                  desc = "Study area used to source any objects that are not supplied",
-                 sourceURL = NA), 
+                 sourceURL = NA),
     expectsInput("species", "data.table",
                  desc = "a table that has species traits such as longevity...",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt"),
@@ -129,9 +129,8 @@ defineModule(sim, list(
     createsOutput("spinUpCache", "logical", desc = ""),
     createsOutput("spinupOutput", "data.table", desc = ""),
     createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species")
-    )
-)
-)
+  )
+))
 
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   if (is.numeric(P(sim)$useParallel)) {
@@ -291,7 +290,7 @@ Init <- function(sim) {
                        successionTimestep = P(sim)$successionTimestep,
                        spinupMortalityfraction = P(sim)$spinupMortalityfraction,
                        species = sim$species, userTags = c("LBMR", "spinUp"))
-  
+
   cohortData <- spinupstage$cohortData
   if (P(sim)$calibrate) {
     sim$spinupOutput <- spinupstage$spinupOutput
@@ -311,7 +310,7 @@ Init <- function(sim) {
     #mortalityMap <- setValues(simulatedBiomassMap, 0L)
     #reproductionMap <- setValues(pixelGroupMap, 0L)
   }
-  
+
   #}
 
   sim$pixelGroupMap <- pixelGroupMap
@@ -402,7 +401,7 @@ SummaryBGM <- function(sim) {
   sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                      "uniqueSumB")
   setColors(sim$biomassMap) <- c("light green", "dark green")
-  
+
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     sim$simulatedBiomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
                                                 "uniqueSumB")
@@ -597,8 +596,8 @@ WardDispersalSeeding <- function(sim) {
     # seed receive just for the species that are seed source
     tempspecies1 <- sim$species[speciesCode %in% unique(matureCohorts$speciesCode),][
       , .(speciesCode, shadetolerance, seeddistance_eff, seeddistance_max)]
-    seedReceive <- setkey(tempspecies1[, c(k = 1, .SD)], k)[setkey(siteShade[, c(k = 1, .SD)], k), allow.cartesian = TRUE][
-      , k := NULL]
+    seedReceive <- setkey(tempspecies1[, c(k = 1, .SD)], k)[setkey(siteShade[
+      , c(k = 1, .SD)], k), allow.cartesian = TRUE][, k := NULL]
     seedReceive <- assignLightProb(sufficientLight = sim$sufficientLight, seedReceive)
     set(seedReceive, NULL, "siteShade", NULL)
     seedReceive <- seedReceive[lightProb %>>% runif(nrow(seedReceive), 0, 1), ][
@@ -718,7 +717,7 @@ summaryBySpecies <- function(sim) {
     df <- sim$species[,list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
     df$species <- equivalentName(df$species, sim$speciesEquivalency, "shortNames")
     df$cols <- equivalentName(df$species, sim$speciesEquivalency, "cols")
-    
+
     cols2 <- df$cols
     names(cols2) <- df$species
     plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species)) +
@@ -763,10 +762,9 @@ plotFn <- function(sim) {
   facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor",
                                    na.rm = TRUE)
   levs <- raster::levels(sim$vegTypeMap)[[1]]
-  setColors(sim$vegTypeMap, levs) <- 
-    equivalentName(levs$Factor, sim$speciesEquivalency, "cols")
+  setColors(sim$vegTypeMap, levs) <- equivalentName(levs$Factor, sim$speciesEquivalency, "cols")
   levs$Factor <- equivalentName(levs$Factor, sim$speciesEquivalency, "shortNames")
-  levels(sim$vegTypeMap) <- levs 
+  levels(sim$vegTypeMap) <- levs
   Plot(sim$vegTypeMap, new = TRUE, title = "Leading vegetation")
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ",round(time(sim))), x = 0.93, y = 0.97)
@@ -828,7 +826,7 @@ Save <- function(sim) {
 CohortAgeReclassification <- function(sim) {
   if (time(sim) != 0) {
     #cohortData <- sim$cohortData
-    sim$cohortData <- ageReclassification(cohortData = sim$cohortData, 
+    sim$cohortData <- ageReclassification(cohortData = sim$cohortData,
                                           successionTimestep = P(sim)$successionTimestep,
                                           stage = "mainSimulation")
     #sim$cohortData <- cohortData
@@ -1171,7 +1169,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     set(newCohortDataExtra, NULL, "community",
         newCohortDataExtra$temppixelGroup + max(newCohortDataExtra$temppixelGroup)*newCohortDataExtra$community)
   }
-  
+
   ## make new pixel groups by adding community IDs to previous max pix group ID
   maxPixelGroup <- max(max(cohortData$pixelGroup), maxValue(pixelGroupMap))
   set(newCohortDataExtra, NULL,  "newpixelGroup",
@@ -1181,16 +1179,16 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   setkey(newCohortDataExtra, pixelIndex)
   newCohortData <- newCohortData[,pixelGroup := NULL][newCohortDataExtra][,pixelIndex := NULL]
   newCohortData <- unique(newCohortData, by = c("newpixelGroup", "speciesCode"))
-  
+
   ## extract total pix group biomass, and join to new data - WHY there are no common pixIDs?
-  sumTable <- cohortData[, .(pixelGroup,sumB)] %>% 
+  sumTable <- cohortData[, .(pixelGroup,sumB)] %>%
     unique(, by = c("pixelGroup"))
   newCohortData <- dplyr::left_join(newCohortData, sumTable, by = "pixelGroup") %>% data.table()
   newCohortData[is.na(sumB),sumB := 0]
   set(cohortData, NULL, "sumB", NULL)
   set(newCohortData, NULL, "pixelGroup", newCohortData$newpixelGroup)
   set(newCohortData, NULL, c("newpixelGroup"), NULL)
-  
+
   ## get spp "productivity traits" per ecoregion/present year
   ## calculate maximum biomass per ecoregion, join to new cohort data
   specieseco_current <- speciesEcoregion[year <= time]
@@ -1210,7 +1208,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   newCohortDataExtra2 <- unique(newCohortDataExtra, by = c("pixelGroup", "newpixelGroup"))
   # newCohortDataExtra2 is further simplified form
   # identify which pixelGroups in cohortData have new regeneration ???
-  ## Ceres: its seems to me like this is actually checking for overlapping data 
+  ## Ceres: its seems to me like this is actually checking for overlapping data
   existingData <- cohortData[pixelGroup %in% unique(newCohortDataExtra2$pixelGroup)]
   setkey(newCohortDataExtra2, pixelGroup)
   setkey(existingData, pixelGroup)
@@ -1244,27 +1242,27 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
 .inputObjects <- function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
-  
+
   if (!suppliedElsewhere("shpStudyArea", sim)) {
-    
+
     message("'shpStudyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
-    
+
     polyCenter <- SpatialPoints(coords = data.frame(x = c(-1349980), y = c(6986895)),
                                 proj4string = CRS(paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
             "+datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")))
-    
+
     seedToKeep <- .GlobalEnv$.Random.seed
     set.seed(1234)
     sim$shpStudyArea <- SpaDES.tools::randomPolygon(x = polyCenter, hectares = 10000)
     .GlobalEnv$.Random.seed <- seedToKeep
   }
-  
+
   if (!suppliedElsewhere("initialCommunities", sim)) {
     maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
-    initialCommunities <- Cache(prepInputs, 
+    initialCommunities <- Cache(prepInputs,
                                 url = extractURL("initialCommunities"),
-                                targetFile = "initial-communities.txt", 
-                                destinationPath = dPath, 
+                                targetFile = "initial-communities.txt",
+                                destinationPath = dPath,
                                 fun = "utils::read.table", #purge = 7,
                                 fill = TRUE, row.names = NULL,
                                 sep = "",
@@ -1285,7 +1283,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
                          desc := paste(initialCommunities[i, 3:maxcol, with = FALSE],
                                        collapse = " ")]
     }
-  
+
     initialCommunities[, rowN := 1:nrow(initialCommunities)]
     initialCommunities[, ':='(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
                                             labels = initialCommunities[cutRows + 1,]$age1),
@@ -1318,17 +1316,17 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     #                                    url = extractURL("initialCommunitiesMap"),
     #                                    destinationPath = dPath,
     #                                    fun = "raster::raster")
-    
+
     ## Dummy version with spatial location in Canada
     ras <- projectExtent(sim$shpStudyArea, crs = sim$shpStudyArea)
     res(ras) = 250
     initialCommunitiesMap <- rasterize(sim$shpStudyArea, ras)
-    
+
     ## make uniform communities (well structured in space)
     mapvals <- rep(unique(initialCommunities$mapcode),
                    each = ceiling(sum(!is.na(getValues(initialCommunitiesMap)))/length(unique(initialCommunities$mapcode))))
     mapvals <- mapvals[1:sum(!is.na(getValues(initialCommunitiesMap)))]   ## remove any extra values
-    
+
     ## assign communities to map and export to sim
     initialCommunitiesMap[!is.na(getValues(initialCommunitiesMap))][] <- mapvals
     sim$initialCommunitiesMap <- initialCommunitiesMap
@@ -1345,9 +1343,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     for (i in 1:2) {
       mainInput <- Cache(prepInputs,
                          extractURL("sufficientLight"),
-                         targetFile = "biomass-succession_test.txt", 
-                         destinationPath = dPath, 
-                         fun = "utils::read.table", 
+                         targetFile = "biomass-succession_test.txt",
+                         destinationPath = dPath,
+                         fun = "utils::read.table",
                          fill = TRUE, #purge = 7,
                          sep = "",
                          header = FALSE,
@@ -1389,7 +1387,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     species[, ':='(seeddistance_eff = gsub(",", "", seeddistance_eff),
                    seeddistance_max = gsub(",", "", seeddistance_max))]
     # change all columns to integer
-    species <- species[, lapply(.SD, as.integer), .SDcols = names(species)[-c(1,NCOL(species))], 
+    species <- species[, lapply(.SD, as.integer), .SDcols = names(species)[-c(1,NCOL(species))],
                        by = "species,postfireregen"]
     setcolorder(species, colNames)
 
@@ -1449,24 +1447,24 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   ## load ecoregion map
   if (!suppliedElsewhere("ecoregionMap", sim )) {
     ## LANDIS-II demo data:
-    
+
     # sim$ecoregionMap <- Cache(prepInputs,
     #                           url = extractURL("ecoregionMap"),
     #                           destinationPath = dPath,
     #                           targetFile = "ecoregions.gis",
     #                           fun = "raster::raster")
-    
+
     ## Dummy version with spatial location in Canada
     ## Dummy version with spatial location in Canada
     ras <- projectExtent(sim$shpStudyArea, crs = sim$shpStudyArea)
     res(ras) = 250
     ecoregionMap <- rasterize(sim$shpStudyArea, ras)
-    
+
     ## make uniform communities (well structured in space)
     mapvals <- rep(unique(ecoregion$mapcode),
                    each = ceiling(sum(!is.na(getValues(ecoregionMap)))/length(unique(ecoregion$mapcode))))
     mapvals <- mapvals[1:sum(!is.na(getValues(ecoregionMap)))]   ## remove any extra values
-    
+
     ## assign communities to map and export to sim
     ecoregionMap[!is.na(getValues(ecoregionMap))][] <- mapvals
     sim$ecoregionMap <- ecoregionMap
