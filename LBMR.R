@@ -292,9 +292,9 @@ Init <- function(sim) {
   if (length(inactivePixelIndex) > 0) {
     pixelGroupMap[inactivePixelIndex] <- -1L
   }
-  cohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
+  cohortData <- sim$updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
                                                  time = round(time(sim)), cohortData = cohortData)
-  cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
+  cohortData <- sim$updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
 
   #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
   message("Running spinup")
@@ -444,7 +444,7 @@ NoDispersalSeeding <- function(sim) {
   } else {
     tempActivePixel <- sim$activePixelIndex
   }
-  sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = time(sim),
+  sim$cohortData <- sim$calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = time(sim),
                                   successionTimestep = P(sim)$successionTimestep)
   sim$cohortData <- setkey(sim$cohortData, speciesCode)[
     setkey(sim$species[, .(speciesCode, sexualmature)], speciesCode), nomatch = 0]
@@ -507,7 +507,7 @@ UniversalDispersalSeeding <- function(sim) {
   } else {
     tempActivePixel <- sim$activePixelIndex
   }
-  sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = round(time(sim)),
+  sim$cohortData <- sim$calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
   species <- sim$species
   # all species can provide seed source, i.e. age>=sexualmature
@@ -578,7 +578,7 @@ WardDispersalSeeding <- function(sim) {
   } else {
     tempActivePixel <- sim$activePixelIndex
   }
-  sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
+  sim$cohortData <- sim$calculateSumB(cohortData = sim$cohortData,
                                   lastReg = sim$lastReg, simuTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
   siteShade <- calcSiteShade(time = round(time(sim)), cohortData = sim$cohortData,
@@ -882,25 +882,25 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     # 1. assign the biomass for the first cohort
     if (nrow(cohortData[age == 2, ]) > 0) {
       lastReg <- k - 1
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
+      cohortData <- sim$calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                   successionTimestep = successionTimestep)
       cohortData[age == 2, B := as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
       cohortData[age == 2, B := as.integer(pmin(maxANPP, B))]
     }
     if (maxAge != 1) {
       # 2. calculate age-related mortality
-      cohortData <- calculateAgeMortality(cohortData, stage = "spinup",
+      cohortData <- sim$calculateAgeMortality(cohortData, stage = "spinup",
                                           spinupMortalityfraction = spinupMortalityfraction)
       # 3. calculate the actual ANPP
       # calculate biomass Potential, for each cohort
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k - 1,
+      cohortData <- sim$calculateSumB(cohortData, lastReg = lastReg, simuTime = k - 1,
                                   successionTimestep = successionTimestep)
-      cohortData <- calculateCompetition(cohortData, stage = "spinup")
+      cohortData <- sim$calculateCompetition(cohortData, stage = "spinup")
       # calculate ANPP
-      cohortData <- calculateANPP(cohortData, stage = "spinup")
+      cohortData <- sim$calculateANPP(cohortData, stage = "spinup")
       cohortData[age > 0, aNPPAct := pmax(1, aNPPAct - mAge)]
       # calculate growth related mortality
-      cohortData <- calculateGrowthMortality(cohortData, stage = "spinup")
+      cohortData <- sim$calculateGrowthMortality(cohortData, stage = "spinup")
       cohortData[age > 0, mBio := pmax(0, mBio - mAge)]
       cohortData[age > 0, mBio := pmin(mBio, aNPPAct)]
       cohortData[age > 0, mortality := mBio + mAge]
@@ -938,7 +938,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     }
     lastnewcohorts <- which(cohortData$origAge == 1)
     if (presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1) {
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
+      cohortData <- sim$calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                   successionTimestep = successionTimestep)
       cohortData[origAge == 1,B := as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
       cohortData[origAge == 1,B := as.integer(pmin(maxANPP, B))]
