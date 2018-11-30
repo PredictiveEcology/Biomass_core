@@ -77,7 +77,7 @@ defineModule(sim, list(
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
-    expectsInput("shpStudyArea", "SpatialPolygonsDataFrame",
+    expectsInput("studyArea", "SpatialPolygonsDataFrame",
                  desc = "Study area used to source any objects that are not supplied",
                  sourceURL = NA),
     expectsInput("species", "data.table",
@@ -1146,9 +1146,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
          Make sure you are using LandR_BiomassGMOrig, or another GM module")
   }
   
-  if (!suppliedElsewhere("shpStudyArea", sim)) {
+  if (!suppliedElsewhere("studyArea", sim)) {
 
-    message("'shpStudyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
+    message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
 
     polyCenter <- SpatialPoints(coords = data.frame(x = c(-1349980), y = c(6986895)),
                                 proj4string = CRS(paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
@@ -1156,7 +1156,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
     seedToKeep <- .GlobalEnv$.Random.seed
     set.seed(1234)
-    sim$shpStudyArea <- SpaDES.tools::randomPolygon(x = polyCenter, hectares = 10000)
+    sim$studyArea <- SpaDES.tools::randomPolygon(x = polyCenter, hectares = 10000)
     .GlobalEnv$.Random.seed <- seedToKeep
   }
 
@@ -1221,9 +1221,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     #                                    fun = "raster::raster")
 
     ## Dummy version with spatial location in Canada
-    ras <- projectExtent(sim$shpStudyArea, crs = sim$shpStudyArea)
+    ras <- projectExtent(sim$studyArea, crs = sim$studyArea)
     res(ras) = 250
-    initialCommunitiesMap <- rasterize(sim$shpStudyArea, ras)
+    initialCommunitiesMap <- rasterize(sim$studyArea, ras)
 
     ## make uniform communities (well structured in space)
     mapvals <- rep(unique(initialCommunities$mapcode),
@@ -1361,9 +1361,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     #                           fun = "raster::raster")
 
     ## Dummy version with spatial location in Canada
-    ras <- projectExtent(sim$shpStudyArea, crs = sim$shpStudyArea)
+    ras <- projectExtent(sim$studyArea, crs = sim$studyArea)
     res(ras) = 250
-    ecoregionMap <- rasterize(sim$shpStudyArea, ras)
+    ecoregionMap <- rasterize(sim$studyArea, ras)
 
     ## make uniform communities (well structured in space)
     mapvals <- rep(unique(ecoregion$mapcode),
