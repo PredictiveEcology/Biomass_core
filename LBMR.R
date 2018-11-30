@@ -1147,7 +1147,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   }
   
   if (!suppliedElsewhere("studyArea", sim)) {
-
     message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
 
     polyCenter <- SpatialPoints(coords = data.frame(x = c(-1349980), y = c(6986895)),
