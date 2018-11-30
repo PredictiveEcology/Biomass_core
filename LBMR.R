@@ -52,6 +52,16 @@ defineModule(sim, list(
                                  "and if cluster object it will be passed to parallel::parClusterApplyLB."))
   ),
   inputObjects = bind_rows(
+    expectsInput("calculateAgeMortality", "function",
+                  desc = "function to calculate aging and mortality"),
+    expectsInput("calculateANPP", "function",
+                  desc = "function to calculate ANPP"),
+    expectsInput("calculateCompetition", "function",
+                  desc = "function to calculate competition for light"),
+    expectsInput("calculateGrowthMortality", "data.table",
+                  desc = "function to calculate growth and mortality"),
+    expectsInput("calculateSumB", "function",
+                  desc = "function to sum biomass"),
     expectsInput("ecoregion", "data.table",
                  desc = "ecoregion look up table",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt"),
@@ -79,7 +89,10 @@ defineModule(sim, list(
     expectsInput("sufficientLight", "data.frame",
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
-
+    expectsInput("updateSpeciesAttributes", "function",
+                  desc = "function to add/update species attributes in species cohort table"),
+    expectsInput("updateSpeciesEcoregionAttributes", "function",
+                  desc = "function to add/update species ecoregion attributes in species cohort table"),
     ## for inputs from optional fire module:
     expectsInput("spinUpCache", "logical", ""),
     expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species"),
