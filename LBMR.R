@@ -1132,6 +1132,20 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 .inputObjects <- function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
   cacheTags <- c(currentModule(sim), "function:.inputObjects", "function:spades")
+  
+  ######################################################
+  ## Check GM functions have been supplied
+  if (!suppliedElsewhere("calculateAgeMortality", sim) |
+      !suppliedElsewhere("calculateANPP", sim) |
+      !suppliedElsewhere("calculateCompetition", sim) |
+      !suppliedElsewhere("calculateGrowthMortality", sim) |
+      !suppliedElsewhere("calculateSumB", sim) |
+      !suppliedElsewhere("updateSpeciesAttributes", sim) |
+      !suppliedElsewhere("updateSpeciesEcoregionAttributes", sim)) {
+    stop("Growth and mortality (GM) function(s) missing.\n
+         Make sure you are using LandR_BiomassGMOrig, or another GM module")
+  }
+  
   if (!suppliedElsewhere("shpStudyArea", sim)) {
 
     message("'shpStudyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
