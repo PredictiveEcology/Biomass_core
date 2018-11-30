@@ -58,7 +58,7 @@ defineModule(sim, list(
                   desc = "function to calculate ANPP"),
     expectsInput("calculateCompetition", "function",
                   desc = "function to calculate competition for light"),
-    expectsInput("calculateGrowthMortality", "data.table",
+    expectsInput("calculateGrowthMortality", "function",
                   desc = "function to calculate growth and mortality"),
     expectsInput("calculateSumB", "function",
                   desc = "function to sum biomass"),
