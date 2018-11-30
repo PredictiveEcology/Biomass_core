@@ -171,7 +171,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "LBMR", "summaryBySpecies", eventPriority = 6)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "LBMR", "plot", eventPriority = 7)
+                                "LBMR", "plotMaps", eventPriority = 7)
 
            if (!any(is.na(P(sim)$.saveInitialTime))) {
              sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
@@ -179,7 +179,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              ## stats plot is retrieving saved rasters so needs data to be saved
              # start on second time around b/c ggplot doesn't like 1 data point
              tPlotInit <- P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep
-             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "statsPlot", eventPriority = 7.75)
+             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = 7.75)
            }
          },
          Dispersal = {
@@ -219,21 +219,21 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "summaryBGM",
                                 eventPriority = 6)
          },
-         plot = {
-           sim <- plotFn(sim)
+         plotMaps = {
+           sim <- plotVegAttributesMaps(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plot", eventPriority = 8)
+                                "LBMR", "plotMaps", eventPriority = 8)
          },
          save = {
            sim <- Save(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "save", eventPriority = 8.5)
          },
-         statsPlot = {
+         plotAvgs = {
            ## only occurs once at the end of the simulation
-           sim <- statsPlotFn(sim)
+           sim <- plotAvgVegAttributes(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "statsPlot", eventPriority = 8.75)
+                                "LBMR", "plotAvgs", eventPriority = 8.75)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
@@ -764,7 +764,7 @@ summaryBySpecies <- function(sim) {
   return(invisible(sim))
 }
 
-plotFn <- function(sim) {
+plotVegAttributesMaps <- function(sim) {
   objsToPlot <- list(Biomass = sim$simulatedBiomassMap,
                      ANPP = sim$ANPPMap,
                      mortality = sim$mortalityMap,
@@ -784,7 +784,7 @@ plotFn <- function(sim) {
   return(invisible(sim))
 }
 
-statsPlotFn <- function(sim) {
+plotAvgVegAttributes <- function(sim) {
   # only take the files in outputPath(sim) that were new since the startClockTime of the spades call
   biomassFiles <- list.files(outputPath(sim), pattern = "simulatedBiomassMap", full.names = TRUE)
   biomassKeepers <- file.info(biomassFiles)$atime > sim@.envir$._startClockTime
