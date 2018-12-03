@@ -1464,8 +1464,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
     ## make uniform communities (well structured in space)
     mapvals <- rep(unique(ecoregion$mapcode),
-                   each = ceiling(sum(!is.na(getValues(ecoregionMap)))/length(unique(ecoregion$mapcode))))
-    mapvals <- mapvals[1:sum(!is.na(getValues(ecoregionMap)))]   ## remove any extra values
+                   each = ceiling(sum(!is.na(getValues(ecoregionMap))) / length(unique(ecoregion$mapcode))))
+    mapvals <- mapvals[1:sum(!is.na(getValues(ecoregionMap)))] ## remove any extra values
 
     ## assign communities to map and export to sim
     ecoregionMap[!is.na(getValues(ecoregionMap))][] <- mapvals
