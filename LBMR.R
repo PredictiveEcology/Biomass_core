@@ -45,11 +45,10 @@ defineModule(sim, list(
     defineParameter("successionTimestep", "numeric", 10, NA, NA, "defines the simulation time step, default is 10 years"),
     defineParameter("useCache", "logic", TRUE,
                     desc = "use caching for the spinup simulation?"),
-    defineParameter("useParallel", "ANY", parallel::detectCores(),
+    defineParameter(".useParallel", "ANY", parallel::detectCores(),
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to data.table::setDTthreads, ",
-                                 "if logical and TRUE, it will be passed to parallel::makeCluster, ",
-                                 "and if cluster object it will be passed to parallel::parClusterApplyLB."))
+                                 ))
   ),
   inputObjects = bind_rows(
     expectsInput("ecoregion", "data.table",
@@ -132,8 +131,8 @@ defineModule(sim, list(
 ))
 
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
-  if (is.numeric(P(sim)$useParallel)) {
-    a <- data.table::setDTthreads(P(sim)$useParallel)
+  if (is.numeric(P(sim)$.useParallel)) {
+    a <- data.table::setDTthreads(P(sim)$.useParallel)
     message("Mortality and Growth should be using >100% CPU")
     if (data.table::getDTthreads() == 1L) crayon::red(message("Only using 1 thread."))
     on.exit(setDTthreads(a))
@@ -397,8 +396,7 @@ SummaryBGM <- function(sim) {
                                                             Regeneration = as.integer(Regeneration / NofCell))]))
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively.
   names(sim$pixelGroupMap) <- "pixelGroup"
-  sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                     "uniqueSumB")
+  sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumB")
   setColors(sim$biomassMap) <- c("light green", "dark green")
 
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
@@ -632,7 +630,7 @@ WardDispersalSeeding <- function(sim) {
                               reducedPixelGroupMap,
                               maxPotentialsLength = 1e5,
                               verbose = FALSE,
-                              useParallel = P(sim)$useParallel)
+                              useParallel = P(sim)$.useParallel)
 
     rm(seedReceive, seedSource)
     if (NROW(seedingData) > 0) {
