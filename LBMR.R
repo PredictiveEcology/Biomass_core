@@ -51,6 +51,16 @@ defineModule(sim, list(
                                  ))
   ),
   inputObjects = bind_rows(
+    expectsInput("calculateAgeMortality", "function",
+                  desc = "function to calculate aging and mortality"),
+    expectsInput("calculateANPP", "function",
+                  desc = "function to calculate ANPP"),
+    expectsInput("calculateCompetition", "function",
+                  desc = "function to calculate competition for light"),
+    expectsInput("calculateGrowthMortality", "function",
+                  desc = "function to calculate growth and mortality"),
+    expectsInput("calculateSumB", "function",
+                  desc = "function to sum biomass"),
     expectsInput("ecoregion", "data.table",
                  desc = "ecoregion look up table",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt"),
@@ -78,7 +88,10 @@ defineModule(sim, list(
     expectsInput("sufficientLight", "data.frame",
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
-
+    expectsInput("updateSpeciesAttributes", "function",
+                  desc = "function to add/update species attributes in species cohort table"),
+    expectsInput("updateSpeciesEcoregionAttributes", "function",
+                  desc = "function to add/update species ecoregion attributes in species cohort table"),
     ## for inputs from optional fire module:
     expectsInput("spinUpCache", "logical", ""),
     expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species"),
@@ -157,7 +170,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "LBMR", "summaryBySpecies", eventPriority = 6)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "LBMR", "plot", eventPriority = 7)
+                                "LBMR", "plotMaps", eventPriority = 7)
 
            if (!any(is.na(P(sim)$.saveInitialTime))) {
              sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
@@ -165,7 +178,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              ## stats plot is retrieving saved rasters so needs data to be saved
              # start on second time around b/c ggplot doesn't like 1 data point
              tPlotInit <- P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep
-             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "statsPlot", eventPriority = 7.75)
+             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = 7.75)
            }
          },
          Dispersal = {
@@ -205,21 +218,21 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "summaryBGM",
                                 eventPriority = 6)
          },
-         plot = {
-           sim <- plotFn(sim)
+         plotMaps = {
+           sim <- plotVegAttributesMaps(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plot", eventPriority = 8)
+                                "LBMR", "plotMaps", eventPriority = 8)
          },
          save = {
            sim <- Save(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "save", eventPriority = 8.5)
          },
-         statsPlot = {
+         plotAvgs = {
            ## only occurs once at the end of the simulation
-           sim <- statsPlotFn(sim)
+           sim <- plotAvgVegAttributes(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "statsPlot", eventPriority = 8.75)
+                                "LBMR", "plotAvgs", eventPriority = 8.75)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
@@ -278,9 +291,9 @@ Init <- function(sim) {
   if (length(inactivePixelIndex) > 0) {
     pixelGroupMap[inactivePixelIndex] <- -1L
   }
-  cohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
+  cohortData <- sim$updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
                                                  time = round(time(sim)), cohortData = cohortData)
-  cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
+  cohortData <- sim$updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
 
   #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
   message("Running spinup")
@@ -429,7 +442,7 @@ NoDispersalSeeding <- function(sim) {
   } else {
     tempActivePixel <- sim$activePixelIndex
   }
-  sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = time(sim),
+  sim$cohortData <- sim$calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = time(sim),
                                   successionTimestep = P(sim)$successionTimestep)
   sim$cohortData <- setkey(sim$cohortData, speciesCode)[
     setkey(sim$species[, .(speciesCode, sexualmature)], speciesCode), nomatch = 0]
@@ -492,7 +505,7 @@ UniversalDispersalSeeding <- function(sim) {
   } else {
     tempActivePixel <- sim$activePixelIndex
   }
-  sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = round(time(sim)),
+  sim$cohortData <- sim$calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
   species <- sim$species
   # all species can provide seed source, i.e. age>=sexualmature
@@ -563,7 +576,7 @@ WardDispersalSeeding <- function(sim) {
   } else {
     tempActivePixel <- sim$activePixelIndex
   }
-  sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
+  sim$cohortData <- sim$calculateSumB(cohortData = sim$cohortData,
                                   lastReg = sim$lastReg, simuTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
   siteShade <- calcSiteShade(time = round(time(sim)), cohortData = sim$cohortData,
@@ -749,7 +762,7 @@ summaryBySpecies <- function(sim) {
   return(invisible(sim))
 }
 
-plotFn <- function(sim) {
+plotVegAttributesMaps <- function(sim) {
   objsToPlot <- list(Biomass = sim$simulatedBiomassMap,
                      ANPP = sim$ANPPMap,
                      mortality = sim$mortalityMap,
@@ -769,7 +782,7 @@ plotFn <- function(sim) {
   return(invisible(sim))
 }
 
-statsPlotFn <- function(sim) {
+plotAvgVegAttributes <- function(sim) {
   # only take the files in outputPath(sim) that were new since the startClockTime of the spades call
   biomassFiles <- list.files(outputPath(sim), pattern = "simulatedBiomassMap", full.names = TRUE)
   biomassKeepers <- file.info(biomassFiles)$atime > sim@.envir$._startClockTime
@@ -867,25 +880,25 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     # 1. assign the biomass for the first cohort
     if (nrow(cohortData[age == 2, ]) > 0) {
       lastReg <- k - 1
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
+      cohortData <- sim$calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                   successionTimestep = successionTimestep)
       cohortData[age == 2, B := as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
       cohortData[age == 2, B := as.integer(pmin(maxANPP, B))]
     }
     if (maxAge != 1) {
       # 2. calculate age-related mortality
-      cohortData <- calculateAgeMortality(cohortData, stage = "spinup",
+      cohortData <- sim$calculateAgeMortality(cohortData, stage = "spinup",
                                           spinupMortalityfraction = spinupMortalityfraction)
       # 3. calculate the actual ANPP
       # calculate biomass Potential, for each cohort
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k - 1,
+      cohortData <- sim$calculateSumB(cohortData, lastReg = lastReg, simuTime = k - 1,
                                   successionTimestep = successionTimestep)
-      cohortData <- calculateCompetition(cohortData, stage = "spinup")
+      cohortData <- sim$calculateCompetition(cohortData, stage = "spinup")
       # calculate ANPP
-      cohortData <- calculateANPP(cohortData, stage = "spinup")
+      cohortData <- sim$calculateANPP(cohortData, stage = "spinup")
       cohortData[age > 0, aNPPAct := pmax(1, aNPPAct - mAge)]
       # calculate growth related mortality
-      cohortData <- calculateGrowthMortality(cohortData, stage = "spinup")
+      cohortData <- sim$calculateGrowthMortality(cohortData, stage = "spinup")
       cohortData[age > 0, mBio := pmax(0, mBio - mAge)]
       cohortData[age > 0, mBio := pmin(mBio, aNPPAct)]
       cohortData[age > 0, mortality := mBio + mAge]
@@ -923,7 +936,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     }
     lastnewcohorts <- which(cohortData$origAge == 1)
     if (presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1) {
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
+      cohortData <- sim$calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                   successionTimestep = successionTimestep)
       cohortData[origAge == 1,B := as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
       cohortData[origAge == 1,B := as.integer(pmin(maxANPP, B))]
@@ -952,29 +965,6 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
 #   return(invisible(sim))
 # }
 
-updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData) {
-  # the following codes were for updating cohortdata using speciesecoregion data at current simulation year
-  # to assign maxB, maxANPP and maxB_eco to cohortData
-  specieseco_current <- speciesEcoregion[year <= time]
-  specieseco_current <- setkey(specieseco_current[year == max(year),
-                                                  .(speciesCode, maxANPP,
-                                                    maxB, ecoregionGroup)],
-                               speciesCode, ecoregionGroup)
-  specieseco_current[, maxB_eco := max(maxB), by = ecoregionGroup]
-
-  cohortData <- setkey(cohortData, speciesCode, ecoregionGroup)[specieseco_current, nomatch = 0]
-  return(cohortData)
-}
-
-updateSpeciesAttributes <- function(species, cohortData) {
-  # to assign longevity, mortalityshape, growthcurve to cohortData
-  species_temp <- setkey(species[, .(speciesCode, longevity, mortalityshape,
-                                     growthcurve)], speciesCode)
-  setkey(cohortData, speciesCode)
-  cohortData <- cohortData[species_temp, nomatch = 0]
-  return(cohortData)
-}
-
 ageReclassification <- function(cohortData, successionTimestep, stage) {
   if (stage == "spinup") {
     # for spin up stage
@@ -992,107 +982,6 @@ ageReclassification <- function(cohortData, successionTimestep, stage) {
                                  B, mortality, aNPPAct)]
     cohortData <- cohortData[age >= successionTimestep + 2]
     cohortData <- rbindlist(list(cohortData, targetData))
-  }
-  return(cohortData)
-}
-
-calculateAgeMortality <- function(cohortData, stage, spinupMortalityfraction) {
-  # for age-related mortality calculation
-  if (stage == "spinup") {
-    cohortData[age > 0, mAge := B*(exp((age)/longevity*mortalityshape)/exp(mortalityshape))]
-    cohortData[age > 0, mAge := mAge+B*spinupMortalityfraction]
-    cohortData[age > 0, mAge := pmin(B, mAge)]
-  } else {
-    set(cohortData, NULL, "mAge",
-        cohortData$B*(exp((cohortData$age)/cohortData$longevity*cohortData$mortalityshape)/exp(cohortData$mortalityshape)))
-    set(cohortData, NULL, "mAge",
-        pmin(cohortData$B,cohortData$mAge))
-  }
-  return(cohortData)
-}
-
-calculateANPP <- function(cohortData, stage) {
-  if (stage == "spinup") {
-    cohortData[age > 0, aNPPAct := maxANPP*exp(1)*(bAP^growthcurve)*exp(-(bAP^growthcurve))*bPM]
-    cohortData[age > 0, aNPPAct := pmin(maxANPP*bPM,aNPPAct)]
-  } else {
-    set(cohortData, NULL, "aNPPAct",
-        cohortData$maxANPP*exp(1)*(cohortData$bAP^cohortData$growthcurve)*exp(-(cohortData$bAP^cohortData$growthcurve))*cohortData$bPM)
-    set(cohortData, NULL, "aNPPAct",
-        pmin(cohortData$maxANPP*cohortData$bPM,cohortData$aNPPAct))
-  }
-  return(cohortData)
-}
-
-calculateGrowthMortality <- function(cohortData, stage) {
-  if (stage == "spinup") {
-    cohortData[age > 0 & bAP %>>% 1.0, mBio := maxANPP*bPM]
-    cohortData[age > 0 & bAP %<=% 1.0, mBio := maxANPP*(2*bAP) / (1 + bAP)*bPM]
-    cohortData[age > 0, mBio := pmin(B, mBio)]
-    cohortData[age > 0, mBio := pmin(maxANPP*bPM, mBio)]
-  } else {
-    cohortData[bAP %>>% 1.0, mBio := maxANPP*bPM]
-    cohortData[bAP %<=% 1.0, mBio := maxANPP*(2*bAP)/(1 + bAP)*bPM]
-    set(cohortData, NULL, "mBio",
-        pmin(cohortData$B, cohortData$mBio))
-    set(cohortData, NULL, "mBio",
-        pmin(cohortData$maxANPP*cohortData$bPM, cohortData$mBio))
-  }
-  return(cohortData)
-}
-
-calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
-  # this function is used to calculate total stand biomass that does not include the new cohorts
-  # the new cohorts are defined as the age younger than simulation time step
-  # reset sumB
-  pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
-                            temID = 1:length(unique(cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 10^4), max(pixelGroups$temID))))
-  if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints + 1)}
-  pixelGroups[, groups := cut(temID, breaks = cutpoints,
-                              labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
-                              include.lowest = TRUE)]
-  for (subgroup in paste("Group",  1:(length(cutpoints) - 1), sep = "")) {
-    subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
-    set(subCohortData, NULL, "sumB", 0L)
-    if (simuTime == lastReg + successionTimestep - 2) {
-      sumBtable <- subCohortData[age > successionTimestep,
-                                 .(tempsumB = as.integer(sum(B, na.rm=TRUE))), by = pixelGroup]
-    } else {
-      sumBtable <- subCohortData[age >= successionTimestep,
-                                 .(tempsumB = as.integer(sum(B, na.rm=TRUE))), by = pixelGroup]
-    }
-    subCohortData <- merge(subCohortData, sumBtable, by = "pixelGroup", all.x = TRUE)
-    subCohortData[is.na(tempsumB), tempsumB := as.integer(0L)][, ':='(sumB = tempsumB, tempsumB = NULL)]
-    if (subgroup == "Group1") {
-      newcohortData <- subCohortData
-    } else {
-      newcohortData <- rbindlist(list(newcohortData, subCohortData))
-    }
-    rm(subCohortData, sumBtable)
-  }
-  rm(cohortData, pixelGroups, cutpoints)
-  return(newcohortData)
-}
-
-calculateCompetition <- function(cohortData,stage) {
-  # two competition indics are calculated bAP and bPM
-  if (stage == "spinup") {
-    cohortData[age > 0, bPot := pmax(1, maxB - sumB + B)]
-    cohortData[age > 0, bAP := B/bPot]
-    set(cohortData, NULL, "bPot", NULL)
-    cohortData[, cMultiplier := pmax(as.numeric(B^0.95), 1)]
-    cohortData[age > 0, cMultTotal := sum(cMultiplier), by = pixelGroup]
-    cohortData[age > 0, bPM := cMultiplier / cMultTotal]
-    set(cohortData, NULL, c("cMultiplier", "cMultTotal"), NULL)
-  } else {
-    set(cohortData, NULL, "bPot", pmax(1, cohortData$maxB - cohortData$sumB + cohortData$B))
-    set(cohortData, NULL, "bAP", cohortData$B/cohortData$bPot)
-    set(cohortData, NULL, "bPot", NULL)
-    set(cohortData, NULL, "cMultiplier", pmax(as.numeric(cohortData$B^0.95), 1))
-    cohortData[, cMultTotal := sum(cMultiplier), by = pixelGroup]
-    set(cohortData, NULL, "bPM", cohortData$cMultiplier/cohortData$cMultTotal)
-    set(cohortData, NULL, c("cMultiplier", "cMultTotal"), NULL)
   }
   return(cohortData)
 }
@@ -1241,6 +1130,20 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 .inputObjects <- function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
   cacheTags <- c(currentModule(sim), "function:.inputObjects", "function:spades")
+  
+  ######################################################
+  ## Check GM functions have been supplied
+  if (!suppliedElsewhere("calculateAgeMortality", sim) |
+      !suppliedElsewhere("calculateANPP", sim) |
+      !suppliedElsewhere("calculateCompetition", sim) |
+      !suppliedElsewhere("calculateGrowthMortality", sim) |
+      !suppliedElsewhere("calculateSumB", sim) |
+      !suppliedElsewhere("updateSpeciesAttributes", sim) |
+      !suppliedElsewhere("updateSpeciesEcoregionAttributes", sim)) {
+    stop("Growth and mortality (GM) function(s) missing.\n
+         Make sure you are using LandR_BiomassGMOrig, or another GM module")
+  }
+  #######################################################
   if (!suppliedElsewhere("studyArea", sim)) {
 
     message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
