@@ -97,7 +97,7 @@ WardFast <- expression(ifelse(cellSize <= effDist, {
 #'
 #' @param verbose Logical. Whether a somewhat verbose output to screen occurs. For debugging.
 #'
-#' @param useParallel any. if the class of this arguement is logical, whether the function creates the cluster based on TRue and FALSE.
+#' @param useParallel ANY. if the class of this arguement is logical, whether the function creates the cluster based on TRue and FALSE.
 #'                         if the class of this arguement is cluster, the function will use this cluster to implement the parallel computation.
 #'
 #' @param ...   Additional parameters. Currently none
@@ -178,7 +178,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   #seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", newRasterCols = "speciesSrcPool")
   #seedReceiveMap <- rasterizeReduced(speciesRcvPool, fullRaster = pixelGroupMap, mapcode = "pixelGroup", newRasterCols = "speciesRcvPool")
   seedSourceMaps <- lapply(seedSourceMaps, function(x) setValues(x, as.integer(x[])))
-  
+
   seedRcvOrig <- which(!is.na(seedSourceMaps$speciesRcvPool[]))
   seedSrcOrig <- which(seedSourceMaps$speciesSrcPool[] > 0)
 
@@ -220,10 +220,10 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
   subSampList <- purrr::transpose(list(activeCell = split(seedRcvOrig, splitFactor),
                                        potentials = split(potentialsOrig, splitFactor)))
   message("  Seed dispersal: starting ", length(subSampList), " groups")
-  if(is.logical(useParallel) | is.numeric(useParallel)){
-    if(isTRUE(useParallel)) {
+  if (is.logical(useParallel) | is.numeric(useParallel)) {
+    if (isTRUE(useParallel)) {
       numCores <- min(length(subSampList), parallel::detectCores()-1)
-      if(Sys.info()[["sysname"]] == "Windows"){
+      if (Sys.info()[["sysname"]] == "Windows") {
         cl <- parallel::makeCluster(numCores)
         allarguementsInMainFunc <- formalArgs(seedDispInnerFn)
         parallel::clusterExport(cl, c("seedDispInnerFn",
@@ -275,7 +275,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap,
       seedsArrived <- rbindlist(allSeedsArrived)
     }
   } else if (is(useParallel, "cluster")){
-    if(!all(unlist(lapply(useParallel, function(x) is(x, "forknode"))))){
+    if (!all(unlist(lapply(useParallel, function(x) is(x, "forknode"))))) {
       allarguementsInMainFunc <- formalArgs(seedDispInnerFn)
       parallel::clusterExport(useParallel, c("seedDispInnerFn",
                                              "data.table", "%>%", "setkey", "adj",

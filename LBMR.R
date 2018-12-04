@@ -45,11 +45,10 @@ defineModule(sim, list(
     defineParameter("successionTimestep", "numeric", 10, NA, NA, "defines the simulation time step, default is 10 years"),
     defineParameter("useCache", "logic", TRUE,
                     desc = "use caching for the spinup simulation?"),
-    defineParameter("useParallel", "ANY", parallel::detectCores(),
+    defineParameter(".useParallel", "ANY", parallel::detectCores(),
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to data.table::setDTthreads, ",
-                                 "if logical and TRUE, it will be passed to parallel::makeCluster, ",
-                                 "and if cluster object it will be passed to parallel::parClusterApplyLB."))
+                                 ))
   ),
   inputObjects = bind_rows(
     expectsInput("calculateAgeMortality", "function",
@@ -77,16 +76,15 @@ defineModule(sim, list(
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
-    expectsInput("studyArea", "SpatialPolygonsDataFrame",
-                 desc =  paste("Multipolygon to use as the study area,",
-                               "Defaults to a square shapefile in Southwestern Alberta, Canada."),
-                 sourceURL = NA), 
     expectsInput("species", "data.table",
                  desc = "a table that has species traits such as longevity...",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt"),
     expectsInput("speciesEcoregion", "data.table",
                  desc = "table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession-dynamic-inputs_test.txt"),
+    expectsInput("studyArea", "SpatialPolygonsDataFrame",
+                 desc = "Study area used to source any objects that are not supplied",
+                 sourceURL = NA),
     expectsInput("sufficientLight", "data.frame",
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
@@ -146,8 +144,8 @@ defineModule(sim, list(
 ))
 
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
-  if (is.numeric(P(sim)$useParallel)) {
-    a <- data.table::setDTthreads(P(sim)$useParallel)
+  if (is.numeric(P(sim)$.useParallel)) {
+    a <- data.table::setDTthreads(P(sim)$.useParallel)
     message("Mortality and Growth should be using >100% CPU")
     if (data.table::getDTthreads() == 1L) crayon::red(message("Only using 1 thread."))
     on.exit(setDTthreads(a))
@@ -411,8 +409,7 @@ SummaryBGM <- function(sim) {
                                                             Regeneration = as.integer(Regeneration / NofCell))]))
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively.
   names(sim$pixelGroupMap) <- "pixelGroup"
-  sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                     "uniqueSumB")
+  sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumB")
   setColors(sim$biomassMap) <- c("light green", "dark green")
 
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
@@ -646,7 +643,7 @@ WardDispersalSeeding <- function(sim) {
                               reducedPixelGroupMap,
                               maxPotentialsLength = 1e5,
                               verbose = FALSE,
-                              useParallel = P(sim)$useParallel)
+                              useParallel = P(sim)$.useParallel)
 
     rm(seedReceive, seedSource)
     if (NROW(seedingData) > 0) {
@@ -1146,8 +1143,9 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     stop("Growth and mortality (GM) function(s) missing.\n
          Make sure you are using LandR_BiomassGMOrig, or another GM module")
   }
-  
+  #######################################################
   if (!suppliedElsewhere("studyArea", sim)) {
+
     message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
 
     polyCenter <- SpatialPoints(coords = data.frame(x = c(-1349980), y = c(6986895)),
@@ -1284,7 +1282,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     species <- species[, 1:11]
     species <- species[col1 != "LandisData",]
     species <- species[col1 != ">>",]
-    
+
     colNames <- c("species", "longevity", "sexualmature", "shadetolerance",
                   "firetolerance", "seeddistance_eff", "seeddistance_max",
                   "resproutprob", "resproutage_min", "resproutage_max",
@@ -1367,8 +1365,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
     ## make uniform communities (well structured in space)
     mapvals <- rep(unique(ecoregion$mapcode),
-                   each = ceiling(sum(!is.na(getValues(ecoregionMap)))/length(unique(ecoregion$mapcode))))
-    mapvals <- mapvals[1:sum(!is.na(getValues(ecoregionMap)))]   ## remove any extra values
+                   each = ceiling(sum(!is.na(getValues(ecoregionMap))) / length(unique(ecoregion$mapcode))))
+    mapvals <- mapvals[1:sum(!is.na(getValues(ecoregionMap)))] ## remove any extra values
 
     ## assign communities to map and export to sim
     ecoregionMap[!is.na(getValues(ecoregionMap))][] <- mapvals
