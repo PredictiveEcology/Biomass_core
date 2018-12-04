@@ -16,18 +16,13 @@ defineModule(sim, list(
   documentation = list("README.txt", "LBMR.Rmd"),
   reqdPkgs = list("data.table", "dplyr", "fpCompare", "ggplot2", "grid",
                   "purrr", "quickPlot", "raster", "Rcpp", "scales", "sp", "tidyr",
-                  "PredictiveEcology/pemisc",
+                  "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
                   "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
-    defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
-                    desc = "This describes the simulation time at which the first plot event should occur"),
-    defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
-                    desc = paste("This describes the simulation time at which the first save event should occur.",
-                                 "Set to NA if no saving is desired.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
@@ -41,14 +36,20 @@ defineModule(sim, list(
                     desc = paste("Should species establishment probability be represented at the pixel level,",
                                  "as a rescaled map of original species percent cover")),
     defineParameter("speciesEquivalency", "data.frame", NA,
-                    desc = "species equivalency table as in pemisc::sppEquivalencies_CA TODO: descitpion needed"),
+                    desc = "species equivalency table as in pemisc::sppEquivalencies_CA"), ## TODO: description needed
     defineParameter("successionTimestep", "numeric", 10, NA, NA, "defines the simulation time step, default is 10 years"),
-    defineParameter("useCache", "logic", TRUE,
+    defineParameter("useCache", "logical", TRUE,
                     desc = "use caching for the spinup simulation?"),
+    defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
+                    desc = "This describes the simulation time at which the first plot event should occur"),
+    defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
+                    desc = paste("This describes the simulation time at which the first save event should occur.",
+                                 "Set to NA if no saving is desired.")),
     defineParameter(".useParallel", "ANY", parallel::detectCores(),
                     desc = paste("Used only in seed dispersal.",
-                                 "If numeric, it will be passed to data.table::setDTthreads, ",
-                                 ))
+                                 "If numeric, it will be passed to data.table::setDTthreads",
+                                 "If TRUE, it will be passed to parallell:makeCluster,",
+                                 "and if a cluster object, it will be passed to parallel::parClusterApplyB"))
   ),
   inputObjects = bind_rows(
     expectsInput("calculateAgeMortality", "function",
@@ -1130,7 +1131,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 .inputObjects <- function(sim) {
   dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
   cacheTags <- c(currentModule(sim), "function:.inputObjects", "function:spades")
-  
+
   ######################################################
   ## Check GM functions have been supplied
   if (!suppliedElsewhere("calculateAgeMortality", sim) |
@@ -1143,10 +1144,11 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
     stop("Growth and mortality (GM) function(s) missing.\n
          Make sure you are using LandR_BiomassGMOrig, or another GM module")
   }
+
   #######################################################
   if (!suppliedElsewhere("studyArea", sim)) {
 
-    message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
+    message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada.")
 
     polyCenter <- SpatialPoints(coords = data.frame(x = c(-1349980), y = c(6986895)),
                                 proj4string = CRS(paste("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=0 +lon_0=-95 +x_0=0 +y_0=0",
@@ -1220,7 +1222,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
     ## Dummy version with spatial location in Canada
     ras <- projectExtent(sim$studyArea, crs = sim$studyArea)
-    res(ras) = 250
+    res(ras) <- 250 ## TODO: this shouldn't be hardcoded; get this from rasterToMatch?
     initialCommunitiesMap <- rasterize(sim$studyArea, ras)
 
     ## make uniform communities (well structured in space)
@@ -1240,111 +1242,14 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   if (!suppliedElsewhere("sufficientLight", sim) |
       (!suppliedElsewhere("species", sim)) |
       (!suppliedElsewhere("minRelativeB", sim))) {
-    maxcol <- 7L
-    for (i in 1:2) {
-      mainInput <- Cache(prepInputs,
-                         extractURL("sufficientLight"),
-                         targetFile = "biomass-succession_test.txt",
-                         destinationPath = dPath,
-                         fun = "utils::read.table",
-                         fill = TRUE, #purge = 7,
-                         sep = "",
-                         header = FALSE,
-                         col.names = c(paste("col",1:maxcol, sep = "")),
-                         blank.lines.skip = TRUE,
-                         stringsAsFactors = FALSE,
-                         overwrite = TRUE)
-      maxcol1 <- max(count.fields(file.path(dPath, "biomass-succession_test.txt"), sep = ""))
-      if (identical(maxcol1,maxcol)) break
-    }
+    mainInput <- prepInputsMainInput(url = NULL, dPath, cacheTags) ## uses default URL
 
-    mainInput <- data.table(mainInput)
-    mainInput <- mainInput[col1 != ">>",]
-
-    # read species.txt and convert it to data.table
-    maxcol <- 13 #max(count.fields(file.path(dPath, "species.txt"), sep = ""))
-    url <- paste0("https://raw.githubusercontent.com/LANDIS-II-Foundation/",
-                  "Extensions-Succession/master/biomass-succession-archive/",
-                  "trunk/tests/v6.0-2.0/species.txt")
-    species <- Cache(prepInputs,
-                     url = url,
-                     targetFile = "species.txt",
-                     destinationPath = asPath(dPath),
-                     fun = "utils::read.table",
-                     fill = TRUE, row.names = NULL, #purge = 7,
-                     sep = "",
-                     header = FALSE,
-                     blank.lines.skip = TRUE,
-                     col.names = c(paste("col", 1:maxcol, sep = "")),
-                     stringsAsFactors = FALSE,
-                     userTags = c(cacheTags, "species")) %>%
-      data.table()
-    species <- species[, 1:11]
-    species <- species[col1 != "LandisData",]
-    species <- species[col1 != ">>",]
-
-    colNames <- c("species", "longevity", "sexualmature", "shadetolerance",
-                  "firetolerance", "seeddistance_eff", "seeddistance_max",
-                  "resproutprob", "resproutage_min", "resproutage_max",
-                  "postfireregen")
-    names(species) <- colNames
-    species[, ':='(seeddistance_eff = gsub(",", "", seeddistance_eff),
-                   seeddistance_max = gsub(",", "", seeddistance_max))]
-    # change all columns to integer
-    species <- species[, lapply(.SD, as.integer), .SDcols = names(species)[-c(1,NCOL(species))],
-                       by = "species,postfireregen"]
-    setcolorder(species, colNames)
-
-    # get additional species traits
-    speciesAddon <- mainInput
-    startRow <- which(speciesAddon$col1 == "SpeciesParameters")
-    speciesAddon <- speciesAddon[(startRow + 1):(startRow + nrow(species)), 1:6, with = FALSE]
-    names(speciesAddon) <- c("species", "leaflongevity", "wooddecayrate",
-                             "mortalityshape", "growthcurve", "leafLignin")
-    speciesAddon[, ':='(leaflongevity = as.numeric(leaflongevity),
-                        wooddecayrate = as.numeric(wooddecayrate),
-                        mortalityshape = as.numeric(mortalityshape),
-                        growthcurve = as.numeric(growthcurve),
-                        leafLignin = as.numeric(leafLignin))]
-
-    species <- setkey(species, species)[setkey(speciesAddon, species), nomatch = 0]
-
-    ## rename species for compatibility across modules (Genu_spe)
-    species$species1 <- as.character(substring(species$species, 1, 4))
-    species$species2 <- as.character(substring(species$species, 5, 7))
-    species[, ':='(species = paste0(toupper(substring(species1, 1, 1)),
-                                    substring(species1, 2, 4), "_",
-                                    species2))]
-
-    species[, ':='(species1 = NULL, species2 = NULL)]
-
-    sim$species <- species
-    rm(maxcol)
+    sim$species <- prepInputsSpecies(url = extractURL("species"), dPath, cacheTags)
   }
 
   if (!suppliedElsewhere("ecoregion", sim)) {
-    ## Get the dummy ecoregion table from LANDIS-II examples.
-    maxcol <- 5 #max(count.fields(file.path(dPath, "ecoregions.txt"), sep = ""))
-    ecoregion <- Cache(prepInputs,
-                       url = extractURL("ecoregion"),
-                       targetFile = "ecoregions.txt",
-                       destinationPath = dPath,
-                       fun = "utils::read.table",
-                       fill = TRUE,
-                       sep = "",
-                       # purge = 7,
-                       header = FALSE,
-                       blank.lines.skip = TRUE,
-                       stringsAsFactors = FALSE)
-    maxcol <- max(count.fields(file.path(dPath, "ecoregions.txt"), sep = ""))
-    colnames(ecoregion) <- c(paste("col", 1:maxcol, sep = ""))
-    ecoregion <- data.table(ecoregion)
-    ecoregion <- ecoregion[col1 != "LandisData",]
-    ecoregion <- ecoregion[col1 != ">>",]
-    names(ecoregion)[1:4] <- c("active", "mapcode", "ecoregion", "description")
-    ecoregion$mapcode <- as.integer(ecoregion$mapcode)
-    sim$ecoregion <- ecoregion
-    rm(maxcol)
+    sim$ecoregion <- prepInputsEcoregion(url = extractURL("ecoregion"),
+                                         dPath = dPath, cacheTags = cacheTags)
   }
 
   ######################################################
@@ -1352,6 +1257,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   if (!suppliedElsewhere("ecoregionMap", sim )) {
     ## LANDIS-II demo data:
 
+    ## TODO: restore the demo data version with prepInputs:
     # sim$ecoregionMap <- Cache(prepInputs,
     #                           url = extractURL("ecoregionMap"),
     #                           destinationPath = dPath,
@@ -1360,8 +1266,8 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
     ## Dummy version with spatial location in Canada
     ras <- projectExtent(sim$studyArea, crs = sim$studyArea)
-    res(ras) = 250
-    ecoregionMap <- rasterize(sim$studyArea, ras)
+    res(ras) <- 250 ## TODO: don't hardcode this; get from rasterToMatch?
+    ecoregionMap <- rasterize(sim$studyArea, ras) ## TODO: use fasterize
 
     ## make uniform communities (well structured in space)
     mapvals <- rep(unique(ecoregion$mapcode),
@@ -1370,43 +1276,14 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
     ## assign communities to map and export to sim
     ecoregionMap[!is.na(getValues(ecoregionMap))][] <- mapvals
+
     sim$ecoregionMap <- ecoregionMap
   }
 
   # input species ecoregion dynamics table
   if (!suppliedElsewhere("speciesEcoregion", sim)) {
-    speciesEcoregion <- Cache(prepInputs,
-                              url = extractURL("speciesEcoregion"),
-                              fun = "utils::read.table",
-                              destinationPath = dPath,
-                              targetFile = "biomass-succession-dynamic-inputs_test.txt",
-                              fill = TRUE,
-                              sep = "",
-                              header = FALSE,
-                              blank.lines.skip = TRUE,
-                              stringsAsFactors = FALSE)
-    maxcol <- max(count.fields(file.path(dPath, "biomass-succession-dynamic-inputs_test.txt"),
-                               sep = ""))
-    colnames(speciesEcoregion) <- paste("col",1:maxcol, sep = "")
-    speciesEcoregion <- data.table(speciesEcoregion)
-    speciesEcoregion <- speciesEcoregion[col1 != "LandisData",]
-    speciesEcoregion <- speciesEcoregion[col1 != ">>",]
-    keepColNames <- c("year", "ecoregion", "species", "establishprob", "maxANPP", "maxB")
-    names(speciesEcoregion)[1:6] <- keepColNames
-    speciesEcoregion <- speciesEcoregion[, keepColNames, with = FALSE]
-    integerCols <- c("year", "establishprob", "maxANPP", "maxB")
-    speciesEcoregion[, (integerCols) := lapply(.SD, as.integer), .SDcols = integerCols]
-
-    ## rename species for compatibility across modules (Xxxx_xxx)
-    speciesEcoregion$species1 <- as.character(substring(speciesEcoregion$species, 1, 4))
-    speciesEcoregion$species2 <- as.character(substring(speciesEcoregion$species, 5, 7))
-    speciesEcoregion[, ':='(species = paste0(toupper(substring(species1, 1, 1)),
-                                             substring(species1, 2, 4), "_", species2))]
-
-    speciesEcoregion[, ':='(species1 = NULL, species2 = NULL)]
-
-    sim$speciesEcoregion <- speciesEcoregion
-    rm(maxcol)
+    sim$speciesEcoregion <- prepInputsSpeciesEcoregion(url = extractURL("speciesEcoregion"),
+                                                       dPath = dPath, cacheTags = cacheTags)
   }
 
   if (!suppliedElsewhere("minRelativeB", sim)) {
@@ -1432,8 +1309,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
   ## make light requirements table
   if (!suppliedElsewhere("sufficientLight", sim)) {
-    sufficientLight <- mainInput %>%
-      data.frame
+    sufficientLight <- data.frame(mainInput)
     startRow <- which(sufficientLight$col1 == "SufficientLight")
     sufficientLight <- sufficientLight[(startRow + 1):(startRow + 5), 1:7]
     sufficientLight <- data.table(sufficientLight)
