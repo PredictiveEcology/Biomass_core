@@ -293,7 +293,8 @@ Init <- function(sim) {
     pixelGroupMap[inactivePixelIndex] <- -1L
   }
   cohortData <- sim$updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
-                                                 time = round(time(sim)), cohortData = cohortData)
+                                                     time = round(time(sim)),
+                                                     cohortData = cohortData)
   cohortData <- sim$updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
 
   #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
@@ -1147,7 +1148,6 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
 
   #######################################################
   if (!suppliedElsewhere("studyArea", sim)) {
-
     message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada.")
 
     polyCenter <- SpatialPoints(coords = data.frame(x = c(-1349980), y = c(6986895)),
