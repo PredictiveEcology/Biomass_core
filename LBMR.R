@@ -299,10 +299,13 @@ Init <- function(sim) {
 
   #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
   message("Running spinup")
-  spinupstage <- Cache(spinUp, cohortData = cohortData, calibrate = P(sim)$calibrate,
+  spinupstage <- Cache(spinUp, sim = sim,
+                       cohortData = cohortData,
+                       calibrate = P(sim)$calibrate,
                        successionTimestep = P(sim)$successionTimestep,
                        spinupMortalityfraction = P(sim)$spinupMortalityfraction,
-                       species = sim$species, userTags = c("LBMR", "spinUp"))
+                       species = sim$species,
+                       userTags = c("LBMR", "spinUp"))
 
   cohortData <- spinupstage$cohortData
   if (P(sim)$calibrate) {
@@ -850,14 +853,15 @@ CohortAgeReclassification <- function(sim) {
 }
 
 ### OTHER FUNCTIONS
-spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species) {
+spinUp <- function(sim, cohortData, calibrate, successionTimestep, spinupMortalityfraction, species) {
   maxAge <- max(cohortData$age) # determine the pre-simulation length
   set(cohortData, NULL, "origAge", cohortData$age)
   set(cohortData, NULL, c("age", "sumB"), as.integer(0L))
   set(cohortData, NULL, c("mortality", "aNPPAct"), as.numeric(0))
   if (calibrate) {
-    spinupOutput <- data.table(pixelGroup = integer(), species = character(), age = integer(),
-                               iniBiomass = integer(), ANPP = numeric(), Mortality = numeric(),
+    spinupOutput <- data.table(pixelGroup = integer(), species = character(),
+                               age = integer(), iniBiomass = integer(),
+                               ANPP = numeric(), Mortality = numeric(),
                                finBiomass = integer())
   }
   k <- 0
