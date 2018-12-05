@@ -1,10 +1,10 @@
 # Ignore
+.csv
+.log
 .Rapp.history
 .RData
 .Rhistory
-.log
-.csv
-last.dump.rda
 .Rproj.user/
 .Rproj.user
-outputs/
+.tif
+outputs/.rda

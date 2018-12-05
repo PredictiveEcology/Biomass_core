@@ -21,7 +21,7 @@ A biomass succession model derived and modified from LANDIS-II.
 ```{r load-SpaDES, eval=TRUE}
 library(SpaDES)
 moduleName <- "LBMR"
-spadesModulesDirectory <- "modules" # where the module will be downloaded
+spadesModulesDirectory <- "../" # where the module will be downloaded
 ```
 
 # Get the module
@@ -57,8 +57,12 @@ Name                      | Default           | Description
 
 ```{r module usage example, eval = FALSE}
 
-inputDir <- file.path(dirname(spadesModulesDirectory), "inputs") %>% checkPath(create = TRUE)
-outputDir <- file.path(dirname(spadesModulesDirectory), "outputs") 
+# inputDir <- file.path(dirname(spadesModulesDirectory), "inputs") %>% checkPath(create = TRUE)
+inputDir <- file.path("modules/LBMR/inputs")
+
+# outputDir <- file.path(dirname(spadesModulesDirectory), "outputs") 
+outputDir <- file.path("modules/LBMR/outputs") 
+
 times <- list(start = 0, end = 10)
 parameters <- list(
   .globals = list(verbose = FALSE),
@@ -72,6 +76,9 @@ parameters <- list(
 )
 modules <- list(moduleName)
 objects <- list()
+
+#modulePath changed so I can edit in LBMR project
+#spadesModulesDirectory <- dirname(getwd())
 
 setPaths(cachePath = file.path(outputDir, "cache"),
          modulePath = spadesModulesDirectory,
