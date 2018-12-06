@@ -35,8 +35,6 @@ defineModule(sim, list(
     defineParameter("speciesEstablishmentProbAsMap", "logical", FALSE,
                     desc = paste("Should species establishment probability be represented at the pixel level,",
                                  "as a rescaled map of original species percent cover")),
-    defineParameter("speciesEquivalency", "data.frame", NA,
-                    desc = "species equivalency table as in pemisc::sppEquivalencies_CA"), ## TODO: description needed
     defineParameter("successionTimestep", "numeric", 10, NA, NA, "defines the simulation time step, default is 10 years"),
     defineParameter("useCache", "logical", TRUE,
                     desc = "use caching for the spinup simulation?"),
@@ -83,6 +81,9 @@ defineModule(sim, list(
     expectsInput("speciesEcoregion", "data.table",
                  desc = "table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession-dynamic-inputs_test.txt"),
+    expectsInput("speciesEquivalency", "data.table",
+                 desc = "table of species equivalencies. See pemisc::sppEquivalencies_CA.",
+                 sourceURL = ""),
     expectsInput("studyArea", "SpatialPolygonsDataFrame",
                  desc = "Study area used to source any objects that are not supplied",
                  sourceURL = NA),
@@ -729,7 +730,9 @@ summaryBySpecies <- function(sim) {
                                   leadingType = names(freqs),
                                   #freqs = freqs,
                                   counts = tabl, stringsAsFactors = FALSE)
-  summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType, sim$speciesEquivalency, "shortNames")
+  summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType,
+                                                  sim$speciesEquivalency,
+                                                  "EN_generic_short")
   summaryBySpecies1$cols <- equivalentName(summaryBySpecies1$leadingType, sim$speciesEquivalency, "cols")
 
   if (is.null(sim$summaryBySpecies1)) {
@@ -739,8 +742,8 @@ summaryBySpecies <- function(sim) {
   }
 
   if (length(unique(sim$summaryBySpecies1$year)) > 1) {
-    df <- sim$species[,list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
-    df$species <- equivalentName(df$species, sim$speciesEquivalency, "shortNames")
+    df <- sim$species[, list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
+    df$species <- equivalentName(df$species, sim$speciesEquivalency, "EN_generic_short")
     df$cols <- equivalentName(df$species, sim$speciesEquivalency, "cols")
 
     cols2 <- df$cols
@@ -789,7 +792,7 @@ plotVegAttributesMaps <- function(sim) {
                                    na.rm = TRUE)
   levs <- raster::levels(sim$vegTypeMap)[[1]]
   setColors(sim$vegTypeMap, levs) <- equivalentName(levs$Factor, sim$speciesEquivalency, "cols")
-  levs$Factor <- equivalentName(levs$Factor, sim$speciesEquivalency, "shortNames")
+  levs$Factor <- equivalentName(levs$Factor, sim$speciesEquivalency, "EN_generic_short")
   levels(sim$vegTypeMap) <- levs
   Plot(sim$vegTypeMap, new = TRUE, title = "Leading vegetation")
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
@@ -1050,16 +1053,12 @@ CohortAgeReclassification <- function(sim) {
     sim$sufficientLight <- data.frame(sufficientLight)
   }
 
-  if (!suppliedElsewhere("speciesEquivalency")) {
-    ## TODO: this is in pemisc@development
-    leadingNames <- c("Black spruce leading", "White spruce leading", "Deciduous leading",
-                      "Mixed", "Pine leading", "Fir leading")
-    latinNames <- c("Pice_mar", "Pice_gla", "Popu_tre", "Mixed", "Pinu_sp", "Abie_sp")
-    shortNames <- c("Bl spruce", "Wh spruce", "Decid", "Mixed", "Pine", "Fir")
-    fullNames <- c("Black.Spruce", "White.Spruce", "Deciduous", "Mixed", "Pine", "Fir")
-    cols <- RColorBrewer::brewer.pal(6, "Accent")
+  if (!suppliedElsewhere("speciesEquivalency", sim)) {
+    data("sppEquivalencies_CA", package = "pemisc")
+    sim$speciesEquivalency <- as.data.table(sppEquivalencies_CA)
 
-    sim$speciesEquivalency <- data.frame(leadingNames, latinNames, shortNames, fullNames, cols, stringsAsFactors = FALSE)
+    ## By default, Abies_las is renamed to Abies_sp
+    sim$speciesEquivalency[KNN == "Abie_Las", LandR := "Abie_sp"]
   }
   return(invisible(sim))
 }
