@@ -1059,6 +1059,12 @@ CohortAgeReclassification <- function(sim) {
 
     ## By default, Abies_las is renamed to Abies_sp
     sim$speciesEquivalency[KNN == "Abie_Las", LandR := "Abie_sp"]
+
+    ## add default colors for species used in model
+    defaultCols <- RColorBrewer::brewer.pal(6, "Accent")
+    LandRNames <- c("Pice_mar", "Pice_gla", "Popu_tre", "Pinu_sp", "Abie_sp")
+    sim$speciesEquivalency[LandR == LandRNames, cols := defaultCols[-4]]
+    sim$speciesEquivalency[EN_generic_full == "Mixed", cols := defaultCols[4]]
   }
   return(invisible(sim))
 }
