@@ -1054,7 +1054,7 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("speciesEquivalency", sim)) {
-    data("sppEquivalencies_CA", package = "pemisc")
+    data("sppEquivalencies_CA", package = "pemisc", envir = environment())
     sim$speciesEquivalency <- as.data.table(sppEquivalencies_CA)
 
     ## By default, Abies_las is renamed to Abies_sp
