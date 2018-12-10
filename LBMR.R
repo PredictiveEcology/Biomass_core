@@ -91,9 +91,9 @@ defineModule(sim, list(
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     expectsInput("updateSpeciesAttributes", "function",
-                  desc = "function to add/update species attributes in species cohort table"),
+                 desc = "function to add/update species attributes in species cohort table"),
     expectsInput("updateSpeciesEcoregionAttributes", "function",
-                  desc = "function to add/update species ecoregion attributes in species cohort table"),
+                 desc = "function to add/update species ecoregion attributes in species cohort table"),
     ## for inputs from optional fire module:
     expectsInput("spinUpCache", "logical", ""),
     expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
@@ -457,7 +457,7 @@ NoDispersalSeeding <- function(sim) {
     tempActivePixel <- sim$activePixelIndex
   }
   sim$cohortData <- sim$calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = time(sim),
-                                  successionTimestep = P(sim)$successionTimestep)
+                                      successionTimestep = P(sim)$successionTimestep)
   sim$cohortData <- setkey(sim$cohortData, speciesCode)[
     setkey(sim$species[, .(speciesCode, sexualmature)], speciesCode), nomatch = 0]
 
