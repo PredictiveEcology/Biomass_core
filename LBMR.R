@@ -36,13 +36,15 @@ defineModule(sim, list(
                     desc = paste("Should species establishment probability be represented at the pixel level,",
                                  "as a rescaled map of original species percent cover")),
     defineParameter("successionTimestep", "numeric", 10, NA, NA, "defines the simulation time step, default is 10 years"),
-    defineParameter("useCache", "logical", TRUE,
-                    desc = "use caching for the spinup simulation?"),
+    defineParameter("vegLeadingProportion", "numeric", 0.8, 0, 1,
+                    desc = "a number that define whether a species is leading for a given pixel"),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
                     desc = "This describes the simulation time at which the first plot event should occur"),
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
                     desc = paste("This describes the simulation time at which the first save event should occur.",
                                  "Set to NA if no saving is desired.")),
+    # defineParameter(".useCache", "logical", TRUE,
+    #                 desc = "use caching for the spinup simulation?"),
     defineParameter(".useParallel", "ANY", parallel::detectCores(),
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to data.table::setDTthreads",
@@ -440,7 +442,7 @@ SummaryBGM <- function(sim) {
     setColors(sim$mortalityMap) <- c("light green", "dark green")
 
     sim$vegTypeMap <- vegTypeMapGenerator(sim$species, sim$cohortData, sim$pixelGroupMap,
-                                          sim$vegLeadingProportion)
+                                          P(sim)$vegLeadingProportion)
   }
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
