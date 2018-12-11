@@ -789,7 +789,8 @@ plotVegAttributesMaps <- function(sim) {
 
   facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor", na.rm = TRUE)
   levs <- raster::levels(sim$vegTypeMap)[[1]]
-  setColors(sim$vegTypeMap, levs) <- equivalentName(levs$Factor, sim$sppEquiv, "cols")
+  colours <- equivalentName(levs$Factor, sim$sppEquiv, "cols")
+  setColors(sim$vegTypeMap, levs) <- colours
   levs$Factor <- equivalentName(levs$Factor, sim$sppEquiv, "EN_generic_short")
   levels(sim$vegTypeMap) <- levs
   Plot(sim$vegTypeMap, new = TRUE, title = "Leading vegetation")
@@ -808,15 +809,13 @@ plotAvgVegAttributes <- function(sim) {
   ANPPFiles <- list.files(outputPath(sim), pattern = "ANPP", full.names = TRUE)
   ANPPKeepers <- file.info(ANPPFiles)$atime > sim@.envir$._startClockTime
 
-  ANPP.stk <- lapply(ANPPFiles[ANPPKeepers],
-                     raster)
+  ANPP.stk <- lapply(ANPPFiles[ANPPKeepers], raster)
   meanBiomass <- sapply(biomass.stk, FUN <- function(x) mean(x[], na.rm = TRUE))
   names(meanBiomass) = sub(".tif", "",  sub(".*simulatedBiomass_Year", "",
                                             basename(biomassFiles[biomassKeepers])))
 
   meanANPP <- sapply(ANPP.stk, FUN <- function(x) mean(x[], na.rm = TRUE))
-  names(meanANPP) = sub(".tif", "",
-                        sub(".*ANPP_Year", "", basename(ANPPFiles[ANPPKeepers])))
+  names(meanANPP) = sub(".tif", "", sub(".*ANPP_Year", "", basename(ANPPFiles[ANPPKeepers])))
 
   means <- cbind(meanBiomass, meanANPP)
   means <- melt(means)
