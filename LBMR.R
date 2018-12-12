@@ -800,7 +800,7 @@ summaryBySpecies <- function(sim) {
 }
 
 plotVegAttributesMaps <- function(sim) {
-  objsToPlot <- list(Biomass = sim$simulatedBiomassMap,
+  objsToPlot <- list(Biomass = sim$simulatedBiomassMap, ## TODO: plot the masked versions
                      ANPP = sim$ANPPMap,
                      mortality = sim$mortalityMap,
                      reproduction = sim$reproducitionMap)
