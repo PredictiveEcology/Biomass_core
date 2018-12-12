@@ -804,19 +804,23 @@ plotVegAttributesMaps <- function(sim) {
                      ANPP = sim$ANPPMap,
                      mortality = sim$mortalityMap,
                      reproduction = sim$reproducitionMap)
+
+  # The ones we want
+  sppEquiv <- sim$sppEquiv[!is.na(sim$sppEquiv[[P(sim)$sppEquivCol]]),]
+
   objsToPlot <- objsToPlot[!sapply(objsToPlot, is.null)]
   Plot(objsToPlot, new = TRUE) # not sure why, but errors if all 5 are put into one command
-
 
   facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor", na.rm = TRUE)
   levs <- raster::levels(sim$vegTypeMap)[[1]]
 
-  # Doesn't change anything in the current default setting -- but it does create an NA where there is "Mixed"
-  #   Other species in levs$Factor are already "Leading",
-  #   but it needs to be here in case it is not Leading in the future
-  levsLeading <- equivalentName(levs$Factor, sim$sppEquiv, P(sim)$sppEquivCol)
+  ## Doesn't change anything in the current default setting, but it does create
+  ##  an NA where there is "Mixed".
+  ## Other species in levs$Factor are already "Leading",
+  ##  but it needs to be here in case it is not Leading in the future.
+  levsLeading <- equivalentName(levs$Factor, sppEquiv, "Leading")
   extraValues <- setdiff(levs$Factor, levsLeading)
-  if (isTRUE(extraValues != "Mixed") && length(extraValues) == 0) {
+  if (isTRUE(extraValues != "Mixed") && length(extraValues) > 0) {
     stop("'plotVegAttributesMaps' in LBMR can only deal with 'Mixed' category or the ones in sim$sppEquiv")
   }
 
@@ -829,7 +833,7 @@ plotVegAttributesMaps <- function(sim) {
   levs$Factor <- levsLeading
   levels(sim$vegTypeMap) <- levs
 
-  colsLeading <- equivalentName(names(sim$sppColors), sim$sppEquiv, P(sim)$sppEquivCol)
+  colsLeading <- equivalentName(names(sim$sppColors), sppEquiv, "Leading")
   colsLeading[whMixedSppColors] <- "Mixed"
   sppColors <- sim$sppColors
   names(sppColors) <- colsLeading
