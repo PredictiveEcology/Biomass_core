@@ -836,11 +836,12 @@ plotVegAttributesMaps <- function(sim) {
   colours <- sppColors[na.omit(match(levsLeading, colsLeading))]
   setColors(sim$vegTypeMap, levs$ID) <- colours
 
-  # Mask out NAs
-  sim$vegTypeMap[is.na(sim$rasterToMatch[])] <- NA # remove NAs from sim$rasterToMatch, faster than raster::mask(sim$vegTypeMap, sim$rasterToMatch)
+  # Mask out NAs based on rasterToMatch (for plotting only!)
+  vegTypeMapForPlot <- sim$vegTypeMap
+  vegTypeMapForPlot[is.na(sim$rasterToMatch[])] <- NA # faster than raster::mask
 
   # Plot
-  Plot(sim$vegTypeMap, new = TRUE, title = "Leading vegetation")
+  Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
   return(invisible(sim))
