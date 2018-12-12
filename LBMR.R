@@ -32,6 +32,8 @@ defineModule(sim, list(
                                  "noDispersal, universalDispersal, and wardDispersal (default).")),
     defineParameter("spinupMortalityfraction", "numeric", 0.001,
                     desc = "defines the mortality loss fraction in spin up-stage simulation"),
+    defineParameter("sppEquivCol", "character", "LandR", NA, NA,
+                    "The column in sim$specieEquivalency data.table to use as a naming convention"),
     defineParameter("speciesEstablishmentProbAsMap", "logical", FALSE,
                     desc = paste("Should species establishment probability be represented at the pixel level,",
                                  "as a rescaled map of original species percent cover")),
