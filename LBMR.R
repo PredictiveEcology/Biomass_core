@@ -796,10 +796,19 @@ plotVegAttributesMaps <- function(sim) {
 
   facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor", na.rm = TRUE)
   levs <- raster::levels(sim$vegTypeMap)[[1]]
-  colours <- equivalentName(levs$Factor, sim$sppEquiv, "cols")
-  setColors(sim$vegTypeMap, levs) <- colours
-  levs$Factor <- equivalentName(levs$Factor, sim$sppEquiv, "EN_generic_short")
-  levels(sim$vegTypeMap) <- levs
+
+  whMixedLevs <- which(levs$Factor == "Mixed")
+  whMixedSppColors <- which(names(sim$sppColors) == "Mixed")
+  levsLeading <- equivalentName(levs$Factor, sim$sppEquiv, "Leading")
+  levsLeading[whMixedLevs] <- "Mixed"
+
+  colsLeading <- equivalentName(names(sim$sppColors), sim$sppEquiv, "Leading")
+  colsLeading[whMixedSppColors] <- "Mixed"
+  colours <- sim$sppColors[na.omit(match(levsLeading, colsLeading))]
+
+  setColors(sim$vegTypeMap, levs$ID) <- colours
+  #levs$Factor <- equivalentName(levs$Factor, sim$sppEquiv, "EN_generic_short")
+  #levels(sim$vegTypeMap) <- levs
   Plot(sim$vegTypeMap, new = TRUE, title = "Leading vegetation")
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
