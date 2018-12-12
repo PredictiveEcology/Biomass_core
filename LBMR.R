@@ -796,21 +796,39 @@ plotVegAttributesMaps <- function(sim) {
   objsToPlot <- objsToPlot[!sapply(objsToPlot, is.null)]
   Plot(objsToPlot, new = TRUE) # not sure why, but errors if all 5 are put into one command
 
+
   facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor", na.rm = TRUE)
   levs <- raster::levels(sim$vegTypeMap)[[1]]
 
+  # Doesn't change anything in the current default setting -- but it does create an NA where there is "Mixed"
+  #   Other species in levs$Factor are already "Leading",
+  #   but it needs to be here in case it is not Leading in the future
+  levsLeading <- equivalentName(levs$Factor, sim$sppEquiv, P(sim)$sppEquivCol)
+  extraValues <- setdiff(levs$Factor, levsLeading)
+  if (isTRUE(extraValues != "Mixed") && length(extraValues) == 0) {
+    stop("'plotVegAttributesMaps' in LBMR can only deal with 'Mixed' category or the ones in sim$sppEquiv")
+  }
+
   whMixedLevs <- which(levs$Factor == "Mixed")
   whMixedSppColors <- which(names(sim$sppColors) == "Mixed")
-  levsLeading <- equivalentName(levs$Factor, sim$sppEquiv, "Leading")
+
+  # Will return NA where there is no value, e.g., Mixed
   levsLeading[whMixedLevs] <- "Mixed"
 
-  colsLeading <- equivalentName(names(sim$sppColors), sim$sppEquiv, "Leading")
-  colsLeading[whMixedSppColors] <- "Mixed"
-  colours <- sim$sppColors[na.omit(match(levsLeading, colsLeading))]
+  levs$Factor <- levsLeading
+  levels(sim$vegTypeMap) <- levs
 
+  colsLeading <- equivalentName(names(sim$sppColors), sim$sppEquiv, P(sim)$sppEquivCol)
+  colsLeading[whMixedSppColors] <- "Mixed"
+  sppColors <- sim$sppColors
+  names(sppColors) <- colsLeading
+  colours <- sppColors[na.omit(match(levsLeading, colsLeading))]
   setColors(sim$vegTypeMap, levs$ID) <- colours
-  #levs$Factor <- equivalentName(levs$Factor, sim$sppEquiv, "EN_generic_short")
-  #levels(sim$vegTypeMap) <- levs
+
+  # Mask out NAs
+  sim$vegTypeMap[is.na(sim$rasterToMatch[])] <- NA # remove NAs from sim$rasterToMatch, faster than raster::mask(sim$vegTypeMap, sim$rasterToMatch)
+
+  # Plot
   Plot(sim$vegTypeMap, new = TRUE, title = "Leading vegetation")
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
