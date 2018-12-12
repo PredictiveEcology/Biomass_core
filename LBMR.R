@@ -83,6 +83,11 @@ defineModule(sim, list(
     expectsInput("speciesEcoregion", "data.table",
                  desc = "table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession-dynamic-inputs_test.txt"),
+    expectsInput("sppColors", "character",
+                 desc = paste("A named vector of colors to use for plotting.",
+                              "The names must be in sim$speciesEquivalency[[sim$sppEquivCol]],",
+                              "and should also contain a color for 'Mixed'"),
+                 sourceURL = NA),
     expectsInput("sppEquiv", "data.table",
                  desc = "table of species equivalencies. See pemisc::sppEquivalencies_CA.",
                  sourceURL = ""),
@@ -1060,10 +1065,11 @@ CohortAgeReclassification <- function(sim) {
     sim$sppEquiv[KNN == "Abie_Las", LandR := "Abie_sp"]
 
     ## add default colors for species used in model
-    defaultCols <- RColorBrewer::brewer.pal(6, "Accent")
-    LandRNames <- c("Pice_mar", "Pice_gla", "Popu_tre", "Pinu_sp", "Abie_sp")
-    sim$sppEquiv[LandR %in% LandRNames, cols := defaultCols[-4]]
-    sim$sppEquiv[EN_generic_full == "Mixed", cols := defaultCols[4]]
+    if (!is.null(sim$sppColors))
+      stop("If you provide sppColors, you MUST also provide sppEquiv")
+    sim$sppColors <- pemisc::sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
+                                       newVals = "Mixed", palette = "Accent")
   }
+
   return(invisible(sim))
 }
