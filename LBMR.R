@@ -738,10 +738,19 @@ summaryBySpecies <- function(sim) {
                                   leadingType = names(freqs),
                                   #freqs = freqs,
                                   counts = tabl, stringsAsFactors = FALSE)
+
+  whMixedLeading <- which(summaryBySpecies1$leadingType == "Mixed")
   summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType,
                                                   sim$sppEquiv,
                                                   "EN_generic_short")
-  summaryBySpecies1$cols <- equivalentName(summaryBySpecies1$leadingType, sim$sppEquiv, "cols")
+  summaryBySpecies1$leadingType[whMixedLeading] <- "Mixed"
+
+  colours <- equivalentName(names(sim$sppColors), sim$sppEquiv, "EN_generic_short")
+  whMixedSppColors <- which(names(sim$sppColors) == "Mixed")
+  colours[whMixedSppColors] <- "Mixed"
+
+  colorIDs <- match(summaryBySpecies1$leadingType, colours)
+  summaryBySpecies1$cols <- sim$sppColors[colorIDs]
 
   if (is.null(sim$summaryBySpecies1)) {
     sim$summaryBySpecies1 <- summaryBySpecies1
@@ -752,7 +761,9 @@ summaryBySpecies <- function(sim) {
   if (length(unique(sim$summaryBySpecies1$year)) > 1) {
     df <- sim$species[, list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
     df$species <- equivalentName(df$species, sim$sppEquiv, "EN_generic_short")
-    df$cols <- equivalentName(df$species, sim$sppEquiv, "cols")
+
+    colorIDs <- match(df$species, colours)
+    df$cols <- sim$sppColors[colorIDs]
 
     cols2 <- df$cols
     names(cols2) <- df$species
