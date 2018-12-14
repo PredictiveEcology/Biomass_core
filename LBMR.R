@@ -79,6 +79,14 @@ defineModule(sim, list(
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
+    expectsInput("rasterToMatch", "RasterLayer",
+                 desc = paste("Raster layer of buffered study area used for cropping, masking and projecting.",
+                              "Defaults to the kNN biomass map masked with `studyArea`"),
+                 sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
+    expectsInput("rasterToMatchReporting", "RasterLayer",
+                 desc = paste("Raster layer of study area used for plotting and reporting only.",
+                              "Defaults to the kNN biomass map masked with `studyArea`"),
+                 sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
     expectsInput("species", "data.table",
                  desc = "a table that has species traits such as longevity...",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt"),
@@ -94,7 +102,13 @@ defineModule(sim, list(
                  desc = "table of species equivalencies. See pemisc::sppEquivalencies_CA.",
                  sourceURL = ""),
     expectsInput("studyArea", "SpatialPolygonsDataFrame",
-                 desc = "Study area used to source any objects that are not supplied",
+                 desc = paste("multipolygon to use as the study area,",
+                              "with attribute LTHFC describing the fire return interval.",
+                              "Defaults to a square shapefile in Southwestern Alberta, Canada."),
+                 sourceURL = ""),
+    expectsInput("studyAreaReporting", "SpatialPolygonsDataFrame",
+                 desc = paste("multipolygon (typically smaller/unbuffered than studyArea) to use for plotting/reporting.",
+                              "Defaults to an area in Southwestern Alberta, Canada."),
                  sourceURL = NA),
     expectsInput("sufficientLight", "data.frame",
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
@@ -842,7 +856,7 @@ plotVegAttributesMaps <- function(sim) {
 
   # Mask out NAs based on rasterToMatch (for plotting only!)
   vegTypeMapForPlot <- sim$vegTypeMap
-  vegTypeMapForPlot[is.na(sim$rasterToMatch[])] <- NA # faster than raster::mask
+  vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA # faster than raster::mask
 
   # Plot
   Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
@@ -934,10 +948,26 @@ CohortAgeReclassification <- function(sim) {
   }
 
   #######################################################
+
+  if (is.null(sim$rasterToMatch)) {
+    if (!suppliedElsewhere("rasterToMatch", sim)) {
+      stop("There is no 'rasterToMatch' supplied")
+    }
+  }
+
+  if (!suppliedElsewhere("rasterToMatchReporting")) {
+    sim$rasterToMatchReporting <- sim$rasterToMatch
+  }
+
   if (!suppliedElsewhere("studyArea", sim)) {
-    message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada.")
+    message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
 
     sim$studyArea <- randomStudyArea(seed = 1234)
+  }
+
+  if (!suppliedElsewhere("studyAreaReporting", sim)) {
+    message("'studyAreaReporting' was not provided by user. Using the same as 'studyArea'.")
+    sim$studyAreaReporting <- sim$studyArea
   }
 
   if (!suppliedElsewhere("initialCommunities", sim)) {
