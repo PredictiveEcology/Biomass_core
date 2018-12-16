@@ -1,5 +1,6 @@
 spinUp <- function(fnList, cohortData, calibrate, successionTimestep, spinupMortalityfraction, species) {
-  maxAge <- max(cohortData$age) # determine the pre-simulation length
+
+  maxAge <- max(cohortData$age, na.rm = TRUE) # determine the pre-simulation length
   set(cohortData, NULL, "origAge", cohortData$age)
   set(cohortData, NULL, c("age", "sumB"), as.integer(0L))
   set(cohortData, NULL, c("mortality", "aNPPAct"), as.numeric(0))
