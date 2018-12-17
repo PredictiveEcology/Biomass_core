@@ -779,7 +779,7 @@ WardDispersalSeeding <- function(sim) {
 
     rm(seedReceive, seedSource)
     if (NROW(seedingData) > 0) {
-      seedingData$ecoregionGroup <- getValues(sim$ecoregionMap)[seedingData$pixelIndex]
+      seedingData[, ecoregionGroup := as.factor(getValues(sim$ecoregionMap)[seedingData$pixelIndex])]
       seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
       specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
       specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
