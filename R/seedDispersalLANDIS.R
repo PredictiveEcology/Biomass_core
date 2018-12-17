@@ -155,10 +155,15 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
     }
     seedsReceived <- raster(pixelGroupMap)
     seedsReceived[] <- 0L
+
+    # NOTE new as.integer for speciesCode -- it is now a factor
     sc <- species %>%
       dplyr::select(speciesCode, seeddistance_eff, seeddistance_max) %>%
       rename(effDist = seeddistance_eff, maxDist = seeddistance_max) %>%
+      mutate(speciesCode = as.integer(speciesCode)) %>%
       data.table()
+    dtSrc[, speciesCode := as.integer(speciesCode)]
+    dtRcv[, speciesCode := as.integer(speciesCode)]
 
     setkey(sc, speciesCode)
     setkey(dtSrc, speciesCode)
@@ -367,6 +372,9 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
         "Currently, it takes either numeric, logical or cluster object"
       )
     }
+
+    # COnvert speciesCode back to factor using original species object from top of this fn
+    seedsArrived[ , speciesCode := species$speciesCode[speciesCode]]
     setnames(seedsArrived, "fromInit", "pixelIndex")
     return(seedsArrived)
 }

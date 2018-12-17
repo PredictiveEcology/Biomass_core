@@ -7,7 +7,7 @@ addNewCohorts <- function(newCohortData, cohortData, pixelGroupMap, time, specie
   # it also would be better if it has the columns of cohortData plus pixelIndex
   newCohortData$pixelGroup <- getValues(pixelGroupMap)[newCohortData$pixelIndex]
   set(newCohortData, NULL, "temppixelGroup", as.integer(as.factor(newCohortData$pixelGroup)))
-  set(newCohortData, NULL, "speciesposition", 2^(newCohortData$speciesCode))
+  set(newCohortData, NULL, "speciesposition", 2^(as.integer(newCohortData$speciesCode)))
   # newCohortDataExtra is used to connect the original pixelGroup to the newPixelGroup
   # communities are any unique combinations of species
   newCohortDataExtra <- newCohortData[, .(community = sum(speciesposition),
