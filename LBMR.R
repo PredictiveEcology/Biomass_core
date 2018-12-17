@@ -341,49 +341,49 @@ Init <- function(sim) {
   cohortData <- sim$updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
 
   ################
-  if (FALSE) { # OLD STUFF
-
-    communities <- sim$initialCommunities %>%
-      gather(key = cohort, value = age, -mapcode, -description, -species, na.rm = TRUE) %>%
-      data.table() %>% ## this needs to be here to appease the data.table gods
-      .[, ':='(age = as.integer(ceiling(as.numeric(age) / P(sim)$successionTimestep) *
-                                  P(sim)$successionTimestep),
-               communityGroup = as.integer(mapcode),
-               mapcode = NULL)] %>%
-      unique(., by = c("communityGroup", "species", "age"))
-    species <- data.table(sim$species)[, speciesCode := as.integer(as.factor(species))]
-    tempspecies <- setkey(species[, .(species, speciesCode)], species)
-    communities <- setkey(communities, species)[tempspecies, nomatch = 0]
-    speciesEcoregion <- setkey(data.table(sim$speciesEcoregion), species)[tempspecies, nomatch = 0]
-    sim$species <- setkey(species, speciesCode)
-    ecoregion <- data.table(sim$ecoregion)[, ecoregionGroup := as.integer(mapcode)]
-    ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
-    sim$minRelativeB <- data.table(sim$minRelativeB, key = "ecoregion")[ecoregion_temp, nomatch = 0]
-    speciesEcoregion <- setkey(speciesEcoregion, ecoregion)[ecoregion_temp, nomatch = 0]
-    sim$speciesEcoregion <- setkey(speciesEcoregion, ecoregionGroup, speciesCode)
-    nrowCommunities <- nrow(communities) #line 197 in Yong code
-    initialCommunitiesMap <- setValues(sim$initialCommunitiesMap, as.integer(sim$initialCommunitiesMap[]))
-    napixels <- which(is.na(getValues(initialCommunitiesMap)))
-    initialCommunitiesMap[napixels] <- as.integer(maxValue(initialCommunitiesMap) + 1)
-    pixelGroupFactor <- as.integer(10^ceiling(log10((maxValue(initialCommunitiesMap) + 1))))
-    #ecoregionMap <- sim$ecoregionMap
-    pixelGroupMap <- setValues(initialCommunitiesMap, as.integer((initialCommunitiesMap +
-                                                                    sim$ecoregionMap*pixelGroupFactor)[]))
-    sim$initialCommunitiesMap <- NULL
-    active_ecoregion <- setkey(ecoregion[active == "yes", .(k = 1, ecoregionGroup)], k)
-    cohortData <- setkey(communities[, k := 1], k)[active_ecoregion, allow.cartesian = TRUE][, k := NULL]
-    set(cohortData, NULL, "pixelGroup", cohortData$communityGroup + cohortData$ecoregionGroup*pixelGroupFactor)
-    set(cohortData, NULL, "B", as.integer(0L))
-    cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B)] # removed communityGroup column
-    # the cohortData here is a full joint table of community Group and ecoregion Group
-    # some redundant pixelGroups are removed, because they are not present on the pixelGroupMap
-    # we are dealing with the case that all the ecoregion is active, how about some ecoregion is not active
-
-  }
-  # # pixels with -1 in the pixelGroupMap are inactive #  ELIOT -- WHY NOT JUST LEAVE AS NA? TRY RM -1
-  # if (length(inactivePixelIndex) > 0) {
-  #   pixelGroupMap[inactivePixelIndex] <- -1L
+  # if (FALSE) { # OLD STUFF
+  #
+  #   communities <- sim$initialCommunities %>%
+  #     gather(key = cohort, value = age, -mapcode, -description, -species, na.rm = TRUE) %>%
+  #     data.table() %>% ## this needs to be here to appease the data.table gods
+  #     .[, ':='(age = as.integer(ceiling(as.numeric(age) / P(sim)$successionTimestep) *
+  #                                 P(sim)$successionTimestep),
+  #              communityGroup = as.integer(mapcode),
+  #              mapcode = NULL)] %>%
+  #     unique(., by = c("communityGroup", "species", "age"))
+  #   species <- data.table(sim$species)[, speciesCode := as.integer(as.factor(species))]
+  #   tempspecies <- setkey(species[, .(species, speciesCode)], species)
+  #   communities <- setkey(communities, species)[tempspecies, nomatch = 0]
+  #   speciesEcoregion <- setkey(data.table(sim$speciesEcoregion), species)[tempspecies, nomatch = 0]
+  #   sim$species <- setkey(species, speciesCode)
+  #   ecoregion <- data.table(sim$ecoregion)[, ecoregionGroup := as.integer(mapcode)]
+  #   ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
+  #   sim$minRelativeB <- data.table(sim$minRelativeB, key = "ecoregion")[ecoregion_temp, nomatch = 0]
+  #   speciesEcoregion <- setkey(speciesEcoregion, ecoregion)[ecoregion_temp, nomatch = 0]
+  #   sim$speciesEcoregion <- setkey(speciesEcoregion, ecoregionGroup, speciesCode)
+  #   nrowCommunities <- nrow(communities) #line 197 in Yong code
+  #   initialCommunitiesMap <- setValues(sim$initialCommunitiesMap, as.integer(sim$initialCommunitiesMap[]))
+  #   napixels <- which(is.na(getValues(initialCommunitiesMap)))
+  #   initialCommunitiesMap[napixels] <- as.integer(maxValue(initialCommunitiesMap) + 1)
+  #   pixelGroupFactor <- as.integer(10^ceiling(log10((maxValue(initialCommunitiesMap) + 1))))
+  #   #ecoregionMap <- sim$ecoregionMap
+  #   pixelGroupMap <- setValues(initialCommunitiesMap, as.integer((initialCommunitiesMap +
+  #                                                                   sim$ecoregionMap*pixelGroupFactor)[]))
+  #   sim$initialCommunitiesMap <- NULL
+  #   active_ecoregion <- setkey(ecoregion[active == "yes", .(k = 1, ecoregionGroup)], k)
+  #   cohortData <- setkey(communities[, k := 1], k)[active_ecoregion, allow.cartesian = TRUE][, k := NULL]
+  #   set(cohortData, NULL, "pixelGroup", cohortData$communityGroup + cohortData$ecoregionGroup*pixelGroupFactor)
+  #   set(cohortData, NULL, "B", as.integer(0L))
+  #   cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B)] # removed communityGroup column
+  #   # the cohortData here is a full joint table of community Group and ecoregion Group
+  #   # some redundant pixelGroups are removed, because they are not present on the pixelGroupMap
+  #   # we are dealing with the case that all the ecoregion is active, how about some ecoregion is not active
+  #
   # }
+  # # # pixels with -1 in the pixelGroupMap are inactive #  ELIOT -- WHY NOT JUST LEAVE AS NA? TRY RM -1
+  # # if (length(inactivePixelIndex) > 0) {
+  # #   pixelGroupMap[inactivePixelIndex] <- -1L
+  # # }
 
   #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
   if (!isTRUE(P(sim)$overrideSpinup)) { # negate the TRUE to allow for default to be this, even if NULL or NA
@@ -553,8 +553,12 @@ SummaryBGM <- function(sim) {
                                          "uniqueSumMortality")
     setColors(sim$mortalityMap) <- c("light green", "dark green")
 
-    sim$vegTypeMap <- vegTypeMapGenerator(sim$species, sim$cohortData, sim$pixelGroupMap,
-                                          P(sim)$vegLeadingProportion)
+    sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
+                                          P(sim)$vegLeadingProportion,
+                                          colors = sim$sppColors,
+                                          unitTest = TRUE)
+
+
   }
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
@@ -837,7 +841,8 @@ summaryBySpecies <- function(sim) {
     sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
 
-  freqs <- table(na.omit(factorValues(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor")[[1]]))
+  freqs <- table(na.omit(factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
+                                      att = 2)))
   tabl <- as.vector(freqs)
   summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)),
                                   leadingType = names(freqs),
@@ -916,26 +921,32 @@ plotVegAttributesMaps <- function(sim) {
   objsToPlot <- objsToPlot[!sapply(objsToPlot, is.null)]
   Plot(objsToPlot, new = TRUE) # not sure why, but errors if all 5 are put into one command
 
-  facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = "Factor", na.rm = TRUE)
   levs <- raster::levels(sim$vegTypeMap)[[1]]
+  levelsName <- names(levs)[2]
+  # facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
+  #                                  att = levelsName,
+  #                                  na.rm = TRUE)
 
   ## Doesn't change anything in the current default setting, but it does create
   ##  an NA where there is "Mixed".
-  ## Other species in levs$Factor are already "Leading",
+  ## Other species in levs[[levelsName]] are already "Leading",
   ##  but it needs to be here in case it is not Leading in the future.
-  levsLeading <- equivalentName(levs$Factor, sppEquiv, "Leading")
-  extraValues <- setdiff(levs$Factor, levsLeading)
-  if (isTRUE(extraValues != "Mixed") && length(extraValues) > 0) {
+  levsLeading <- equivalentName(levs[[levelsName]], sppEquiv, "Leading")
+  hasOnlyMixedAsOther <- sum(is.na(levsLeading) == 1) && levs[[levelsName]][is.na(levsLeading)] == "Mixed"
+  #extraValues <- setdiff(levs[[levelsName]], levsLeading)
+  if (!isTRUE(hasOnlyMixedAsOther)) {
     stop("'plotVegAttributesMaps' in LBMR can only deal with 'Mixed' category or the ones in sim$sppEquiv")
   }
 
-  whMixedLevs <- which(levs$Factor == "Mixed")
+  whMixedLevs <- which(levs[[levelsName]] == "Mixed")
   whMixedSppColors <- which(names(sim$sppColors) == "Mixed")
 
   # Will return NA where there is no value, e.g., Mixed
   levsLeading[whMixedLevs] <- "Mixed"
 
-  levs$Factor <- levsLeading
+  shortNames <- equivalentName(levsLeading, sppEquiv, "EN_generic_short")
+  shortNames[whMixedLevs] <- "Mixed"
+  levs[[levelsName]] <- shortNames
   levels(sim$vegTypeMap) <- levs
 
   colsLeading <- equivalentName(names(sim$sppColors), sppEquiv, "Leading")
@@ -947,7 +958,14 @@ plotVegAttributesMaps <- function(sim) {
 
   # Mask out NAs based on rasterToMatch (for plotting only!)
   vegTypeMapForPlot <- sim$vegTypeMap
-  vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA # faster than raster::mask
+  if (isTRUE(all.equal(extent(vegTypeMapForPlot), extent(sim$rasterToMatch)))) {
+    vegTypeMapForPlot[is.na(sim$rasterToMatch[])] <- NA # faster than raster::mask
+  } else if  (isTRUE(all.equal(extent(vegTypeMapForPlot), extent(sim$rasterToMatchReporting)))) {
+    vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA # faster than raster::mask
+  } else {
+    stop("the extent of sim$vegTypeMap does not match that of sim$rasterToMatch or ",
+         "sim$rasterToMatchReporting. They must match. Please modify one or the other")
+  }
 
   # Plot
   Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
