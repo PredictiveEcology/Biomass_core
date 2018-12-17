@@ -297,7 +297,7 @@ Init <- function(sim) {
   ##############################################
   setDT(sim$minRelativeB) # make a data.table
   # join to get ecoregionGroup column
-  sim$minRelativeB <- sim$minRelativeB[speciesEcoregion[, .(ecoregion, ecoregionGroup)],
+  sim$minRelativeB <- sim$minRelativeB[unique(speciesEcoregion[, .(ecoregion, ecoregionGroup)]),
                                          on = "ecoregion", nomatch = 0]
 
   #############################################
