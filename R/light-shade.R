@@ -34,8 +34,8 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   setkey(minRelativeB, ecoregionGroup)
   bAMterm1 <- bAMterm1[minRelativeB, nomatch = 0]
   bAMterm1$bAM <- round(bAMterm1$bAM, 3)
-  bAMterm1[, siteShade := cut(bAM, sort(unique(c(0, X1, X2, X3, X4, X5, 1))),
-                              labels = FALSE, right = FALSE, include.lowest = TRUE) - 1,
+  bAMterm1[, siteShade := as.integer(cut(bAM, sort(unique(c(0, X1, X2, X3, X4, X5, 1))),
+                              labels = FALSE, right = FALSE, include.lowest = TRUE) - 1),
            by = pixelGroup]
   bAMterm1 <- bAMterm1[, .(pixelGroup, siteShade)]
   return(bAMterm1)
