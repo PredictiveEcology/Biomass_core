@@ -106,7 +106,10 @@ ageReclassification <- function(cohortData, successionTimestep, stage) {
   } else {
     # non- spinup stage
     targetData <- cohortData[age <= (successionTimestep + 1), ]
-    targetData <- targetData[, .(ecoregionGroup = mean(ecoregionGroup),
+
+    # Squash multiple cohorts that regenerated within the successionTimestep
+    #   into a single cohort
+    targetData <- targetData[, .(ecoregionGroup = unique(ecoregionGroup),
                                  age = successionTimestep + 1,
                                  B = sum(B, na.rm = TRUE),
                                  mortality = sum(mortality, na.rm = TRUE),
