@@ -1,10 +1,3 @@
-assignLightProb <- function(sufficientLight, newCohortData) {
-  ## for each line, get the survival probability from sufficientLight table
-  ## note that sufficentLight is a table of survival probs for each tolerance level (row) by and shade level (column)
-  ## siteShade + 2 is necessary to skip the first column
-  newCohortData[ , lightProb := sufficientLight[cbind(shadetolerance, siteShade + 2)]]
-}
-
 calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   # the siteshade was calculated based on the code:
   # https://github.com/LANDIS-II-Foundation/Extensions-Succession/blob/master/biomass-succession/trunk/src/PlugIn.cs
