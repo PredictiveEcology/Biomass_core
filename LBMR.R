@@ -1044,8 +1044,9 @@ CohortAgeReclassification <- function(sim) {
 ## DEFAULT INPUT OBJECTS
 
 .inputObjects <- function(sim) {
-  dPath <- dataPath(sim) #file.path(modulePath(sim), "LBMR", "data")
-  cacheTags <- c(currentModule(sim), "function:.inputObjects", "function:spades")
+  cacheTags <- c(currentModule(sim), "function:.inputObjects")
+  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
+  message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   ######################################################
   ## Check GM functions have been supplied
