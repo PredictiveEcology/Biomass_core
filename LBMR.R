@@ -21,8 +21,6 @@ defineModule(sim, list(
                   "PredictiveEcology/SpaDES.core@development",
                   "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
-    defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
-                    desc = "Initial time for the growth event to occur"),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
@@ -841,8 +839,7 @@ summaryBySpecies <- function(sim) {
     sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
 
-  freqs <- table(na.omit(factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
-                                      att = 2)))
+  freqs <- table(na.omit(factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = 2)))
   tabl <- as.vector(freqs)
   summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)),
                                   leadingType = names(freqs),
@@ -879,7 +876,7 @@ summaryBySpecies <- function(sim) {
     names(cols2) <- df$species
     plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species)) +
       scale_fill_manual(values = cols2) +
-      geom_area(position = 'stack') +
+      geom_area(position = "stack") +
       labs(x = "Year", y = "Biomass by species") +
       theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
@@ -910,10 +907,19 @@ summaryBySpecies <- function(sim) {
 }
 
 plotVegAttributesMaps <- function(sim) {
-  objsToPlot <- list(Biomass = sim$simulatedBiomassMap, ## TODO: plot the masked versions
-                     ANPP = sim$ANPPMap,
-                     mortality = sim$mortalityMap,
-                     reproduction = sim$reproducitionMap)
+  biomassMapForPlot <- raster::mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
+  ANPPMapForPlot <- raster::mask(sim$ANPPMap, sim$studyAreaReporting)
+  mortalityMapForPlot <- raster::mask(sim$mortalityMap, sim$studyAreaReporting)
+  reproductionMapForPlot <- if (is.null(sim$reproductionMap)) {
+    NULL
+  } else {
+    raster::mask(sim$reproductionMap, sim$studyAreaReporting)
+  }
+
+  objsToPlot <- list(Biomass = biomassMapForPlot,
+                     ANPP = ANPPMapForPlot,
+                     mortality = mortalityMapForPlot,
+                     reproduction = reproductionMapForPlot)
 
   # The ones we want
   sppEquiv <- sim$sppEquiv[!is.na(sim$sppEquiv[[P(sim)$sppEquivCol]]),]
@@ -932,7 +938,8 @@ plotVegAttributesMaps <- function(sim) {
   ## Other species in levs[[levelsName]] are already "Leading",
   ##  but it needs to be here in case it is not Leading in the future.
   levsLeading <- equivalentName(levs[[levelsName]], sppEquiv, "Leading")
-  hasOnlyMixedAsOther <- sum(is.na(levsLeading) == 1) && levs[[levelsName]][is.na(levsLeading)] == "Mixed"
+  hasOnlyMixedAsOther <- sum(is.na(levsLeading) == 1) &&
+    levs[[levelsName]][is.na(levsLeading)] == "Mixed"
   #extraValues <- setdiff(levs[[levelsName]], levsLeading)
   if (!isTRUE(hasOnlyMixedAsOther)) {
     stop("'plotVegAttributesMaps' in LBMR can only deal with 'Mixed' category or the ones in sim$sppEquiv")
