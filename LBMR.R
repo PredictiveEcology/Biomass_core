@@ -880,17 +880,23 @@ summaryBySpecies <- function(sim) {
       labs(x = "Year", y = "Biomass by species") +
       theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
-    Plot(plot2, title = c("Average biomass by species"))
-
+    title2 <- if (identical(time(sim), P(sim)$.plotInitialTime))
+      "Average biomass by species" else ""
+    Plot(plot2, title = title2, new = TRUE)
+browser()
+    maxNpixels <- sum(!is.na(rasterToMatchReporting))
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
     plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
       scale_fill_manual(values = cols3) +
       labs(x = "Year", y = "Count") +
       geom_area() +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank())
+      theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+      geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey")
 
-    Plot(plot3, title = c("Number of pixels, by leading type"), new = TRUE)
+    title3 <- if (identical(time(sim), P(sim)$.plotInitialTime))
+      "Number of pixels, by leading type" else ""
+    Plot(plot3, title = title3, new = TRUE)
   }
 
   # means <- cbind(meanBiomass, meanANPP)
@@ -965,14 +971,7 @@ plotVegAttributesMaps <- function(sim) {
 
   # Mask out NAs based on rasterToMatch (for plotting only!)
   vegTypeMapForPlot <- sim$vegTypeMap
-  if (isTRUE(all.equal(extent(vegTypeMapForPlot), extent(sim$rasterToMatch)))) {
-    vegTypeMapForPlot[is.na(sim$rasterToMatch[])] <- NA # faster than raster::mask
-  } else if  (isTRUE(all.equal(extent(vegTypeMapForPlot), extent(sim$rasterToMatchReporting)))) {
-    vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA # faster than raster::mask
-  } else {
-    stop("the extent of sim$vegTypeMap does not match that of sim$rasterToMatch or ",
-         "sim$rasterToMatchReporting. They must match. Please modify one or the other")
-  }
+  vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA ## faster than raster::mask
 
   # Plot
   Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
@@ -1033,11 +1032,9 @@ Save <- function(sim) {
 
 CohortAgeReclassification <- function(sim) {
   if (time(sim) != 0) {
-    #cohortData <- sim$cohortData
     sim$cohortData <- ageReclassification(cohortData = sim$cohortData,
                                           successionTimestep = P(sim)$successionTimestep,
                                           stage = "mainSimulation")
-    #sim$cohortData <- cohortData
     return(invisible(sim))
   } else {
     return(invisible(sim))
