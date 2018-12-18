@@ -970,8 +970,8 @@ plotVegAttributesMaps <- function(sim) {
   setColors(sim$vegTypeMap, levs$ID) <- colours
 
   # Mask out NAs based on rasterToMatch (for plotting only!)
-  vegTypeMapForPlot <- sim$vegTypeMap
-  vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA ## faster than raster::mask
+  vegTypeMapForPlot <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
+  #vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA ## faster than raster::mask
 
   # Plot
   Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
