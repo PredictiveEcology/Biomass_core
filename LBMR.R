@@ -883,7 +883,7 @@ summaryBySpecies <- function(sim) {
     title2 <- if (identical(time(sim), P(sim)$.plotInitialTime))
       "Average biomass by species" else ""
     Plot(plot2, title = title2, new = TRUE)
-browser()
+
     maxNpixels <- sum(!is.na(rasterToMatchReporting))
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
