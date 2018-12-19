@@ -312,7 +312,7 @@ Init <- function(sim) {
       communityGroup,
       mapcode,
       speciesPresence,
-      ecoregionGroup = as.factor(gsub(".*_.*_", "", mapcode)))]
+      ecoregionGroup = as.factor(gsub("[[:alnum:]]*_[[:alnum:]]*_", "", mapcode)))] # strip off 2 parts -- speciesLayers & Age
     , by = c("communityGroup", "speciesCode", "age", "mapcode"))
 
   set(cohortData, NULL, "pixelGroup", cohortData$communityGroup)
