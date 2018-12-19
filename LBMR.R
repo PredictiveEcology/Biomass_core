@@ -274,7 +274,7 @@ Init <- function(sim) {
   ##############################################
   setDT(sim$ecoregion)
   ecoregion <- sim$ecoregion[, ecoregionGroup := as.factor(ecoregion)]
-  ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
+  #ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
 
   ##############################################
   # species
@@ -328,7 +328,7 @@ Init <- function(sim) {
   sim$inactivePixelIndex <- which(ecoregionMapNAs) # store this for future use
 
   # Keeps track of the length of the ecoregion
-  mod$activeEcoregionLength <- data.table(Ecoregion = getValues(sim$ecoregionMap),
+  mod$activeEcoregionLength <- data.table(Ecoregion = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregion"),
                                           pixelIndex = 1:ncell(sim$ecoregionMap))[
                                             Ecoregion %in% active_ecoregion$ecoregionGroup,
                                             .(NofCell = length(pixelIndex)), by = Ecoregion]
@@ -452,7 +452,7 @@ Init <- function(sim) {
   }
   sim$pixelGroupMap <- pixelGroupMap
 
-  simulationOutput <- data.table(Ecoregion = getValues(sim$ecoregionMap),
+  simulationOutput <- data.table(Ecoregion = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregion"),
                                  pixelGroup = getValues(pixelGroupMap),
                                  pixelIndex = 1:ncell(sim$ecoregionMap))[
                                    , .(NofPixel = length(pixelIndex)), by = c("Ecoregion", "pixelGroup")]
@@ -468,9 +468,9 @@ Init <- function(sim) {
                                                ANPP = 0L, Mortality = 0L, Regeneration = 0L)]
   sim$lastReg <- 0
   speciesEcoregion[, identifier := year > P(sim)$successionTimestep]
-  speciesEcoregion_True <- speciesEcoregion[identifier == "TRUE",]
-  speciesEcoregion_False <- speciesEcoregion[identifier == "FALSE",]
-  speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(speciesEcoregion_False$year),]
+  speciesEcoregion_True <- speciesEcoregion[identifier == TRUE,]
+  speciesEcoregion_False <- speciesEcoregion[identifier == FALSE,]
+  speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(year),]
   sim$speciesEcoregion <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))[
     , ':='(year = year - min(year), identifier = NULL)]
   sim$lastFireYear <- "noFire"
@@ -486,7 +486,7 @@ SummaryBGM <- function(sim) {
   pixelGroups[, groups := cut(temID, breaks = cutpoints,
                               labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
                               include.lowest = TRUE)]
-  ecoPixelgroup <- data.table(Ecoregion = getValues(sim$ecoregionMap),
+  ecoPixelgroup <- data.table(Ecoregion = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregion"),
                               pixelGroup = getValues(sim$pixelGroupMap),
                               pixelIndex = 1:ncell(sim$ecoregionMap))[
                                 , .(NofPixelGroup = length(pixelIndex)),
@@ -777,7 +777,7 @@ WardDispersalSeeding <- function(sim) {
 
     rm(seedReceive, seedSource)
     if (NROW(seedingData) > 0) {
-      seedingData[, ecoregionGroup := as.factor(getValues(sim$ecoregionMap)[seedingData$pixelIndex])]
+      seedingData[, ecoregionGroup := factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregion")[seedingData$pixelIndex]]
       seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
       specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
       specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
