@@ -1,3 +1,15 @@
+#' Calculate site shade
+#'
+#' @param time TODO: description neeede
+#' @param cohortData TODO: description neeede
+#' @param speciesEcoregion TODO: description neeede
+#' @param minRelativeB TODO: description neeede
+#'
+#' @return TODO: description neeede
+#'
+#' @export
+#' @importFrom data.table data.table set setkey
+#'
 calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   # the siteshade was calculated based on the code:
   # https://github.com/LANDIS-II-Foundation/Extensions-Succession/blob/master/biomass-succession/trunk/src/PlugIn.cs

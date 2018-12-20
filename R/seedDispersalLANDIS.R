@@ -1,7 +1,6 @@
-##############################################################
 #' Ward Seed Dispersal kernel
 #'
-#' A probability distribution used in Landis.
+#' A probability distribution used in LANDIS-II.
 #'
 #' @export
 #' @docType methods
@@ -28,7 +27,6 @@ Ward <- expression(if (cellSize <= effDist) {
   )
 })
 
-##############################################################
 #' WardFast Seed Dispersal kernel
 #'
 #' A probability distribution used in LANDIS-II.
@@ -58,25 +56,28 @@ WardFast <- expression(ifelse(cellSize <= effDist, {
   )
 }))
 
-##############################################################
-#' Simulate a LANDISDisp process on a landscape.
+#' Simulate a LANDIS-II dispersal process on a landscape.
 #'
-#' Simulate seed dispersal using user defined function. This is a "receiving pixel" focused dispersal approach.
-#' It is the "potentially receiving" cell that looks around itself for potential seed sources. If it finds
-#' a single seed source, that passes the probability function described by the dispersalFn, then the
-#' cluster ends and the receiving cell index is returned as part of a vector of indices of all
-#' successfully cells that received seeds. This function can therefore only be used for a relatively
-#' specific situation where there is a yes/no returned for each potential receiving cell, i.e., not abundance.
-#' This function is also not cumulative, i.e,. there is no higher abundance of seeds received if
-#' a receiving cell has lots of seed sources around it vs. a single seed source. The difference will
-#' come with a higher probability of successfully receiving a "seed".
+#' Simulate seed dispersal using user defined function. This is a "receiving
+#' pixel" focused dispersal approach. It is the "potentially receiving" cell
+#' that looks around itself for potential seed sources. If it finds a single
+#' seed source, that passes the probability function described by the
+#' dispersalFn, then the cluster ends and the receiving cell index is returned
+#' as part of a vector of indices of all successfully cells that received seeds.
+#' This function can therefore only be used for a relatively specific situation
+#' where there is a yes/no returned for each potential receiving cell, i.e., not
+#' abundance. This function is also not cumulative, i.e,. there is no higher
+#' abundance of seeds received if a receiving cell has lots of seed sources
+#' around it vs. a single seed source. The difference will come with a higher
+#' probability of successfully receiving a "seed".
 #'
-#' \code{dispersalFn} must be an expression that returns a probability distribution. Because
-#' it is a dispersal kernal, it must be a probability distribution. The expression that can
-#' take an argument named "dis" (without quotes) as this will be calculated internally and
-#' represents the distance from the initial (receiving) pixel and all active pixels within that
-#' cluster of active pixels. \code{SpaDES} includes the \code{\link{Ward}} kernel as defined in the
-#' LANDIS-II documentation.
+#' \code{dispersalFn} must be an expression that returns a probability
+#' distribution. Because it is a dispersal kernal, it must be a probability
+#' distribution. The expression that can take an argument named "dis" (without
+#' quotes) as this will be calculated internally and represents the distance
+#' from the initial (receiving) pixel and all active pixels within that cluster
+#' of active pixels. \code{SpaDES} includes the \code{\link{Ward}} kernel as
+#' defined in the LANDIS-II documentation.
 #'
 #' @param sim A simList object
 #'
@@ -443,7 +444,7 @@ WardEqn <- function(dis, cellSize, effDist, maxDist, k, b) {
     )
   }
 }
-#
+
 # WardFn <- function(dis, maxDist=3000, effDist=30, ...) {
 #   #effDist = 100
 #   #maxDist = 150

@@ -1,5 +1,18 @@
+#' Title
+#'
+#' @param fnList TODO: remove this once the functions are in the package!
+#' @param cohortData TODO: description needed
+#' @param calibrate TODO: description needed
+#' @param successionTimestep TODO: description needed
+#' @param spinupMortalityfraction TODO: description needed
+#' @param species TODO: description needed
+#'
+#' @return TODO: description needed
+#'
+#' @export
+#' @importFrom data.table data.table set setkey
+#'
 spinUp <- function(fnList, cohortData, calibrate, successionTimestep, spinupMortalityfraction, species) {
-
   maxAge <- max(cohortData$age, na.rm = TRUE) # determine the pre-simulation length
   set(cohortData, NULL, "origAge", cohortData$age)
   set(cohortData, NULL, c("age", "sumB"), as.integer(0L))
