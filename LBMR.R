@@ -450,7 +450,6 @@ Init <- function(sim) {
                                      B, mortality = 0, aNPPAct = 0)]
     pixelAll <- cohortData[, .(uniqueSumB = as.integer(sum(B, na.rm = TRUE))), by = pixelGroup]
   }
-  sim$pixelGroupMap <- pixelGroupMap
 
   simulationOutput <- data.table(Ecoregion = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregion"),
                                  pixelGroup = getValues(pixelGroupMap),
@@ -474,6 +473,7 @@ Init <- function(sim) {
   sim$speciesEcoregion <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))[
     , ':='(year = year - min(year), identifier = NULL)]
   sim$lastFireYear <- "noFire"
+  sim$pixelGroupMap <- pixelGroupMap
   return(invisible(sim))
 }
 
