@@ -170,7 +170,7 @@ defineModule(sim, list(
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   if (is.numeric(P(sim)$.useParallel)) {
     a <- data.table::setDTthreads(P(sim)$.useParallel)
-    message("Mortality and Growth should be using >100% CPU")
+    message("LBMR should be using >100% CPU")
     if (data.table::getDTthreads() == 1L) crayon::red(message("Only using 1 thread."))
     on.exit(setDTthreads(a))
   }

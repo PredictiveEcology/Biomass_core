@@ -294,7 +294,7 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
         parallel::stopCluster(cl)
       } else {
         allSeedsArrived <- list()
-        message(" Should be using more than 100% CPU because of data.table openMP use")
+        message("  Seed dispersal should be using more than 100% CPU because of data.table openMP use")
 
         for (y in seq_along(subSampList)) {
           curThreads <- getDTthreads()
