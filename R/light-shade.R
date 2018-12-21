@@ -27,21 +27,27 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
         , ':='(prevMortality = 0, sumB = 0)]
   }
   #bAM <- data.table(speciesEcoregion)[year <= time(sim) & (year > (time(sim)-P(sim)$successionTimestep))]
-  bAM <- speciesEcoregion[year <= time]
-  bAM <- bAM[year == max(bAM$year)]
-  bAM <- bAM[, .(maxMaxB = max(maxB)), by = ecoregionGroup]
+  bAM <- speciesEcoregionLatestYear(speciesEcoregion, time)
+  bAM <- na.omit(bAM) # remove ecoregion-species groups with no maxB or maxANPP
+  bAM <- bAM[, .(maxMaxB = max(maxB, na.rm = TRUE)), by = ecoregionGroup]
   setkey(bAM, ecoregionGroup)
   setkey(bAMterm1, ecoregionGroup)
-  bAMterm1 <- bAMterm1[bAM, nomatch = 0]
+  bAMterm1 <- bAM[bAMterm1, nomatch = 0]
   bAMterm1[, sumB := pmin((maxMaxB - prevMortality), sumB)]
   bAMterm1[, bAM := sumB/maxMaxB]
   minRelativeB <- data.table(minRelativeB)
   setkey(minRelativeB, ecoregionGroup)
-  bAMterm1 <- bAMterm1[minRelativeB, nomatch = 0]
+  bAMterm1 <- minRelativeB[bAMterm1, nomatch = 0]
   bAMterm1$bAM <- round(bAMterm1$bAM, 3)
-  bAMterm1[, siteShade := as.integer(cut(bAM, sort(unique(c(0, X1, X2, X3, X4, X5, 1))),
-                              labels = FALSE, right = FALSE, include.lowest = TRUE) - 1),
+
+  # This is faster than using cut
+  bAMterm1[, siteShade := which(bAM < unique(c(0, X1, X2, X3, X4, X5, 1.1)))[1]-2,
            by = pixelGroup]
+  # b[, siteShade := as.integer(cut(bAM, sort(unique(c(0, X1, X2, X3, X4, X5, 1))),
+  #                            labels = FALSE, right = FALSE, include.lowest = TRUE) - 1),
+  #           by = pixelGroup]
+  # if (!all.equal(b$siteShade, bAMterm1$siteShade))
+  #   stop("aaaaa")
   bAMterm1 <- bAMterm1[, .(pixelGroup, siteShade)]
   return(bAMterm1)
 }
