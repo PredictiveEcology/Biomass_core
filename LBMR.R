@@ -16,6 +16,7 @@ defineModule(sim, list(
   documentation = list("README.txt", "LBMR.Rmd"),
   reqdPkgs = list("data.table", "dplyr", "fpCompare", "ggplot2", "grid",
                   "purrr", "quickPlot", "raster", "Rcpp", "scales", "sp", "tidyr",
+                  #"PredictiveEcology/LandR@development",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
@@ -102,7 +103,7 @@ defineModule(sim, list(
                               "and should also contain a color for 'Mixed'"),
                  sourceURL = NA),
     expectsInput("sppEquiv", "data.table",
-                 desc = "table of species equivalencies. See pemisc::sppEquivalencies_CA.",
+                 desc = "table of species equivalencies. See pemisc::sppEquivalencies_CA.", ## TODO: use LandR
                  sourceURL = ""),
     expectsInput("studyArea", "SpatialPolygonsDataFrame",
                  desc = paste("multipolygon to use as the study area,",
@@ -1256,7 +1257,7 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("sppEquiv", sim)) {
-    data("sppEquivalencies_CA", package = "pemisc", envir = environment())
+    data("sppEquivalencies_CA", package = "pemisc", envir = environment()) ## TODO: sue LandR
     sim$sppEquiv <- as.data.table(sppEquivalencies_CA)
 
     ## By default, Abies_las is renamed to Abies_sp
@@ -1265,7 +1266,7 @@ CohortAgeReclassification <- function(sim) {
     ## add default colors for species used in model
     if (!is.null(sim$sppColors))
       stop("If you provide sppColors, you MUST also provide sppEquiv")
-    sim$sppColors <- pemisc::sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
+    sim$sppColors <- pemisc::sppColors(sim$sppEquiv, P(sim)$sppEquivCol, ## TODO: use LandR
                                        newVals = "Mixed", palette = "Accent")
   }
 
