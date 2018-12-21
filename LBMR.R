@@ -565,7 +565,6 @@ SummaryBGM <- function(sim) {
 }
 
 NoDispersalSeeding <- function(sim) {
-  pixelGroupMap <- sim$pixelGroupMap
   if (sim$lastFireYear == round(time(sim))) { # if current year is both fire year and succession year
     # find new active pixel that remove successful postfire regeneration
     # since this is on site regeneration, all the burnt pixels can not seeding
@@ -578,33 +577,33 @@ NoDispersalSeeding <- function(sim) {
   sim$cohortData <- setkey(sim$cohortData, speciesCode)[
     setkey(sim$species[, .(speciesCode, sexualmature)], speciesCode), nomatch = 0]
 
-  newCohortData <- sim$cohortData[age >= sexualmature]
+  seedingData <- sim$cohortData[age >= sexualmature]
   set(sim$cohortData, NULL, "sexualmature", NULL)
-  set(newCohortData, NULL, c("sexualmature", "age", "B", "mortality", "aNPPAct"), NULL)
+  set(seedingData, NULL, c("sexualmature", "age", "B", "mortality", "aNPPAct"), NULL)
   siteShade <- setkey(data.table(calcSiteShade(time = round(time(sim)), sim$cohortData,
                                                sim$speciesEcoregion, sim$minRelativeB)), pixelGroup)
-  newCohortData <- setkey(newCohortData, pixelGroup)[siteShade, nomatch = 0]
-  newCohortData <- setkey(newCohortData, speciesCode)[setkey(sim$species[
+  seedingData <- setkey(seedingData, pixelGroup)[siteShade, nomatch = 0]
+  seedingData <- setkey(seedingData, speciesCode)[setkey(sim$species[
     , .(speciesCode, shadetolerance)], speciesCode), nomatch = 0]
-  newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight, newCohortData)
-  newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0, 1),]
-  set(newCohortData, NULL, c("shadetolerance", "lightProb", "siteShade", "sumB"), NULL)
-  newCohortData <- unique(newCohortData, by = c("pixelGroup", "speciesCode"))
+  seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
+  seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData), 0, 1),]
+  set(seedingData, NULL, c("shadetolerance", "lightProb", "siteShade", "sumB"), NULL)
+  seedingData <- unique(seedingData, by = c("pixelGroup", "speciesCode"))
 
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
-                                   pixelGroup = getValues(pixelGroupMap)[tempActivePixel]), pixelGroup)
-  pixelsInfor <- setkey(pixelsInfor[pixelGroup %in% unique(newCohortData$pixelGroup)], pixelGroup)
-  newCohortData <- setkey(newCohortData, pixelGroup)[pixelsInfor, allow.cartesian = TRUE]
-  newCohortData <- setkey(newCohortData, ecoregionGroup, speciesCode)
+                                   pixelGroup = getValues(sim$pixelGroupMap)[tempActivePixel]), pixelGroup)
+  pixelsInfor <- setkey(pixelsInfor[pixelGroup %in% unique(seedingData$pixelGroup)], pixelGroup)
+  seedingData <- setkey(seedingData, pixelGroup)[pixelsInfor, allow.cartesian = TRUE]
+  seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
   specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
   specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
                                                   .(speciesCode, establishprob, ecoregionGroup)],
                                ecoregionGroup, speciesCode)
-  newCohortData <- newCohortData[specieseco_current, nomatch = 0]
-  newCohortData <- newCohortData[establishprob %>>% runif(nrow(newCohortData), 0, 1),]
-  set(newCohortData, NULL, c("establishprob"), NULL)
-  if (P(sim)$calibrate == TRUE & NROW(newCohortData) > 0) {
-    newCohortData_summ <- newCohortData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
+  seedingData <- seedingData[specieseco_current, nomatch = 0]
+  seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
+  set(seedingData, NULL, c("establishprob"), NULL)
+  if (P(sim)$calibrate == TRUE & NROW(seedingData) > 0) {
+    newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                             numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
     newCohortData_summ <- setkey(newCohortData_summ, speciesCode)[
@@ -612,25 +611,19 @@ NoDispersalSeeding <- function(sim) {
       nomatch = 0][, .(species, seedingAlgorithm, Year, numberOfReg)]
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
-  if (NROW(newCohortData) > 0) {
-    addnewcohort <- addNewCohorts(newCohortData, sim$cohortData, pixelGroupMap,
-                                  time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
-    sim$cohortData <- addnewcohort$cohortData
-    sim$pixelGroupMap <- addnewcohort$pixelGroupMap
+
+  if (nrow(seedingData) > 0) {
+    outs <- addCohorts(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
+                       time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
+    sim$cohortData <- outs$cohortData
+    sim$pixelGroupMap <- outs$pixelGroupMap
   }
+
   sim$lastReg <- round(time(sim))
   return(invisible(sim))
 }
 
 UniversalDispersalSeeding <- function(sim) {
-  pixelGroupMap <- sim$pixelGroupMap
-  fire_nonRegPixels <- which(getValues(pixelGroupMap) == 0)
-  if (length(fire_nonRegPixels) > 0) {
-    pixelGroupMap[fire_nonRegPixels] <- getValues(sim$ecoregionMap)[fire_nonRegPixels] %>%
-      as.factor() %>%
-      as.integer() %>%
-      `+`(maxValue(pixelGroupMap))
-  }
   if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
     tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
   } else {
@@ -643,7 +636,7 @@ UniversalDispersalSeeding <- function(sim) {
   speciessource <- setkey(sim$species[, .(speciesCode, k = 1)], k)
   siteShade <- data.table(calcSiteShade(time = round(time(sim)), sim$cohortData,
                                         sim$speciesEcoregion, sim$minRelativeB))
-  activePixelGroup <- unique(data.table(pixelGroup = getValues(pixelGroupMap)[tempActivePixel],
+  activePixelGroup <- unique(data.table(pixelGroup = getValues(sim$pixelGroupMap)[tempActivePixel],
                                         ecoregionGroup = sim$ecoregionMap[tempActivePixel]),
                              by = "pixelGroup")
   siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
@@ -651,29 +644,29 @@ UniversalDispersalSeeding <- function(sim) {
   setkey(siteShade[, k := 1], k)
   # i believe this is the latest version how the landis guys calculate sufficient light
   # http://landis-extensions.googlecode.com/svn/trunk/succession-library/trunk/src/ReproductionDefaults.cs
-  newCohortData <- siteShade[speciessource, allow.cartesian = TRUE][, k := NULL]
-  newCohortData <- setkey(newCohortData, speciesCode)[setkey(sim$species[, .(speciesCode, shadetolerance)],
+  seedingData <- siteShade[speciessource, allow.cartesian = TRUE][, k := NULL]
+  seedingData <- setkey(seedingData, speciesCode)[setkey(sim$species[, .(speciesCode, shadetolerance)],
                                                              speciesCode),
                                                       nomatch = 0]
-  newCohortData <- assignLightProb(sufficientLight = sim$sufficientLight, newCohortData)
-  newCohortData <- newCohortData[lightProb %>>% runif(nrow(newCohortData), 0 , 1),]
-  set(newCohortData, NULL, c("siteShade", "lightProb", "shadetolerance"), NULL)
+  seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
+  seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData), 0 , 1),]
+  set(seedingData, NULL, c("siteShade", "lightProb", "shadetolerance"), NULL)
   #   pixelGroupEcoregion <- unique(sim$cohortData, by = c("pixelGroup"))[,'.'(pixelGroup, sumB)]
 
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
-                                   pixelGroup = getValues(pixelGroupMap)[tempActivePixel]), pixelGroup)
-  pixelsInfor <- setkey(pixelsInfor[pixelGroup %in% unique(newCohortData$pixelGroup)], pixelGroup)
-  newCohortData <- setkey(newCohortData, pixelGroup)[pixelsInfor, allow.cartesian = TRUE]
-  newCohortData <- setkey(newCohortData, ecoregionGroup, speciesCode)
+                                   pixelGroup = getValues(sim$pixelGroupMap)[tempActivePixel]), pixelGroup)
+  pixelsInfor <- setkey(pixelsInfor[pixelGroup %in% unique(seedingData$pixelGroup)], pixelGroup)
+  seedingData <- setkey(seedingData, pixelGroup)[pixelsInfor, allow.cartesian = TRUE]
+  seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
   specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
   specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
                                                   .(speciesCode, establishprob, ecoregionGroup)],
                                ecoregionGroup, speciesCode)
-  newCohortData <- newCohortData[specieseco_current, nomatch = 0]
-  newCohortData <- newCohortData[establishprob %>>% runif(nrow(newCohortData), 0, 1),]
-  set(newCohortData, NULL, "establishprob", NULL)
+  seedingData <- seedingData[specieseco_current, nomatch = 0]
+  seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
+  set(seedingData, NULL, "establishprob", NULL)
   if (P(sim)$calibrate == TRUE) {
-    newCohortData_summ <- newCohortData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm,
+    newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm,
                                             Year = round(time(sim)),
                                             numberOfReg = length(pixelIndex)),
                                         by = speciesCode]
@@ -682,34 +675,19 @@ UniversalDispersalSeeding <- function(sim) {
       nomatch = 0][, .(species, seedingAlgorithm, Year, numberOfReg)]
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
-  if (NROW(newCohortData) > 0) {
-    addnewcohort <- addNewCohorts(newCohortData, sim$cohortData, pixelGroupMap,
-                                  time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
-    sim$cohortData <- addnewcohort$cohortData
-    sim$pixelGroupMap <- addnewcohort$pixelGroupMap
+  if (nrow(seedingData) > 0) {
+    outs <- addCohorts(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
+                       time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
+    sim$cohortData <- outs$cohortData
+    sim$pixelGroupMap <- outs$pixelGroupMap
   }
   sim$lastReg <- round(time(sim))
   return(invisible(sim))
 }
 
 WardDispersalSeeding <- function(sim) {
-  #   cohortData <- sim$cohortData
-  pixelGroupMap <- sim$pixelGroupMap
-  fire_nonRegPixels <- which(getValues(pixelGroupMap) == 0)
-  if (length(fire_nonRegPixels) > 0) {
-    maxPixelGroup <- maxValue(pixelGroupMap)
-    pixelGroupMap[fire_nonRegPixels] <- makePixelGroups(maxPixelGroup, factorValues2(sim$ecoregionMap,
-                                                 getValues(sim$ecoregionMap)[fire_nonRegPixels], att = 5),
-                    speciesGroup = "")
-
-    # pixelGroupMap[fire_nonRegPixels] <- getValues(sim$ecoregionMap)[fire_nonRegPixels] %>%
-    #   as.factor() %>%
-    #   as.integer() %>%
-    #   `+`(max(sim$cohortData$pixelGroup))
-  }
   if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
-    message(crayon::red("sim$postFirePixel doesn't exist. Find out what it is and fix this next line"))
-    tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
+    tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$firePixelTable$pixelIndex)]
   } else {
     tempActivePixel <- sim$activePixelIndex
   }
@@ -718,7 +696,8 @@ WardDispersalSeeding <- function(sim) {
                                   successionTimestep = P(sim)$successionTimestep)
   siteShade <- calcSiteShade(time = round(time(sim)), cohortData = sim$cohortData,
                              sim$speciesEcoregion, sim$minRelativeB)
-  activePixelGroup <- data.table(pixelGroup = unique(getValues(pixelGroupMap)[tempActivePixel]))
+  activePixelGroup <- data.table(pixelGroup = unique(getValues(sim$pixelGroupMap)[tempActivePixel])) %>%
+    na.omit()
   #siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
   siteShade <- siteShade[activePixelGroup, on = "pixelGroup"]
   siteShade[is.na(siteShade),siteShade := 0]
@@ -761,26 +740,26 @@ WardDispersalSeeding <- function(sim) {
     # Add inSituReceived data.table from the inSitu seeding function or event
     inSituReceived <- data.table(fromInit = numeric(), species = character())
 
-    # it could be more effecient if pixelGroupMap is reduced map by removing the pixels that have successful postdisturbance regeneration
+    # it could be more effecient if sim$pixelGroupMap is reduced map by removing the pixels that have successful postdisturbance regeneration
     # and the inactive pixels
     # how to subset the reducedmap
     if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
-      inactivePixelIndex <- c(sim$inactivePixelIndex, sim$postFirePixel)
+      inactivePixelIndex <- c(sim$inactivePixelIndex, sim$firePixelTable$pixelIndex)
     } else {
       inactivePixelIndex <- sim$inactivePixelIndex
     }
     if (length(inactivePixelIndex) > 0) {
-      reducedPixelGroupMap <- pixelGroupMap
+      reducedPixelGroupMap <- sim$pixelGroupMap
       reducedPixelGroupMap[inactivePixelIndex] <- NA
     } else {
-      reducedPixelGroupMap <- pixelGroupMap
+      reducedPixelGroupMap <- sim$pixelGroupMap
     }
 
     seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
                               reducedPixelGroupMap,
-                              maxPotentialsLength = 1e5,
+                              maxPotentialsLength = 5e5,
                               verbose = FALSE,
                               useParallel = P(sim)$.useParallel)
 
@@ -794,6 +773,9 @@ WardDispersalSeeding <- function(sim) {
                                    ecoregionGroup, speciesCode)
       seedingData <- seedingData[specieseco_current, nomatch = 0]
 
+      ##############################################
+      # Run probability of establishment
+      ##############################################
       seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
       set(seedingData, NULL, "establishprob", NULL)
       if (P(sim)$calibrate == TRUE) {
@@ -806,12 +788,10 @@ WardDispersalSeeding <- function(sim) {
         sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, seedingData_summ))
       }
       if (nrow(seedingData) > 0) {
-        browser()
-        sim$cohortData <- addNewCohorts(seedingData,
-                                        cohortData = sim$cohortData, pixelGroupMap,
-                                        time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
-        #sim$cohortData <- addnewcohort$cohortData
-        sim$pixelGroupMap <- pixelGroupMap
+        outs <- addCohorts(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
+                        time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
+        sim$cohortData <- outs$cohortData
+        sim$pixelGroupMap <- outs$pixelGroupMap
       }
     }
   }
