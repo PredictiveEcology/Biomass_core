@@ -696,12 +696,18 @@ WardDispersalSeeding <- function(sim) {
   pixelGroupMap <- sim$pixelGroupMap
   fire_nonRegPixels <- which(getValues(pixelGroupMap) == 0)
   if (length(fire_nonRegPixels) > 0) {
-    pixelGroupMap[fire_nonRegPixels] <- getValues(sim$ecoregionMap)[fire_nonRegPixels] %>%
-      as.factor() %>%
-      as.integer() %>%
-      `+`(max(sim$cohortData$pixelGroup))
+    maxPixelGroup <- maxValue(pixelGroupMap)
+    pixelGroupMap[fire_nonRegPixels] <- makePixelGroups(maxPixelGroup, factorValues2(sim$ecoregionMap,
+                                                 getValues(sim$ecoregionMap)[fire_nonRegPixels], att = 5),
+                    speciesGroup = "")
+
+    # pixelGroupMap[fire_nonRegPixels] <- getValues(sim$ecoregionMap)[fire_nonRegPixels] %>%
+    #   as.factor() %>%
+    #   as.integer() %>%
+    #   `+`(max(sim$cohortData$pixelGroup))
   }
   if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
+    message(crayon::red("sim$postFirePixel doesn't exist. Find out what it is and fix this next line"))
     tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
   } else {
     tempActivePixel <- sim$activePixelIndex
@@ -712,14 +718,16 @@ WardDispersalSeeding <- function(sim) {
   siteShade <- calcSiteShade(time = round(time(sim)), cohortData = sim$cohortData,
                              sim$speciesEcoregion, sim$minRelativeB)
   activePixelGroup <- data.table(pixelGroup = unique(getValues(pixelGroupMap)[tempActivePixel]))
-  siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
+  #siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
+  siteShade <- siteShade[activePixelGroup, on = "pixelGroup"]
   siteShade[is.na(siteShade),siteShade := 0]
   # Seed source cells:
   # 1. Select only sexually mature cohorts, then
   # 2. collapse to pixelGroup by species, i.e,. doesn't matter that there is >1 cohort of same species
-  sim$cohortData <- setkey(sim$cohortData, speciesCode)[setkey(sim$species[, .(speciesCode, sexualmature)],
-                                                               speciesCode),
-                                                        nomatch = 0]
+  sim$cohortData <- sim$species[, c("speciesCode", "sexualmature")][sim$cohortData, on = "speciesCode"]
+  # sim$cohortData <- setkey(sim$cohortData, speciesCode)[setkey(sim$species[, .(speciesCode, sexualmature)],
+  #                                                              speciesCode),
+  #                                                       nomatch = 0]
   matureCohorts <- sim$cohortData[age >= sexualmature] %>%
     unique(by = c("pixelGroup", "speciesCode")) %>%
     setkey(., speciesCode)
@@ -740,7 +748,7 @@ WardDispersalSeeding <- function(sim) {
       , c(k = 1, .SD)], k), allow.cartesian = TRUE][, k := NULL]
     seedReceive <- assignLightProb(sufficientLight = sim$sufficientLight, seedReceive)
     set(seedReceive, NULL, "siteShade", NULL)
-    seedReceive <- seedReceive[lightProb %>>% runif(nrow(seedReceive), 0, 1), ][
+    seedReceive <- seedReceive[lightProb %>>% runif(NROW(seedReceive), 0, 1), ][
       , .(pixelGroup, speciesCode, seeddistance_eff, seeddistance_max)]
     setkey(seedReceive, speciesCode)
 
