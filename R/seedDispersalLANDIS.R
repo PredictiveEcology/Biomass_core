@@ -173,12 +173,14 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
     speciesSrcPool <- sc[dtSrc] %>%
       group_by(pixelGroup) %>%
       summarise(speciesSrcPool = sum(2 ^ speciesCode)) %>%
-      data.table(key = "pixelGroup")
+      data.table(key = "pixelGroup") %>%
+      na.omit()
 
     speciesRcvPool <- sc[dtRcv] %>%
       group_by(pixelGroup) %>%
       summarise(speciesRcvPool = sum(2 ^ speciesCode)) %>%
-      data.table(key = "pixelGroup")
+      data.table(key = "pixelGroup") %>%
+      na.omit()
 
     setkey(sc, speciesCode)
     spPool <- merge(speciesRcvPool, speciesSrcPool, all = TRUE)
