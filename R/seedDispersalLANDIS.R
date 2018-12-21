@@ -158,11 +158,14 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
     seedsReceived[] <- 0L
 
     # NOTE new as.integer for speciesCode -- it is now a factor
-    sc <- species %>%
-      dplyr::select(speciesCode, seeddistance_eff, seeddistance_max) %>%
-      rename(effDist = seeddistance_eff, maxDist = seeddistance_max) %>%
-      mutate(speciesCode = as.integer(speciesCode)) %>%
-      data.table()
+    sc <- species[, list(speciesCode = as.integer(speciesCode),
+                         effDist = seeddistance_eff,
+                         maxDist = seeddistance_max)]
+    # sc <- species %>%
+    #   dplyr::select(speciesCode, seeddistance_eff, seeddistance_max) %>%
+    #   rename(effDist = seeddistance_eff, maxDist = seeddistance_max) %>%
+    #   mutate(speciesCode = as.integer(speciesCode)) %>%
+    #   data.table()
     dtSrc[, speciesCode := as.integer(speciesCode)]
     dtRcv[, speciesCode := as.integer(speciesCode)]
 
