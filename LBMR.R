@@ -805,6 +805,7 @@ WardDispersalSeeding <- function(sim) {
         sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, seedingData_summ))
       }
       if (nrow(seedingData) > 0) {
+        browser()
         addnewcohort <- addNewCohorts(seedingData, cohortData = sim$cohortData, pixelGroupMap,
                                       time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
         sim$cohortData <- addnewcohort$cohortData
