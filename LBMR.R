@@ -806,10 +806,11 @@ WardDispersalSeeding <- function(sim) {
       }
       if (nrow(seedingData) > 0) {
         browser()
-        addnewcohort <- addNewCohorts(seedingData, cohortData = sim$cohortData, pixelGroupMap,
-                                      time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
-        sim$cohortData <- addnewcohort$cohortData
-        sim$pixelGroupMap <- addnewcohort$pixelGroupMap
+        sim$cohortData <- addNewCohorts(seedingData,
+                                        cohortData = sim$cohortData, pixelGroupMap,
+                                        time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
+        #sim$cohortData <- addnewcohort$cohortData
+        sim$pixelGroupMap <- pixelGroupMap
       }
     }
   }
