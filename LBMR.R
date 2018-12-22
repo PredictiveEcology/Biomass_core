@@ -613,8 +613,10 @@ NoDispersalSeeding <- function(sim) {
   }
 
   if (nrow(seedingData) > 0) {
-    outs <- addCohorts(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
-                       time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
+    outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
+                             time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
+                             firePixelTable = NULL,
+                             successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
     sim$pixelGroupMap <- outs$pixelGroupMap
   }
@@ -676,8 +678,10 @@ UniversalDispersalSeeding <- function(sim) {
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
   if (nrow(seedingData) > 0) {
-    outs <- addCohorts(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
-                       time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
+    outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
+                             time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
+                             firePixelTable = NULL,
+                             successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
     sim$pixelGroupMap <- outs$pixelGroupMap
   }
@@ -776,6 +780,11 @@ WardDispersalSeeding <- function(sim) {
       ##############################################
       # Run probability of establishment
       ##############################################
+      if (isTRUE(getOption("LandR.assertions"))) {
+        testCohortData(sim$cohortData, sim$pixelGroupMap)
+        seedData <- copy(seedingData)
+      }
+
       seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
       set(seedingData, NULL, "establishprob", NULL)
       if (P(sim)$calibrate == TRUE) {
@@ -788,8 +797,12 @@ WardDispersalSeeding <- function(sim) {
         sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, seedingData_summ))
       }
       if (nrow(seedingData) > 0) {
-        outs <- addCohorts(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
-                        time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion)
+        aaaa <<- 1
+        outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
+                        time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
+                        firePixelTable = NULL,
+                        successionTimestep = P(sim)$successionTimestep)
+
         sim$cohortData <- outs$cohortData
         sim$pixelGroupMap <- outs$pixelGroupMap
       }
@@ -1023,6 +1036,7 @@ Save <- function(sim) {
 
 CohortAgeReclassification <- function(sim) {
   if (time(sim) != 0) {
+
     sim$cohortData <- ageReclassification(cohortData = sim$cohortData,
                                           successionTimestep = P(sim)$successionTimestep,
                                           stage = "mainSimulation")
