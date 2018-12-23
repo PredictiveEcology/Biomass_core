@@ -19,5 +19,11 @@ ageReclassification <- function(cohortData, successionTimestep, stage) {
     cohortData <- cohortData[age >= successionTimestep + 2]
     cohortData <- rbindlist(list(cohortData, targetData))
   }
+  if (isTRUE(getOption("LandR.assertions"))) {
+    if (!identical(NROW(cohortData), NROW(unique(cohortData, by = c("pixelGroup", "speciesCode", "age", "B"))))) {
+      stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
+    }
+
+  }
   return(cohortData)
 }
