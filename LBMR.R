@@ -435,7 +435,7 @@ Init <- function(sim) {
     biomassTable <- na.omit(biomassTable)
     maxBiomass <- maxValue(sim$biomassMap)
     if (maxBiomass < 1e3) {
-      message(crayon::red("  Because biomassMap values are all below 1000, assuming that these should be\n",
+      message(crayon::green("  Because biomassMap values are all below 1000, assuming that these should be\n",
               "    converted to tonnes/ha by multiplying by 100"))
       biomassTable[, `:=`(biomass = biomass * 100)]
     }
