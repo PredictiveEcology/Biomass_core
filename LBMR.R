@@ -782,7 +782,6 @@ WardDispersalSeeding <- function(sim) {
       ##############################################
       if (isTRUE(getOption("LandR.assertions"))) {
         testCohortData(sim$cohortData, sim$pixelGroupMap)
-        seedData <- copy(seedingData)
       }
 
       seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
@@ -797,7 +796,6 @@ WardDispersalSeeding <- function(sim) {
         sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, seedingData_summ))
       }
       if (nrow(seedingData) > 0) {
-        aaaa <<- 1
         outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
                         time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
                         firePixelTable = NULL,
