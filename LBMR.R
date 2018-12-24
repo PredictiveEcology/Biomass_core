@@ -327,7 +327,6 @@ Init <- function(sim) {
 
   pixelGroupMap <- sim$initialCommunitiesMap
 
-
   names(pixelGroupMap) <- "pixelGroup"
 
   # Changed mechanism for active and inactive -- just use NA on ecoregionMap
