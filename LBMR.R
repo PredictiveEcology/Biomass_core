@@ -138,8 +138,6 @@ defineModule(sim, list(
                   desc = "Biomass map at each succession time step"),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
-    createsOutput("initialCommunitiesMap", "RasterLayer",
-                  desc = "initial community map that has mapcodes match initial community table"),
     createsOutput("lastFireYear", "numeric",
                   desc = "Year of the most recent fire year"),
     createsOutput("lastReg", "numeric",
@@ -315,6 +313,7 @@ Init <- function(sim) {
       speciesPresence,
       ecoregionGroup = as.factor(gsub("[[:alnum:]]*_[[:alnum:]]*_", "", mapcode)))] # strip off 2 parts -- speciesLayers & Age
     , by = c("communityGroup", "speciesCode", "age", "mapcode"))
+
 
   set(cohortData, NULL, "pixelGroup", cohortData$communityGroup)
   set(cohortData, NULL, "B", as.integer(0L))
