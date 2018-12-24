@@ -138,6 +138,8 @@ defineModule(sim, list(
                   desc = "Biomass map at each succession time step"),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
+    createsOutput("initialCommunities", "character",
+                 desc = "Because the initialCommunities object can be LARGE, it is saved to disk with this filename"),
     createsOutput("lastFireYear", "numeric",
                   desc = "Year of the most recent fire year"),
     createsOutput("lastReg", "numeric",
@@ -314,12 +316,18 @@ Init <- function(sim) {
       ecoregionGroup = as.factor(gsub("[[:alnum:]]*_[[:alnum:]]*_", "", mapcode)))] # strip off 2 parts -- speciesLayers & Age
     , by = c("communityGroup", "speciesCode", "age", "mapcode"))
 
+  # get it out of the way, saving it to disk, if needed
+  initialCommunitiesSaveFilePath <- file.path(outputPath(sim), "initialCommunities.rds")
+  saveRDS(sim$initialCommunities, file = initialCommunitiesSaveFilePath)
+  sim$initialCommunities <- initialCommunitiesSaveFilePath
 
   set(cohortData, NULL, "pixelGroup", cohortData$communityGroup)
   set(cohortData, NULL, "B", as.integer(0L))
   cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, speciesPresence)] # removed communityGroup column
 
   pixelGroupMap <- sim$initialCommunitiesMap
+
+
   names(pixelGroupMap) <- "pixelGroup"
 
   # Changed mechanism for active and inactive -- just use NA on ecoregionMap
