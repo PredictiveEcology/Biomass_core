@@ -886,7 +886,7 @@ summaryBySpecies <- function(sim) {
       "Average biomass by species" else ""
     Plot(plot2, title = title2, new = TRUE)
 
-    maxNpixels <- sum(!is.na(sim$rasterToMatchReporting))
+    maxNpixels <- sum(!is.na(sim$rasterToMatchReporting[]))
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
     plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
