@@ -1015,7 +1015,7 @@ plotAvgVegAttributes <- function(sim) {
     facet_wrap(~ Var2, scales = "free_y") +
     labs(x = "Year", y = "Average value")
 
-  Plot(plot1, title = c("Average biomass/ANPP"))
+  Plot(plot1, title = c("Average biomass/ANPP"), new = TRUE)
   return(invisible(sim))
 }
 
