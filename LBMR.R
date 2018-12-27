@@ -769,7 +769,7 @@ WardDispersalSeeding <- function(sim) {
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
                               reducedPixelGroupMap,
-                              maxPotentialsLength = 5e5,
+                              maxPotentialsLength = 1e5,
                               verbose = FALSE,
                               useParallel = P(sim)$.useParallel)
 
