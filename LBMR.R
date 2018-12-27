@@ -930,16 +930,14 @@ plotVegAttributesMaps <- function(sim) {
     raster::mask(sim$reproductionMap, sim$studyAreaReporting)
   }
 
-  objsToPlot <- list(Biomass = biomassMapForPlot,
-                     ANPP = ANPPMapForPlot,
-                     mortality = mortalityMapForPlot,
-                     reproduction = reproductionMapForPlot)
-
-  # The ones we want
-  sppEquiv <- sim$sppEquiv[!is.na(sim$sppEquiv[[P(sim)$sppEquivCol]]),]
-
-  objsToPlot <- objsToPlot[!sapply(objsToPlot, is.null)]
-  Plot(objsToPlot, new = TRUE) # not sure why, but errors if all 5 are put into one command
+  if (!is.null(biomassMapForPlot))
+    Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
+  if (!is.null(ANPPMapForPlot))
+    Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
+  if (!is.null(mortalityMapForPlot))
+    Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
+  if (!is.null(reproductionMapForPlot))
+    Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
 
   levs <- raster::levels(sim$vegTypeMap)[[1]]
   levelsName <- names(levs)[2]
