@@ -949,6 +949,9 @@ plotVegAttributesMaps <- function(sim) {
   ##  an NA where there is "Mixed".
   ## Other species in levs[[levelsName]] are already "Leading",
   ##  but it needs to be here in case it is not Leading in the future.
+  # The ones we want
+  sppEquiv <- sim$sppEquiv[!is.na(sim$sppEquiv[[P(sim)$sppEquivCol]]),]
+
   levsLeading <- equivalentName(levs[[levelsName]], sppEquiv, "Leading")
   hasOnlyMixedAsOther <- sum(is.na(levsLeading) == 1) &&
     levs[[levelsName]][is.na(levsLeading)] == "Mixed"
