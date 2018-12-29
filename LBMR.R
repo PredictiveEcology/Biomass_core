@@ -213,6 +213,8 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              sim <- WardDispersalSeeding(sim)
            } else stop("Undefined seed dispersal type!")
 
+           clearPlot(4)
+           clearPlot(5)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = 4)
          },
