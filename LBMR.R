@@ -849,12 +849,14 @@ summaryBySpecies <- function(sim) {
     sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
 
-  freqs <- table(na.omit(factorValues2(sim$vegTypeMap, sim$vegTypeMap[], att = 2)))
+  vtm <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
+  freqs <- table(na.omit(factorValues2(vtm, vtm[], att = 2)))
   tabl <- as.vector(freqs)
   summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)),
                                   leadingType = names(freqs),
                                   #freqs = freqs,
-                                  counts = tabl, stringsAsFactors = FALSE)
+                                  counts = tabl,
+                                  stringsAsFactors = FALSE)
 
   whMixedLeading <- which(summaryBySpecies1$leadingType == "Mixed")
   summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType,
