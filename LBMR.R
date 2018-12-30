@@ -310,7 +310,7 @@ Init <- function(sim) {
   cohortData <- unique(
     sim$initialCommunities[, .(
       speciesCode = as.factor(species),
-      age = as.integer(ceiling(as.numeric(age) / P(sim)$successionTimestep) *
+      age = asInteger(ceiling(asInteger(age) / P(sim)$successionTimestep) *
                          P(sim)$successionTimestep),
       communityGroup,
       mapcode,
@@ -324,7 +324,7 @@ Init <- function(sim) {
   sim$initialCommunities <- initialCommunitiesSaveFilePath
 
   set(cohortData, NULL, "pixelGroup", cohortData$communityGroup)
-  set(cohortData, NULL, "B", as.integer(0L))
+  set(cohortData, NULL, "B", 0L)
   cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, speciesPresence)] # removed communityGroup column
 
   pixelGroupMap <- sim$initialCommunitiesMap
@@ -425,7 +425,7 @@ Init <- function(sim) {
       sim$regenerationOutput <- data.table(seedingAlgorithm = character(), species = character(),
                                            Year = numeric(), numberOfReg = numeric())
     }
-    pixelAll <- cohortData[, .(uniqueSumB = as.integer(sum(B, na.rm = TRUE))), by = pixelGroup]
+    pixelAll <- cohortData[, .(uniqueSumB = asInteger(sum(B, na.rm = TRUE))), by = pixelGroup]
     if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
       simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
       #ANPPMap <- setValues(simulatedBiomassMap, 0L)
@@ -435,7 +435,7 @@ Init <- function(sim) {
     #}
 
     sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age,
-                                     B, mortality = 0, aNPPAct = 0)]
+                                     B, mortality = 0L, aNPPAct = 0L)]
   } else {
     message("Skipping spinup and using the sim$biomassMap as initial biomass values")
     biomassTable <- data.table(biomass = getValues(sim$biomassMap),
@@ -447,17 +447,17 @@ Init <- function(sim) {
               "    converted to tonnes/ha by multiplying by 100"))
       biomassTable[, `:=`(biomass = biomass * 100)]
     }
-    biomassTable <- biomassTable[, list(Bsum = as.integer(mean(biomass, na.rm = TRUE))),
+    biomassTable <- biomassTable[, list(Bsum = asInteger(mean(biomass, na.rm = TRUE))),
                                  by = pixelGroup]
     # Delete the B from cohortData -- it will be joined from biomassTable
     set(cohortData, NULL, "B", NULL)
     cohortData[, totalSpeciesPresence := sum(speciesPresence), by = "pixelGroup"]
     cohortData <- cohortData[biomassTable, on = "pixelGroup"]
-    cohortData[, B := as.integer(Bsum * speciesPresence / totalSpeciesPresence),
+    cohortData[, B := asInteger(Bsum * speciesPresence / totalSpeciesPresence),
                by = c("pixelGroup", "speciesCode")]
     sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age,
-                                     B, mortality = 0, aNPPAct = 0)]
-    pixelAll <- cohortData[, .(uniqueSumB = as.integer(sum(B, na.rm = TRUE))), by = pixelGroup]
+                                     B, mortality = 0L, aNPPAct = 0L)]
+    pixelAll <- cohortData[, .(uniqueSumB = asInteger(sum(B, na.rm = TRUE))), by = pixelGroup]
   }
 
   simulationOutput <- data.table(Ecoregion = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregion"),
@@ -471,8 +471,8 @@ Init <- function(sim) {
   ## above needs to be numeric because of integer overflow -- returned to integer in 2 lines
   simulationOutput <- setkey(simulationOutput, Ecoregion)[
     setkey(mod$activeEcoregionLength, Ecoregion), nomatch = 0]
-  sim$simulationOutput <- simulationOutput[, .(Ecoregion, NofCell, Year = as.integer(time(sim)),
-                                               Biomass = as.integer(Biomass/NofCell),
+  sim$simulationOutput <- simulationOutput[, .(Ecoregion, NofCell, Year = asInteger(time(sim)),
+                                               Biomass = asInteger(Biomass/NofCell),
                                                ANPP = 0L, Mortality = 0L, Regeneration = 0L)]
   sim$lastReg <- 0
   speciesEcoregion[, identifier := year > P(sim)$successionTimestep]
@@ -509,10 +509,10 @@ SummaryBGM <- function(sim) {
       subCohortData[, reproduction := 0]
     }
     subCohortData[is.na(reproduction), reproduction := 0L]
-    summarytable_sub <- subCohortData[, .(uniqueSumB = as.integer(sum(B, na.rm=TRUE)),
-                                          uniqueSumANPP = as.integer(sum(aNPPAct, na.rm=TRUE)),
-                                          uniqueSumMortality = as.integer(sum(mortality, na.rm=TRUE)),
-                                          uniqueSumRege = as.integer(mean(reproduction, na.rm = TRUE))),
+    summarytable_sub <- subCohortData[, .(uniqueSumB = asInteger(sum(B, na.rm=TRUE)),
+                                          uniqueSumANPP = asInteger(sum(aNPPAct, na.rm=TRUE)),
+                                          uniqueSumMortality = asInteger(sum(mortality, na.rm=TRUE)),
+                                          uniqueSumRege = asInteger(mean(reproduction, na.rm = TRUE))),
                                       by = pixelGroup]
 
     tempOutput <- setkey(ecoPixelgroup[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ],
@@ -538,10 +538,10 @@ SummaryBGM <- function(sim) {
                                                              Ecoregion), nomatch = 0]
   sim$simulationOutput <- rbindlist(list(sim$simulationOutput,
                                          tempOutput_All[, .(Ecoregion, NofCell, Year = as.integer(time(sim)),
-                                                            Biomass = as.integer(Biomass / NofCell),
-                                                            ANPP = as.integer(ANPP / NofCell),
-                                                            Mortality = as.integer(Mortality / NofCell),
-                                                            Regeneration = as.integer(Regeneration / NofCell))]))
+                                                            Biomass = asInteger(Biomass / NofCell),
+                                                            ANPP = asInteger(ANPP / NofCell),
+                                                            Mortality = asInteger(Mortality / NofCell),
+                                                            Regeneration = asInteger(Regeneration / NofCell))]))
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively.
   names(sim$pixelGroupMap) <- "pixelGroup"
   sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumB")
@@ -825,7 +825,7 @@ summaryRegen <- function(sim) {
     names(pixelGroupMap) <- "pixelGroup"
     # please note that the calculation of reproduction is based on successioinTime step interval,
     pixelAll <- sim$cohortData[age <= P(sim)$successionTimestep + 1,
-                               .(uniqueSumReproduction = as.integer(sum(B, na.rm = TRUE))),
+                               .(uniqueSumReproduction = asInteger(sum(B, na.rm = TRUE))),
                                by = pixelGroup]
     if (NROW(pixelAll) > 0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")

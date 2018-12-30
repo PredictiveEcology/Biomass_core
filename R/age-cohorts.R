@@ -9,7 +9,7 @@ ageReclassification <- function(cohortData, successionTimestep, stage) {
     # Squash multiple cohorts that regenerated within the successionTimestep
     #   into a single cohort
     targetData <- targetData[, .(ecoregionGroup = unique(ecoregionGroup),
-                                 age = successionTimestep + 1,
+                                 age = asInteger(successionTimestep + 1),
                                  B = sum(B, na.rm = TRUE),
                                  mortality = sum(mortality, na.rm = TRUE),
                                  aNPPAct = sum(aNPPAct, na.rm = TRUE)),
