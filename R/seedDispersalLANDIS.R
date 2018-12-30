@@ -298,8 +298,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
 
         for (y in seq_along(subSampList)) {
           curThreads <- getDTthreads()
-          if (P(sim)$.useParallel != curThreads) {
-            a <- data.table::setDTthreads(P(sim)$.useParallel)
+          if (useParallel != curThreads) {
+            a <- data.table::setDTthreads(useParallel)
             on.exit(data.table::setDTthreads(a))
           }
           allSeedsArrived[[y]] <- seedDispInnerFn(
