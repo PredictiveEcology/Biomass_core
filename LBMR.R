@@ -275,8 +275,23 @@ Init <- function(sim) {
   ##############################################
   # ecoregion
   ##############################################
+  browser()
   setDT(sim$ecoregion)
-  ecoregion <- sim$ecoregion[, ecoregionGroup := as.factor(ecoregion)]
+  if (getOption("LandR.assertions")) {
+    classes <- c("character", "factor")
+    names(classes) <- c("active", "ecoregionGroup")
+    test1 <- all(names(classes) %in% colnames(sim$ecoregion))
+    test2 <- all(sapply(seq(NCOL(sim$ecoregion[, names(classes), with = FALSE])),
+                    function(colNum) {
+                      is(sim$ecoregion[, names(classes)[colNum], with = FALSE][[1]],
+                         classes[colNum])
+                      }))
+    if (!test1 || !test2)
+      stop("sim$ecoregion should be a data.table with 2 columns: ",
+              paste(names(classes), collapse = ", "),
+           " ... of classes: ", paste(classes, collapse = ", "))
+  }
+  #ecoregion <- sim$ecoregion[, ecoregionGroup := as.factor(ecoregion)]
   #ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
 
   ##############################################
