@@ -4,9 +4,12 @@ defineModule(sim, list(
   name = "LBMR",
   description = "A fast and large landscape biomass succession model modified from LANDIS II",
   keywords = c("forest succession", "LANDIS II", "Biomass"),
-  authors = c(person(c("Yong"), "Luo", email = "Yong.Luo@canada.ca", role = c("aut", "cre")),
-              person(c("Eliot", "J", "B"), "McIntire", email = "Eliot.McIntire@canada.ca", role = c("aut", "cre")),
-              person(c("Jean"), "Marchal", email = "jean.d.marchal@gmail.com", role = c("aut", "cre"))),
+  authors = c(
+    person("Yong", "Luo", email = "yluo1@lakeheadu.ca", role = "aut"),
+    person(c("Eliot", "J", "B"), "McIntire", email = "eliot.mcintire@canada.ca", role = c("aut", "cre")),
+    person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb"),
+    person(c("Alex", "M."), "Chubaty", email = "achubaty@friresearch.ca", role = "ctb")
+  ),
   childModules = character(0),
   version = list(SpaDES.core = "0.2.3.9009", numeric_version("1.3.0.9001")),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
