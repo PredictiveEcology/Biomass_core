@@ -286,7 +286,7 @@ Init <- function(sim) {
   if (getOption("LandR.assertions")) {
     classes <- c("character", "factor")
     names(classes) <- c("active", "ecoregionGroup")
-    test1 <- all(names(classes) %in% colnames(sim$ecoregion))
+  ecoregion <- sim$ecoregion#[, ecoregionGroup := as.factor(ecoregion)]
     test2 <- all(sapply(seq(NCOL(sim$ecoregion[, names(classes), with = FALSE])),
                     function(colNum) {
                       is(sim$ecoregion[, names(classes)[colNum], with = FALSE][[1]],
@@ -319,25 +319,26 @@ Init <- function(sim) {
   ##############################################
   setDT(sim$minRelativeB) # make a data.table
   # join to get ecoregionGroup column
-  sim$minRelativeB <- sim$minRelativeB[unique(speciesEcoregion[, .(ecoregion, ecoregionGroup)]),
-                                         on = "ecoregion", nomatch = 0]
+  sim$minRelativeB <- sim$minRelativeB[unique(speciesEcoregion[, .(ecoregionGroup)]),
+                                         on = "ecoregionGroup", nomatch = 0]
 
   #############################################
   # Create cohortData from communities
   #############################################
   active_ecoregion <- setkey(ecoregion[active == "yes", .(k = 1, ecoregionGroup)], k) # not sure what k is doing here
 
-  sim$initialCommunities[, communityGroup := as.integer(mapcode)]
-  cohortData <- unique(
-    sim$initialCommunities[, .(
-      speciesCode = as.factor(species),
-      age = asInteger(ceiling(asInteger(age) / P(sim)$successionTimestep) *
-                         P(sim)$successionTimestep),
-      communityGroup,
-      mapcode,
-      speciesPresence,
-      ecoregionGroup = as.factor(gsub("[[:alnum:]]*_[[:alnum:]]*_", "", mapcode)))] # strip off 2 parts -- speciesLayers & Age
-    , by = c("communityGroup", "speciesCode", "age", "mapcode"))
+  if (FALSE) {
+    sim$initialCommunities # [, communityGroup := as.integer(mapcode)]
+    cohortData <- unique(
+      sim$initialCommunities[, .(
+        speciesCode = as.factor(species),
+        age = asInteger(ceiling(asInteger(age) / P(sim)$successionTimestep) *
+                          P(sim)$successionTimestep),
+        pixelGroup,
+        # mapcode,
+        speciesPresence,
+        ecoregionGroup = as.factor(gsub("[[:alnum:]]*_[[:alnum:]]*_", "", mapcode)))] # strip off 2 parts -- speciesLayers & Age
+      , by = c("communityGroup", "speciesCode", "age", "mapcode"))
 
   # get it out of the way, saving it to disk, if needed
   initialCommunitiesSaveFilePath <- file.path(outputPath(sim), "initialCommunities.rds")
@@ -358,11 +359,14 @@ Init <- function(sim) {
   sim$inactivePixelIndex <- which(ecoregionMapNAs) # store this for future use
 
   # Keeps track of the length of the ecoregion
-  mod$activeEcoregionLength <- data.table(Ecoregion = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregion"),
+  mod$activeEcoregionLength <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
+                                                                    getValues(sim$ecoregionMap),
+                                                                    att = "ecoregionGroup"),
                                           pixelIndex = 1:ncell(sim$ecoregionMap))[
-                                            Ecoregion %in% active_ecoregion$ecoregionGroup,
-                                            .(NofCell = length(pixelIndex)), by = Ecoregion]
-  cohortData <- cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)[sim$activePixelIndex]),]
+                                            ecoregionGroup %in% active_ecoregion$ecoregionGroup,
+                                            .(NofCell = length(pixelIndex)), by = "ecoregionGroup"]
+
+  cohortData <- sim$cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)[sim$activePixelIndex]),]
   cohortData <- sim$updateSpeciesEcoregionAttributes(speciesEcoregion = speciesEcoregion,
                                                      time = round(time(sim)),
                                                      cohortData = cohortData)
@@ -503,6 +507,7 @@ Init <- function(sim) {
   sim$speciesEcoregion <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))[
     , ':='(year = year - min(year), identifier = NULL)]
   sim$lastFireYear <- "noFire"
+
   sim$pixelGroupMap <- pixelGroupMap
   return(invisible(sim))
 }
@@ -516,11 +521,11 @@ SummaryBGM <- function(sim) {
   pixelGroups[, groups := cut(temID, breaks = cutpoints,
                               labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
                               include.lowest = TRUE)]
-  ecoPixelgroup <- data.table(Ecoregion = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregion"),
+  ecoPixelgroup <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregionGroup"),
                               pixelGroup = getValues(sim$pixelGroupMap),
                               pixelIndex = 1:ncell(sim$ecoregionMap))[
                                 , .(NofPixelGroup = length(pixelIndex)),
-                                by = c("Ecoregion", "pixelGroup")]
+                                by = c("ecoregionGroup", "pixelGroup")]
 
   for (subgroup in paste("Group",  1:(length(cutpoints) - 1), sep = "")) {
     subCohortData <- sim$cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
@@ -554,11 +559,11 @@ SummaryBGM <- function(sim) {
                                        ANPP = sum(uniqueSumANPP * NofPixelGroup),
                                        Mortality = sum(uniqueSumMortality * NofPixelGroup),
                                        Regeneration = sum(uniqueSumRege * NofPixelGroup)),
-                                   by = Ecoregion]
-  tempOutput_All <- setkey(tempOutput_All, Ecoregion)[setkey(mod$activeEcoregionLength,
-                                                             Ecoregion), nomatch = 0]
+                                   by = ecoregionGroup]
+  tempOutput_All <- setkey(tempOutput_All, ecoregionGroup)[setkey(mod$activeEcoregionLength,
+                                                             ecoregionGroup), nomatch = 0]
   sim$simulationOutput <- rbindlist(list(sim$simulationOutput,
-                                         tempOutput_All[, .(Ecoregion, NofCell, Year = as.integer(time(sim)),
+                                         tempOutput_All[, .(ecoregionGroup, NofCell, Year = as.integer(time(sim)),
                                                             Biomass = asInteger(Biomass / NofCell),
                                                             ANPP = asInteger(ANPP / NofCell),
                                                             Mortality = asInteger(Mortality / NofCell),
