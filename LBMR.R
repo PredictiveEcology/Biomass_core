@@ -29,9 +29,12 @@ defineModule(sim, list(
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
-    defineParameter("overrideSpinup", "logical", FALSE, NA, NA,
-                    paste("Should biomass be inserted from sim$biomassMap (an input), rather than",
-                          "derived using spinUp procedures. spinUp uses Age as the driver, so biomass",
+    defineParameter("initialBiomassSource", "character", "SpinUp", NA, NA,
+                    paste("Currently, there are three options: 'SpinUp', 'cohortData', 'biomassMap'. ",
+                          "If 'SpinUp', it will derive biomass by running spinup derived from Landis-II.",
+                          "If 'cohortData', it will be taken from the 'cohortData' object, i.e., it is already correct, by cohort.",
+                          "If 'biomassMap', it will be taken from sim$biomassMap, divided across species using sim$speciesLayers percent cover values",
+                          "`SpinUp`` uses sim$ageMap as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
                           "about biomass, unless this is set to TRUE, and a sim$biomassMap is supplied")),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
@@ -410,8 +413,12 @@ Init <- function(sim) {
   # #   pixelGroupMap[inactivePixelIndex] <- -1L
   # # }
 
-  #sim <- cacheSpinUpFunction(sim, cachePath = outputPath(sim))
-  if (!isTRUE(P(sim)$overrideSpinup)) { # negate the TRUE to allow for default to be this, even if NULL or NA
+  initialBiomassSourcePoss <- c('spinUp', 'cohortData', 'biomassMap')
+  if (!any(grepl(P(sim)$initialBiomassSource, initialBiomassSourcePoss))) {
+    stop("P(sim)$initialBiomassSource must be one of: ", paste(initialBiomassSourcePoss, collapse = ", "))
+
+  }
+  if (grepl("spin", tolower(P(sim)$initialBiomassSource))) { # negate the TRUE to allow for default to be this, even if NULL or NA
     message("Running spinup")
     spinupstage <- Cache(spinUp,
                          fnList = list(
@@ -443,19 +450,8 @@ Init <- function(sim) {
       sim$regenerationOutput <- data.table(seedingAlgorithm = character(), species = character(),
                                            Year = numeric(), numberOfReg = numeric())
     }
-    pixelAll <- cohortData[, .(uniqueSumB = asInteger(sum(B, na.rm = TRUE))), by = pixelGroup]
-    if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
-      simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
-      #ANPPMap <- setValues(simulatedBiomassMap, 0L)
-      #mortalityMap <- setValues(simulatedBiomassMap, 0L)
-      #reproductionMap <- setValues(pixelGroupMap, 0L)
-    }
-    #}
-
-    sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age,
-                                     B, mortality = 0L, aNPPAct = 0L)]
-  } else {
-    message("Skipping spinup and using the sim$biomassMap as initial biomass values")
+  } else if (grepl("biomassmap", tolower(P(sim)$initialBiomassSource))) {
+    message("Skipping spinup and using the sim$biomassMap * SpeciesLayers pct as initial biomass values")
     biomassTable <- data.table(biomass = getValues(sim$biomassMap),
                           pixelGroup = getValues(pixelGroupMap))
     biomassTable <- na.omit(biomassTable)
@@ -465,6 +461,9 @@ Init <- function(sim) {
               "    converted to tonnes/ha by multiplying by 100"))
       biomassTable[, `:=`(biomass = biomass * 100)]
     }
+
+    # In case there are non-identical biomasses in each pixelGroup -- this should be irrelevant with
+    #   improved Boreal_LBMRDataPrep.R (Jan 6, 2019 -- Eliot)
     biomassTable <- biomassTable[, list(Bsum = asInteger(mean(biomass, na.rm = TRUE))),
                                  by = pixelGroup]
     # Delete the B from cohortData -- it will be joined from biomassTable
@@ -473,23 +472,27 @@ Init <- function(sim) {
     cohortData <- cohortData[biomassTable, on = "pixelGroup"]
     cohortData[, B := asInteger(Bsum * speciesPresence / totalSpeciesPresence),
                by = c("pixelGroup", "speciesCode")]
-    sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age,
-                                     B, mortality = 0L, aNPPAct = 0L)]
-    pixelAll <- cohortData[, .(uniqueSumB = asInteger(sum(B, na.rm = TRUE))), by = pixelGroup]
+  }
+  pixelAll <- cohortData[, .(uniqueSumB = asInteger(sum(B, na.rm = TRUE))), by = pixelGroup]
+  if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
+    simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
-  simulationOutput <- data.table(Ecoregion = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregion"),
+  sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age,
+                                   B, mortality = 0L, aNPPAct = 0L)]
+  simulationOutput <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap),
+                                                           att = "ecoregionGroup"),
                                  pixelGroup = getValues(pixelGroupMap),
                                  pixelIndex = 1:ncell(sim$ecoregionMap))[
-                                   , .(NofPixel = length(pixelIndex)), by = c("Ecoregion", "pixelGroup")]
+                                   , .(NofPixel = length(pixelIndex)), by = c("ecoregionGroup", "pixelGroup")]
 
   simulationOutput <- setkey(simulationOutput, pixelGroup)[
     setkey(pixelAll, pixelGroup), nomatch = 0][
-      , .(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = Ecoregion] ## NOTE:
+      , .(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = ecoregionGroup] ## NOTE:
   ## above needs to be numeric because of integer overflow -- returned to integer in 2 lines
-  simulationOutput <- setkey(simulationOutput, Ecoregion)[
-    setkey(mod$activeEcoregionLength, Ecoregion), nomatch = 0]
-  sim$simulationOutput <- simulationOutput[, .(Ecoregion, NofCell, Year = asInteger(time(sim)),
+  simulationOutput <- setkey(simulationOutput, ecoregionGroup)[
+    setkey(mod$activeEcoregionLength, ecoregionGroup), nomatch = 0]
+  sim$simulationOutput <- simulationOutput[, .(ecoregionGroup, NofCell, Year = asInteger(time(sim)),
                                                Biomass = asInteger(Biomass/NofCell),
                                                ANPP = 0L, Mortality = 0L, Regeneration = 0L)]
   sim$lastReg <- 0
