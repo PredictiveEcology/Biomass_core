@@ -274,44 +274,44 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 Init <- function(sim) {
   # A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks
   mod$cutpoint <- 1e10
+
+  LandR::assertERGs(sim$ecoregionMap, sim$cohortData, sim$speciesEcoregion,
+                    sim$minRelativeB)
   ##############################################
   # Prepare individual objects
   ##############################################
-
   ##############################################
   # ecoregion
   ##############################################
-  browser()
   setDT(sim$ecoregion)
-  if (getOption("LandR.assertions")) {
-    classes <- c("character", "factor")
-    names(classes) <- c("active", "ecoregionGroup")
+  LandR::assertColumns(sim$ecoregion, c(active = "character", ecoregionGroup = "factor"))
+
+
   ecoregion <- sim$ecoregion#[, ecoregionGroup := as.factor(ecoregion)]
-    test2 <- all(sapply(seq(NCOL(sim$ecoregion[, names(classes), with = FALSE])),
-                    function(colNum) {
-                      is(sim$ecoregion[, names(classes)[colNum], with = FALSE][[1]],
-                         classes[colNum])
-                      }))
-    if (!test1 || !test2)
-      stop("sim$ecoregion should be a data.table with 2 columns: ",
-              paste(names(classes), collapse = ", "),
-           " ... of classes: ", paste(classes, collapse = ", "))
-  }
-  #ecoregion <- sim$ecoregion[, ecoregionGroup := as.factor(ecoregion)]
   #ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
 
   ##############################################
   # species
   ##############################################
-  species <- data.table(sim$species)[, speciesCode := as.factor(species)]
+  species <- setDT(sim$species)[, speciesCode := as.factor(species)]
+  LandR::assertColumns(sim$species,
+                       c(species = "character", Area = "factor", longevity = "integer",
+                         sexualmature = "integer", shadetolerance = "integer", firetolerance = "integer",
+                         seeddistance_eff = "integer", seeddistance_max = "integer", resproutprob = "numeric",
+                         resproutage_min = "integer", resproutage_max = "integer", postfireregen = "factor",
+                         leaflongevity = "integer", wooddecayrate = "numeric", mortalityshape = "integer",
+                         growthcurve = "integer", leafLignin = "numeric", hardsoft = "factor",
+                         speciesCode = "factor"))
   sim$species <- setkey(species, speciesCode)
 
   ##############################################
   # speciesEcoregion
   ##############################################
-  speciesEcoregion <- sim$speciesEcoregion[sim$species[, .(species, speciesCode)],
-                                                on = "species", nomatch = 0]
-  speciesEcoregion[, ecoregionGroup := as.factor(ecoregion)]
+  LandR::assertColumns(sim$speciesEcoregion,
+                       c(ecoregionGroup = "factor", speciesCode = "factor", establishprob = "numeric",
+                         maxB = "integer", maxANPP = "numeric"))
+  #speciesEcoregion[, ecoregionGroup := as.factor(ecoregion)]
+  speciesEcoregion <- sim$speciesEcoregion#[sim$species[, .(species, speciesCode)],
   speciesEcoregion <- setkey(speciesEcoregion, ecoregionGroup, speciesCode)
 
   ##############################################
@@ -340,16 +340,18 @@ Init <- function(sim) {
         ecoregionGroup = as.factor(gsub("[[:alnum:]]*_[[:alnum:]]*_", "", mapcode)))] # strip off 2 parts -- speciesLayers & Age
       , by = c("communityGroup", "speciesCode", "age", "mapcode"))
 
-  # get it out of the way, saving it to disk, if needed
-  initialCommunitiesSaveFilePath <- file.path(outputPath(sim), "initialCommunities.rds")
-  saveRDS(sim$initialCommunities, file = initialCommunitiesSaveFilePath)
-  sim$initialCommunities <- initialCommunitiesSaveFilePath
+    # get it out of the way, saving it to disk, if needed
+    initialCommunitiesSaveFilePath <- file.path(outputPath(sim), "initialCommunities.rds")
+    saveRDS(sim$initialCommunities, file = initialCommunitiesSaveFilePath)
+    sim$initialCommunities <- initialCommunitiesSaveFilePath
 
-  set(cohortData, NULL, "pixelGroup", cohortData$communityGroup)
-  set(cohortData, NULL, "B", 0L)
-  cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, speciesPresence)] # removed communityGroup column
+    set(cohortData, NULL, "pixelGroup", cohortData$communityGroup)
+    set(cohortData, NULL, "B", 0L)
+    cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, speciesPresence)] # removed communityGroup column
 
-  pixelGroupMap <- sim$initialCommunitiesMap
+    pixelGroupMap <- sim$initialCommunitiesMap
+  }
+  pixelGroupMap <- sim$pixelGroupMap
 
   names(pixelGroupMap) <- "pixelGroup"
 
