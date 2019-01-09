@@ -816,9 +816,7 @@ WardDispersalSeeding <- function(sim) {
       ##############################################
       # Run probability of establishment
       ##############################################
-      if (isTRUE(getOption("LandR.assertions"))) {
-        testCohortData(sim$cohortData, sim$pixelGroupMap)
-      }
+      testCohortData(sim$cohortData, sim$pixelGroupMap)
 
       seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
       set(seedingData, NULL, "establishprob", NULL)
