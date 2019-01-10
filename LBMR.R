@@ -523,7 +523,8 @@ SummaryBGM <- function(sim) {
   pixelGroups[, groups := cut(temID, breaks = cutpoints,
                               labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
                               include.lowest = TRUE)]
-  ecoPixelgroup <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregionGroup"),
+  ecoPixelgroup <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap),
+                                                             att = "ecoregionGroup"),
                               pixelGroup = getValues(sim$pixelGroupMap),
                               pixelIndex = 1:ncell(sim$ecoregionMap))[
                                 , .(NofPixelGroup = length(pixelIndex)),
@@ -675,7 +676,8 @@ UniversalDispersalSeeding <- function(sim) {
   siteShade <- data.table(calcSiteShade(time = round(time(sim)), sim$cohortData,
                                         sim$speciesEcoregion, sim$minRelativeB))
   activePixelGroup <- unique(data.table(pixelGroup = getValues(sim$pixelGroupMap)[tempActivePixel],
-                                        ecoregionGroup = sim$ecoregionMap[tempActivePixel]),
+                                        ecoregionGroup = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap),
+                                                                       att = "ecoregionGroup")[tempActivePixel]),
                              by = "pixelGroup")
   siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
   siteShade[is.na(siteShade), siteShade := 0]
@@ -805,7 +807,8 @@ WardDispersalSeeding <- function(sim) {
 
     rm(seedReceive, seedSource)
     if (NROW(seedingData) > 0) {
-      seedingData[, ecoregionGroup := factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap), att = "ecoregion")[seedingData$pixelIndex]]
+      seedingData[, ecoregionGroup := factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap),
+                                                    att = "ecoregionGroup")[seedingData$pixelIndex]]
       seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
       specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
       specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
