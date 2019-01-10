@@ -20,7 +20,7 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
     bAMterm1[is.na(sumB), sumB := 0]
     bAMterm1[is.na(prevMortality), prevMortality := 0]
     bAMterm1 <- unique(bAMterm1, by = c("pixelGroup", "ecoregionGroup"))
-    set(cohortData, NULL, "prevMortality", NULL)
+    #set(cohortData, NULL, "prevMortality", NULL)
   } else {
     bAMterm1 <- unique(cohortData, by = c("pixelGroup", "ecoregionGroup"))[
       , .(pixelGroup, ecoregionGroup)][

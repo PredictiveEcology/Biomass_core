@@ -868,7 +868,9 @@ summaryRegen <- function(sim) {
 }
 
 summaryBySpecies <- function(sim) {
-  thisPeriod <- sim$cohortData[, list(year = time(sim), BiomassBySpecies = mean(B)), by = speciesCode]
+  thisPeriod <- sim$cohortData[, list(year = time(sim),
+                                      BiomassBySpecies = mean(B, na.rm = TRUE)),
+                               by = speciesCode]
   if (is.null(sim$summaryBySpecies)) {
     sim$summaryBySpecies <- thisPeriod
   } else {
