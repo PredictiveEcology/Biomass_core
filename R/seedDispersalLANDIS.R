@@ -146,7 +146,8 @@ WardFast <- expression(ifelse(cellSize <= effDist, {
 #' }
 LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = WardFast,
                        b = 0.01, k = 0.95, plot.it = FALSE, maxPotentialsLength = 1e3,
-                       verbose = FALSE, useParallel, ...) {
+                       verbose = getOption("LandR.verbose", TRUE),
+                       useParallel, ...) {
     cellSize <- res(pixelGroupMap) %>% unique()
     if (length(cellSize) > 1) {
       ## check for equal cell sizes that "aren't" due to floating point error
@@ -244,7 +245,9 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
       activeCell = split(seedRcvOrig, splitFactor),
       potentials = split(potentialsOrig, splitFactor)
     ))
-    message("  Seed dispersal: starting ", length(subSampList), " groups")
+
+    if (verbose > 0)
+      message("  Seed dispersal: starting ", length(subSampList), " groups")
     if (is.logical(useParallel) | is.numeric(useParallel)) {
       if (isTRUE(useParallel)) {
         numCores <- min(length(subSampList), parallel::detectCores() - 1)
@@ -269,7 +272,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
         } else {
           cl <- parallel::makeForkCluster(numCores)
         }
-        message("Running seed dispersal in parallel on ", length(cl), " clusters")
+        if (verbose > 0)
+          message("Running seed dispersal in parallel on ", length(cl), " clusters")
         seedsArrived <- parallel::parLapply(cl, subSampList,
                                             function(y)
                                               seedDispInnerFn(
@@ -294,7 +298,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
         parallel::stopCluster(cl)
       } else {
         allSeedsArrived <- list()
-        message("  Seed dispersal should be using more than 100% CPU because of data.table openMP use")
+        if (verbose > 0)
+          message("  Seed dispersal should be using more than 100% CPU because of data.table openMP use")
 
         for (y in seq_along(subSampList)) {
           curThreads <- getDTthreads()
@@ -321,7 +326,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
             pointDistance
           )
         }
-        message("    End of using more than 100% CPU because of data.table openMP use")
+        if (verbose > 0)
+          message("    End of using more than 100% CPU because of data.table openMP use")
         seedsArrived <- rbindlist(allSeedsArrived)
       }
     } else if (is(useParallel, "cluster")) {
@@ -345,7 +351,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
           envir = environment()
         )
       }
-      message("Running seed dispersal in parallel on ", length(useParallel), " clusters")
+      if (verbose > 0)
+        message("Running seed dispersal in parallel on ", length(useParallel), " clusters")
       reqdPkgs <- unlist(depends(sim)@dependencies[[current(sim)[["moduleName"]]]]@reqdPkgs)
       parallel::clusterExport(useParallel, c("reqdPkgs"), envir = environment())
       clusterEvalQ(cl = useParallel, {
@@ -509,8 +516,10 @@ WardEqn <- function(dis, cellSize, effDist, maxDist, k, b) {
 seedDispInnerFn <- function(activeCell, potentials, n, speciesRcvPool, sc,
                             pixelGroupMap, ultimateMaxDist, cellSize, xysAll,
                             dtSrc, dispersalFn, k, b, lociReturn, speciesComm,
-                            pointDistance) {
-  message("  Dispersal for pixels ", min(activeCell), " to ", max(activeCell))
+                            pointDistance, verbose = getOption("LandR.verbose", TRUE)) {
+  if (verbose > 0)
+    message("  Dispersal for pixels ", min(activeCell), " to ", max(activeCell))
+
   seedsArrived <- data.table(
     fromInit = integer(),
     speciesCode = integer(),
@@ -607,7 +616,8 @@ seedDispInnerFn <- function(activeCell, potentials, n, speciesRcvPool, sc,
       }
     }
     midTime <- Sys.time()
-    message("    Dispersal for ", n, " m from source. Elapsed time: ", midTime - startTime)
+    if (verbose > 1)
+      message("    Dispersal for ", n, " m from source. Elapsed time: ", midTime - startTime)
     n <- n + cellSize
     # refresh so that "to" cells become new "from" cells
     activeCell <- potentials[, to]

@@ -123,6 +123,9 @@ defineModule(sim, list(
     expectsInput("sufficientLight", "data.frame",
                  desc = "table defining how the species with different shade tolerance respond to stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
+    expectsInput("treedFirePixelTableSinceLastDisp", "data.table",
+                 desc = "3 columns: pixelIndex, pixelGroup, and burnTime. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding pixelGroup and time it occurred",
+                 sourceURL = ""),
     expectsInput("updateSpeciesAttributes", "function",
                  desc = "function to add/update species attributes in species cohort table"),
     expectsInput("updateSpeciesEcoregionAttributes", "function",
@@ -176,8 +179,10 @@ defineModule(sim, list(
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   if (is.numeric(P(sim)$.useParallel)) {
     a <- data.table::setDTthreads(P(sim)$.useParallel)
-    message("LBMR should be using >100% CPU")
-    if (data.table::getDTthreads() == 1L) crayon::red(message("Only using 1 thread."))
+    if (getOption("LandR.verbose", TRUE) > 0) {
+      message("LBMR should be using >100% CPU")
+      if (data.table::getDTthreads() == 1L) crayon::red(message("Only using 1 thread."))
+    }
     on.exit(setDTthreads(a))
   }
   switch(eventType,
@@ -211,13 +216,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            }
          },
          Dispersal = {
-           if (P(sim)$seedingAlgorithm == "noDispersal") {
-             sim <- NoDispersalSeeding(sim)
-           } else if (P(sim)$seedingAlgorithm == "universalDispersal") {
-             sim <- UniversalDispersalSeeding(sim)
-           } else if (P(sim)$seedingAlgorithm == "wardDispersal") {
-             sim <- WardDispersalSeeding(sim)
-           } else stop("Undefined seed dispersal type!")
+           sim <- Dispersal(sim)
 
            clearPlot(4)
            clearPlot(5)
@@ -271,7 +270,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   return(invisible(sim))
 }
 
-Init <- function(sim) {
+Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   # A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks
   mod$cutpoint <- 1e10
 
@@ -425,7 +424,8 @@ Init <- function(sim) {
 
   }
   if (grepl("spin", tolower(P(sim)$initialBiomassSource))) { # negate the TRUE to allow for default to be this, even if NULL or NA
-    message("Running spinup")
+    if (verbose > 0)
+      message("Running spinup")
     spinupstage <- Cache(spinUp,
                          fnList = list(
                            calculateAgeMortality = sim$calculateAgeMortality,
@@ -457,14 +457,17 @@ Init <- function(sim) {
                                            Year = numeric(), numberOfReg = numeric())
     }
   } else if (grepl("biomassmap", tolower(P(sim)$initialBiomassSource))) {
-    message("Skipping spinup and using the sim$biomassMap * SpeciesLayers pct as initial biomass values")
+    if (verbose > 0)
+      message("Skipping spinup and using the sim$biomassMap * SpeciesLayers pct as initial biomass values")
     biomassTable <- data.table(biomass = getValues(sim$biomassMap),
                           pixelGroup = getValues(pixelGroupMap))
     biomassTable <- na.omit(biomassTable)
     maxBiomass <- maxValue(sim$biomassMap)
     if (maxBiomass < 1e3) {
-      message(crayon::green("  Because biomassMap values are all below 1000, assuming that these should be\n",
-              "    converted to tonnes/ha by multiplying by 100"))
+      if (verbose > 0){
+        message(crayon::green("  Because biomassMap values are all below 1000, assuming that these should be\n",
+                              "    converted to tonnes/ha by multiplying by 100"))
+      }
       biomassTable[, `:=`(biomass = biomass * 100)]
     }
 
@@ -601,14 +604,34 @@ SummaryBGM <- function(sim) {
   return(invisible(sim))
 }
 
-NoDispersalSeeding <- function(sim) {
-  if (sim$lastFireYear == round(time(sim))) { # if current year is both fire year and succession year
-    # find new active pixel that remove successful postfire regeneration
-    # since this is on site regeneration, all the burnt pixels can not seeding
-    tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$firePixelTable$pixelIndex)]
-  } else {
-    tempActivePixel <- sim$activePixelIndex
-  }
+Dispersal <- function(sim) {
+  treedFirePixelTableCurYr <- sim$treedFirePixelTableSinceLastDisp[burnTime == time(sim)]
+  pixelsFromCurYrBurn <- treedFirePixelTableCurYr$pixelIndex
+  tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% pixelsFromCurYrBurn)]
+  # tempInactivePixel <- c(sim$inactivePixelIndex, pixelsFromCurYrBurn)
+
+
+  if (P(sim)$seedingAlgorithm == "noDispersal") {
+    sim <- NoDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
+  } else if (P(sim)$seedingAlgorithm == "universalDispersal") {
+    sim <- UniversalDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
+  } else if (P(sim)$seedingAlgorithm == "wardDispersal") {
+    sim <- WardDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
+  } else stop("Undefined seed dispersal type!")
+
+  sim$treedFirePixelTableSinceLastDisp <- treedFirePixelTableCurYr
+  return(invisible(sim))
+}
+
+
+NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
+  # if (sim$lastFireYear == round(time(sim))) { # if current year is both fire year and succession year
+  #   # find new active pixel that remove successful postfire regeneration
+  #   # since this is on site regeneration, all the burnt pixels can not seeding
+  #   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$treedFirePixelTableSinceLastDisp$pixelIndex)]
+  # } else {
+  #   tempActivePixel <- sim$activePixelIndex
+  # }
   sim$cohortData <- sim$calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = time(sim),
                                       successionTimestep = P(sim)$successionTimestep)
   sim$cohortData <- setkey(sim$cohortData, speciesCode)[
@@ -652,7 +675,7 @@ NoDispersalSeeding <- function(sim) {
   if (nrow(seedingData) > 0) {
     outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
                              time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
-                             firePixelTable = NULL,
+                             treedFirePixelTableSinceLastDisp = NULL,
                              successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
     sim$pixelGroupMap <- outs$pixelGroupMap
@@ -662,12 +685,12 @@ NoDispersalSeeding <- function(sim) {
   return(invisible(sim))
 }
 
-UniversalDispersalSeeding <- function(sim) {
-  if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
-    tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
-  } else {
-    tempActivePixel <- sim$activePixelIndex
-  }
+UniversalDispersalSeeding <- function(sim, tempActivePixel) {
+  # if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
+  #   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
+  # } else {
+  #   tempActivePixel <- sim$activePixelIndex
+  # }
   sim$cohortData <- sim$calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
   species <- sim$species
@@ -718,7 +741,7 @@ UniversalDispersalSeeding <- function(sim) {
   if (nrow(seedingData) > 0) {
     outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
                              time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
-                             firePixelTable = NULL,
+                             treedFirePixelTableSinceLastDisp = NULL,
                              successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
     sim$pixelGroupMap <- outs$pixelGroupMap
@@ -727,12 +750,16 @@ UniversalDispersalSeeding <- function(sim) {
   return(invisible(sim))
 }
 
-WardDispersalSeeding <- function(sim) {
-  if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
-    tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$firePixelTable$pixelIndex)]
-  } else {
-    tempActivePixel <- sim$activePixelIndex
-  }
+WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
+                                 verbose = getOption("LandR.verbose", TRUE)) {
+  #if (sim$lastFireYear == round(time(sim))) {
+    # the current year is both fire year and succession year
+    # tempActivePixel <-
+    #   sim$activePixelIndex[!(sim$activePixelIndex %in%
+    #                            sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]$pixelIndex)]
+  #} else {
+  #  tempActivePixel <- sim$activePixelIndex
+  #}
   sim$cohortData <- sim$calculateSumB(cohortData = sim$cohortData,
                                   lastReg = sim$lastReg, simuTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
@@ -746,7 +773,8 @@ WardDispersalSeeding <- function(sim) {
   # Seed source cells:
   # 1. Select only sexually mature cohorts, then
   # 2. collapse to pixelGroup by species, i.e,. doesn't matter that there is >1 cohort of same species
-  sim$cohortData <- sim$species[, c("speciesCode", "sexualmature")][sim$cohortData, on = "speciesCode"]
+  sim$cohortData <- sim$species[, c("speciesCode", "sexualmature")][sim$cohortData,
+                                                                    on = "speciesCode"]
   # sim$cohortData <- setkey(sim$cohortData, speciesCode)[setkey(sim$species[, .(speciesCode, sexualmature)],
   #                                                              speciesCode),
   #                                                       nomatch = 0]
@@ -774,27 +802,29 @@ WardDispersalSeeding <- function(sim) {
       , .(pixelGroup, speciesCode, seeddistance_eff, seeddistance_max)]
     setkey(seedReceive, speciesCode)
 
+    # rm ones that had successful serotiny or resprouting
+    seedReceive <- seedReceive[!sim$cohortData[age == 1L], on = c("pixelGroup", "speciesCode")]
+
     # 3. Remove any species from the seedSource that couldn't regeneration anywhere on the map due to insufficient light
     #    (info contained within seedReceive)
     # this is should be a inner join, needs to specify the nomatch=0, nomatch = NA is default that sugest the full joint.
     seedSource <- seedSource[speciesCode %in% unique(seedReceive$speciesCode),]
 
     # Add inSituReceived data.table from the inSitu seeding function or event
-    inSituReceived <- data.table(fromInit = numeric(), species = character())
+    inSituReceived <- data.table(fromInit = integer(), species = character())
 
-    # it could be more effecient if sim$pixelGroupMap is reduced map by removing the pixels that have successful postdisturbance regeneration
-    # and the inactive pixels
+    # it could be more effecient if sim$pixelGroupMap is reduced map by removing the pixels that have
+    # successful postdisturbance regeneration and the inactive pixels
     # how to subset the reducedmap
-    if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
-      inactivePixelIndex <- c(sim$inactivePixelIndex, sim$firePixelTable$pixelIndex)
-    } else {
-      inactivePixelIndex <- sim$inactivePixelIndex
-    }
-    if (length(inactivePixelIndex) > 0) {
-      reducedPixelGroupMap <- sim$pixelGroupMap
-      reducedPixelGroupMap[inactivePixelIndex] <- NA
-    } else {
-      reducedPixelGroupMap <- sim$pixelGroupMap
+    #browser()
+    # if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
+    #   inactivePixelIndex <- c(sim$inactivePixelIndex, sim$treedFirePixelTableSinceLastDisp$pixelIndex)
+    # } else {
+    #   inactivePixelIndex <- sim$inactivePixelIndex
+    # }
+    reducedPixelGroupMap <- sim$pixelGroupMap
+    if (length(pixelsFromCurYrBurn) > 0) {
+      reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
     }
 
     seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
@@ -804,6 +834,12 @@ WardDispersalSeeding <- function(sim) {
                               maxPotentialsLength = 1e5,
                               verbose = FALSE,
                               useParallel = P(sim)$.useParallel)
+
+    if (getOption("LandR.verbose", TRUE) > 0) {
+      emptyForestPixels <- sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]
+      seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
+      message(blue("Of", NROW(emptyForestPixels), "burned and empty pixels: Num pixels where seeds arrived:", NROW(seedsArrivedPixels)))
+    }
 
     rm(seedReceive, seedSource)
     if (NROW(seedingData) > 0) {
@@ -819,7 +855,7 @@ WardDispersalSeeding <- function(sim) {
       ##############################################
       # Run probability of establishment
       ##############################################
-      testCohortData(sim$cohortData, sim$pixelGroupMap)
+      assertCohortData(sim$cohortData, sim$pixelGroupMap)
 
       seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
       set(seedingData, NULL, "establishprob", NULL)
@@ -833,9 +869,10 @@ WardDispersalSeeding <- function(sim) {
         sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, seedingData_summ))
       }
       if (nrow(seedingData) > 0) {
-        outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
+        outs <- updateCohortData(seedingData, cohortData = sim$cohortData,
+                                 pixelGroupMap = sim$pixelGroupMap,
                         time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
-                        firePixelTable = NULL,
+                        treedFirePixelTableSinceLastDisp = NULL,
                         successionTimestep = P(sim)$successionTimestep)
 
         sim$cohortData <- outs$cohortData
@@ -844,6 +881,7 @@ WardDispersalSeeding <- function(sim) {
     }
   }
   sim$lastReg <- round(time(sim))
+  sim$tree
   return(invisible(sim))
 }
 
@@ -1091,7 +1129,8 @@ CohortAgeReclassification <- function(sim) {
 .inputObjects <- function(sim) {
   cacheTags <- c(currentModule(sim), "function:.inputObjects")
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
-  message(currentModule(sim), ": using dataPath '", dPath, "'.")
+  if (getOption("LandR.verbose", TRUE) > 0)
+    message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   ######################################################
   ## Check GM functions have been supplied
@@ -1119,13 +1158,15 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("studyArea", sim)) {
-    message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
+    if (getOption("LandR.verbose", TRUE) > 0)
+      message("'studyArea' was not provided by user. Using a polygon in southwestern Alberta, Canada,")
 
     sim$studyArea <- randomStudyArea(seed = 1234)
   }
 
   if (!suppliedElsewhere("studyAreaReporting", sim)) {
-    message("'studyAreaReporting' was not provided by user. Using the same as 'studyArea'.")
+    if (getOption("LandR.verbose", TRUE) > 0)
+      message("'studyAreaReporting' was not provided by user. Using the same as 'studyArea'.")
     sim$studyAreaReporting <- sim$studyArea
   }
 
@@ -1303,6 +1344,11 @@ CohortAgeReclassification <- function(sim) {
       stop("If you provide sppColors, you MUST also provide sppEquiv")
     sim$sppColors <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
                                newVals = "Mixed", palette = "Accent")
+  }
+
+  if (!suppliedElsewhere(sim$treedFirePixelTableSinceLastDisp)) {
+    sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(), pixelGroup = integer(),
+                                                       burnTime = numeric())
   }
 
   return(invisible(sim))
