@@ -816,7 +816,6 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     # it could be more effecient if sim$pixelGroupMap is reduced map by removing the pixels that have
     # successful postdisturbance regeneration and the inactive pixels
     # how to subset the reducedmap
-    #browser()
     # if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
     #   inactivePixelIndex <- c(sim$inactivePixelIndex, sim$treedFirePixelTableSinceLastDisp$pixelIndex)
     # } else {
@@ -832,13 +831,16 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
                               species = sim$species,
                               reducedPixelGroupMap,
                               maxPotentialsLength = 1e5,
+                              successionTimestep = P(sim)$successionTimestep,
                               verbose = FALSE,
                               useParallel = P(sim)$.useParallel)
 
     if (getOption("LandR.verbose", TRUE) > 0) {
       emptyForestPixels <- sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]
       seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
-      message(blue("Of", NROW(emptyForestPixels), "burned and empty pixels: Num pixels where seeds arrived:", NROW(seedsArrivedPixels)))
+      message(blue("Of", NROW(emptyForestPixels),
+                   "burned and empty pixels: Num pixels where seeds arrived:",
+                   NROW(seedsArrivedPixels)))
     }
 
     rm(seedReceive, seedSource)
@@ -858,6 +860,13 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
       assertCohortData(sim$cohortData, sim$pixelGroupMap)
 
       seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
+      if (getOption("LandR.verbose", TRUE) > 0) {
+        seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
+        message(blue("Of", NROW(emptyForestPixels),
+                     "burned and empty pixels: Num pixels where seedlings established:",
+                     NROW(seedsArrivedPixels)))
+      }
+
       set(seedingData, NULL, "establishprob", NULL)
       if (P(sim)$calibrate == TRUE) {
         seedingData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
@@ -881,7 +890,7 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     }
   }
   sim$lastReg <- round(time(sim))
-  sim$tree
+  sim$treedFirePixelTableSinceLastDisp <-
   return(invisible(sim))
 }
 

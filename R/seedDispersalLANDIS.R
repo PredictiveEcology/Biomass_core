@@ -103,6 +103,7 @@ WardFast <- expression(ifelse(cellSize <= effDist, {
 #' the effective distance (eg., 0.95)
 #'
 #' @param maxPotentialsLength numeric, number of unique pixels to treat simultaneously. Smaller reduces memory use.
+#' @param successionTimestep integer. The time in timeunits between succession (i.e., dispersal) events.
 #'
 #' @param verbose Logical. Whether a somewhat verbose output to screen occurs. For debugging.
 #'
@@ -146,6 +147,7 @@ WardFast <- expression(ifelse(cellSize <= effDist, {
 #' }
 LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = WardFast,
                        b = 0.01, k = 0.95, plot.it = FALSE, maxPotentialsLength = 1e3,
+                       successionTimestep,
                        verbose = getOption("LandR.verbose", TRUE),
                        useParallel, ...) {
     cellSize <- res(pixelGroupMap) %>% unique()
@@ -292,7 +294,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
                                                 b,
                                                 lociReturn,
                                                 speciesComm,
-                                                pointDistance
+                                                pointDistance,
+                                                successionTimestep = successionTimestep
                                               )) %>%
           rbindlist()
         parallel::stopCluster(cl)
@@ -323,7 +326,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
             b,
             lociReturn,
             speciesComm,
-            pointDistance
+            pointDistance,
+            successionTimestep = successionTimestep
           )
         }
         if (verbose > 0)
@@ -376,7 +380,8 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
                                                 b,
                                                 lociReturn,
                                                 speciesComm,
-                                                pointDistance
+                                                pointDistance,
+                                                successionTimestep = successionTimestep
                                               )) %>%
         rbindlist()
     } else {
@@ -513,10 +518,12 @@ WardEqn <- function(dis, cellSize, effDist, maxDist, k, b) {
 # h[seedingData[species=="querrubr",pixelIndex]] <- 1
 # Plot(h)
 
+#' @inheritParams LANDISDisp
 seedDispInnerFn <- function(activeCell, potentials, n, speciesRcvPool, sc,
                             pixelGroupMap, ultimateMaxDist, cellSize, xysAll,
                             dtSrc, dispersalFn, k, b, lociReturn, speciesComm,
-                            pointDistance, verbose = getOption("LandR.verbose", TRUE)) {
+                            pointDistance, successionTimestep,
+                            verbose = getOption("LandR.verbose", TRUE)) {
   if (verbose > 0)
     message("  Dispersal for pixels ", min(activeCell), " to ", max(activeCell))
 
@@ -595,8 +602,19 @@ seedDispInnerFn <- function(activeCell, potentials, n, speciesRcvPool, sc,
 
         # back to Ward
         # Don't include the ones that were already, calculate probability
-        potentialsWithSeedDT[dis == 0, dispersalProb := 1]
-        potentialsWithSeedDT[dis != 0, dispersalProb := eval(dispersalFn)]
+        whDisZero <- which(potentialsWithSeedDT$dis == 0)
+        if (length(whDisZero)) {
+          potentialsWithSeedDT[whDisZero, dispersalProb := 1]
+          potentialsWithSeedDT[-whDisZero, dispersalProb := eval(dispersalFn)]
+        } else {
+          potentialsWithSeedDT[ , dispersalProb := eval(dispersalFn)]
+        }
+
+        # Eliot -- Jan 11, 2019 -- adjust based on successionTimestep --
+        #  seeds can disperse every year in reality, their probabilities must be scaled
+        #  to timestep
+        potentialsWithSeedDT[, dispersalProb := 1 - (1 - dispersalProb) ^ successionTimestep]
+
         potentialsWithSeedDT <- potentialsWithSeedDT[
           , .(receivesSeeds = runif(nr) < dispersalProb, fromInit, speciesCode)]
         receivedSeeds <- potentialsWithSeedDT[
