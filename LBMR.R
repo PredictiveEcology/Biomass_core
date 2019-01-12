@@ -890,7 +890,6 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     }
   }
   sim$lastReg <- round(time(sim))
-  sim$treedFirePixelTableSinceLastDisp <-
   return(invisible(sim))
 }
 
