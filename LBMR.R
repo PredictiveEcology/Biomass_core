@@ -859,9 +859,10 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
       ##############################################
       assertCohortData(sim$cohortData, sim$pixelGroupMap)
 
-      seedingData <- seedingData[establishprob >= runif(nrow(seedingData), 0, 1), ]
+      seedingData <- seedingData[runif(nrow(seedingData)) <= establishprob, ]
       if (getOption("LandR.verbose", TRUE) > 0) {
-        seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
+        seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0],
+                                     by = "pixelIndex")
         message(blue("Of", NROW(emptyForestPixels),
                      "burned and empty pixels: Num pixels where seedlings established:",
                      NROW(seedsArrivedPixels)))
