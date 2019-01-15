@@ -655,10 +655,14 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   pixelsInfor <- setkey(pixelsInfor[pixelGroup %in% unique(seedingData$pixelGroup)], pixelGroup)
   seedingData <- setkey(seedingData, pixelGroup)[pixelsInfor, allow.cartesian = TRUE]
   seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
-  specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
-  specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
-                                                  .(speciesCode, establishprob, ecoregionGroup)],
-                               ecoregionGroup, speciesCode)
+
+  specieseco_current <- speciesEcoregionLatestYear(
+    speciesEcoregion[,.(speciesCode, establishprob, ecoregionGroup)],
+    round(time(sim)))
+  specieseco_current <- setkey(specieseco_current, ecoregionGroup, speciesCode)
+
+  #specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
+  # specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
   seedingData <- seedingData[specieseco_current, nomatch = 0]
   seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, c("establishprob"), NULL)
@@ -721,10 +725,16 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
   pixelsInfor <- setkey(pixelsInfor[pixelGroup %in% unique(seedingData$pixelGroup)], pixelGroup)
   seedingData <- setkey(seedingData, pixelGroup)[pixelsInfor, allow.cartesian = TRUE]
   seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
-  specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
-  specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
-                                                  .(speciesCode, establishprob, ecoregionGroup)],
-                               ecoregionGroup, speciesCode)
+
+  specieseco_current <- speciesEcoregionLatestYear(
+    speciesEcoregion[,.(speciesCode, establishprob, ecoregionGroup)],
+    round(time(sim)))
+  specieseco_current <- setkeyv(specieseco_current, "ecoregionGroup", "speciesCode")
+
+  #specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
+  #specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
+  #                                                .(speciesCode, establishprob, ecoregionGroup)],
+  #                             ecoregionGroup, speciesCode)
   seedingData <- seedingData[specieseco_current, nomatch = 0]
   seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, "establishprob", NULL)
@@ -848,10 +858,16 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
       seedingData[, ecoregionGroup := factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap),
                                                     att = "ecoregionGroup")[seedingData$pixelIndex]]
       seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
-      specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
-      specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
-                                                      .(speciesCode, establishprob, ecoregionGroup)],
-                                   ecoregionGroup, speciesCode)
+
+      specieseco_current <- speciesEcoregionLatestYear(
+        speciesEcoregion[,.(speciesCode, establishprob, ecoregionGroup)],
+        round(time(sim)))
+      specieseco_current <- setkeyv(specieseco_current, "ecoregionGroup", "speciesCode")
+
+      # specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
+      # specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
+      #                                                 .(speciesCode, establishprob, ecoregionGroup)],
+      #                              ecoregionGroup, speciesCode)
       seedingData <- seedingData[specieseco_current, nomatch = 0]
 
       ##############################################
