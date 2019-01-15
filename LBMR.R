@@ -60,7 +60,7 @@ defineModule(sim, list(
     defineParameter(".useParallel", "ANY", parallel::detectCores(),
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to data.table::setDTthreads",
-                                 "If TRUE, it will be passed to parallell:makeCluster,",
+                                 "If TRUE, it will be passed to parallel:makeCluster,",
                                  "and if a cluster object, it will be passed to parallel::parClusterApplyB"))
   ),
   inputObjects = bind_rows(
