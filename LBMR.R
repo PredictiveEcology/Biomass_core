@@ -596,8 +596,6 @@ SummaryBGM <- function(sim) {
                                           P(sim)$vegLeadingProportion,
                                           colors = sim$sppColors,
                                           unitTest = TRUE)
-
-
   }
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
@@ -610,7 +608,6 @@ Dispersal <- function(sim) {
   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% pixelsFromCurYrBurn)]
   # tempInactivePixel <- c(sim$inactivePixelIndex, pixelsFromCurYrBurn)
 
-
   if (P(sim)$seedingAlgorithm == "noDispersal") {
     sim <- NoDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
   } else if (P(sim)$seedingAlgorithm == "universalDispersal") {
@@ -622,7 +619,6 @@ Dispersal <- function(sim) {
   sim$treedFirePixelTableSinceLastDisp <- treedFirePixelTableCurYr
   return(invisible(sim))
 }
-
 
 NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   # if (sim$lastFireYear == round(time(sim))) { # if current year is both fire year and succession year

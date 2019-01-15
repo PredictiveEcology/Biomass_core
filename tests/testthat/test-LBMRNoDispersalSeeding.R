@@ -6,7 +6,7 @@ test_that("test no dispersal seeding algorithm",{
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
                      LBMR=list( .saveInitialTime=NA))
-  
+
   pixelGroupMap <- raster(xmn=50,xmx=50+100*100,
                         ymn=50,ymx=50+100*100,
                         res=c(100,100), val=1)
@@ -31,8 +31,8 @@ test_that("test no dispersal seeding algorithm",{
   sufficientLight <- read.csv("~/GitHub/nrv-succession/code blitz succession/modeltesting-data/sufficientLight.csv",
                               header=T,stringsAsFactor=FALSE)
   seedingAlgorithm <- "noDispersal"
-  cohortData <- data.table(pixelGroup = 1, ecoregionGroup = 1L, 
-                           speciesCode = 1, age = 31, B = 17016L, 
+  cohortData <- data.table(pixelGroup = 1, ecoregionGroup = 1L,
+                           speciesCode = 1, age = 31, B = 17016L,
                            mortality = 737.567259958833, aNPPAct = 1079.75965551773)
   objects <- list("pixelGroupMap"=pixelGroupMap,
                   "speciesEcoregion"=speciesEcoregion,
@@ -48,7 +48,7 @@ test_that("test no dispersal seeding algorithm",{
                   "regenerationOutput"=regenerationOutput,
                   "cohortData"=cohortData)
   mySim <- simInit(times=list(start=0, end=2),
-                   params=parameters, 
+                   params=parameters,
                    modules=module,
                    objects=objects,
                    paths=path)
@@ -56,13 +56,12 @@ test_that("test no dispersal seeding algorithm",{
   if(exists("LBMRNoDispersalSeeding")){
     output <- LBMRNoDispersalSeeding(mySim)
   } else {
-    output <- mySim$LBMRNoDispersalSeeding(mySim) 
+    output <- mySim$LBMRNoDispersalSeeding(mySim)
   }
   output <- output$regenerationOutput$numberOfReg
   expect_equal(output,2196)
   rm(output)
-  
-  
+
   rm(lastFireYear)
   lastFireYear <- 0
   firePixelTable <- data.table(pixelIndex = 1:1000)
@@ -82,7 +81,7 @@ test_that("test no dispersal seeding algorithm",{
                   "cohortData"=cohortData,
                   "firePixelTable" = firePixelTable)
   mySim <- simInit(times=list(start=0, end=2),
-                   params=parameters, 
+                   params=parameters,
                    modules=module,
                    objects=objects,
                    paths=path)
@@ -90,17 +89,17 @@ test_that("test no dispersal seeding algorithm",{
   if(exists("LBMRNoDispersalSeeding")){
     output <- LBMRNoDispersalSeeding(mySim)
   } else {
-    output <- mySim$LBMRNoDispersalSeeding(mySim) 
+    output <- mySim$LBMRNoDispersalSeeding(mySim)
   }
   output <- output$regenerationOutput$numberOfReg
   expect_equal(output,1962)
   rm(output)
-  
-  
+
+
   establishprobs <- seq(0.01,1,length=10)
   for(establishprob in establishprobs){
-    cohortData <- data.table(pixelGroup = 1, ecoregionGroup = 1L, 
-                             speciesCode = 1, age = 31, B = 17016L, 
+    cohortData <- data.table(pixelGroup = 1, ecoregionGroup = 1L,
+                             speciesCode = 1, age = 31, B = 17016L,
                              mortality = 737.567259958833, aNPPAct = 1079.75965551773)
     speciesEcoregion[, establishprob := establishprob]
     species[,shadetolerance := 3]
@@ -118,7 +117,7 @@ test_that("test no dispersal seeding algorithm",{
                     "regenerationOutput"=regenerationOutput,
                     "cohortData"=cohortData)
     mySim <- simInit(times=list(start=0, end=2),
-                     params=parameters, 
+                     params=parameters,
                      modules=module,
                      objects=objects,
                      paths=path)
@@ -130,9 +129,9 @@ test_that("test no dispersal seeding algorithm",{
     output <- output$regenerationOutput$numberOfReg
     expect_equal(output,numeric(0))
   }
-  
-  
-  
-  
-  
+
+
+
+
+
 })
