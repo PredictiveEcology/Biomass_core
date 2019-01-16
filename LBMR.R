@@ -860,9 +860,9 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
       seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
 
       specieseco_current <- speciesEcoregionLatestYear(
-        sim$speciesEcoregion[,.(year, speciesCode, establishprob, ecoregionGroup)],
+        sim$speciesEcoregion[, .(year, speciesCode, establishprob, ecoregionGroup)],
         round(time(sim)))
-      specieseco_current <- setkeyv(specieseco_current, "ecoregionGroup", "speciesCode")
+      specieseco_current <- setkeyv(specieseco_current, c("ecoregionGroup", "speciesCode"))
 
       # specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
       # specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
