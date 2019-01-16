@@ -653,7 +653,7 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
 
   specieseco_current <- speciesEcoregionLatestYear(
-    sim$speciesEcoregion[,.(speciesCode, establishprob, ecoregionGroup)],
+    speciesEcoregion[,.(year, speciesCode, establishprob, ecoregionGroup)],
     round(time(sim)))
   specieseco_current <- setkey(specieseco_current, ecoregionGroup, speciesCode)
 
@@ -723,7 +723,7 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
   seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
 
   specieseco_current <- speciesEcoregionLatestYear(
-    sim$speciesEcoregion[,.(speciesCode, establishprob, ecoregionGroup)],
+    speciesEcoregion[,.(year, speciesCode, establishprob, ecoregionGroup)],
     round(time(sim)))
   specieseco_current <- setkeyv(specieseco_current, "ecoregionGroup", "speciesCode")
 
@@ -856,7 +856,7 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
       seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
 
       specieseco_current <- speciesEcoregionLatestYear(
-        sim$speciesEcoregion[,.(speciesCode, establishprob, ecoregionGroup)],
+        speciesEcoregion[,.(year, speciesCode, establishprob, ecoregionGroup)],
         round(time(sim)))
       specieseco_current <- setkeyv(specieseco_current, "ecoregionGroup", "speciesCode")
 
