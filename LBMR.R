@@ -729,7 +729,7 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
   specieseco_current <- speciesEcoregionLatestYear(
     sim$speciesEcoregion[,.(year, speciesCode, establishprob, ecoregionGroup)],
     round(time(sim)))
-  specieseco_current <- setkeyv(specieseco_current, "ecoregionGroup", "speciesCode")
+  specieseco_current <- setkeyv(specieseco_current, c("ecoregionGroup", "speciesCode"))
 
   #specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
   #specieseco_current <- setkey(specieseco_current[year == max(specieseco_current$year),
