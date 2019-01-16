@@ -274,8 +274,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   # A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks
   mod$cutpoint <- 1e10
 
-  LandR::assertERGs(sim$ecoregionMap, sim$cohortData, sim$speciesEcoregion,
-                    sim$minRelativeB)
+  LandR::assertERGs(sim$ecoregionMap, sim$cohortData, sim$speciesEcoregion, sim$minRelativeB)
   ##############################################
   # Prepare individual objects
   ##############################################
@@ -284,7 +283,6 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ##############################################
   setDT(sim$ecoregion)
   LandR::assertColumns(sim$ecoregion, c(active = "character", ecoregionGroup = "factor"))
-
 
   ecoregion <- sim$ecoregion#[, ecoregionGroup := as.factor(ecoregion)]
   #ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
@@ -295,20 +293,22 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   species <- setDT(sim$species)[, speciesCode := as.factor(species)]
   LandR::assertColumns(sim$species,
                        c(species = "character", Area = "factor", longevity = "integer",
-                         sexualmature = "integer", shadetolerance = "integer", firetolerance = "integer",
-                         seeddistance_eff = "integer", seeddistance_max = "integer", resproutprob = "numeric",
-                         resproutage_min = "integer", resproutage_max = "integer", postfireregen = "factor",
-                         leaflongevity = "integer", wooddecayrate = "numeric", mortalityshape = "integer",
-                         growthcurve = "integer", leafLignin = "numeric", hardsoft = "factor",
-                         speciesCode = "factor"))
+                         sexualmature = "integer", shadetolerance = "integer",
+                         firetolerance = "integer", seeddistance_eff = "integer",
+                         seeddistance_max = "integer", resproutprob = "numeric",
+                         resproutage_min = "integer", resproutage_max = "integer",
+                         postfireregen = "factor", leaflongevity = "integer",
+                         wooddecayrate = "numeric", mortalityshape = "integer",
+                         growthcurve = "integer", leafLignin = "numeric",
+                         hardsoft = "factor", speciesCode = "factor"))
   sim$species <- setkey(species, speciesCode)
 
   ##############################################
   # speciesEcoregion
   ##############################################
   LandR::assertColumns(sim$speciesEcoregion,
-                       c(ecoregionGroup = "factor", speciesCode = "factor", establishprob = "numeric",
-                         maxB = "integer", maxANPP = "numeric"))
+                       c(ecoregionGroup = "factor", speciesCode = "factor",
+                         establishprob = "numeric", maxB = "integer", maxANPP = "numeric"))
   #speciesEcoregion[, ecoregionGroup := as.factor(ecoregion)]
   speciesEcoregion <- sim$speciesEcoregion#[sim$species[, .(species, speciesCode)],
   speciesEcoregion <- setkey(speciesEcoregion, ecoregionGroup, speciesCode)
@@ -464,7 +464,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     biomassTable <- na.omit(biomassTable)
     maxBiomass <- maxValue(sim$biomassMap)
     if (maxBiomass < 1e3) {
-      if (verbose > 0){
+      if (verbose > 0) {
         message(crayon::green("  Because biomassMap values are all below 1000, assuming that these should be\n",
                               "    converted to tonnes/ha by multiplying by 100"))
       }
@@ -489,11 +489,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age,
                                    B, mortality = 0L, aNPPAct = 0L)]
-  simulationOutput <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap),
-                                                           att = "ecoregionGroup"),
+  simulationOutput <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
+                                                                getValues(sim$ecoregionMap),
+                                                                att = "ecoregionGroup"),
                                  pixelGroup = getValues(pixelGroupMap),
                                  pixelIndex = 1:ncell(sim$ecoregionMap))[
-                                   , .(NofPixel = length(pixelIndex)), by = c("ecoregionGroup", "pixelGroup")]
+                                   , .(NofPixel = length(pixelIndex)),
+                                   by = c("ecoregionGroup", "pixelGroup")]
 
   simulationOutput <- setkey(simulationOutput, pixelGroup)[
     setkey(pixelAll, pixelGroup), nomatch = 0][
@@ -521,12 +523,14 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 SummaryBGM <- function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup),
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = mod$cutpoint), max(pixelGroups$temID))))
+  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = mod$cutpoint),
+                             max(pixelGroups$temID))))
   if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints + 1)}
   pixelGroups[, groups := cut(temID, breaks = cutpoints,
                               labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
                               include.lowest = TRUE)]
-  ecoPixelgroup <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap),
+  ecoPixelgroup <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
+                                                             getValues(sim$ecoregionMap),
                                                              att = "ecoregionGroup"),
                               pixelGroup = getValues(sim$pixelGroupMap),
                               pixelIndex = 1:ncell(sim$ecoregionMap))[
@@ -882,12 +886,13 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
 
       set(seedingData, NULL, "establishprob", NULL)
       if (P(sim)$calibrate == TRUE) {
-        seedingData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
-                                            numberOfReg = length(pixelIndex)),
-                                        by = speciesCode]
-        seedingData_summ <- setkey(seedingData_summ, speciesCode)[setkey(sim$species[, .(species,speciesCode)], speciesCode),
-                                                                  nomatch = 0][, .(species, seedingAlgorithm,
-                                                                                   Year, numberOfReg)]
+        seedingData_summ <- seedingData[
+          , .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
+              numberOfReg = length(pixelIndex)),
+          by = speciesCode]
+        seedingData_summ <- setkey(seedingData_summ, speciesCode)[
+          setkey(sim$species[, .(species,speciesCode)], speciesCode), nomatch = 0][
+            , .(species, seedingAlgorithm, Year, numberOfReg)]
         sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, seedingData_summ))
       }
       if (nrow(seedingData) > 0) {
