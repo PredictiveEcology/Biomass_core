@@ -172,7 +172,8 @@ defineModule(sim, list(
                   desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
     createsOutput("spinUpCache", "logical", desc = ""),
     createsOutput("spinupOutput", "data.table", desc = ""),
-    createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species")
+    createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species"),
+    createsOutput("summaryBySpecies1", "data.table", desc = "Pixel summaries by species used for plotting and reporting.")
   )
 ))
 
