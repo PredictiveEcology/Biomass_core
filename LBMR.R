@@ -172,7 +172,8 @@ defineModule(sim, list(
                   desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
     createsOutput("spinUpCache", "logical", desc = ""),
     createsOutput("spinupOutput", "data.table", desc = ""),
-    createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species")
+    createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species"),
+    createsOutput("summaryBySpecies1", "data.table", desc = "Pixel summaries by species used for plotting and reporting.")
   )
 ))
 
@@ -183,7 +184,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
       message("LBMR should be using >100% CPU")
       if (data.table::getDTthreads() == 1L) crayon::red(message("Only using 1 thread."))
     }
-    on.exit(setDTthreads(a))
+    on.exit(data.table::setDTthreads(a), add = TRUE)
   }
   switch(eventType,
          init = {
@@ -291,7 +292,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   # species
   ##############################################
   species <- setDT(sim$species)[, speciesCode := as.factor(species)]
-  LandR::assertColumns(sim$species,
+  LandR::assertColumns(species,
                        c(species = "character", Area = "factor", longevity = "integer",
                          sexualmature = "integer", shadetolerance = "integer",
                          firetolerance = "integer", seeddistance_eff = "integer",
@@ -299,7 +300,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                          resproutage_min = "integer", resproutage_max = "integer",
                          postfireregen = "factor", leaflongevity = "integer",
                          wooddecayrate = "numeric", mortalityshape = "integer",
-                         growthcurve = "integer", leafLignin = "numeric",
+                         growthcurve = "numeric", leafLignin = "numeric",
                          hardsoft = "factor", speciesCode = "factor"))
   sim$species <- setkey(species, speciesCode)
 
