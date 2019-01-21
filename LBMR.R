@@ -292,7 +292,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   # species
   ##############################################
   species <- setDT(sim$species)[, speciesCode := as.factor(species)]
-  LandR::assertColumns(sim$species,
+  LandR::assertColumns(species,
                        c(species = "character", Area = "factor", longevity = "integer",
                          sexualmature = "integer", shadetolerance = "integer",
                          firetolerance = "integer", seeddistance_eff = "integer",
@@ -300,7 +300,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                          resproutage_min = "integer", resproutage_max = "integer",
                          postfireregen = "factor", leaflongevity = "integer",
                          wooddecayrate = "numeric", mortalityshape = "integer",
-                         growthcurve = "integer", leafLignin = "numeric",
+                         growthcurve = "numeric", leafLignin = "numeric",
                          hardsoft = "factor", speciesCode = "factor"))
   sim$species <- setkey(species, speciesCode)
 
