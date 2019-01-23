@@ -80,12 +80,12 @@ defineModule(sim, list(
     expectsInput("ecoregionMap", "RasterLayer",
                  desc = "ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table",
                  sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.gis"),
-    expectsInput("initialCommunities", "data.table",
-                 desc = "initial community table",
-                 sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.txt"),
-    expectsInput("initialCommunitiesMap", "RasterLayer",
-                 desc = "initial community map that has mapcodes match initial community table",
-                 sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
+    # expectsInput("initialCommunities", "data.table",
+    #              desc = "initial community table",
+    #              sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.txt"),
+    # expectsInput("initialCommunitiesMap", "RasterLayer",
+    #              desc = "initial community map that has mapcodes match initial community table",
+    #              sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
@@ -1197,80 +1197,88 @@ CohortAgeReclassification <- function(sim) {
     sim$studyAreaReporting <- sim$studyArea
   }
 
-  if (!suppliedElsewhere("initialCommunities", sim)) {
-    maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
-    initialCommunities <- Cache(prepInputs,
-                                url = extractURL("initialCommunities"),
-                                targetFile = "initial-communities.txt",
-                                destinationPath = dPath,
-                                fun = "utils::read.table", #purge = 7,
-                                fill = TRUE, row.names = NULL,
-                                sep = "",
-                                blank.lines.skip = TRUE,
-                                col.names = c("species", paste("age", 1:(maxcol - 1), sep = "")),
-                                stringsAsFactors = FALSE,
-                                overwrite = TRUE)
-    # correct the typo in the original txt
-    initialCommunities[14, 1:4] <- initialCommunities[14, 2:5]
+  if (!suppliedElsewhere("pixelGroupMap")) {
+    stop("Currently, pixelGroupMap is a required input. Please use a module, such as",
+         "Boreal_LBMRDataPrep to create an initial pixelGroupMap")
 
-    initialCommunities <- data.table(initialCommunities)
-    initialCommunities <- cbind(data.table(mapcode = 1:nrow(initialCommunities),
-                                           description = NA), initialCommunities)
-    initialCommunities <- initialCommunities[species != "LandisData",]
-    cutRows <- grep(">>", initialCommunities$species)
-    for (i in cutRows) {
-      initialCommunities[i,
-                         desc := paste(initialCommunities[i, 3:maxcol, with = FALSE],
-                                       collapse = " ")]
-    }
-
-    initialCommunities[, rowN := 1:nrow(initialCommunities)]
-    initialCommunities[, ':='(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
-                                            labels = initialCommunities[cutRows + 1,]$age1),
-                              description = cut(rowN, breaks = c(cutRows, max(rowN)),
-                                                labels = initialCommunities[cutRows,]$desc))]
-    initialCommunities <- initialCommunities[!c(cutRows, cutRows + 1), ][, ':='(desc = NULL, rowN = NULL)]
-    initialCommunities[, ':='(description = gsub(">>", "", description),
-                              mapcode = as.integer(as.character(mapcode)))]
-
-    initialCommunities <- data.table(initialCommunities[, 1:3, with = FALSE],
-                                     initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
-
-    ## rename species for compatibility across modules (Genu_spe)
-    initialCommunities$species1 <- as.character(substring(initialCommunities$species, 1, 4))
-    initialCommunities$species2 <- as.character(substring(initialCommunities$species, 5, 7))
-    initialCommunities[, ':='(species = paste0(toupper(substring(species1, 1, 1)),
-                                               substring(species1, 2, 4), "_", species2))]
-
-    initialCommunities[, ':='(species1 = NULL, species2 = NULL)]
-
-    sim$initialCommunities <- initialCommunities
-    rm(cutRows, i, maxcol)
   }
+  if (FALSE) { # not using this -- Eliot Jan 22, 2019 -- use pixelGroupMap and pixelGroups instead
+    if (!suppliedElsewhere("initialCommunities", sim)) {
+      maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
+      initialCommunities <- Cache(prepInputs,
+                                  url = extractURL("initialCommunities"),
+                                  targetFile = "initial-communities.txt",
+                                  destinationPath = dPath,
+                                  fun = "utils::read.table", #purge = 7,
+                                  fill = TRUE, row.names = NULL,
+                                  sep = "",
+                                  blank.lines.skip = TRUE,
+                                  col.names = c("species", paste("age", 1:(maxcol - 1), sep = "")),
+                                  stringsAsFactors = FALSE,
+                                  overwrite = TRUE)
+      # correct the typo in the original txt
+      initialCommunities[14, 1:4] <- initialCommunities[14, 2:5]
 
+      initialCommunities <- data.table(initialCommunities)
+      initialCommunities <- cbind(data.table(mapcode = 1:nrow(initialCommunities),
+                                             description = NA), initialCommunities)
+      initialCommunities <- initialCommunities[species != "LandisData",]
+      cutRows <- grep(">>", initialCommunities$species)
+      for (i in cutRows) {
+        initialCommunities[i,
+                           desc := paste(initialCommunities[i, 3:maxcol, with = FALSE],
+                                         collapse = " ")]
+      }
+
+      initialCommunities[, rowN := 1:nrow(initialCommunities)]
+      initialCommunities[, ':='(mapcode = cut(rowN, breaks = c(cutRows, max(rowN)),
+                                              labels = initialCommunities[cutRows + 1,]$age1),
+                                description = cut(rowN, breaks = c(cutRows, max(rowN)),
+                                                  labels = initialCommunities[cutRows,]$desc))]
+      initialCommunities <- initialCommunities[!c(cutRows, cutRows + 1), ][, ':='(desc = NULL, rowN = NULL)]
+      initialCommunities[, ':='(description = gsub(">>", "", description),
+                                mapcode = as.integer(as.character(mapcode)))]
+
+      initialCommunities <- data.table(initialCommunities[, 1:3, with = FALSE],
+                                       initialCommunities[, lapply(.SD, as.integer), .SDcols = age1:age6])
+
+      ## rename species for compatibility across modules (Genu_spe)
+      initialCommunities$species1 <- as.character(substring(initialCommunities$species, 1, 4))
+      initialCommunities$species2 <- as.character(substring(initialCommunities$species, 5, 7))
+      initialCommunities[, ':='(species = paste0(toupper(substring(species1, 1, 1)),
+                                                 substring(species1, 2, 4), "_", species2))]
+
+      initialCommunities[, ':='(species1 = NULL, species2 = NULL)]
+
+      sim$initialCommunities <- initialCommunities
+      rm(cutRows, i, maxcol)
+    }
+  }
   # load the initial community map
-  if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
-    ## LANDIS-II demo data:
-    # sim$initialCommunitiesMap <- Cache(prepInputs,
-    #                                    targetFile = "initial-communities.gis",
-    #                                    url = extractURL("initialCommunitiesMap"),
-    #                                    destinationPath = dPath,
-    #                                    fun = "raster::raster")
+  if (FALSE) { # No longer using this
+    if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
+      ## LANDIS-II demo data:
+      # sim$initialCommunitiesMap <- Cache(prepInputs,
+      #                                    targetFile = "initial-communities.gis",
+      #                                    url = extractURL("initialCommunitiesMap"),
+      #                                    destinationPath = dPath,
+      #                                    fun = "raster::raster")
 
-    ## Dummy version with spatial location in Canada
-    ras <- projectExtent(sim$studyArea, crs = sim$studyArea)
-    res(ras) <- 250 ## TODO: this shouldn't be hardcoded; get this from rasterToMatch?
-    initialCommunitiesMap <- rasterize(sim$studyArea, ras)
+      ## Dummy version with spatial location in Canada
+      ras <- projectExtent(sim$studyArea, crs = sim$studyArea)
+      res(ras) <- 250 ## TODO: this shouldn't be hardcoded; get this from rasterToMatch?
+      initialCommunitiesMap <- rasterize(sim$studyArea, ras)
 
-    ## make uniform communities (well structured in space)
-    mapvals <- rep(unique(initialCommunities$mapcode),
-                   each = ceiling(sum(!is.na(getValues(initialCommunitiesMap))) /
-                                    length(unique(initialCommunities$mapcode))))
-    mapvals <- mapvals[1:sum(!is.na(getValues(initialCommunitiesMap)))]   ## remove any extra values
+      ## make uniform communities (well structured in space)
+      mapvals <- rep(unique(initialCommunities$mapcode),
+                     each = ceiling(sum(!is.na(getValues(initialCommunitiesMap))) /
+                                      length(unique(initialCommunities$mapcode))))
+      mapvals <- mapvals[1:sum(!is.na(getValues(initialCommunitiesMap)))]   ## remove any extra values
 
-    ## assign communities to map and export to sim
-    initialCommunitiesMap[!is.na(getValues(initialCommunitiesMap))][] <- mapvals
-    sim$initialCommunitiesMap <- initialCommunitiesMap
+      ## assign communities to map and export to sim
+      initialCommunitiesMap[!is.na(getValues(initialCommunitiesMap))][] <- mapvals
+      sim$initialCommunitiesMap <- initialCommunitiesMap
+    }
   }
 
   ## load the biomass_succession.txt and obtain:
