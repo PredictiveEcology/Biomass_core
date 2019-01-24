@@ -202,7 +202,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
            sim <- scheduleEvent(sim, start(sim),
                                 "LBMR", "summaryBGM", eventPriority = 5.75)
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
+           sim <- scheduleEvent(sim, start(sim),
                                 "LBMR", "summaryBySpecies", eventPriority = 6)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "LBMR", "plotMaps", eventPriority = 7)
@@ -584,24 +584,23 @@ SummaryBGM <- function(sim) {
   sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumB")
   setColors(sim$biomassMap) <- c("light green", "dark green")
 
-  if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
-    sim$simulatedBiomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                                "uniqueSumB")
-    setColors(sim$simulatedBiomassMap) <- c("light green", "dark green")
+  sim$simulatedBiomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
+                                              "uniqueSumB")
+  setColors(sim$simulatedBiomassMap) <- c("light green", "dark green")
 
-    sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                    "uniqueSumANPP")
-    setColors(sim$ANPPMap) <- c("light green", "dark green")
+  sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
+                                  "uniqueSumANPP")
+  setColors(sim$ANPPMap) <- c("light green", "dark green")
 
-    sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                         "uniqueSumMortality")
-    setColors(sim$mortalityMap) <- c("light green", "dark green")
+  sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
+                                       "uniqueSumMortality")
+  setColors(sim$mortalityMap) <- c("light green", "dark green")
 
-    sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
-                                          P(sim)$vegLeadingProportion,
-                                          colors = sim$sppColors,
-                                          unitTest = TRUE)
-  }
+  sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
+                                        P(sim)$vegLeadingProportion,
+                                        colors = sim$sppColors,
+                                        unitTest = TRUE)
+
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
   return(invisible(sim))
@@ -982,29 +981,35 @@ summaryBySpecies <- function(sim) {
 
     cols2 <- df$cols
     names(cols2) <- df$species
-    plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species)) +
-      scale_fill_manual(values = cols2) +
-      geom_area(position = "stack") +
-      labs(x = "Year", y = "Biomass by species") +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
-    title2 <- if (identical(time(sim), P(sim)$.plotInitialTime + P(sim)$.plotInterval))
-      "Average biomass by species" else ""
-    Plot(plot2, title = title2, new = TRUE)
+    if (!is.na(P(sim)$.plotInitialTime)) {
+      plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species)) +
+        scale_fill_manual(values = cols2) +
+        geom_area(position = "stack") +
+        labs(x = "Year", y = "Biomass by species") +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank())
+
+      title2 <- if (identical(time(sim), P(sim)$.plotInitialTime + P(sim)$.plotInterval))
+        "Average biomass by species" else ""
+      Plot(plot2, title = title2, new = TRUE)
+    }
 
     maxNpixels <- sum(!is.na(sim$rasterToMatchReporting[]))
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
-    plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
-      scale_fill_manual(values = cols3) +
-      labs(x = "Year", y = "Count") +
-      geom_area() +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
-      geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey")
 
-    title3 <- if (identical(time(sim), P(sim)$.plotInitialTime + P(sim)$.plotInterval))
-      "Number of pixels, by leading type" else ""
-    Plot(plot3, title = title3, new = TRUE)
+    if (!is.na(P(sim)$.plotInitialTime)) {
+      plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
+        scale_fill_manual(values = cols3) +
+        labs(x = "Year", y = "Count") +
+        geom_area() +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+        geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey")
+
+      title3 <- if (identical(time(sim), P(sim)$.plotInitialTime + P(sim)$.plotInterval))
+        "Number of pixels, by leading type" else ""
+      Plot(plot3, title = title3, new = TRUE)
+    }
   }
 
   # means <- cbind(meanBiomass, meanANPP)
