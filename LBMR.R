@@ -241,13 +241,13 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
          summaryBySpecies = {
            sim <- summaryBySpecies(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBySpecies", eventPriority = 5.75)
+                                "LBMR", "summaryBySpecies", eventPriority = 6)
          },
          summaryBGM = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryBGM",
-                                eventPriority = 6)
+                                eventPriority = 5.75)
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
