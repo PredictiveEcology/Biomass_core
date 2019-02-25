@@ -42,7 +42,7 @@ defineModule(sim, list(
                                  "noDispersal, universalDispersal, and wardDispersal (default).")),
     defineParameter("spinupMortalityfraction", "numeric", 0.001,
                     desc = "defines the mortality loss fraction in spin up-stage simulation"),
-    defineParameter("sppEquivCol", "character", "LandR", NA, NA,
+    defineParameter("sppEquivCol", "character", "Boreal", NA, NA,
                     "The column in sim$specieEquivalency data.table to use as a naming convention"),
     defineParameter("speciesEstablishmentProbAsMap", "logical", FALSE,
                     desc = paste("Should species establishment probability be represented at the pixel level,",
@@ -65,15 +65,15 @@ defineModule(sim, list(
   ),
   inputObjects = bind_rows(
     expectsInput("calculateAgeMortality", "function",
-                  desc = "function to calculate aging and mortality"),
+                 desc = "function to calculate aging and mortality"),
     expectsInput("calculateANPP", "function",
-                  desc = "function to calculate ANPP"),
+                 desc = "function to calculate ANPP"),
     expectsInput("calculateCompetition", "function",
-                  desc = "function to calculate competition for light"),
+                 desc = "function to calculate competition for light"),
     expectsInput("calculateGrowthMortality", "function",
-                  desc = "function to calculate growth and mortality"),
+                 desc = "function to calculate growth and mortality"),
     expectsInput("calculateSumB", "function",
-                  desc = "function to sum biomass"),
+                 desc = "function to sum biomass"),
     expectsInput("ecoregion", "data.table",
                  desc = "ecoregion look up table",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt"),
@@ -89,8 +89,9 @@ defineModule(sim, list(
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
-    expectsInput("pixelGroupMap", "RasterLayer", 
-                 desc = "initial community map that has mapcodes match initial community table"),
+    expectsInput("pixelGroupMap", "RasterLayer",
+                 desc = "initial community map that has mapcodes match initial community table",
+                 sourceURL = ""),
     expectsInput("rasterToMatch", "RasterLayer",
                  desc = paste("Raster layer of buffered study area used for cropping, masking and projecting.",
                               "Defaults to the kNN biomass map masked with `studyArea`"),
@@ -150,7 +151,7 @@ defineModule(sim, list(
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
     createsOutput("initialCommunities", "character",
-                 desc = "Because the initialCommunities object can be LARGE, it is saved to disk with this filename"),
+                  desc = "Because the initialCommunities object can be LARGE, it is saved to disk with this filename"),
     createsOutput("lastFireYear", "numeric",
                   desc = "Year of the most recent fire year"),
     createsOutput("lastReg", "numeric",
@@ -176,7 +177,7 @@ defineModule(sim, list(
     createsOutput("spinupOutput", "data.table", desc = ""),
     createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species"),
     createsOutput("summaryBySpecies1", "data.table", desc = "Pixel summaries by species used for plotting and reporting.")
-  )
+    )
 ))
 
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
@@ -322,7 +323,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   setDT(sim$minRelativeB) # make a data.table
   # join to get ecoregionGroup column
   sim$minRelativeB <- sim$minRelativeB[unique(speciesEcoregion[, .(ecoregionGroup)]),
-                                         on = "ecoregionGroup", nomatch = 0]
+                                       on = "ecoregionGroup", nomatch = 0]
 
   #############################################
   # Create cohortData from communities
@@ -364,8 +365,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   # Keeps track of the length of the ecoregion
   mod$activeEcoregionLength <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
-                                                                    getValues(sim$ecoregionMap),
-                                                                    att = "ecoregionGroup"),
+                                                                         getValues(sim$ecoregionMap),
+                                                                         att = "ecoregionGroup"),
                                           pixelIndex = 1:ncell(sim$ecoregionMap))[
                                             ecoregionGroup %in% active_ecoregion$ecoregionGroup,
                                             .(NofCell = length(pixelIndex)), by = "ecoregionGroup"]
@@ -463,7 +464,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     if (verbose > 0)
       message("Skipping spinup and using the sim$biomassMap * SpeciesLayers pct as initial biomass values")
     biomassTable <- data.table(biomass = getValues(sim$biomassMap),
-                          pixelGroup = getValues(pixelGroupMap))
+                               pixelGroup = getValues(pixelGroupMap))
     biomassTable <- na.omit(biomassTable)
     maxBiomass <- maxValue(sim$biomassMap)
     if (maxBiomass < 1e3) {
@@ -574,7 +575,7 @@ SummaryBGM <- function(sim) {
                                        Regeneration = sum(uniqueSumRege * NofPixelGroup)),
                                    by = ecoregionGroup]
   tempOutput_All <- setkey(tempOutput_All, ecoregionGroup)[setkey(mod$activeEcoregionLength,
-                                                             ecoregionGroup), nomatch = 0]
+                                                                  ecoregionGroup), nomatch = 0]
   sim$simulationOutput <- rbindlist(list(sim$simulationOutput,
                                          tempOutput_All[, .(ecoregionGroup, NofCell, Year = as.integer(time(sim)),
                                                             Biomass = asInteger(Biomass / NofCell),
@@ -670,8 +671,8 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   set(seedingData, NULL, c("establishprob"), NULL)
   if (P(sim)$calibrate == TRUE & NROW(seedingData) > 0) {
     newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
-                                            numberOfReg = length(pixelIndex)),
-                                        by = speciesCode]
+                                          numberOfReg = length(pixelIndex)),
+                                      by = speciesCode]
     newCohortData_summ <- setkey(newCohortData_summ, speciesCode)[
       setkey(sim$species[, .(species,speciesCode)], speciesCode),
       nomatch = 0][, .(species, seedingAlgorithm, Year, numberOfReg)]
@@ -698,7 +699,7 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
   #   tempActivePixel <- sim$activePixelIndex
   # }
   sim$cohortData <- sim$calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = round(time(sim)),
-                                  successionTimestep = P(sim)$successionTimestep)
+                                      successionTimestep = P(sim)$successionTimestep)
   species <- sim$species
   # all species can provide seed source, i.e. age>=sexualmature
   speciessource <- setkey(sim$species[, .(speciesCode, k = 1)], k)
@@ -715,8 +716,8 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
   # http://landis-extensions.googlecode.com/svn/trunk/succession-library/trunk/src/ReproductionDefaults.cs
   seedingData <- siteShade[speciessource, allow.cartesian = TRUE][, k := NULL]
   seedingData <- setkey(seedingData, speciesCode)[setkey(sim$species[, .(speciesCode, shadetolerance)],
-                                                             speciesCode),
-                                                      nomatch = 0]
+                                                         speciesCode),
+                                                  nomatch = 0]
   seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
   seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData), 0 , 1),]
   set(seedingData, NULL, c("siteShade", "lightProb", "shadetolerance"), NULL)
@@ -742,9 +743,9 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
   set(seedingData, NULL, "establishprob", NULL)
   if (P(sim)$calibrate == TRUE) {
     newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm,
-                                            Year = round(time(sim)),
-                                            numberOfReg = length(pixelIndex)),
-                                        by = speciesCode]
+                                          Year = round(time(sim)),
+                                          numberOfReg = length(pixelIndex)),
+                                      by = speciesCode]
     newCohortData_summ <- setkey(newCohortData_summ, speciesCode)[
       setkey(sim$species[, .(species, speciesCode)], speciesCode),
       nomatch = 0][, .(species, seedingAlgorithm, Year, numberOfReg)]
@@ -765,16 +766,16 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
 WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
                                  verbose = getOption("LandR.verbose", TRUE)) {
   #if (sim$lastFireYear == round(time(sim))) {
-    # the current year is both fire year and succession year
-    # tempActivePixel <-
-    #   sim$activePixelIndex[!(sim$activePixelIndex %in%
-    #                            sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]$pixelIndex)]
+  # the current year is both fire year and succession year
+  # tempActivePixel <-
+  #   sim$activePixelIndex[!(sim$activePixelIndex %in%
+  #                            sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]$pixelIndex)]
   #} else {
   #  tempActivePixel <- sim$activePixelIndex
   #}
   sim$cohortData <- sim$calculateSumB(cohortData = sim$cohortData,
-                                  lastReg = sim$lastReg, simuTime = round(time(sim)),
-                                  successionTimestep = P(sim)$successionTimestep)
+                                      lastReg = sim$lastReg, simuTime = round(time(sim)),
+                                      successionTimestep = P(sim)$successionTimestep)
   siteShade <- calcSiteShade(time = round(time(sim)), cohortData = sim$cohortData,
                              sim$speciesEcoregion, sim$minRelativeB)
   activePixelGroup <- data.table(pixelGroup = unique(getValues(sim$pixelGroupMap)[tempActivePixel])) %>%
@@ -900,9 +901,9 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
       if (nrow(seedingData) > 0) {
         outs <- updateCohortData(seedingData, cohortData = sim$cohortData,
                                  pixelGroupMap = sim$pixelGroupMap,
-                        time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
-                        treedFirePixelTableSinceLastDisp = NULL,
-                        successionTimestep = P(sim)$successionTimestep)
+                                 time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
+                                 treedFirePixelTableSinceLastDisp = NULL,
+                                 successionTimestep = P(sim)$successionTimestep)
 
         sim$cohortData <- outs$cohortData
         sim$pixelGroupMap <- outs$pixelGroupMap
@@ -1204,11 +1205,11 @@ CohortAgeReclassification <- function(sim) {
     sim$studyAreaReporting <- sim$studyArea
   }
 
-  if (!suppliedElsewhere("pixelGroupMap")) {
+  if (!suppliedElsewhere("pixelGroupMap", sim)) {
     stop("Currently, pixelGroupMap is a required input. Please use a module, such as",
          "Boreal_LBMRDataPrep to create an initial pixelGroupMap")
-
   }
+
   if (FALSE) { # not using this -- Eliot Jan 22, 2019 -- use pixelGroupMap and pixelGroups instead
     if (!suppliedElsewhere("initialCommunities", sim)) {
       maxcol <- 7 #max(count.fields(file.path(dPath, "initial-communities.txt"), sep = ""))
@@ -1307,7 +1308,7 @@ CohortAgeReclassification <- function(sim) {
 
   ######################################################
   ## load ecoregion map
-  if (!suppliedElsewhere("ecoregionMap", sim )) {
+  if (!suppliedElsewhere("ecoregionMap", sim)) {
     ## LANDIS-II demo data:
 
     ## TODO: restore the demo data version with prepInputs:
@@ -1323,9 +1324,9 @@ CohortAgeReclassification <- function(sim) {
     ecoregionMap <- rasterize(sim$studyArea, ras) ## TODO: use fasterize
 
     ## make uniform communities (well structured in space)
-    mapvals <- rep(unique(ecoregion$mapcode),
+    mapvals <- rep(unique(sim$ecoregion$mapcode),
                    each = ceiling(sum(!is.na(getValues(ecoregionMap))) /
-                                    length(unique(ecoregion$mapcode))))
+                                    length(unique(sim$ecoregion$mapcode))))
     mapvals <- mapvals[1:sum(!is.na(getValues(ecoregionMap)))] ## remove any extra values
 
     ## assign communities to map and export to sim
@@ -1389,7 +1390,8 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere(sim$treedFirePixelTableSinceLastDisp)) {
-    sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(), pixelGroup = integer(),
+    sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(),
+                                                       pixelGroup = integer(),
                                                        burnTime = numeric())
   }
 
