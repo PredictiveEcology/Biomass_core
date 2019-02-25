@@ -1390,9 +1390,10 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere(sim$treedFirePixelTableSinceLastDisp)) {
-    sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(), pixelGroup = integer(),
+    sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(),
+                                                       pixelGroup = integer(),
                                                        burnTime = numeric())
   }
 
   return(invisible(sim))
-  }
+}
