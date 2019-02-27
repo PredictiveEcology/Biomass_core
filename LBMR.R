@@ -29,7 +29,7 @@ defineModule(sim, list(
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
-    defineParameter("initialBiomassSource", "character", "SpinUp", NA, NA,
+    defineParameter("initialBiomassSource", "character", "spinUp", NA, NA,
                     paste("Currently, there are three options: 'SpinUp', 'cohortData', 'biomassMap'. ",
                           "If 'SpinUp', it will derive biomass by running spinup derived from Landis-II.",
                           "If 'cohortData', it will be taken from the 'cohortData' object, i.e., it is already correct, by cohort.",
