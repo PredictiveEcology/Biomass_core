@@ -74,6 +74,8 @@ defineModule(sim, list(
                  desc = "function to calculate growth and mortality"),
     expectsInput("calculateSumB", "function",
                  desc = "function to sum biomass"),
+    expectsInput("cohortData", "data.table",
+                 desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
     expectsInput("ecoregion", "data.table",
                  desc = "ecoregion look up table",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt"),
@@ -144,8 +146,7 @@ defineModule(sim, list(
                   desc = "ANPP map at each succession time step"),
     createsOutput("burnLoci", "numeric", desc = "Fire pixel IDs"),
     createsOutput("cohortData", "data.table",
-                  desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at
-                  succession time step"),
+                  desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step"),
     createsOutput(objectName = "simulatedBiomassMap", objectClass = "RasterLayer",
                   desc = "Biomass map at each succession time step"),
     createsOutput("inactivePixelIndex", "logical",
@@ -425,8 +426,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   initialBiomassSourcePoss <- c('spinUp', 'cohortData', 'biomassMap')
   if (!any(grepl(P(sim)$initialBiomassSource, initialBiomassSourcePoss))) {
     stop("P(sim)$initialBiomassSource must be one of: ", paste(initialBiomassSourcePoss, collapse = ", "))
-
   }
+
   if (grepl("spin", tolower(P(sim)$initialBiomassSource))) { # negate the TRUE to allow for default to be this, even if NULL or NA
     if (verbose > 0)
       message("Running spinup")
@@ -486,6 +487,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     cohortData[, B := asInteger(Bsum * speciesPresence / totalSpeciesPresence),
                by = c("pixelGroup", "speciesCode")]
   }
+
   pixelAll <- cohortData[, .(uniqueSumB = asInteger(sum(B, na.rm = TRUE))), by = pixelGroup]
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
@@ -1149,7 +1151,6 @@ Save <- function(sim) {
 
 CohortAgeReclassification <- function(sim) {
   if (time(sim) != 0) {
-
     sim$cohortData <- ageReclassification(cohortData = sim$cohortData,
                                           successionTimestep = P(sim)$successionTimestep,
                                           stage = "mainSimulation")
@@ -1158,8 +1159,6 @@ CohortAgeReclassification <- function(sim) {
     return(invisible(sim))
   }
 }
-
-## DEFAULT INPUT OBJECTS
 
 .inputObjects <- function(sim) {
   cacheTags <- c(currentModule(sim), "function:.inputObjects")
@@ -1179,7 +1178,6 @@ CohortAgeReclassification <- function(sim) {
     stop("Growth and mortality (GM) function(s) missing.\n
          Make sure you are using LandR_BiomassGMOrig, or another GM module")
   }
-
   #######################################################
 
   if (is.null(sim$rasterToMatch)) {
