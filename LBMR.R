@@ -177,7 +177,7 @@ defineModule(sim, list(
     createsOutput("spinupOutput", "data.table", desc = ""),
     createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species"),
     createsOutput("summaryBySpecies1", "data.table", desc = "Pixel summaries by species used for plotting and reporting.")
-    )
+  )
 ))
 
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
@@ -202,11 +202,11 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                unlist(sim@params, recursive = TRUE)[.] %>%
                unique(.) %>%
                as.numeric(.)
-               
+
              if (length(fireInitialTime) > 1)
                stop(paste("Different values for fireInitialTime parameter provided.",
                           "Make sure all modules have the same fireInitialTime value", sep = "\n"))
-             
+
              sim <- scheduleEvent(sim, fireInitialTime,
                                   "LBMR", "summaryBGM", eventPriority = 4)
            }
@@ -266,7 +266,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryBGM",
                                 eventPriority = 5.75)
-          
+
            if (!is.null(sim$rstCurrentBurn)) {
              ## schedule post-fire (pre-growth/mortality/dispersal) summaryBGM
              ## if fires are simulated
@@ -274,11 +274,11 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                unlist(sim@params, recursive = TRUE)[.] %>%
                unique(.) %>%
                as.numeric(.)
-             
+
              if (length(fireTimestep) > 1)
                stop(paste("Different values for fireTimestep parameter provided.",
                           "Make sure all modules have the same fireTimestep value", sep = "\n"))
-             
+
              sim <- scheduleEvent(sim, time(sim) + fireTimestep,
                                   "LBMR", "summaryBGM", eventPriority = 4)
            }
