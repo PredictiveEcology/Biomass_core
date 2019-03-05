@@ -578,23 +578,20 @@ SummaryBGM <- function(sim) {
                                    by = ecoregionGroup]
   tempOutput_All <- setkey(tempOutput_All, ecoregionGroup)[setkey(mod$activeEcoregionLength,
                                                                   ecoregionGroup), nomatch = 0]
-  sim$simulationOutput <- rbindlist(list(sim$simulationOutput,
-                                         tempOutput_All[, .(ecoregionGroup, NofCell, Year = as.integer(time(sim)),
-                                                            Biomass = asInteger(Biomass / NofCell),
-                                                            ANPP = asInteger(ANPP / NofCell),
-                                                            Mortality = asInteger(Mortality / NofCell),
-                                                            Regeneration = asInteger(Regeneration / NofCell))]))
+  sim$simulationOutput <- rbindlist(
+    list(sim$simulationOutput,
+         tempOutput_All[, .(ecoregionGroup, NofCell, Year = as.integer(time(sim)),
+                            Biomass = asInteger(Biomass / NofCell),
+                            ANPP = asInteger(ANPP / NofCell),
+                            Mortality = asInteger(Mortality / NofCell),
+                            Regeneration = asInteger(Regeneration / NofCell))]))
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively.
   names(sim$pixelGroupMap) <- "pixelGroup"
-  sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumB")
-  setColors(sim$biomassMap) <- c("light green", "dark green")
 
-  sim$simulatedBiomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                              "uniqueSumB")
+  sim$simulatedBiomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumB")
   setColors(sim$simulatedBiomassMap) <- c("light green", "dark green")
 
-  sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                  "uniqueSumANPP")
+  sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
   setColors(sim$ANPPMap) <- c("light green", "dark green")
 
   sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
