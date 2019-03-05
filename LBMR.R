@@ -29,7 +29,7 @@ defineModule(sim, list(
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
-    defineParameter("initialBiomassSource", "character", "spinUp", NA, NA,
+    defineParameter("initialBiomassSource", "character", "cohortData", NA, NA,
                     paste("Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. ",
                           "If 'spinUp', it will derive biomass by running spinup derived from Landis-II.",
                           "If 'cohortData', it will be taken from the 'cohortData' object, i.e., it is already correct, by cohort.",
@@ -429,6 +429,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   }
 
   if (grepl("spin", tolower(P(sim)$initialBiomassSource))) { # negate the TRUE to allow for default to be this, even if NULL or NA
+    stop("'spinUp as a value for P(sim)$initialBiomassSource is not working currently; ",
+         "please use 'cohortData'")
+
     if (verbose > 0)
       message("Running spinup")
     spinupstage <- Cache(spinUp,
@@ -462,6 +465,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                            Year = numeric(), numberOfReg = numeric())
     }
   } else if (grepl("biomassmap", tolower(P(sim)$initialBiomassSource))) {
+    stop("'biomassMap as a value for P(sim)$initialBiomassSource is not working currently; ",
+         "please use 'cohortData'")
     if (verbose > 0)
       message("Skipping spinup and using the sim$biomassMap * SpeciesLayers pct as initial biomass values")
     biomassTable <- data.table(biomass = getValues(sim$biomassMap),
