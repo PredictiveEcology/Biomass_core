@@ -190,6 +190,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
     }
     on.exit(data.table::setDTthreads(a), add = TRUE)
   }
+  plotAvgEventPriority <- 7.75
   switch(eventType,
          init = {
            ## do stuff for this event
@@ -198,16 +199,16 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            ## schedule events
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = 5)
-           if (P(sim)$successionTimestep != 1) {
-             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
-                                  "cohortAgeReclassification", eventPriority = 6.25)
-           }
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = 5.5)
            sim <- scheduleEvent(sim, start(sim),
                                 "LBMR", "summaryBGM", eventPriority = 5.75)
            sim <- scheduleEvent(sim, start(sim),
                                 "LBMR", "summaryBySpecies", eventPriority = 6)
+           if (P(sim)$successionTimestep != 1) {
+             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
+                                  "cohortAgeReclassification", eventPriority = 6.25)
+           }
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "LBMR", "plotMaps", eventPriority = 7)
 
@@ -217,7 +218,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              ## stats plot is retrieving saved rasters so needs data to be saved
              # start on second time around b/c ggplot doesn't like 1 data point
              tPlotInit <- P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep
-             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = 7.75)
+             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = plotAvgEventPriority)
            }
          },
          Dispersal = {
@@ -264,10 +265,9 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "save", eventPriority = 8.5)
          },
          plotAvgs = {
-           ## only occurs once at the end of the simulation
            sim <- plotAvgVegAttributes(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plotAvgs", eventPriority = 8.75)
+                                "LBMR", "plotAvgs", eventPriority = plotAvgEventPriority)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
