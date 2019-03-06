@@ -1,6 +1,6 @@
 ---
 title: "LBMR"
-author: "Jean Marchal (jean.d.marchal@gmail.com) & Ceres Barros (cbarros@mail.ubc.ca)"
+author: "Jean Marchal (<jean.d.marchal@gmail.com>) & Ceres Barros (<cbarros@mail.ubc.ca>)"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
   pdf_document: default
