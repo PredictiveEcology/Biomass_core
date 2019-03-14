@@ -1,6 +1,6 @@
 ---
 title: "LBMR"
-author: "Jean Marchal (jean.d.marchal@gmail.com)"
+author: "Jean Marchal (jean.d.marchal@gmail.com) & Ceres Barros (cbarros@mail.ubc.ca)"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
   pdf_document: default
@@ -14,7 +14,30 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 
 # Overview
 
-A biomass succession model derived and modified from LANDIS-II.
+A biomass succession model derived and modified from LANDIS-II Biomass Extension v3.2.1
+LBMR simulates forest succession in a spatially explicit manner (per pixel) by reproducing the population dynamics (growth and mortality), dispersal and competition for light resources of tree species. 
+Like in LANDIS-II, dynamics are simulated in terms of their biomass per cohort (a combination of species and age), following a biomass ~ age curve  that is influenced by species-specific  parameters such as growth, mortality, maximum biomass, and species traits suss as longevity and tolerance to shade (see [LANDIS-II Biomass Succession v3.2 User Guide](https://github.com/LANDIS-II-Foundation/Extension-Biomass-Succession/blob/master/docs/LANDIS-II%20Biomass%20Succession%20v3.2%20User%20Guide.docx) and [Scheller and Mladenoff (2004)](https://pdfs.semanticscholar.org/4d38/d0be6b292eccd444af399775d37a757d1967.pdf) The biggest differences between LBMR and LANDIS-II lie on how the model is parameterised and how different processes have been compartmentalised in order for higher flexibility.
+
+- Parametrisation. As of now, LBMR relies on other SpaDES-modules to "automatically" estimate parameters linked to growth and seed germination (such as the maximum biomass per species, per pixel, and the probability of seed germination - i.e. species establishment probability not due to resprouting) from existing data (such as species % cover, or presence/absence, stand age and stand biomass data). Other parameters are currently taken from the LANDIS-II species traits used for version 3.2.1 (which can be found [here](https://github.com/LANDIS-II-Foundation/Extensions-Succession-Archive/blob/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt) or [here](https://raw.ithubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt)]).
+- Compartmentalisation and modularity. While in LANDIS-II phenomena like growth and mortality occur as part of the same process (or function from a coding perspective), in LBMR they occur separately and sequentially. This means that they can be more easily upgraded/changed. The same happens with post-disturbance regeneration. Unlike in LANDIS-II, post-disturbance regeneration is not part of LBMR *per se*, but rather belongs to a separate module, that needs to be loaded should the user want to simulate disturbance effect (i.e. fire disturbances). Again, this enables higher flexibility when swapping between different approaches to regeneration.
+
+## General flow of LBMR processes
+1. Preparation of necessary objects for the simulation - either by accessory prep. data modules, of LBMR itself (using LANDIS-II test parameters)
+2. Seed dispersal - see Section 4.5.1 Seeding of the LANDIS-II Model v7.0 Description(https://drive.google.com/file/d/15gSueug-Rj9I2RZqdroDbad-k53Jq7j3/view) for details
+3. Growth, ageing and mortality - based on [Scheller and Mladenoff (2004)](https://pdfs.semanticscholar.org/4d38/d0be6b292eccd444af399775d37a757d1967.pdf)
+4. Preparation of visual/saved outputs
+... (repeat 2-4) ...
+
+Note that should a post-disturbance regeneration module be used, regeneration will occur after the disturbance, but *before* dispersal and background vegetation growth and mortality. Hence, the disturbance should take place either at the very beginning or at the very end of each simulation time step:
+
+## General flow of LBMR processes when disturbances are included (by linking other modules)
+1. Preparation of necessary objects for the simulation - either by accessory prep. data modules, of LBMR itself (using LANDIS-II test parameters)
+2. Disturbance
+3. Post-disturbance regeneration
+4. Seed dispersal - see Section 4.5.1 Seeding of the LANDIS-II Model v7.0 Description(https://drive.google.com/file/d/15gSueug-Rj9I2RZqdroDbad-k53Jq7j3/view) for details
+5. Growth, ageing and mortality - based on [Scheller and Mladenoff (2004)](https://pdfs.semanticscholar.org/4d38/d0be6b292eccd444af399775d37a757d1967.pdf)
+6. Preparation of visual/saved outputs
+... (repeat 2-6) ...
 
 # Load SpaDES
 

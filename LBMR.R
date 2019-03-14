@@ -29,12 +29,12 @@ defineModule(sim, list(
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
-    defineParameter("initialBiomassSource", "character", "SpinUp", NA, NA,
-                    paste("Currently, there are three options: 'SpinUp', 'cohortData', 'biomassMap'. ",
-                          "If 'SpinUp', it will derive biomass by running spinup derived from Landis-II.",
+    defineParameter("initialBiomassSource", "character", "cohortData", NA, NA,
+                    paste("Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. ",
+                          "If 'spinUp', it will derive biomass by running spinup derived from Landis-II.",
                           "If 'cohortData', it will be taken from the 'cohortData' object, i.e., it is already correct, by cohort.",
                           "If 'biomassMap', it will be taken from sim$biomassMap, divided across species using sim$speciesLayers percent cover values",
-                          "`SpinUp`` uses sim$ageMap as the driver, so biomass",
+                          "`spinUp`` uses sim$ageMap as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
                           "about biomass, unless this is set to TRUE, and a sim$biomassMap is supplied")),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
@@ -74,6 +74,8 @@ defineModule(sim, list(
                  desc = "function to calculate growth and mortality"),
     expectsInput("calculateSumB", "function",
                  desc = "function to sum biomass"),
+    expectsInput("cohortData", "data.table",
+                 desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
     expectsInput("ecoregion", "data.table",
                  desc = "ecoregion look up table",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt"),
@@ -144,8 +146,7 @@ defineModule(sim, list(
                   desc = "ANPP map at each succession time step"),
     createsOutput("burnLoci", "numeric", desc = "Fire pixel IDs"),
     createsOutput("cohortData", "data.table",
-                  desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at
-                  succession time step"),
+                  desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step"),
     createsOutput(objectName = "simulatedBiomassMap", objectClass = "RasterLayer",
                   desc = "Biomass map at each succession time step"),
     createsOutput("inactivePixelIndex", "logical",
@@ -189,6 +190,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
     }
     on.exit(data.table::setDTthreads(a), add = TRUE)
   }
+  plotAvgEventPriority <- 7.75
   switch(eventType,
          init = {
            ## do stuff for this event
@@ -231,7 +233,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              ## stats plot is retrieving saved rasters so needs data to be saved
              # start on second time around b/c ggplot doesn't like 1 data point
              tPlotInit <- P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep
-             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = 7.75)   ## TODO: check with Alex if this can't be changed to 8.75
+             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = plotAvgEventPriority)
            }
          },
          Dispersal = {
@@ -294,10 +296,9 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "save", eventPriority = 8.5)
          },
          plotAvgs = {
-           ## only occurs once at the end of the simulation
            sim <- plotAvgVegAttributes(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plotAvgs", eventPriority = 8.75)
+                                "LBMR", "plotAvgs", eventPriority = plotAvgEventPriority)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
@@ -456,9 +457,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   initialBiomassSourcePoss <- c('spinUp', 'cohortData', 'biomassMap')
   if (!any(grepl(P(sim)$initialBiomassSource, initialBiomassSourcePoss))) {
     stop("P(sim)$initialBiomassSource must be one of: ", paste(initialBiomassSourcePoss, collapse = ", "))
-
   }
+
   if (grepl("spin", tolower(P(sim)$initialBiomassSource))) { # negate the TRUE to allow for default to be this, even if NULL or NA
+    stop("'spinUp as a value for P(sim)$initialBiomassSource is not working currently; ",
+         "please use 'cohortData'")
+
     if (verbose > 0)
       message("Running spinup")
     spinupstage <- Cache(spinUp,
@@ -492,6 +496,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                            Year = numeric(), numberOfReg = numeric())
     }
   } else if (grepl("biomassmap", tolower(P(sim)$initialBiomassSource))) {
+    stop("'biomassMap as a value for P(sim)$initialBiomassSource is not working currently; ",
+         "please use 'cohortData'")
     if (verbose > 0)
       message("Skipping spinup and using the sim$biomassMap * SpeciesLayers pct as initial biomass values")
     biomassTable <- data.table(biomass = getValues(sim$biomassMap),
@@ -517,6 +523,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     cohortData[, B := asInteger(Bsum * speciesPresence / totalSpeciesPresence),
                by = c("pixelGroup", "speciesCode")]
   }
+
   pixelAll <- cohortData[, .(uniqueSumB = asInteger(sum(B, na.rm = TRUE))), by = pixelGroup]
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
@@ -607,23 +614,20 @@ SummaryBGM <- function(sim) {
                                    by = ecoregionGroup]
   tempOutput_All <- setkey(tempOutput_All, ecoregionGroup)[setkey(mod$activeEcoregionLength,
                                                                   ecoregionGroup), nomatch = 0]
-  sim$simulationOutput <- rbindlist(list(sim$simulationOutput,
-                                         tempOutput_All[, .(ecoregionGroup, NofCell, Year = as.integer(time(sim)),
-                                                            Biomass = asInteger(Biomass / NofCell),
-                                                            ANPP = asInteger(ANPP / NofCell),
-                                                            Mortality = asInteger(Mortality / NofCell),
-                                                            Regeneration = asInteger(Regeneration / NofCell))]))
+  sim$simulationOutput <- rbindlist(
+    list(sim$simulationOutput,
+         tempOutput_All[, .(ecoregionGroup, NofCell, Year = as.integer(time(sim)),
+                            Biomass = asInteger(Biomass / NofCell),
+                            ANPP = asInteger(ANPP / NofCell),
+                            Mortality = asInteger(Mortality / NofCell),
+                            Regeneration = asInteger(Regeneration / NofCell))]))
   # the unit for sumB, sumANPP, sumMortality are g/m2, g/m2/year, g/m2/year, respectively.
   names(sim$pixelGroupMap) <- "pixelGroup"
-  sim$biomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumB")
-  setColors(sim$biomassMap) <- c("light green", "dark green")
 
-  sim$simulatedBiomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                              "uniqueSumB")
+  sim$simulatedBiomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumB")
   setColors(sim$simulatedBiomassMap) <- c("light green", "dark green")
 
-  sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                  "uniqueSumANPP")
+  sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
   setColors(sim$ANPPMap) <- c("light green", "dark green")
 
   sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
@@ -1180,7 +1184,6 @@ Save <- function(sim) {
 
 CohortAgeReclassification <- function(sim) {
   if (time(sim) != 0) {
-
     sim$cohortData <- ageReclassification(cohortData = sim$cohortData,
                                           successionTimestep = P(sim)$successionTimestep,
                                           stage = "mainSimulation")
@@ -1189,8 +1192,6 @@ CohortAgeReclassification <- function(sim) {
     return(invisible(sim))
   }
 }
-
-## DEFAULT INPUT OBJECTS
 
 .inputObjects <- function(sim) {
   cacheTags <- c(currentModule(sim), "function:.inputObjects")
@@ -1210,7 +1211,6 @@ CohortAgeReclassification <- function(sim) {
     stop("Growth and mortality (GM) function(s) missing.\n
          Make sure you are using LandR_BiomassGMOrig, or another GM module")
   }
-
   #######################################################
 
   if (is.null(sim$rasterToMatch)) {
