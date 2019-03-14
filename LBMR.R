@@ -190,7 +190,12 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
     }
     on.exit(data.table::setDTthreads(a), add = TRUE)
   }
-  plotAvgEventPriority <- 7.75
+
+  dispEvtPriority <- 5
+  agingEvtPriotity <- 6
+  summEvtsPriority <- 7
+  plotAvgEvtPriority <- 8
+
   switch(eventType,
          init = {
            ## do stuff for this event
@@ -198,27 +203,27 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 
            ## schedule events
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                "LBMR", "Dispersal", eventPriority = 5)
+                                "LBMR", "Dispersal", eventPriority = dispEvtPriority)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
-                                "LBMR", "summaryRegen", eventPriority = 5.5)
+                                "LBMR", "summaryRegen", eventPriority = summEvtsPriority + 0.25)
            sim <- scheduleEvent(sim, start(sim),
-                                "LBMR", "summaryBGM", eventPriority = 5.75)
+                                "LBMR", "summaryBGM", eventPriority = summEvtsPriority + 0.5)
            sim <- scheduleEvent(sim, start(sim),
-                                "LBMR", "summaryBySpecies", eventPriority = 6)
+                                "LBMR", "summaryBySpecies", eventPriority =  summEvtsPriority + 0.75)
            if (P(sim)$successionTimestep != 1) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
-                                  "cohortAgeReclassification", eventPriority = 6.25)
+                                  "cohortAgeReclassification", eventPriority = agingEvtPriotity)
            }
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "LBMR", "plotMaps", eventPriority = 7)
+                                "LBMR", "plotMaps", eventPriority = plotAvgEvtPriority)
 
            if (!any(is.na(P(sim)$.saveInitialTime))) {
              sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
-                                  "LBMR", "save", eventPriority = 8.5)
+                                  "LBMR", "save", eventPriority = plotAvgEvtPriority + 0.5)
              ## stats plot is retrieving saved rasters so needs data to be saved
              # start on second time around b/c ggplot doesn't like 1 data point
              tPlotInit <- P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep
-             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = plotAvgEventPriority)
+             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = plotAvgEvtPriority + 0.75)
            }
          },
          Dispersal = {
@@ -227,7 +232,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            clearPlot(4)
            clearPlot(5)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "Dispersal", eventPriority = 4)
+                                "LBMR", "Dispersal", eventPriority = dispEvtPriority)
          },
          cohortAgeReclassification = {
            sim <- CohortAgeReclassification(sim)
@@ -235,39 +240,39 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            if (P(sim)$successionTimestep != 1) {
              sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                   "LBMR", "cohortAgeReclassification",
-                                  eventPriority = 5.25)
+                                  eventPriority = agingEvtPriotity)
            }
          },
          summaryRegen = {
            sim <- summaryRegen(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryRegen", eventPriority = 5.5)
-         },
-         summaryBySpecies = {
-           sim <- summaryBySpecies(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBySpecies", eventPriority = 6)
+                                "LBMR", "summaryRegen", eventPriority = summEvtsPriority + 0.25)
          },
          summaryBGM = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryBGM",
-                                eventPriority = 5.75)
+                                eventPriority = summEvtsPriority + 0.5)
+         },
+         summaryBySpecies = {
+           sim <- summaryBySpecies(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBySpecies", eventPriority = summEvtsPriority + 0.75)
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plotMaps", eventPriority = 8)
+                                "LBMR", "plotMaps", eventPriority = plotAvgEvtPriority)
          },
          save = {
            sim <- Save(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "save", eventPriority = 8.5)
+                                "LBMR", "save", eventPriority = plotAvgEvtPriority + 0.5)
          },
          plotAvgs = {
            sim <- plotAvgVegAttributes(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plotAvgs", eventPriority = plotAvgEventPriority)
+                                "LBMR", "plotAvgs", eventPriority = plotAvgEvtPriority + 0.75)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
