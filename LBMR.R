@@ -197,21 +197,6 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- Init(sim)
 
            ## schedule events
-           if (!is.null(sim$rstCurrentBurn)) {
-             ## schedule post-fire (pre-growth/mortality/dispersal) summaryBGM
-             ## if fires are simulated
-             fireInitialTime <- grep("fireInitialTime", names(unlist(sim@params, recursive = TRUE))) %>%
-               unlist(sim@params, recursive = TRUE)[.] %>%
-               unique(.) %>%
-               as.numeric(.)
-
-             if (length(fireInitialTime) > 1)
-               stop(paste("Different values for fireInitialTime parameter provided.",
-                          "Make sure all modules have the same fireInitialTime value", sep = "\n"))
-
-             sim <- scheduleEvent(sim, fireInitialTime,
-                                  "LBMR", "summaryBGM", eventPriority = 4)
-           }
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = 5)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
@@ -268,22 +253,6 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryBGM",
                                 eventPriority = 5.75)
-
-           if (!is.null(sim$rstCurrentBurn)) {
-             ## schedule post-fire (pre-growth/mortality/dispersal) summaryBGM
-             ## if fires are simulated
-             fireTimestep <- grep("fireTimestep", names(unlist(sim@params, recursive = TRUE))) %>%
-               unlist(sim@params, recursive = TRUE)[.] %>%
-               unique(.) %>%
-               as.numeric(.)
-
-             if (length(fireTimestep) > 1)
-               stop(paste("Different values for fireTimestep parameter provided.",
-                          "Make sure all modules have the same fireTimestep value", sep = "\n"))
-
-             sim <- scheduleEvent(sim, time(sim) + fireTimestep,
-                                  "LBMR", "summaryBGM", eventPriority = 4)
-           }
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
