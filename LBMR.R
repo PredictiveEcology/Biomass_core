@@ -178,7 +178,7 @@ defineModule(sim, list(
     createsOutput("spinupOutput", "data.table", desc = ""),
     createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species"),
     createsOutput("summaryBySpecies1", "data.table", desc = "Pixel summaries by species used for plotting and reporting.")
-    )
+  )
 ))
 
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
