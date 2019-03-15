@@ -203,7 +203,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 
            ## make sure plotting window is big enough
            if (dev.size()[2] < 14) {
-             graphics.off()
+             dev.off()
              dev(height = 10, width = 14)
              clearPlot()
            }
