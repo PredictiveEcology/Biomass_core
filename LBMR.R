@@ -201,6 +201,13 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            ## do stuff for this event
            sim <- Init(sim)
 
+           ## make sure plotting window is big enough
+           if (dev.size()[2] < 14) {
+             graphics.off()
+             dev(height = 10, width = 14)
+             clearPlot()
+           }
+
            ## schedule events
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = dispEvtPriority)
@@ -229,8 +236,6 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
          Dispersal = {
            sim <- Dispersal(sim)
 
-           clearPlot(4)
-           clearPlot(5)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = dispEvtPriority)
          },
@@ -1041,20 +1046,12 @@ plotVegAttributesMaps <- function(sim) {
   biomassMapForPlot <- raster::mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
   ANPPMapForPlot <- raster::mask(sim$ANPPMap, sim$studyAreaReporting)
   mortalityMapForPlot <- raster::mask(sim$mortalityMap, sim$studyAreaReporting)
-  reproductionMapForPlot <- if (is.null(sim$reproductionMap)) {
-    NULL
+  if (is.null(sim$reproductionMap)) {
+    reproductionMapForPlot <- biomassMapForPlot
+    reproductionMapForPlot[!is.na(reproductionMapForPlot)][] <- 0
   } else {
-    raster::mask(sim$reproductionMap, sim$studyAreaReporting)
+    reproductionMapForPlot <-  raster::mask(sim$reproductionMap, sim$studyAreaReporting)
   }
-
-  if (!is.null(biomassMapForPlot))
-    Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
-  if (!is.null(ANPPMapForPlot))
-    Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
-  if (!is.null(mortalityMapForPlot))
-    Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
-  if (!is.null(reproductionMapForPlot))
-    Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
 
   levs <- raster::levels(sim$vegTypeMap)[[1]]
   levelsName <- names(levs)[2]
@@ -1100,9 +1097,19 @@ plotVegAttributesMaps <- function(sim) {
   #vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA ## faster than raster::mask
 
   # Plot
+  if (!is.null(biomassMapForPlot))
+    Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
+  if (!is.null(ANPPMapForPlot))
+    Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
+  if (!is.null(mortalityMapForPlot))
+    Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
   Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
+
+  if (!is.null(reproductionMapForPlot))
+    Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
+
   return(invisible(sim))
 }
 
