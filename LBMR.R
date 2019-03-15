@@ -224,7 +224,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "LBMR", "plotMaps", eventPriority = plotAvgEvtPriority)
 
-           if (!any(is.na(P(sim)$.saveInitialTime))) {
+           if (!is.na(P(sim)$.saveInitialTime)) {
              sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
                                   "LBMR", "save", eventPriority = plotAvgEvtPriority + 0.5)
              ## stats plot is retrieving saved rasters so needs data to be saved
