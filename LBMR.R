@@ -108,7 +108,7 @@ defineModule(sim, list(
     expectsInput("speciesEcoregion", "data.table",
                  desc = "table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession-dynamic-inputs_test.txt"),
-    expectsInput("sppColors", "character",
+    expectsInput("sppColorVect", "character",
                  desc = paste("A named vector of colors to use for plotting.",
                               "The names must be in sim$speciesEquivalency[[sim$sppEquivCol]],",
                               "and should also contain a color for 'Mixed'"),
@@ -610,7 +610,7 @@ SummaryBGM <- function(sim) {
 
   sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
                                         P(sim)$vegLeadingProportion,
-                                        colors = sim$sppColors,
+                                        colors = sim$sppColorVect,
                                         unitTest = TRUE)
 
   # the following codes for preparing the data table for saving
@@ -971,12 +971,12 @@ summaryBySpecies <- function(sim) {
                                                   "EN_generic_short")
   summaryBySpecies1$leadingType[whMixedLeading] <- "Mixed"
 
-  colours <- equivalentName(names(sim$sppColors), sim$sppEquiv, "EN_generic_short")
-  whMixedSppColors <- which(names(sim$sppColors) == "Mixed")
+  colours <- equivalentName(names(sim$sppColorVect), sim$sppEquiv, "EN_generic_short")
+  whMixedSppColors <- which(names(sim$sppColorVect) == "Mixed")
   colours[whMixedSppColors] <- "Mixed"
 
   colorIDs <- match(summaryBySpecies1$leadingType, colours)
-  summaryBySpecies1$cols <- sim$sppColors[colorIDs]
+  summaryBySpecies1$cols <- sim$sppColorVect[colorIDs]
 
   if (is.null(sim$summaryBySpecies1)) {
     sim$summaryBySpecies1 <- summaryBySpecies1
@@ -989,7 +989,7 @@ summaryBySpecies <- function(sim) {
     df$species <- equivalentName(df$species, sim$sppEquiv, "EN_generic_short")
 
     colorIDs <- match(df$species, colours)
-    df$cols <- sim$sppColors[colorIDs]
+    df$cols <- sim$sppColorVect[colorIDs]
 
     cols2 <- df$cols
     names(cols2) <- df$species
@@ -1078,7 +1078,7 @@ plotVegAttributesMaps <- function(sim) {
   }
 
   whMixedLevs <- which(levs[[levelsName]] == "Mixed")
-  whMixedSppColors <- which(names(sim$sppColors) == "Mixed")
+  whMixedSppColors <- which(names(sim$sppColorVect) == "Mixed")
 
   # Will return NA where there is no value, e.g., Mixed
   levsLeading[whMixedLevs] <- "Mixed"
@@ -1088,11 +1088,11 @@ plotVegAttributesMaps <- function(sim) {
   levs[[levelsName]] <- shortNames
   levels(sim$vegTypeMap) <- levs
 
-  colsLeading <- equivalentName(names(sim$sppColors), sppEquiv, "Leading")
+  colsLeading <- equivalentName(names(sim$sppColorVect), sppEquiv, "Leading")
   colsLeading[whMixedSppColors] <- "Mixed"
-  sppColors <- sim$sppColors
-  names(sppColors) <- colsLeading
-  colours <- sppColors[na.omit(match(levsLeading, colsLeading))]
+  sppColorVect <- sim$sppColorVect
+  names(sppColorVect) <- colsLeading
+  colours <- sppColorVect[na.omit(match(levsLeading, colsLeading))]
   setColors(sim$vegTypeMap, levs$ID) <- colours
 
   # Mask out NAs based on rasterToMatch (for plotting only!)
@@ -1381,6 +1381,8 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("sppEquiv", sim)) {
+    if (!is.null(sim$sppColorVect))
+      stop("If you provide sppColorVect, you MUST also provide sppEquiv")
     data("sppEquivalencies_CA", package = "LandR", envir = environment())
     sim$sppEquiv <- as.data.table(sppEquivalencies_CA)
 
@@ -1388,10 +1390,11 @@ CohortAgeReclassification <- function(sim) {
     sim$sppEquiv[KNN == "Abie_Las", LandR := "Abie_sp"]
 
     ## add default colors for species used in model
-    if (!is.null(sim$sppColors))
-      stop("If you provide sppColors, you MUST also provide sppEquiv")
-    sim$sppColors <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
+     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
                                newVals = "Mixed", palette = "Accent")
+  } else {
+    if (is.null(sim$sppColorVect))
+      stop("If you provide please provide sppColorVect")
   }
 
   if (!suppliedElsewhere(sim$treedFirePixelTableSinceLastDisp)) {
