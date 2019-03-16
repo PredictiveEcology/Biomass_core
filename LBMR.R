@@ -1422,7 +1422,7 @@ CohortAgeReclassification <- function(sim) {
                                newVals = "Mixed", palette = "Accent")
   } else {
     if (is.null(sim$sppColorVect))
-      stop("If you provide please provide sppColorVect")
+      stop("If you provide sppEquiv, you MUST also provide sppColorVect")
   }
 
   if (!suppliedElsewhere(sim$treedFirePixelTableSinceLastDisp)) {
