@@ -1145,19 +1145,19 @@ plotAvgVegAttributes <- function(sim) {
   # only take the files in outputPath(sim) that were new since the startClockTime of the spades call
   biomassFiles <- list.files(outputPath(sim), pattern = "simulatedBiomassMap", full.names = TRUE)
   biomassKeepers <- file.info(biomassFiles)$atime > sim@.envir$._startClockTime
-
   biomass.stk <- lapply(biomassFiles[biomassKeepers], raster)
 
   ANPPFiles <- list.files(outputPath(sim), pattern = "ANPP", full.names = TRUE)
   ANPPKeepers <- file.info(ANPPFiles)$atime > sim@.envir$._startClockTime
-
   ANPP.stk <- lapply(ANPPFiles[ANPPKeepers], raster)
+
   meanBiomass <- sapply(biomass.stk, FUN <- function(x) mean(x[], na.rm = TRUE))
-  names(meanBiomass) = sub(".tif", "",  sub(".*simulatedBiomass_Year", "",
+  names(meanBiomass) <- sub(".tif", "",  sub(".*simulatedBiomassMap_Year", "",
                                             basename(biomassFiles[biomassKeepers])))
 
   meanANPP <- sapply(ANPP.stk, FUN <- function(x) mean(x[], na.rm = TRUE))
-  names(meanANPP) = sub(".tif", "", sub(".*ANPP_Year", "", basename(ANPPFiles[ANPPKeepers])))
+  names(meanANPP) <- sub(".tif", "", sub(".*ANPP_Year", "",
+                                         basename(ANPPFiles[ANPPKeepers])))
 
   means <- cbind(meanBiomass, meanANPP)
   means <- melt(means)
