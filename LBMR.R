@@ -233,9 +233,10 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
-               warning(paste(".saveInitialTime should be > start(sim) + P(sim)$successionTimestep",
-                             "First save changed to start(sim) + P(sim)$successionTimestep"))
-               P(sim)$.saveInitialTime <- start(sim) + P(sim)$successionTimestep
+               message(crayon::blue(
+                 paste(".saveInitialTime should be >",  start(sim) + P(sim)$successionTimestep,
+                       ". First save changed to", start(sim) + P(sim)$successionTimestep)))
+               params(sim)$LBMR$.saveInitialTime <- start(sim) + P(sim)$successionTimestep
              }
              sim <- scheduleEvent(sim, P(sim)$.saveInitialTime,
                                   "LBMR", "save", eventPriority = plotAvgEvtPriority + 0.5)
