@@ -218,7 +218,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            ## schedule events
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = dispEvtPriority)
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
+           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = summEvtsPriority + 0.25)
            sim <- scheduleEvent(sim, start(sim),
                                 "LBMR", "summaryBGM", eventPriority = summEvtsPriority + 0.5)
