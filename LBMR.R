@@ -204,7 +204,8 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- Init(sim)
 
            ## make sure plotting window is big enough
-           if (dev.size()[2] < 14) {
+           if (!is.na(P(sim)$.plotInitialTime) &
+               dev.size()[2] < 14) {
              dev.off()
              dev(height = 10, width = 14)
              clearPlot()
