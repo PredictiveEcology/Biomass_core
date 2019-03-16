@@ -236,7 +236,10 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                                   "LBMR", "save", eventPriority = plotAvgEvtPriority + 0.5)
              ## stats plot is retrieving saved rasters so needs data to be saved
              # start on second time around b/c ggplot doesn't like 1 data point
-             tPlotInit <- P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep
+             tPlotInit <- if (!is.na(P(sim)$.plotInitialTime)) {
+               P(sim)$.saveInitialTime + 2*P(sim)$successionTimestep
+             } else NA
+
              sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = plotAvgEvtPriority + 0.75)
            }
          },
