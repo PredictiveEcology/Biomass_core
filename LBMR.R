@@ -244,7 +244,15 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              ## stats plot is retrieving saved rasters so needs data to be saved
              # start on second time around b/c ggplot doesn't like 1 data point
              tPlotInit <- if (!is.na(P(sim)$.plotInitialTime)) {
-               P(sim)$.saveInitialTime + 2*P(sim)$successionTimestep
+               if (P(sim)$.saveInitialTime + 2*P(sim)$successionTimestep <= end(sim))
+                 P(sim)$.saveInitialTime + 2*P(sim)$successionTimestep
+               else {
+                 message(crayon::blue(
+                   paste("First save is too close to end, considering the simulation time step.",
+                         "Not enough data to plot average biomass/ANPP.",
+                         "Increase simulation time, decrease simualtion time step, or save earlier")))
+                 NA
+               }
              } else NA
 
              sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = plotAvgEvtPriority + 0.75)
