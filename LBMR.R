@@ -213,8 +213,8 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 
            ## current window will be used for maps
            ## a new one for summary stats
-           sim$mapWindow <- dev.cur()
-           sim$statsWindow <- sim$mapWindow + 1
+           mod$mapWindow <- dev.cur()
+           mod$statsWindow <- mod$mapWindow + 1
 
            ## schedule events
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
@@ -1025,7 +1025,7 @@ summaryBySpecies <- function(sim) {
     names(cols2) <- df$species
 
     if (!is.na(P(sim)$.plotInitialTime)) {
-      dev(sim$statsWindow)
+      dev(mod$statsWindow)
       plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species)) +
         scale_fill_manual(values = cols2) +
         geom_area(position = "stack") +
@@ -1042,7 +1042,7 @@ summaryBySpecies <- function(sim) {
     names(cols3) <- sim$summaryBySpecies1$leadingType
 
     if (!is.na(P(sim)$.plotInitialTime)) {
-      dev(sim$statsWindow)
+      dev(mod$statsWindow)
       plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
         scale_fill_manual(values = cols3) +
         labs(x = "Year", y = "Count") +
@@ -1124,7 +1124,7 @@ plotVegAttributesMaps <- function(sim) {
   #vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA ## faster than raster::mask
 
   # Plot
-  dev(sim$mapWindow)
+  dev(mod$mapWindow)
   if (!is.null(biomassMapForPlot))
     Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
   if (!is.null(ANPPMapForPlot))
@@ -1162,7 +1162,7 @@ plotAvgVegAttributes <- function(sim) {
   means <- cbind(meanBiomass, meanANPP)
   means <- melt(means)
 
-  dev(sim$statsWindow)
+  dev(mod$statsWindow)
   plot1 <- ggplot(data = means, aes(x = Var1, y = value, colour = Var2)) +
     geom_line(size = 1, show.legend = FALSE) + theme_bw() +
     facet_wrap(~ Var2, scales = "free_y") +
