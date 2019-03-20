@@ -217,7 +217,8 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   summBGMPriority <- summBGMPriority[P(sim)$calcSummaryBGM] ## filter necessary priorities
 
   summSppPriority <- summRegenPriority + 0.5
-  plotAvgEvtPriority <- 9
+  plotPriority <- 9
+  savePriority <- 10
 
   switch(eventType,
          init = {
@@ -268,7 +269,9 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, start(sim),
                                 "LBMR", "summaryBySpecies", eventPriority = summSppPriority)   ## only occurs before summaryRegen in init.
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "LBMR", "plotMaps", eventPriority = plotAvgEvtPriority)
+                                "LBMR", "plotMaps", eventPriority = plotPriority)
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "LBMR", "plotAvgs",
+                                eventPriority = plotPriority + 0.25)
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
@@ -278,29 +281,13 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                params(sim)$LBMR$.saveInitialTime <- start(sim) + P(sim)$successionTimestep
              }
              sim <- scheduleEvent(sim, P(sim)$.saveInitialTime,
-                                  "LBMR", "save", eventPriority = plotAvgEvtPriority + 0.25)
-             ## stats plot is retrieving saved rasters so needs data to be saved
-             # start on second time around b/c ggplot doesn't like 1 data point
-             tPlotInit <- if (!is.na(P(sim)$.plotInitialTime)) {
-               if (P(sim)$.saveInitialTime + 2*P(sim)$successionTimestep <= end(sim))
-                 P(sim)$.saveInitialTime + 2*P(sim)$successionTimestep
-               else {
-                 message(crayon::blue(
-                   paste("First save is too close to end, considering the simulation time step.",
-                         "Not enough data to plot average biomass/ANPP.",
-                         "Increase simulation time, decrease simualtion time step, or save earlier")))
-                 NA
-               }
-             } else NA
-
-             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs",
-                                  eventPriority = plotAvgEvtPriority + 0.5)
+                                  "LBMR", "save", eventPriority = savePriority)
            }
          },
          summaryBGMstart = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM", eventPriority = summBGMPriority$start)
+                                "LBMR", "summaryBGMstart", eventPriority = summBGMPriority$start)
          },
          Dispersal = {
            sim <- Dispersal(sim)
@@ -355,17 +342,17 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plotMaps", eventPriority = plotAvgEvtPriority)
+                                "LBMR", "plotMaps", eventPriority = plotPriority)
          },
          save = {
            sim <- Save(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "save", eventPriority = plotAvgEvtPriority + 0.25)
+                                "LBMR", "save", eventPriority = savePriority)
          },
          plotAvgs = {
            sim <- plotAvgVegAttributes(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plotAvgs", eventPriority = plotAvgEvtPriority + 0.5)
+                                "LBMR", "plotAvgs", eventPriority = plotPriority + 0.25)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
