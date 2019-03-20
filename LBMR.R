@@ -298,17 +298,17 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
          summaryBGMpostDisp = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM", eventPriority = summBGMPriority$postDisp)
+                                "LBMR", "summaryBGMpostDisp", eventPriority = summBGMPriority$postDisp)
          },
          summaryBGMpostRegen = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM", eventPriority = summBGMPriority$postRegen)
+                                "LBMR", "summaryBGMpostRegen", eventPriority = summBGMPriority$postRegen)
          },
          summaryBGMpostGM = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM", eventPriority = summBGMPriority$postGM)
+                                "LBMR", "summaryBGMpostGM", eventPriority = summBGMPriority$postGM)
          },
          cohortAgeReclassification = {
            sim <- CohortAgeReclassification(sim)
@@ -322,7 +322,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
          summaryBGMpostAging = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM", eventPriority = summBGMPriority$postAging)
+                                "LBMR", "summaryBGMpostAging", eventPriority = summBGMPriority$postAging)
          },
          summaryRegen = {
            sim <- summaryRegen(sim)
