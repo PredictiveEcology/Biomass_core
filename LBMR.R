@@ -1215,33 +1215,44 @@ plotVegAttributesMaps <- function(sim) {
 }
 
 plotAvgVegAttributes <- function(sim) {
-  # only take the files in outputPath(sim) that were new since the startClockTime of the spades call
-  biomassFiles <- list.files(outputPath(sim), pattern = "simulatedBiomassMap", full.names = TRUE)
-  biomassKeepers <- file.info(biomassFiles)$atime > sim@.envir$._startClockTime
-  biomass.stk <- lapply(biomassFiles[biomassKeepers], raster)
+  ## MEAN BIOMASS/AGE/ANPP ACROSS LANDSCAPE
+  ## calculate sumB and mean age/aNPP per pixelGroup first
+  thisPeriod <- sim$cohortData[, list(sumB = sum(B, na.rm = TRUE),
+                                      meanAge = mean(age, na.rm = TRUE),
+                                      meanANPP = mean(aNPPAct, na.rm = TRUE)),
+                               by = pixelGroup]
+  thisPeriod <- thisPeriod[, list(year = time(sim),
+                                  BiomassLandscape = mean(sumB, na.rm = TRUE),
+                                  AgeLandscape = mean(meanAge, na.rm = TRUE),
+                                  aNPPLandscape = mean(meanANPP, na.rm = TRUE))]
+  if (is.null(sim$summaryLandscape)) {
+    sim$summaryLandscape <- thisPeriod
+  } else {
+    sim$summaryLandscape <- rbindlist(list(sim$summaryLandscape, thisPeriod))
+  }
 
-  ANPPFiles <- list.files(outputPath(sim), pattern = "ANPP", full.names = TRUE)
-  ANPPKeepers <- file.info(ANPPFiles)$atime > sim@.envir$._startClockTime
-  ANPP.stk <- lapply(ANPPFiles[ANPPKeepers], raster)
 
-  meanBiomass <- sapply(biomass.stk, FUN <- function(x) mean(x[], na.rm = TRUE))
-  names(meanBiomass) <- sub(".tif", "",  sub(".*simulatedBiomassMap_Year", "",
-                                            basename(biomassFiles[biomassKeepers])))
+  if (length(unique(sim$summaryLandscape$year)) > 1) {
+    df2 <- melt(sim$summaryLandscape, id.vars = "year")
+    if (!is.na(P(sim)$.plotInitialTime)) {
+      dev(mod$statsWindow)
 
-  meanANPP <- sapply(ANPP.stk, FUN <- function(x) mean(x[], na.rm = TRUE))
-  names(meanANPP) <- sub(".tif", "", sub(".*ANPP_Year", "",
-                                         basename(ANPPFiles[ANPPKeepers])))
+      varLabels <- c(BiomassLandscape = "Biomass",
+                     AgeLandscape = "Age",
+                     aNPPLandscape = "aNPP")
 
-  means <- cbind(meanBiomass, meanANPP)
-  means <- melt(means)
+      plot1 <- ggplot(data = df2, aes(x = year, y = value, colour = variable)) +
+        geom_line(size = 1) + theme_bw() +
+        scale_colour_brewer(labels = varLabels, type = "qual", palette = "Dark2") +
+        facet_wrap(~ variable, scales = "free_y",
+                   labeller = labeller(variable = varLabels)) +
+        labs(x = "Year", y = "Average value") +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank(),
+              legend.position = "bottom")
 
-  dev(mod$statsWindow)
-  plot1 <- ggplot(data = means, aes(x = Var1, y = value, colour = Var2)) +
-    geom_line(size = 1, show.legend = FALSE) + theme_bw() +
-    facet_wrap(~ Var2, scales = "free_y") +
-    labs(x = "Year", y = "Average value")
-
-  Plot(plot1, title = c("Average biomass/ANPP"), new = TRUE)
+      Plot(plot1, title = "Average landscape biomass, age and aNPP" , new = TRUE)
+    }
+  }
   return(invisible(sim))
 }
 
