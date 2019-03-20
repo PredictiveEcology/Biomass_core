@@ -1042,15 +1042,26 @@ summaryRegen <- function(sim) {
 }
 
 summaryBySpecies <- function(sim) {
-  thisPeriod <- sim$cohortData[, list(year = time(sim),
-                                      BiomassBySpecies = mean(B, na.rm = TRUE)),
+  ## MEAN BIOMASS/AGE/ANPP PER SPECIES
+  ## calculate SUM B and MEAN age/aNPP per species, per pixelGroup first,
+  ## then average across pixelgroups
+  thisPeriod <- sim$cohortData[, list(BiomassBySpecies = sum(B, na.rm = TRUE),
+                                      AgeBySpecies = mean(age, na.rm = TRUE),
+                                      aNPPBySpecies = mean(aNPPAct, na.rm = TRUE)),
+                               by = .(speciesCode, pixelGroup)]
+  thisPeriod <- thisPeriod[, list(year = time(sim),
+                                      BiomassBySpecies = mean(BiomassBySpecies, na.rm = TRUE),
+                                      AgeBySpecies = mean(AgeBySpecies, na.rm = TRUE),
+                                      aNPPBySpecies = mean(aNPPBySpecies, na.rm = TRUE)),
                                by = speciesCode]
+
   if (is.null(sim$summaryBySpecies)) {
     sim$summaryBySpecies <- thisPeriod
   } else {
     sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
 
+  ## MEAN NO. PIXELS PER LEADING SPECIES
   vtm <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
   freqs <- table(na.omit(factorValues2(vtm, vtm[], att = 2)))
   tabl <- as.vector(freqs)
