@@ -145,7 +145,6 @@ defineModule(sim, list(
                  desc = "function to add/update species attributes in species cohort table"),
     expectsInput("updateSpeciesEcoregionAttributes", "function",
                  desc = "function to add/update species ecoregion attributes in species cohort table"),
-    ## for inputs from optional fire module:
     expectsInput("spinUpCache", "logical", ""),
     expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
   ),
@@ -630,7 +629,6 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   return(invisible(sim))
 }
 
-### EVENT FUNCTIONS
 SummaryBGM <- function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup),
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
@@ -651,7 +649,7 @@ SummaryBGM <- function(sim) {
   for (subgroup in paste("Group",  1:(length(cutpoints) - 1), sep = "")) {
     subCohortData <- sim$cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
     if (nrow(subCohortData[age == (P(sim)$successionTimestep + 1),]) > 0) {
-      subCohortData[age == (P(sim)$successionTimestep + 1),reproduction := sum(B), by = pixelGroup]
+      subCohortData[age == (P(sim)$successionTimestep + 1), reproduction := sum(B), by = pixelGroup]
     } else {
       subCohortData[, reproduction := 0]
     }
