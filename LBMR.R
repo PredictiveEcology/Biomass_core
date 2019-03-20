@@ -1127,15 +1127,17 @@ summaryBySpecies <- function(sim) {
       Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
     }
 
-  # means <- cbind(meanBiomass, meanANPP)
-  # means <- melt(means)
-  #
-  # plot1 <- ggplot(data = means, aes(x = Var1, y = value, colour = Var2)) +
-  #   geom_line(size = 1, show.legend = FALSE) + theme_bw() +
-  #   facet_wrap(~ Var2, scales = "free_y") +
-  #   labs(x = "Year", y = "Average value")
-  #
-  # Plot(plot1, title = c("Average biomass/ANPP"))
+    if (!is.na(P(sim)$.plotInitialTime)) {
+      dev(mod$statsWindow)
+      plot4 <- ggplot(data = df, aes(x = year, y = AgeBySpecies, colour = species)) +
+        scale_colour_manual(values = cols2) +
+        geom_line(size = 1) + theme_bw() +
+        labs(x = "Year", y = "Average species age") +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank())
+
+      Plot(plot4, title = "Average species age", new = TRUE)
+    }
+  }
 
   return(invisible(sim))
 }
