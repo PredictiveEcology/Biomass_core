@@ -1108,9 +1108,7 @@ summaryBySpecies <- function(sim) {
         labs(x = "Year", y = "Biomass by species") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
-      title2 <- if (identical(time(sim), P(sim)$.plotInitialTime + P(sim)$.plotInterval))
-        "Average biomass by species" else ""
-      Plot(plot2, title = title2, new = TRUE)
+      Plot(plot2, title = "Average biomass by species", new = TRUE)
     }
 
     maxNpixels <- sum(!is.na(sim$rasterToMatchReporting[]))
@@ -1126,11 +1124,8 @@ summaryBySpecies <- function(sim) {
         theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
         geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey")
 
-      title3 <- if (identical(time(sim), P(sim)$.plotInitialTime + P(sim)$.plotInterval))
-        "Number of pixels, by leading type" else ""
-      Plot(plot3, title = title3, new = TRUE)
+      Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
     }
-  }
 
   # means <- cbind(meanBiomass, meanANPP)
   # means <- melt(means)
