@@ -25,7 +25,7 @@ defineModule(sim, list(
                   "PredictiveEcology/SpaDES.core@development",
                   "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
-    defineParameter("calcSummaryBGM", "character", c("end"), NA, NA,
+    defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
                     "Currently any combination of 5 options is possible:",
                     "'start'- as before vegetation succession events, i.e. before dispersal,",
