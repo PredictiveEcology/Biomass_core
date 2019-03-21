@@ -1497,10 +1497,7 @@ CohortAgeReclassification <- function(sim) {
     #                           targetFile = "ecoregions.gis",
     #                           fun = "raster::raster")
 
-    ## Dummy version with spatial location in Canada
-    ras <- projectExtent(sim$studyArea, crs = sim$studyArea)
-    res(ras) <- 250 ## TODO: don't hardcode this; get from rasterToMatch?
-    ecoregionMap <- rasterize(sim$studyArea, ras) ## TODO: use fasterize
+    ecoregionMap <- sim$rasterToMatch
 
     ## make uniform communities (well structured in space)
     mapvals <- rep(unique(sim$ecoregion$mapcode),
