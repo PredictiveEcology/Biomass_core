@@ -113,7 +113,8 @@ defineModule(sim, list(
                               "Defaults to the kNN biomass map masked with `studyArea`"),
                  sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
     expectsInput("species", "data.table",
-                 desc = "a table that has species traits such as longevity...",
+                 desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
+                              "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs"),
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt"),
     expectsInput("speciesEcoregion", "data.table",
                  desc = "table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time",
@@ -179,13 +180,18 @@ defineModule(sim, list(
     createsOutput("simulationTreeOutput", "data.table",
                   desc = "Summary of several characteristics about the stands, derived from cohortData"),
     createsOutput("species", "data.table",
-                  desc = "a table that has species traits such as longevity..."),
+                  desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
+                               "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs")),
     createsOutput("speciesEcoregion", "data.table",
                   desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
     # createsOutput("spinUpCache", "logical", desc = ""),
-    createsOutput("spinupOutput", "data.table", desc = ""),
-    createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species"),
-    createsOutput("summaryBySpecies1", "data.table", desc = "Pixel summaries by species used for plotting and reporting.")
+    createsOutput("spinupOutput", "data.table", desc = "Spin-up output"),
+    createsOutput("summaryBySpecies", "data.table",
+                  desc = "The average species biomass, age and aNPP across the landscape (used for plotting and reporting)."),
+    createsOutput("summaryBySpecies1", "data.table",
+                  desc = "No. pixels of each leading vegetation type (used for plotting and reporting)."),
+    createsOutput("summaryLandscape", "data.table",
+                  desc = "The averages of total biomass, age and aNPP across the landscape (used for plotting and reporting).")
   )
 ))
 
