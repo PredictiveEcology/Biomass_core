@@ -1555,18 +1555,31 @@ CohortAgeReclassification <- function(sim) {
     if (!is.null(sim$sppColorVect))
       stop("If you provide sppColorVect, you MUST also provide sppEquiv")
 
-    message(paste("There is no 'sppEquiv' table supplied;",
-                  "will attempt to use all species listed under 'LandR'",
-                  "in the LandR::sppEquivalencies_CA table"))
-
     data("sppEquivalencies_CA", package = "LandR", envir = environment())
     sim$sppEquiv <- as.data.table(sppEquivalencies_CA)
-
     ## By default, Abies_las is renamed to Abies_sp
     sim$sppEquiv[KNN == "Abie_Las", LandR := "Abie_sp"]
 
-    ## remove empty lines in LandR column
-    sim$sppEquiv[LandR != ""]
+    ## check spp column to use
+    if (P(sim)$sppEquivCol == "Boreal") {
+      message(paste("There is no 'sppEquiv' table supplied;",
+                    "will attempt to use species listed under 'Boreal'",
+                    "in the 'LandR::sppEquivalencies_CA' table"))
+    } else {
+      if (grepl(P(sim)$sppEquivCol, names(sim$sppEquiv))) {
+        message(paste("There is no 'sppEquiv' table supplied,",
+                      "will attempt to use species listed under", P(sim)$sppEquivCol,
+                      "in the 'LandR::sppEquivalencies_CA' table"))
+      } else {
+        stop("You changed 'sppEquivCol' without providing 'sppEquiv',",
+             "and the column name can't be found in the default table ('LandR::sppEquivalencies_CA').",
+             "Please provide conforming 'sppEquivCol', 'sppEquiv' and 'sppColorVect'")
+      }
+    }
+
+    ## remove empty lines/NAs
+    sim$sppEquiv <- sim$sppEquiv[!"", on = P(sim)$sppEquivCol]
+    sim$sppEquiv <- na.omit(sim$sppEquiv, P(sim)$sppEquivCol)
 
     ## add default colors for species used in model
     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
