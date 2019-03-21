@@ -1493,19 +1493,27 @@ CohortAgeReclassification <- function(sim) {
   if (!suppliedElsewhere("sppEquiv", sim)) {
     if (!is.null(sim$sppColorVect))
       stop("If you provide sppColorVect, you MUST also provide sppEquiv")
+
+    message(paste("There is no 'sppEquiv' table supplied;",
+                  "will attempt to use all species listed under 'LandR'",
+                  "in the LandR::sppEquivalencies_CA table"))
+
     data("sppEquivalencies_CA", package = "LandR", envir = environment())
     sim$sppEquiv <- as.data.table(sppEquivalencies_CA)
 
     ## By default, Abies_las is renamed to Abies_sp
     sim$sppEquiv[KNN == "Abie_Las", LandR := "Abie_sp"]
 
+    ## remove empty lines in LandR column
+    sim$sppEquiv[LandR != ""]
+
     ## add default colors for species used in model
-     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
-                               newVals = "Mixed", palette = "Accent")
+    sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
+                                  newVals = "Mixed", palette = "Accent")
   } else {
     if (is.null(sim$sppColorVect))
-      stop("If you provide sppEquiv, you MUST also provide sppColorVect")
-  }
+      stop("If you provide 'sppEquiv' you MUST also provide 'sppColorVect'")
+    }
 
   if (!suppliedElsewhere("treedFirePixelTableSinceLastDisp", sim)) {
     sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(),
