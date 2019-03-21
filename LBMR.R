@@ -153,7 +153,6 @@ defineModule(sim, list(
                   desc = "internal use. Keeps track of which pixels are active"),
     createsOutput("ANPPMap", "RasterLayer",
                   desc = "ANPP map at each succession time step"),
-    createsOutput("burnLoci", "numeric", desc = "Fire pixel IDs"),
     createsOutput("cohortData", "data.table",
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step"),
     createsOutput(objectName = "simulatedBiomassMap", objectClass = "RasterLayer",
