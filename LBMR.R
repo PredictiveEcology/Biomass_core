@@ -1507,7 +1507,7 @@ CohortAgeReclassification <- function(sim) {
       stop("If you provide sppEquiv, you MUST also provide sppColorVect")
   }
 
-  if (!suppliedElsewhere(sim$treedFirePixelTableSinceLastDisp)) {
+  if (!suppliedElsewhere("treedFirePixelTableSinceLastDisp", sim)) {
     sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(),
                                                        pixelGroup = integer(),
                                                        burnTime = numeric())
