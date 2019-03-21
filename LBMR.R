@@ -1513,5 +1513,30 @@ CohortAgeReclassification <- function(sim) {
                                                        burnTime = numeric())
   }
 
+  if (!suppliedElsewhere("speciesLayers", sim)) {
+    #opts <- options(reproducible.useCache = "overwrite")
+    sim$speciesLayers <- Cache(loadkNNSpeciesLayers,
+                               dPath = dPath,
+                               rasterToMatch = sim$rasterToMatch,
+                               studyArea = sim$studyAreaLarge,
+                               sppEquiv = sim$sppEquiv,
+                               knnNamesCol = "KNN",
+                               sppEquivCol = P(sim)$sppEquivCol,
+                               thresh = 5,
+                               url = extractURL("speciesLayers"),
+                               userTags = c(cacheTags, "speciesLayers"))
+  }
+
+  if(!suppliedElsewhere("species", sim)) {
+    speciesTable <- getSpeciesTable(dPath = dPath, cacheTags = cacheTags)
+    sim$species <- prepSpeciesTable(speciesTable = speciesTable,
+                                    speciesLayers = sim$speciesLayers,
+                                    sppEquiv = sim$sppEquiv[get(P(sim)$sppEquivCol) %in%
+                                                              names(speciesLayers)],
+                                    sppEquivCol = P(sim)$sppEquivCol)
+
+  }
+
+
   return(invisible(sim))
 }
