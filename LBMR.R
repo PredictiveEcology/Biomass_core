@@ -146,7 +146,7 @@ defineModule(sim, list(
     expectsInput("updateSpeciesEcoregionAttributes", "function",
                  desc = "function to add/update species ecoregion attributes in species cohort table"),
     # expectsInput("spinUpCache", "logical", ""),
-    expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
+    # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
   ),
   outputObjects = bind_rows(
     createsOutput("activePixelIndex", "logical",
