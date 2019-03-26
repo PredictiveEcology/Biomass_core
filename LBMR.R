@@ -25,6 +25,14 @@ defineModule(sim, list(
                   "PredictiveEcology/SpaDES.core@development",
                   "PredictiveEcology/SpaDES.tools@development"),
   parameters = rbind(
+    defineParameter("calcSummaryBGM", "character", c("end"), NA, NA,
+                    desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
+                    "Currently any combination of 5 options is possible:",
+                    "'start'- as before vegetation succession events, i.e. before dispersal,",
+                    "'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'),",
+                    "'postGM' - after growth and mortality, 'postAging' - after aging,",
+                    "'end' - at the end of vegetation succesion events, before plotting and saving.",
+                    "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
@@ -51,10 +59,12 @@ defineModule(sim, list(
     defineParameter("vegLeadingProportion", "numeric", 0.8, 0, 1,
                     desc = "a number that define whether a species is leading for a given pixel"),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
-                    desc = "This describes the simulation time at which the first plot event should occur"),
+                    desc = paste("Vector of length = 1, describing the simulation time at which the first plot event should occur.",
+                                 "Set to NA to turn plotting off.")),
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
-                    desc = paste("This describes the simulation time at which the first save event should occur.",
-                                 "Set to NA if no saving is desired.")),
+                    desc = paste("Vector of length = 1, describing the simulation time at which the first save event should occur.",
+                                 "Set to NA if no saving is desired. If not NA, then saving will occur at",
+                                 ".saveInitialTime and every subsequent time step")),
     defineParameter(".useCache", "logical", TRUE,
                     desc = "use caching for the spinup simulation?"),
     defineParameter(".useParallel", "ANY", parallel::detectCores(),
@@ -108,7 +118,7 @@ defineModule(sim, list(
     expectsInput("speciesEcoregion", "data.table",
                  desc = "table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time",
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession-dynamic-inputs_test.txt"),
-    expectsInput("sppColors", "character",
+    expectsInput("sppColorVect", "character",
                  desc = paste("A named vector of colors to use for plotting.",
                               "The names must be in sim$speciesEquivalency[[sim$sppEquivCol]],",
                               "and should also contain a color for 'Mixed'"),
@@ -135,7 +145,6 @@ defineModule(sim, list(
                  desc = "function to add/update species attributes in species cohort table"),
     expectsInput("updateSpeciesEcoregionAttributes", "function",
                  desc = "function to add/update species ecoregion attributes in species cohort table"),
-    ## for inputs from optional fire module:
     expectsInput("spinUpCache", "logical", ""),
     expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
   ),
@@ -178,7 +187,7 @@ defineModule(sim, list(
     createsOutput("spinupOutput", "data.table", desc = ""),
     createsOutput("summaryBySpecies", "data.table", desc = "The average biomass in a pixel, by species"),
     createsOutput("summaryBySpecies1", "data.table", desc = "Pixel summaries by species used for plotting and reporting.")
-    )
+  )
 ))
 
 doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
@@ -192,47 +201,114 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   }
 
   dispEvtPriority <- 5
-  agingEvtPriotity <- 6
-  summEvtsPriority <- 7
-  plotAvgEvtPriority <- 8
+  GMEvtPriority <- 6   ## not used yet
+  agingEvtPriotity <- 7
+  summRegenPriority <- 8
+  ## summary of BGM can occur several times, b4/after other events
+  summBGMPriority <- list(start = dispEvtPriority - 1,
+                          postDisp = dispEvtPriority + 0.25,
+                          postRegen = 4,
+                          postGM = GMEvtPriority + 0.25,
+                          postAging = agingEvtPriotity + 0.25,
+                          end = summRegenPriority + 0.25)
+  ## add "end" to parameter vector if necessary
+  if (!any(P(sim)$calcSummaryBGM == "end"))
+    params(sim)$LBMR$calcSummaryBGM <- c(P(sim)$calcSummaryBGM, "end")
+  summBGMPriority <- summBGMPriority[P(sim)$calcSummaryBGM] ## filter necessary priorities
+
+  summSppPriority <- summRegenPriority + 0.5
+  plotPriority <- 9
+  savePriority <- 10
 
   switch(eventType,
          init = {
            ## do stuff for this event
            sim <- Init(sim)
 
+           ## make sure plotting window is big enough
+           if (!is.na(P(sim)$.plotInitialTime) &
+               dev.size()[2] < 14) {
+             dev.off()
+             dev(height = 10, width = 14)
+             clearPlot()
+           }
+
+           ## current window will be used for maps
+           ## a new one for summary stats
+           mod$mapWindow <- dev.cur()
+           mod$statsWindow <- mod$mapWindow + 1
+
            ## schedule events
+           if (!is.null(summBGMPriority$start))
+             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+                                  "LBMR", "summaryBGMstart", eventPriority = summBGMPriority$start)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = dispEvtPriority)
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime + P(sim)$successionTimestep,
-                                "LBMR", "summaryRegen", eventPriority = summEvtsPriority + 0.25)
-           sim <- scheduleEvent(sim, start(sim),
-                                "LBMR", "summaryBGM", eventPriority = summEvtsPriority + 0.5)
-           sim <- scheduleEvent(sim, start(sim),
-                                "LBMR", "summaryBySpecies", eventPriority =  summEvtsPriority + 0.75)
+           if (!is.null(summBGMPriority$postDisp))
+             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+                                  "LBMR", "summaryBGMpostDisp", eventPriority = summBGMPriority$postDisp)
+           if (!is.null(summBGMPriority$postRegen))
+             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+                                  "LBMR", "summaryBGMpostRegen", eventPriority = summBGMPriority$postRegen)
+           if (!is.null(summBGMPriority$postGM))
+             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+                                  "LBMR", "summaryBGMpostGM", eventPriority = summBGMPriority$postGM)
            if (P(sim)$successionTimestep != 1) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
                                   "cohortAgeReclassification", eventPriority = agingEvtPriotity)
+             if (!is.null(summBGMPriority$postAging))
+               sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+                                    "LBMR", "summaryBGMpostAging", eventPriority = summBGMPriority$postAging)
            }
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "LBMR", "plotMaps", eventPriority = plotAvgEvtPriority)
 
-           if (!any(is.na(P(sim)$.saveInitialTime))) {
-             sim <- scheduleEvent(sim, P(sim)$.saveInitialTime + P(sim)$successionTimestep,
-                                  "LBMR", "save", eventPriority = plotAvgEvtPriority + 0.5)
-             ## stats plot is retrieving saved rasters so needs data to be saved
-             # start on second time around b/c ggplot doesn't like 1 data point
-             tPlotInit <- P(sim)$.plotInitialTime + 2*P(sim)$successionTimestep
-             sim <- scheduleEvent(sim, tPlotInit, "LBMR", "plotAvgs", eventPriority = plotAvgEvtPriority + 0.75)
+           ## note that summaryBGM and summaryBySpecies, will occur during init too
+           sim <- scheduleEvent(sim, start(sim),
+                                  "LBMR", "summaryBGM", eventPriority = summBGMPriority$end)
+           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryRegen", eventPriority = summRegenPriority)
+           sim <- scheduleEvent(sim, start(sim),
+                                "LBMR", "summaryBySpecies", eventPriority = summSppPriority)   ## only occurs before summaryRegen in init.
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
+                                "LBMR", "plotMaps", eventPriority = plotPriority)
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "LBMR", "plotAvgs",
+                                eventPriority = plotPriority + 0.25)
+
+           if (!is.na(P(sim)$.saveInitialTime)) {
+             if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
+               message(crayon::blue(
+                 paste(".saveInitialTime should be >=",  start(sim) + P(sim)$successionTimestep,
+                       ". First save changed to", start(sim) + P(sim)$successionTimestep)))
+               params(sim)$LBMR$.saveInitialTime <- start(sim) + P(sim)$successionTimestep
+             }
+             sim <- scheduleEvent(sim, P(sim)$.saveInitialTime,
+                                  "LBMR", "save", eventPriority = savePriority)
            }
+         },
+         summaryBGMstart = {
+           sim <- SummaryBGM(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBGMstart", eventPriority = summBGMPriority$start)
          },
          Dispersal = {
            sim <- Dispersal(sim)
 
-           clearPlot(4)
-           clearPlot(5)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = dispEvtPriority)
+         },
+         summaryBGMpostDisp = {
+           sim <- SummaryBGM(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBGMpostDisp", eventPriority = summBGMPriority$postDisp)
+         },
+         summaryBGMpostRegen = {
+           sim <- SummaryBGM(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBGMpostRegen", eventPriority = summBGMPriority$postRegen)
+         },
+         summaryBGMpostGM = {
+           sim <- SummaryBGM(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBGMpostGM", eventPriority = summBGMPriority$postGM)
          },
          cohortAgeReclassification = {
            sim <- CohortAgeReclassification(sim)
@@ -243,36 +319,40 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                                   eventPriority = agingEvtPriotity)
            }
          },
+         summaryBGMpostAging = {
+           sim <- SummaryBGM(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+                                "LBMR", "summaryBGMpostAging", eventPriority = summBGMPriority$postAging)
+         },
          summaryRegen = {
            sim <- summaryRegen(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryRegen", eventPriority = summEvtsPriority + 0.25)
+                                "LBMR", "summaryRegen", eventPriority = summRegenPriority)
          },
          summaryBGM = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM",
-                                eventPriority = summEvtsPriority + 0.5)
+                                "LBMR", "summaryBGM", eventPriority = summBGMPriority$end)
          },
          summaryBySpecies = {
            sim <- summaryBySpecies(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBySpecies", eventPriority = summEvtsPriority + 0.75)
+                                "LBMR", "summaryBySpecies", eventPriority = summSppPriority)
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plotMaps", eventPriority = plotAvgEvtPriority)
+                                "LBMR", "plotMaps", eventPriority = plotPriority)
          },
          save = {
            sim <- Save(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "save", eventPriority = plotAvgEvtPriority + 0.5)
+                                "LBMR", "save", eventPriority = savePriority)
          },
          plotAvgs = {
            sim <- plotAvgVegAttributes(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plotAvgs", eventPriority = plotAvgEvtPriority + 0.75)
+                                "LBMR", "plotAvgs", eventPriority = plotPriority + 0.25)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
@@ -280,6 +360,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   return(invisible(sim))
 }
 
+### EVENT FUNCTIONS
 Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   # A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks
   mod$cutpoint <- 1e10
@@ -535,7 +616,6 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   return(invisible(sim))
 }
 
-### EVENT FUNCTIONS
 SummaryBGM <- function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup),
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
@@ -556,7 +636,7 @@ SummaryBGM <- function(sim) {
   for (subgroup in paste("Group",  1:(length(cutpoints) - 1), sep = "")) {
     subCohortData <- sim$cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
     if (nrow(subCohortData[age == (P(sim)$successionTimestep + 1),]) > 0) {
-      subCohortData[age == (P(sim)$successionTimestep + 1),reproduction := sum(B), by = pixelGroup]
+      subCohortData[age == (P(sim)$successionTimestep + 1), reproduction := sum(B), by = pixelGroup]
     } else {
       subCohortData[, reproduction := 0]
     }
@@ -610,7 +690,7 @@ SummaryBGM <- function(sim) {
 
   sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
                                         P(sim)$vegLeadingProportion,
-                                        colors = sim$sppColors,
+                                        colors = sim$sppColorVect,
                                         unitTest = TRUE)
 
   # the following codes for preparing the data table for saving
@@ -925,7 +1005,7 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
 
 summaryRegen <- function(sim) {
   #cohortData <- sim$cohortData
-  if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
+  if (!is.na(P(sim)$.plotInitialTime) | !is.na(P(sim)$.saveInitialTime)) {
     pixelGroupMap <- sim$pixelGroupMap
     names(pixelGroupMap) <- "pixelGroup"
     # please note that the calculation of reproduction is based on successioinTime step interval,
@@ -947,15 +1027,26 @@ summaryRegen <- function(sim) {
 }
 
 summaryBySpecies <- function(sim) {
-  thisPeriod <- sim$cohortData[, list(year = time(sim),
-                                      BiomassBySpecies = mean(B, na.rm = TRUE)),
+  ## MEAN BIOMASS/AGE/ANPP PER SPECIES
+  ## calculate SUM B and MEAN age/aNPP per species, per pixelGroup first,
+  ## then average across pixelgroups
+  thisPeriod <- sim$cohortData[, list(BiomassBySpecies = sum(B, na.rm = TRUE),
+                                      AgeBySpecies = mean(age, na.rm = TRUE),
+                                      aNPPBySpecies = mean(aNPPAct, na.rm = TRUE)),
+                               by = .(speciesCode, pixelGroup)]
+  thisPeriod <- thisPeriod[, list(year = time(sim),
+                                      BiomassBySpecies = mean(BiomassBySpecies, na.rm = TRUE),
+                                      AgeBySpecies = mean(AgeBySpecies, na.rm = TRUE),
+                                      aNPPBySpecies = mean(aNPPBySpecies, na.rm = TRUE)),
                                by = speciesCode]
+
   if (is.null(sim$summaryBySpecies)) {
     sim$summaryBySpecies <- thisPeriod
   } else {
     sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
 
+  ## MEAN NO. PIXELS PER LEADING SPECIES
   vtm <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
   freqs <- table(na.omit(factorValues2(vtm, vtm[], att = 2)))
   tabl <- as.vector(freqs)
@@ -971,12 +1062,12 @@ summaryBySpecies <- function(sim) {
                                                   "EN_generic_short")
   summaryBySpecies1$leadingType[whMixedLeading] <- "Mixed"
 
-  colours <- equivalentName(names(sim$sppColors), sim$sppEquiv, "EN_generic_short")
-  whMixedSppColors <- which(names(sim$sppColors) == "Mixed")
+  colours <- equivalentName(names(sim$sppColorVect), sim$sppEquiv, "EN_generic_short")
+  whMixedSppColors <- which(names(sim$sppColorVect) == "Mixed")
   colours[whMixedSppColors] <- "Mixed"
 
   colorIDs <- match(summaryBySpecies1$leadingType, colours)
-  summaryBySpecies1$cols <- sim$sppColors[colorIDs]
+  summaryBySpecies1$cols <- sim$sppColorVect[colorIDs]
 
   if (is.null(sim$summaryBySpecies1)) {
     sim$summaryBySpecies1 <- summaryBySpecies1
@@ -989,21 +1080,20 @@ summaryBySpecies <- function(sim) {
     df$species <- equivalentName(df$species, sim$sppEquiv, "EN_generic_short")
 
     colorIDs <- match(df$species, colours)
-    df$cols <- sim$sppColors[colorIDs]
+    df$cols <- sim$sppColorVect[colorIDs]
 
     cols2 <- df$cols
     names(cols2) <- df$species
 
     if (!is.na(P(sim)$.plotInitialTime)) {
+      dev(mod$statsWindow)
       plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species)) +
         scale_fill_manual(values = cols2) +
         geom_area(position = "stack") +
         labs(x = "Year", y = "Biomass by species") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
-      title2 <- if (identical(time(sim), P(sim)$.plotInitialTime + P(sim)$.plotInterval))
-        "Average biomass by species" else ""
-      Plot(plot2, title = title2, new = TRUE)
+      Plot(plot2, title = "Average biomass by species", new = TRUE)
     }
 
     maxNpixels <- sum(!is.na(sim$rasterToMatchReporting[]))
@@ -1011,6 +1101,7 @@ summaryBySpecies <- function(sim) {
     names(cols3) <- sim$summaryBySpecies1$leadingType
 
     if (!is.na(P(sim)$.plotInitialTime)) {
+      dev(mod$statsWindow)
       plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
         scale_fill_manual(values = cols3) +
         labs(x = "Year", y = "Count") +
@@ -1018,21 +1109,20 @@ summaryBySpecies <- function(sim) {
         theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
         geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey")
 
-      title3 <- if (identical(time(sim), P(sim)$.plotInitialTime + P(sim)$.plotInterval))
-        "Number of pixels, by leading type" else ""
-      Plot(plot3, title = title3, new = TRUE)
+      Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
+    }
+
+    if (!is.na(P(sim)$.plotInitialTime)) {
+      dev(mod$statsWindow)
+      plot4 <- ggplot(data = df, aes(x = year, y = AgeBySpecies, colour = species)) +
+        scale_colour_manual(values = cols2) +
+        geom_line(size = 1) + theme_bw() +
+        labs(x = "Year", y = "Average species age") +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank())
+
+      Plot(plot4, title = "Average species age", new = TRUE)
     }
   }
-
-  # means <- cbind(meanBiomass, meanANPP)
-  # means <- melt(means)
-  #
-  # plot1 <- ggplot(data = means, aes(x = Var1, y = value, colour = Var2)) +
-  #   geom_line(size = 1, show.legend = FALSE) + theme_bw() +
-  #   facet_wrap(~ Var2, scales = "free_y") +
-  #   labs(x = "Year", y = "Average value")
-  #
-  # Plot(plot1, title = c("Average biomass/ANPP"))
 
   return(invisible(sim))
 }
@@ -1041,20 +1131,12 @@ plotVegAttributesMaps <- function(sim) {
   biomassMapForPlot <- raster::mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
   ANPPMapForPlot <- raster::mask(sim$ANPPMap, sim$studyAreaReporting)
   mortalityMapForPlot <- raster::mask(sim$mortalityMap, sim$studyAreaReporting)
-  reproductionMapForPlot <- if (is.null(sim$reproductionMap)) {
-    NULL
+  if (is.null(sim$reproductionMap)) {
+    reproductionMapForPlot <- biomassMapForPlot
+    reproductionMapForPlot[!is.na(reproductionMapForPlot)][] <- 0
   } else {
-    raster::mask(sim$reproductionMap, sim$studyAreaReporting)
+    reproductionMapForPlot <-  raster::mask(sim$reproductionMap, sim$studyAreaReporting)
   }
-
-  if (!is.null(biomassMapForPlot))
-    Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
-  if (!is.null(ANPPMapForPlot))
-    Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
-  if (!is.null(mortalityMapForPlot))
-    Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
-  if (!is.null(reproductionMapForPlot))
-    Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
 
   levs <- raster::levels(sim$vegTypeMap)[[1]]
   levelsName <- names(levs)[2]
@@ -1078,7 +1160,7 @@ plotVegAttributesMaps <- function(sim) {
   }
 
   whMixedLevs <- which(levs[[levelsName]] == "Mixed")
-  whMixedSppColors <- which(names(sim$sppColors) == "Mixed")
+  whMixedSppColors <- which(names(sim$sppColorVect) == "Mixed")
 
   # Will return NA where there is no value, e.g., Mixed
   levsLeading[whMixedLevs] <- "Mixed"
@@ -1088,11 +1170,11 @@ plotVegAttributesMaps <- function(sim) {
   levs[[levelsName]] <- shortNames
   levels(sim$vegTypeMap) <- levs
 
-  colsLeading <- equivalentName(names(sim$sppColors), sppEquiv, "Leading")
+  colsLeading <- equivalentName(names(sim$sppColorVect), sppEquiv, "Leading")
   colsLeading[whMixedSppColors] <- "Mixed"
-  sppColors <- sim$sppColors
-  names(sppColors) <- colsLeading
-  colours <- sppColors[na.omit(match(levsLeading, colsLeading))]
+  sppColorVect <- sim$sppColorVect
+  names(sppColorVect) <- colsLeading
+  colours <- sppColorVect[na.omit(match(levsLeading, colsLeading))]
   setColors(sim$vegTypeMap, levs$ID) <- colours
 
   # Mask out NAs based on rasterToMatch (for plotting only!)
@@ -1100,39 +1182,62 @@ plotVegAttributesMaps <- function(sim) {
   #vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA ## faster than raster::mask
 
   # Plot
+  dev(mod$mapWindow)
+  if (!is.null(biomassMapForPlot))
+    Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
+  if (!is.null(ANPPMapForPlot))
+    Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
+  if (!is.null(mortalityMapForPlot))
+    Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
   Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
   grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
   grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
+
+  if (!is.null(reproductionMapForPlot))
+    Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
+
   return(invisible(sim))
 }
 
 plotAvgVegAttributes <- function(sim) {
-  # only take the files in outputPath(sim) that were new since the startClockTime of the spades call
-  biomassFiles <- list.files(outputPath(sim), pattern = "simulatedBiomassMap", full.names = TRUE)
-  biomassKeepers <- file.info(biomassFiles)$atime > sim@.envir$._startClockTime
+  ## MEAN BIOMASS/AGE/ANPP ACROSS LANDSCAPE
+  ## calculate sumB and mean age/aNPP per pixelGroup first
+  thisPeriod <- sim$cohortData[, list(sumB = sum(B, na.rm = TRUE),
+                                      meanAge = mean(age, na.rm = TRUE),
+                                      meanANPP = mean(aNPPAct, na.rm = TRUE)),
+                               by = pixelGroup]
+  thisPeriod <- thisPeriod[, list(year = time(sim),
+                                  BiomassLandscape = mean(sumB, na.rm = TRUE),
+                                  AgeLandscape = mean(meanAge, na.rm = TRUE),
+                                  aNPPLandscape = mean(meanANPP, na.rm = TRUE))]
+  if (is.null(sim$summaryLandscape)) {
+    sim$summaryLandscape <- thisPeriod
+  } else {
+    sim$summaryLandscape <- rbindlist(list(sim$summaryLandscape, thisPeriod))
+  }
 
-  biomass.stk <- lapply(biomassFiles[biomassKeepers], raster)
 
-  ANPPFiles <- list.files(outputPath(sim), pattern = "ANPP", full.names = TRUE)
-  ANPPKeepers <- file.info(ANPPFiles)$atime > sim@.envir$._startClockTime
+  if (length(unique(sim$summaryLandscape$year)) > 1) {
+    df2 <- melt(sim$summaryLandscape, id.vars = "year")
+    if (!is.na(P(sim)$.plotInitialTime)) {
+      dev(mod$statsWindow)
 
-  ANPP.stk <- lapply(ANPPFiles[ANPPKeepers], raster)
-  meanBiomass <- sapply(biomass.stk, FUN <- function(x) mean(x[], na.rm = TRUE))
-  names(meanBiomass) = sub(".tif", "",  sub(".*simulatedBiomass_Year", "",
-                                            basename(biomassFiles[biomassKeepers])))
+      varLabels <- c(BiomassLandscape = "Biomass",
+                     AgeLandscape = "Age",
+                     aNPPLandscape = "aNPP")
 
-  meanANPP <- sapply(ANPP.stk, FUN <- function(x) mean(x[], na.rm = TRUE))
-  names(meanANPP) = sub(".tif", "", sub(".*ANPP_Year", "", basename(ANPPFiles[ANPPKeepers])))
+      plot1 <- ggplot(data = df2, aes(x = year, y = value, colour = variable)) +
+        geom_line(size = 1) + theme_bw() +
+        scale_colour_brewer(labels = varLabels, type = "qual", palette = "Dark2") +
+        facet_wrap(~ variable, scales = "free_y",
+                   labeller = labeller(variable = varLabels)) +
+        labs(x = "Year", y = "Average value") +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank(),
+              legend.position = "bottom")
 
-  means <- cbind(meanBiomass, meanANPP)
-  means <- melt(means)
-
-  plot1 <- ggplot(data = means, aes(x = Var1, y = value, colour = Var2)) +
-    geom_line(size = 1, show.legend = FALSE) + theme_bw() +
-    facet_wrap(~ Var2, scales = "free_y") +
-    labs(x = "Year", y = "Average value")
-
-  Plot(plot1, title = c("Average biomass/ANPP"), new = TRUE)
+      Plot(plot1, title = "Average landscape biomass, age and aNPP" , new = TRUE)
+    }
+  }
   return(invisible(sim))
 }
 
@@ -1142,7 +1247,7 @@ Save <- function(sim) {
   raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$reproductionMap) <- raster::projection(sim$ecoregionMap)
   writeRaster(sim$simulatedBiomassMap,
-              file.path(outputPath(sim), paste("biomassMap_Year", round(time(sim)), ".tif", sep = "")),
+              file.path(outputPath(sim), paste("simulatedBiomassMap_Year", round(time(sim)), ".tif", sep = "")),
               datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$ANPPMap,
               file.path(outputPath(sim), paste("ANPP_Year", round(time(sim)), ".tif", sep = "")),
@@ -1381,6 +1486,8 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("sppEquiv", sim)) {
+    if (!is.null(sim$sppColorVect))
+      stop("If you provide sppColorVect, you MUST also provide sppEquiv")
     data("sppEquivalencies_CA", package = "LandR", envir = environment())
     sim$sppEquiv <- as.data.table(sppEquivalencies_CA)
 
@@ -1388,10 +1495,11 @@ CohortAgeReclassification <- function(sim) {
     sim$sppEquiv[KNN == "Abie_Las", LandR := "Abie_sp"]
 
     ## add default colors for species used in model
-    if (!is.null(sim$sppColors))
-      stop("If you provide sppColors, you MUST also provide sppEquiv")
-    sim$sppColors <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
+     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
                                newVals = "Mixed", palette = "Accent")
+  } else {
+    if (is.null(sim$sppColorVect))
+      stop("If you provide sppEquiv, you MUST also provide sppColorVect")
   }
 
   if (!suppliedElsewhere(sim$treedFirePixelTableSinceLastDisp)) {
