@@ -893,7 +893,8 @@ SummaryBGM <- function(sim) {
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
   cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = mod$cutpoint),
                              max(pixelGroups$temID))))
-  if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints + 1)}
+  if (length(cutpoints) == 1)
+    cutpoints <- c(cutpoints, cutpoints + 1)
   pixelGroups[, groups := cut(temID, breaks = cutpoints,
                               labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
                               include.lowest = TRUE)]
