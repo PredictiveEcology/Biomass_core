@@ -368,19 +368,9 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   # A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks
   mod$cutpoint <- 1e10
-
-  LandR::assertERGs(sim$ecoregionMap, sim$cohortData, sim$speciesEcoregion, sim$minRelativeB)
   ##############################################
   # Prepare individual objects
   ##############################################
-  ##############################################
-  # ecoregion
-  ##############################################
-  setDT(sim$ecoregion)
-  LandR::assertColumns(sim$ecoregion, c(active = "character", ecoregionGroup = "factor"))
-
-  ecoregion <- sim$ecoregion#[, ecoregionGroup := as.factor(ecoregion)]
-  #ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
 
   ##############################################
   # species
