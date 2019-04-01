@@ -27,12 +27,12 @@ defineModule(sim, list(
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
-                    "Currently any combination of 5 options is possible:",
-                    "'start'- as before vegetation succession events, i.e. before dispersal,",
-                    "'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'),",
-                    "'postGM' - after growth and mortality, 'postAging' - after aging,",
-                    "'end' - at the end of vegetation succesion events, before plotting and saving.",
-                    "The 'end' option is always active, being also the default option.")),
+                                 "Currently any combination of 5 options is possible:",
+                                 "'start'- as before vegetation succession events, i.e. before dispersal,",
+                                 "'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'),",
+                                 "'postGM' - after growth and mortality, 'postAging' - after aging,",
+                                 "'end' - at the end of vegetation succesion events, before plotting and saving.",
+                                 "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
@@ -267,7 +267,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 
            ## note that summaryBGM and summaryBySpecies, will occur during init too
            sim <- scheduleEvent(sim, start(sim),
-                                  "LBMR", "summaryBGM", eventPriority = summBGMPriority$end)
+                                "LBMR", "summaryBGM", eventPriority = summBGMPriority$end)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = summRegenPriority)
            sim <- scheduleEvent(sim, start(sim),
@@ -389,12 +389,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sim$species <- setkey(species, speciesCode)
 
   if (!suppliedElsewhere("cohortData", sim) |
-     !suppliedElsewhere("pixelGroupMap")) {
+      !suppliedElsewhere("pixelGroupMap")) {
 
     if ((!suppliedElsewhere("cohortData", sim) &
-        suppliedElsewhere("pixelGroupMap")) |
-       (suppliedElsewhere("cohortData", sim) &
-        !suppliedElsewhere("pixelGroupMap"))) {
+         suppliedElsewhere("pixelGroupMap")) |
+        (suppliedElsewhere("cohortData", sim) &
+         !suppliedElsewhere("pixelGroupMap"))) {
       stop("Either 'cohortData' or 'pixelGroupMap' are being supplied without the other.",
            "These two objects must be supplied together and conform to each other.",
            "Either supply both of them manually, or use a module like Biomass_BorealDataPrep to do so.")
@@ -402,9 +402,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
     if (suppliedElsewhere("ecoregionMap", sim))
       message(blue("'ecoregionMap' was supplied, but "),
-                   red("will be replaced by a dummy version to make "),
-                   blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
-                        "'cohortData', 'pixelGroupMap' and 'ecoregionMap'"))
+              red("will be replaced by a dummy version to make "),
+              blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
+                   "'cohortData', 'pixelGroupMap' and 'ecoregionMap'"))
     ecoregionMap <- randomPolygons(ras = sim$rasterToMatch,
                                    res = res(sim$rasterToMatch),
                                    numTypes = 2)
@@ -467,8 +467,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     pixelTable <- data.table(age = asInteger(round(standAgeMap[], -1)),  ## round to nearest 10th
                              logAge = log(standAgeMap[]),
                              initialEcoregionCode = factor(factorValues2(ecoregionFiles$ecoregionMap,
-                                                  ecoregionFiles$ecoregionMap[],
-                                                  att = 5)),
+                                                                         ecoregionFiles$ecoregionMap[],
+                                                                         att = 5)),
                              totalBiomass = asInteger(biomassMap[]) * 100, # change units
                              cover = coverMatrix,
                              pixelIndex = seq(ncell(sim$rasterToMatch)),
@@ -536,7 +536,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     # For Cache -- doesn't need to cache all columns in the data.table -- only the ones in the model
     message(blue("Estimating maxB from "), red("DUMMY values of age and ecoregionGroup "),
             blue("using the formula:\n"),
-                 magenta(paste0(format(biomassQuotedFormula), collapse = "")))
+            magenta(paste0(format(biomassQuotedFormula), collapse = "")))
     modelBiomass <- Cache(statsModel, form = biomassQuotedFormula,
                           uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(pixelCohortData$ecoregionGroup)),
                           .specialData = pixelCohortData,
@@ -1308,10 +1308,10 @@ summaryBySpecies <- function(sim) {
                                       aNPPBySpecies = mean(aNPPAct, na.rm = TRUE)),
                                by = .(speciesCode, pixelGroup)]
   thisPeriod <- thisPeriod[, list(year = time(sim),
-                                      BiomassBySpecies = mean(BiomassBySpecies, na.rm = TRUE),
-                                      AgeBySpecies = mean(AgeBySpecies, na.rm = TRUE),
-                                      aNPPBySpecies = mean(aNPPBySpecies, na.rm = TRUE)),
-                               by = speciesCode]
+                                  BiomassBySpecies = mean(BiomassBySpecies, na.rm = TRUE),
+                                  AgeBySpecies = mean(AgeBySpecies, na.rm = TRUE),
+                                  aNPPBySpecies = mean(aNPPBySpecies, na.rm = TRUE)),
+                           by = speciesCode]
 
   if (is.null(sim$summaryBySpecies)) {
     sim$summaryBySpecies <- thisPeriod
@@ -1835,7 +1835,7 @@ CohortAgeReclassification <- function(sim) {
   } else {
     if (is.null(sim$sppColorVect))
       stop("If you provide 'sppEquiv' you MUST also provide 'sppColorVect'")
-    }
+  }
 
   if (!suppliedElsewhere("treedFirePixelTableSinceLastDisp", sim)) {
     sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(),
