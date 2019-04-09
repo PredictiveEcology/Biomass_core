@@ -1300,15 +1300,16 @@ summaryBySpecies <- function(sim) {
   ## MEAN BIOMASS/AGE/ANPP PER SPECIES
   ## calculate SUM B and MEAN age/aNPP per species, per pixelGroup first,
   ## then average across pixelgroups
-  thisPeriod <- sim$cohortData[, list(BiomassBySpecies = sum(B, na.rm = TRUE),
-                                      AgeBySpecies = mean(age, na.rm = TRUE),
+  thisPeriod <- sim$cohortData[, list(year = time(sim),
+                                      BiomassBySpecies = sum(B, na.rm = TRUE),
+                                      AgeBySppWeighted = sum(age*B, na.rm = TRUE)/sum(B, na.rm = TRUE),
                                       aNPPBySpecies = mean(aNPPAct, na.rm = TRUE)),
                                by = .(speciesCode, pixelGroup)]
-  thisPeriod <- thisPeriod[, list(year = time(sim),
-                                  BiomassBySpecies = mean(BiomassBySpecies, na.rm = TRUE),
-                                  AgeBySpecies = mean(AgeBySpecies, na.rm = TRUE),
-                                  aNPPBySpecies = mean(aNPPBySpecies, na.rm = TRUE)),
-                           by = speciesCode]
+  # thisPeriod <- thisPeriod[, list(year = time(sim),
+  #                                 BiomassBySpecies = mean(BiomassBySpecies, na.rm = TRUE),
+  #                                 AgeBySppWeighted = mean(AgeBySppWeighted, na.rm = TRUE),
+  #                                 aNPPBySpecies = mean(aNPPBySpecies, na.rm = TRUE)),
+  #                          by = speciesCode]
 
   if (is.null(sim$summaryBySpecies)) {
     sim$summaryBySpecies <- thisPeriod
@@ -1357,9 +1358,10 @@ summaryBySpecies <- function(sim) {
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-      plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species)) +
+      plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies,
+                                     fill = species, group = species)) +
+        stat_summary(fun.y = mean, geom = "area", position = "stack") +
         scale_fill_manual(values = cols2) +
-        geom_area(position = "stack") +
         labs(x = "Year", y = "Biomass by species") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
@@ -1384,13 +1386,16 @@ summaryBySpecies <- function(sim) {
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-      plot4 <- ggplot(data = df, aes(x = year, y = AgeBySpecies, colour = species)) +
+      plot4 <- ggplot(data = df, aes(x = year, y = AgeBySppWeighted,
+                                     colour = species, group = species)) +
+        stat_summary(fun.y = mean, geom = "line", size = 1) +
         scale_colour_manual(values = cols2) +
-        geom_line(size = 1) + theme_bw() +
         labs(x = "Year", y = "Average species age") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
-      Plot(plot4, title = "Average species age", new = TRUE)
+      Plot(plot4, title = paste("Average species age\n",
+                                "weighted by biomass"),
+           new = TRUE)
     }
   }
 
