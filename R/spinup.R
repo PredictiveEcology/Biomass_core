@@ -12,7 +12,7 @@
 #' @export
 #' @importFrom data.table data.table set setkey
 #'
-spinUp <- function(fnList, cohortData, calibrate, successionTimestep, spinupMortalityfraction, species) {
+spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species) {
   maxAge <- max(cohortData$age, na.rm = TRUE) # determine the pre-simulation length
   set(cohortData, NULL, "origAge", cohortData$age)
   set(cohortData, NULL, c("age", "sumB"), as.integer(0L))
@@ -45,25 +45,25 @@ spinUp <- function(fnList, cohortData, calibrate, successionTimestep, spinupMort
     # 1. assign the biomass for the first cohort
     if (nrow(cohortData[age == 2, ]) > 0) {
       lastReg <- k - 1
-      cohortData <- fnList$calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
+      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                          successionTimestep = successionTimestep)
       cohortData[age == 2, B := as.integer(pmax(1, maxANPP * exp(-1.6 * sumB / maxB_eco)))]
       cohortData[age == 2, B := as.integer(pmin(maxANPP, B))]
     }
     if (maxAge != 1) {
       # 2. calculate age-related mortality
-      cohortData <- fnList$calculateAgeMortality(cohortData, stage = "spinup",
+      cohortData <- calculateAgeMortality(cohortData, stage = "spinup",
                                                  spinupMortalityfraction = spinupMortalityfraction)
       # 3. calculate the actual ANPP
       # calculate biomass Potential, for each cohort
-      cohortData <- fnList$calculateSumB(cohortData, lastReg = lastReg, simuTime = k - 1,
+      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k - 1,
                                          successionTimestep = successionTimestep)
-      cohortData <- fnList$calculateCompetition(cohortData, stage = "spinup")
+      cohortData <- calculateCompetition(cohortData, stage = "spinup")
       # calculate ANPP
-      cohortData <- fnList$calculateANPP(cohortData, stage = "spinup")
+      cohortData <- calculateANPP(cohortData, stage = "spinup")
       cohortData[age > 0, aNPPAct := pmax(1, aNPPAct - mAge)]
       # calculate growth related mortality
-      cohortData <- fnList$calculateGrowthMortality(cohortData, stage = "spinup")
+      cohortData <- calculateGrowthMortality(cohortData, stage = "spinup")
       cohortData[age > 0, mBio := pmax(0, mBio - mAge)]
       cohortData[age > 0, mBio := pmin(mBio, aNPPAct)]
       cohortData[age > 0, mortality := mBio + mAge]
@@ -99,7 +99,7 @@ spinUp <- function(fnList, cohortData, calibrate, successionTimestep, spinupMort
     }
     lastnewcohorts <- which(cohortData$origAge == 1)
     if (presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1) {
-      cohortData <- fnList$calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
+      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                          successionTimestep = successionTimestep)
       cohortData[origAge == 1,B := as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
       cohortData[origAge == 1,B := as.integer(pmin(maxANPP, B))]
