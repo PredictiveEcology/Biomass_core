@@ -38,7 +38,7 @@ defineModule(sim, list(
     defineParameter("growthAndMortalityDrivers", "characacter", "LandR", NA, NA,
                     desc = "package name where the following functions can be found: calculateClimateEffect,
                     assignClimateEffect"),
-    defineParameter("growthInitialTime", "numeric", 0, NA_real_, NA_real_,
+    defineParameter("growthInitialTime", "numeric", start(sim), NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
     defineParameter("initialBiomassSource", "character", "cohortData", NA, NA,
                     paste("Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. ",
@@ -74,16 +74,6 @@ defineModule(sim, list(
                                  "and if a cluster object, it will be passed to parallel::parClusterApplyB"))
   ),
   inputObjects = bind_rows(
-    expectsInput("calculateAgeMortality", "function",
-                 desc = "function to calculate aging and mortality"),
-    expectsInput("calculateANPP", "function",
-                 desc = "function to calculate ANPP"),
-    expectsInput("calculateCompetition", "function",
-                 desc = "function to calculate competition for light"),
-    expectsInput("calculateGrowthMortality", "function",
-                 desc = "function to calculate growth and mortality"),
-    expectsInput("calculateSumB", "function",
-                 desc = "function to sum biomass"),
     expectsInput("cohortData", "data.table",
                  desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
     expectsInput("ecoregion", "data.table",
@@ -733,10 +723,10 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                             .(NofCell = length(pixelIndex)), by = "ecoregionGroup"]
 
   cohortData <- sim$cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)[sim$activePixelIndex]),]
-  cohortData <- sim$updateSpeciesEcoregionAttributes(speciesEcoregion = speciesEcoregion,
+  cohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = speciesEcoregion,
                                                      time = round(time(sim)),
                                                      cohortData = cohortData)
-  cohortData <- sim$updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
+  cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
 
   ################
   # if (FALSE) { # OLD STUFF
@@ -1148,7 +1138,7 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   # } else {
   #   tempActivePixel <- sim$activePixelIndex
   # }
-  sim$cohortData <- sim$calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = time(sim),
+  sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = time(sim),
                                       successionTimestep = P(sim)$successionTimestep)
   sim$cohortData <- setkey(sim$cohortData, speciesCode)[
     setkey(sim$species[, .(speciesCode, sexualmature)], speciesCode), nomatch = 0]
@@ -1211,7 +1201,7 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
   # } else {
   #   tempActivePixel <- sim$activePixelIndex
   # }
-  sim$cohortData <- sim$calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = round(time(sim)),
+  sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = round(time(sim)),
                                       successionTimestep = P(sim)$successionTimestep)
   species <- sim$species
   # all species can provide seed source, i.e. age>=sexualmature
@@ -1286,7 +1276,7 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
   #} else {
   #  tempActivePixel <- sim$activePixelIndex
   #}
-  sim$cohortData <- sim$calculateSumB(cohortData = sim$cohortData,
+  sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
                                       lastReg = sim$lastReg, simuTime = round(time(sim)),
                                       successionTimestep = P(sim)$successionTimestep)
   siteShade <- calcSiteShade(time = round(time(sim)), cohortData = sim$cohortData,
@@ -1702,18 +1692,6 @@ CohortAgeReclassification <- function(sim) {
   if (getOption("LandR.verbose", TRUE) > 0)
     message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
-  ######################################################
-  ## Check GM functions have been supplied
-  if (!suppliedElsewhere("calculateAgeMortality", sim) |
-      !suppliedElsewhere("calculateANPP", sim) |
-      !suppliedElsewhere("calculateCompetition", sim) |
-      !suppliedElsewhere("calculateGrowthMortality", sim) |
-      !suppliedElsewhere("calculateSumB", sim) |
-      !suppliedElsewhere("updateSpeciesAttributes", sim) |
-      !suppliedElsewhere("updateSpeciesEcoregionAttributes", sim)) {
-    stop("Growth and mortality (GM) function(s) missing.\n
-         Make sure you are using LandR_BiomassGMOrig, or another GM module")
-  }
   #######################################################
 
   if (!suppliedElsewhere("studyArea", sim)) {
