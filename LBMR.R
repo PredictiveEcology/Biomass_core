@@ -509,14 +509,17 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     cohortDataShortNoCover <- cohortDataShort[coverPres == 0]
     cohortDataShort <- cohortDataShort[coverPres > 0] # remove places where there is 0 cover
 
-    coverQuotedFormula <- quote(cbind(coverPres, coverNum) ~ speciesCode + (1 | ecoregionGroup))
-    biomassQuotedFormula <- quote(B ~ logAge * speciesCode + (speciesCode | ecoregionGroup) + cover * speciesCode)
+    coverModel <- quote(lme4::glmer(cbind(coverPres, coverNum) ~ speciesCode +
+                                      (1 | ecoregionGroup), family = binomial))
+    biomassModel <- quote(lme4::lmer(B ~ logAge * speciesCode + cover * speciesCode +
+                                       (logAge + cover + speciesCode | ecoregionGroup)))
 
     ## COVER
     message(blue("Estimating Species Establishment Probability from "), red("DUMMY values of ecoregionGroup "),
-            blue("using the formula:\n"), magenta(format(coverQuotedFormula)))
+            blue("using the formula:\n"), magenta(format(coverModel)))
 
-    modelCover <- Cache(statsModel, coverQuotedFormula,
+    modelCover <- Cache(statsModel,
+                        modelFn = coverModel,
                         uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(cohortDataShort$ecoregionGroup)),
                         .specialData = cohortDataShort, family = binomial,
                         omitArgs = c(".specialData"))
@@ -528,8 +531,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     # For Cache -- doesn't need to cache all columns in the data.table -- only the ones in the model
     message(blue("Estimating maxB from "), red("DUMMY values of age and ecoregionGroup "),
             blue("using the formula:\n"),
-            magenta(paste0(format(biomassQuotedFormula), collapse = "")))
-    modelBiomass <- Cache(statsModel, form = biomassQuotedFormula,
+            magenta(paste0(format(biomassModel), collapse = "")))
+    modelBiomass <- Cache(statsModel,
+                          modelFN = biomassModel,
                           uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(pixelCohortData$ecoregionGroup)),
                           .specialData = pixelCohortData,
                           omitArgs = c(".specialData"))
