@@ -509,14 +509,17 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     cohortDataShortNoCover <- cohortDataShort[coverPres == 0]
     cohortDataShort <- cohortDataShort[coverPres > 0] # remove places where there is 0 cover
 
-    coverQuotedFormula <- quote(cbind(coverPres, coverNum) ~ speciesCode + (1 | ecoregionGroup))
-    biomassQuotedFormula <- quote(B ~ logAge * speciesCode + (speciesCode | ecoregionGroup) + cover * speciesCode)
+    coverModel <- quote(lme4::glmer(cbind(coverPres, coverNum) ~ speciesCode +
+                                      (1 | ecoregionGroup), family = binomial))
+    biomassModel <- quote(lme4::lmer(B ~ logAge * speciesCode + cover * speciesCode +
+                                       (logAge + cover + speciesCode | ecoregionGroup)))
 
     ## COVER
     message(blue("Estimating Species Establishment Probability from "), red("DUMMY values of ecoregionGroup "),
-            blue("using the formula:\n"), magenta(format(coverQuotedFormula)))
+            blue("using the formula:\n"), magenta(format(coverModel)))
 
-    modelCover <- Cache(statsModel, coverQuotedFormula,
+    modelCover <- Cache(statsModel,
+                        modelFn = coverModel,
                         uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(cohortDataShort$ecoregionGroup)),
                         .specialData = cohortDataShort, family = binomial,
                         omitArgs = c(".specialData"))
@@ -528,8 +531,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     # For Cache -- doesn't need to cache all columns in the data.table -- only the ones in the model
     message(blue("Estimating maxB from "), red("DUMMY values of age and ecoregionGroup "),
             blue("using the formula:\n"),
-            magenta(paste0(format(biomassQuotedFormula), collapse = "")))
-    modelBiomass <- Cache(statsModel, form = biomassQuotedFormula,
+            magenta(paste0(format(biomassModel), collapse = "")))
+    modelBiomass <- Cache(statsModel,
+                          modelFN = biomassModel,
                           uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(pixelCohortData$ecoregionGroup)),
                           .specialData = pixelCohortData,
                           omitArgs = c(".specialData"))
@@ -1440,19 +1444,30 @@ summaryRegen <- function(sim) {
   return(invisible(sim))
 }
 
-summaryBySpecies <- function(sim) {
-  ## MEAN BIOMASS/AGE/ANPP PER SPECIES
-  ## calculate SUM B and MEAN age/aNPP per species, per pixelGroup first,
-  ## then average across pixelgroups
-  thisPeriod <- sim$cohortData[, list(BiomassBySpecies = sum(B, na.rm = TRUE),
-                                      AgeBySpecies = mean(age, na.rm = TRUE),
-                                      aNPPBySpecies = mean(aNPPAct, na.rm = TRUE)),
-                               by = .(speciesCode, pixelGroup)]
-  thisPeriod <- thisPeriod[, list(year = time(sim),
-                                  BiomassBySpecies = mean(BiomassBySpecies, na.rm = TRUE),
-                                  AgeBySpecies = mean(AgeBySpecies, na.rm = TRUE),
-                                  aNPPBySpecies = mean(aNPPBySpecies, na.rm = TRUE)),
-                           by = speciesCode]
+plotSummaryBySpecies <- function(sim) {
+  ## BIOMASS, WEIGHTED AVERAGE AGE, AVERAGE ANPP
+  ## AND AGE OF OLDEST COHORT PER SPECIES
+
+  ## Averages are calculated across pixels
+  ## TODO: test code below with larger dataset and compare
+  if (FALSE) {
+    ## don't expand table, multiply by no. pixels.
+    pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+    thisPeriod <- pixelCohortData[, list(year = time(sim),
+                                         BiomassBySpecies = sum(B*noPixels, na.rm = TRUE),
+                                         AgeBySppWeighted = sum((age*B)*noPixels, na.rm = TRUE)/sum(B*noPixels, na.rm = TRUE),
+                                         aNPPBySpecies = mean(aNPPAct, na.rm = TRUE),
+                                         OldestCohortBySpp = age[B*noPixels == max(B*noPixels, na.rm = TRUE)]),
+                                  by = .(speciesCode)]
+  }
+
+  pixelCohortData <- makePixelCohortData(sim$cohortData, sim$pixelGroupMap)
+  thisPeriod <- pixelCohortData[, list(year = time(sim),
+                                       BiomassBySpecies = sum(B, na.rm = TRUE),
+                                       AgeBySppWeighted = sum(age*B, na.rm = TRUE)/sum(B, na.rm = TRUE),
+                                       aNPPBySpecies = mean(aNPPAct, na.rm = TRUE),
+                                       OldestCohortBySpp = max(age, na.rm = TRUE)),
+                                by = .(speciesCode)]
 
   if (is.null(sim$summaryBySpecies)) {
     sim$summaryBySpecies <- thisPeriod
@@ -1501,19 +1516,22 @@ summaryBySpecies <- function(sim) {
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-      plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species)) +
+      plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies,
+                                     fill = species, group = species)) +
+        stat_summary(fun.y = mean, geom = "area", position = "stack") +
         scale_fill_manual(values = cols2) +
-        geom_area(position = "stack") +
-        labs(x = "Year", y = "Biomass by species") +
+        labs(x = "Year", y = "Average biomass") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
-      Plot(plot2, title = "Average biomass by species", new = TRUE)
+      Plot(plot2, title = paste0("Average biomass by species\n",
+                                 "across pixels"), new = TRUE)
     }
 
     maxNpixels <- sum(!is.na(sim$rasterToMatchReporting[]))
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
 
+    ## TODO: check dashed line
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
       plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
@@ -1528,13 +1546,30 @@ summaryBySpecies <- function(sim) {
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-      plot4 <- ggplot(data = df, aes(x = year, y = AgeBySpecies, colour = species)) +
+      plot4 <- ggplot(data = df, aes(x = year, y = AgeBySppWeighted,
+                                     colour = species, group = species)) +
+        geom_line(size = 1) +
         scale_colour_manual(values = cols2) +
-        geom_line(size = 1) + theme_bw() +
-        labs(x = "Year", y = "Average species age") +
+        labs(x = "Year", y = "Average age") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
-      Plot(plot4, title = "Average species age", new = TRUE)
+      Plot(plot4, title = paste0("Biomass-weighted species age\n",
+                                 "(averaged across pixels)"),
+           new = TRUE)
+    }
+
+    if (!is.na(P(sim)$.plotInitialTime)) {
+      dev(mod$statsWindow)
+      plot5 <- ggplot(data = df, aes(x = year, y = OldestCohortBySpp,
+                                     colour = species, group = species)) +
+        geom_line(size = 1) +
+        scale_colour_manual(values = cols2) +
+        labs(x = "Year", y = "Average age") +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank())
+
+      Plot(plot5, title = paste("Oldest cohort age\n",
+                                "by species (across pixels)"),
+           new = TRUE)
     }
   }
 
@@ -1614,16 +1649,33 @@ plotVegAttributesMaps <- function(sim) {
 }
 
 plotAvgVegAttributes <- function(sim) {
-  ## MEAN BIOMASS/AGE/ANPP ACROSS LANDSCAPE
-  ## calculate sumB and mean age/aNPP per pixelGroup first
-  thisPeriod <- sim$cohortData[, list(sumB = sum(B, na.rm = TRUE),
-                                      meanAge = mean(age, na.rm = TRUE),
-                                      meanANPP = mean(aNPPAct, na.rm = TRUE)),
-                               by = pixelGroup]
+  ## AVERAGE STAND BIOMASS/AGE/ANPP IN THE LANDSCAPE
+  ## calculate acrosS pixels
+  if (FALSE) {
+    ## don't expand table, multiply by no. pixels.
+    pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+    thisPeriod <- pixelCohortData[, list(sumB = sum(B*noPixels, na.rm = TRUE),
+                                         meanAge = mean(age, na.rm = TRUE),
+                                         meanANPP = mean(aNPPAct, na.rm = TRUE)),
+                                  by = pixelGroup]
+
+    thisPeriod <- thisPeriod[, list(year = time(sim),
+                                   BiomassLandscape = mean(sumB, na.rm = TRUE),
+                                   AgeLandscape = mean(meanAge, na.rm = TRUE),
+                                   aNPPLandscape = mean(meanANPP, na.rm = TRUE))]
+  }
+
+  pixelCohortData <- makePixelCohortData(sim$cohortData, sim$pixelGroupMap)
+  thisPeriod <- pixelCohortData[, list(sumB = sum(B, na.rm = TRUE),
+                                       meanAge = mean(age, na.rm = TRUE),
+                                       meanANPP = mean(aNPPAct, na.rm = TRUE)),
+                                by = pixelIndex]
+
   thisPeriod <- thisPeriod[, list(year = time(sim),
-                                  BiomassLandscape = mean(sumB, na.rm = TRUE),
-                                  AgeLandscape = mean(meanAge, na.rm = TRUE),
-                                  aNPPLandscape = mean(meanANPP, na.rm = TRUE))]
+                                 BiomassLandscape = mean(sumB, na.rm = TRUE),
+                                 AgeLandscape = mean(meanAge, na.rm = TRUE),
+                                 aNPPLandscape = mean(meanANPP, na.rm = TRUE))]
+
   if (is.null(sim$summaryLandscape)) {
     sim$summaryLandscape <- thisPeriod
   } else {
