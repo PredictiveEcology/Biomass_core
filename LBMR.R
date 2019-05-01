@@ -1544,11 +1544,10 @@ plotSummaryBySpecies <- function(sim) {
                                  "across pixels"), new = TRUE)
     }
 
-    maxNpixels <- sum(!is.na(sim$rasterToMatchReporting[]))
+    maxNpixels <- sum(!is.na(sim$pixelGroupMap[]))
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
 
-    ## TODO: check dashed line
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
       plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
