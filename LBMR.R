@@ -1618,11 +1618,14 @@ plotVegAttributesMaps <- function(sim) {
   sppEquiv <- sim$sppEquiv[!is.na(sim$sppEquiv[[P(sim)$sppEquivCol]]),]
 
   levsLeading <- equivalentName(levs[[levelsName]], sppEquiv, "Leading")
-  hasOnlyMixedAsOther <- sum(is.na(levsLeading) == 1) &&
-    levs[[levelsName]][is.na(levsLeading)] == "Mixed"
-  #extraValues <- setdiff(levs[[levelsName]], levsLeading)
-  if (!isTRUE(hasOnlyMixedAsOther)) {
-    stop("'plotVegAttributesMaps' in LBMR can only deal with 'Mixed' category or the ones in sim$sppEquiv")
+
+  if (any(grepl("Mixed", levs[[levelsName]]))) {
+    hasOnlyMixedAsOther <- sum(is.na(levsLeading) == 1) &&
+      levs[[levelsName]][is.na(levsLeading)] == "Mixed"
+    #extraValues <- setdiff(levs[[levelsName]], levsLeading)
+    if (!isTRUE(hasOnlyMixedAsOther)) {
+      stop("'plotVegAttributesMaps' in LBMR can only deal with 'Mixed' category or the ones in sim$sppEquiv")
+    }
   }
 
   whMixedLevs <- which(levs[[levelsName]] == "Mixed")
