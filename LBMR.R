@@ -212,7 +212,6 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
     params(sim)$LBMR$calcSummaryBGM <- c(P(sim)$calcSummaryBGM, "end")
   summBGMPriority <- summBGMPriority[P(sim)$calcSummaryBGM] ## filter necessary priorities
 
-  summSppPriority <- summRegenPriority + 0.5
   plotPriority <- 9
   savePriority <- 10
 
@@ -273,12 +272,12 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "summaryBGM", eventPriority = summBGMPriority$end)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryRegen", eventPriority = summRegenPriority)
-           sim <- scheduleEvent(sim, start(sim),
-                                "LBMR", "summaryBySpecies", eventPriority = summSppPriority)   ## only occurs before summaryRegen in init.
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "LBMR", "plotMaps", eventPriority = plotPriority)
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "LBMR", "plotAvgs",
-                                eventPriority = plotPriority + 0.25)
+                                "LBMR", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
+                                "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
+           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
+                                "LBMR", "plotAvgs", eventPriority = plotPriority + 0.5)
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
@@ -345,10 +344,10 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "summaryBGM", eventPriority = summBGMPriority$end)
          },
-         summaryBySpecies = {
-           sim <- summaryBySpecies(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBySpecies", eventPriority = summSppPriority)
+         plotSummaryBySpecies = {
+           sim <- plotSummaryBySpecies(sim)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                "LBMR", "plotSummaryBySpecies", eventPriority = plotPriority)
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
