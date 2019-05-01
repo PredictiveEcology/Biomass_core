@@ -55,7 +55,9 @@ defineModule(sim, list(
                     desc = "defines the mortality loss fraction in spin up-stage simulation"),
     defineParameter("sppEquivCol", "character", "Boreal", NA, NA,
                     "The column in sim$specieEquivalency data.table to use as a naming convention"),
-    defineParameter("successionTimestep", "numeric", 10, NA, NA, "defines the simulation time step, default is 10 years"),
+    defineParameter("successionTimestep", "numeric", 10, NA, NA,
+                    paste("defines the simulation time step, default is 10 years.",
+                          "Note that growth and mortality always happen on a yearly basis.")),
     defineParameter("vegLeadingProportion", "numeric", 0.8, 0, 1,
                     desc = "a number that define whether a species is leading for a given pixel"),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
@@ -178,7 +180,7 @@ defineModule(sim, list(
     # createsOutput("spinUpCache", "logical", desc = ""),
     createsOutput("spinupOutput", "data.table", desc = "Spin-up output"),
     createsOutput("summaryBySpecies", "data.table",
-                  desc = "The average species biomass, age and aNPP across the landscape (used for plotting and reporting)."),
+                  desc = "The total species biomass, average age and aNPP across the landscape (used for plotting and reporting)."),
     createsOutput("summaryBySpecies1", "data.table",
                   desc = "No. pixels of each leading vegetation type (used for plotting and reporting)."),
     createsOutput("summaryLandscape", "data.table",
@@ -196,6 +198,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
     on.exit(data.table::setDTthreads(a), add = TRUE)
   }
 
+  ## Set event priorities
   dispEvtPriority <- 5
   GMEvtPriority <- 6
   agingEvtPriotity <- 7
@@ -742,8 +745,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   cohortData <- sim$cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)[sim$activePixelIndex]),]
   cohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = speciesEcoregion,
-                                                     time = round(time(sim)),
-                                                     cohortData = cohortData)
+                                                 time = round(time(sim)),
+                                                 cohortData = cohortData)
   cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
 
   ################
@@ -1157,7 +1160,7 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   #   tempActivePixel <- sim$activePixelIndex
   # }
   sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = time(sim),
-                                      successionTimestep = P(sim)$successionTimestep)
+                                  successionTimestep = P(sim)$successionTimestep)
   sim$cohortData <- setkey(sim$cohortData, speciesCode)[
     setkey(sim$species[, .(speciesCode, sexualmature)], speciesCode), nomatch = 0]
 
@@ -1220,7 +1223,7 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
   #   tempActivePixel <- sim$activePixelIndex
   # }
   sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = round(time(sim)),
-                                      successionTimestep = P(sim)$successionTimestep)
+                                  successionTimestep = P(sim)$successionTimestep)
   species <- sim$species
   # all species can provide seed source, i.e. age>=sexualmature
   speciessource <- setkey(sim$species[, .(speciesCode, k = 1)], k)
@@ -1295,8 +1298,8 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
   #  tempActivePixel <- sim$activePixelIndex
   #}
   sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
-                                      lastReg = sim$lastReg, simuTime = round(time(sim)),
-                                      successionTimestep = P(sim)$successionTimestep)
+                                  lastReg = sim$lastReg, simuTime = round(time(sim)),
+                                  successionTimestep = P(sim)$successionTimestep)
   siteShade <- calcSiteShade(time = round(time(sim)), cohortData = sim$cohortData,
                              sim$speciesEcoregion, sim$minRelativeB)
   activePixelGroup <- data.table(pixelGroup = unique(getValues(sim$pixelGroupMap)[tempActivePixel])) %>%
