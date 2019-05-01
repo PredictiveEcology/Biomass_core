@@ -61,10 +61,16 @@ defineModule(sim, list(
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first plot event should occur.",
                                  "Set to NA to turn plotting off.")),
+    defineParameter(".plotInterval", "numeric", NA, NA, NA,
+                    desc = paste("defines the plotting time step.",
+                                 "If NA, the default, .plotInterval is set to successionTimestep.")),
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first save event should occur.",
                                  "Set to NA if no saving is desired. If not NA, then saving will occur at",
-                                 ".saveInitialTime and every subsequent time step")),
+                                 ".saveInitialTime with a frequency equal to .saveInterval")),
+    defineParameter(".saveInterval", "numeric", NA, NA, NA,
+                    desc = paste("defines the saving time step.",
+                                 "If NA, the default, .saveInterval is set to successionTimestep.")),
     defineParameter(".useCache", "logical", TRUE,
                     desc = "use caching for the spinup simulation?"),
     defineParameter(".useParallel", "ANY", parallel::detectCores(),
@@ -213,7 +219,13 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
   switch(eventType,
          init = {
            ## do stuff for this event
-           sim <- Init(sim)
+
+           ## Define .plotInterval/.saveInterval if need be
+           if (is.na(P(sim)$.plotInterval))
+             params(sim)$LBMR$.plotInterval <- P(sim)$successionTimestep
+
+           if (is.na(P(sim)$.saveInterval))
+             params(sim)$LBMR$.saveInterval <- P(sim)$successionTimestep
 
            ## make sure plotting window is big enough
            if (!is.na(P(sim)$.plotInitialTime) &
@@ -222,6 +234,9 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              dev(height = 10, width = 14)
              clearPlot()
            }
+
+           ## Run Init event
+           sim <- Init(sim)
 
            ## current window will be used for maps
            ## a new one for summary stats
@@ -337,18 +352,18 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plotMaps", eventPriority = plotPriority)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
          },
          save = {
            sim <- Save(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval,
                                 "LBMR", "save", eventPriority = savePriority)
          },
          plotAvgs = {
            sim <- plotAvgVegAttributes(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "plotAvgs", eventPriority = plotPriority + 0.25)
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                "LBMR", "plotAvgs", eventPriority = plotPriority + 0.5)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
