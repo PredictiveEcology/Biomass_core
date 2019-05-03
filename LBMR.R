@@ -1085,7 +1085,7 @@ MortalityAndGrowth <- function(sim) {
 
     #This line will return aNPPAct unchanged unless LandR_BiomassGMCS is also run
     subCohortData$climGrowth <- assignClimateEffect(predObj, subCohortData = subCohortData, type = 'growthPred')
-    subCohortData$aNPPAct <- subCohortData$aNPPAct + subCohortData$climGrowth
+    subCohortData$aNPPAct <- pmax(0, subCohortData$aNPPAct + subCohortData$climGrowth)
 
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
@@ -1094,7 +1094,8 @@ MortalityAndGrowth <- function(sim) {
 
     #This line will return mortality unchanged unless LandR_BiomassGMCS is also run
     subCohortData$climMort <- assignClimateEffect(predObj, subCohortData = subCohortData, type = "mortPred")
-    subCohortData$mortality <- subCohortData$mortality + subCohortData$climMort
+    #Total mortality can't be negative
+    subCohortData$mortality <- pmax(0, subCohortData$mortality + subCohortData$climMort)
     #Ian added this check 04/04/2019 - without climate-sensitivity, mortality never exceeds biomass
     subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
 
