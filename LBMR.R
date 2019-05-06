@@ -1006,14 +1006,15 @@ summaryBySpecies <- function(sim) {
     names(cols2) <- df$species
 
     if (!is.na(P(sim)$.plotInitialTime)) {
+      dev(mod$statsWindow)
       plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies,
+                                     fill = species, group = species)) +
+        stat_summary(fun.y = mean, geom = "area", position = "stack") +
         scale_fill_manual(values = cols2) +
         labs(x = "Year", y = "Biomass by species") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
-      title2 <- if (identical(time(sim), P(sim)$.plotInitialTime + P(sim)$.plotInterval))
-        "Average biomass by species" else ""
-      Plot(plot2, title = title2, new = TRUE)
+      Plot(plot2, title = "Average biomass by species", new = TRUE)
     }
 
     maxNpixels <- sum(!is.na(sim$rasterToMatchReporting[]))
