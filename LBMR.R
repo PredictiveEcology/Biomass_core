@@ -974,6 +974,7 @@ SummaryBGM <- function(sim) {
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
   return(invisible(sim))
 }
+
 MortalityAndGrowth <- function(sim) {
   if (is.numeric(P(sim)$.useParallel)) {
     data.table::setDTthreads(P(sim)$.useParallel)
