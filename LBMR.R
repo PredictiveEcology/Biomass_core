@@ -1467,24 +1467,13 @@ plotSummaryBySpecies <- function(sim) {
   ## AND AGE OF OLDEST COHORT PER SPECIES
 
   ## Averages are calculated across pixels
-  ## TODO: test code below with larger dataset and compare
-  if (FALSE) {
-    ## don't expand table, multiply by no. pixels.
-    pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
-    thisPeriod <- pixelCohortData[, list(year = time(sim),
-                                         BiomassBySpecies = sum(B*noPixels, na.rm = TRUE),
-                                         AgeBySppWeighted = sum((age*B)*noPixels, na.rm = TRUE)/sum(B*noPixels, na.rm = TRUE),
-                                         aNPPBySpecies = mean(aNPPAct, na.rm = TRUE),
-                                         OldestCohortBySpp = age[B*noPixels == max(B*noPixels, na.rm = TRUE)]),
-                                  by = .(speciesCode)]
-  }
-
-  pixelCohortData <- makePixelCohortData(sim$cohortData, sim$pixelGroupMap)
+  ## don't expand table, multiply by no. pixels - faster
+  pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
   thisPeriod <- pixelCohortData[, list(year = time(sim),
-                                       BiomassBySpecies = sum(B, na.rm = TRUE),
-                                       AgeBySppWeighted = sum(age*B, na.rm = TRUE)/sum(B, na.rm = TRUE),
-                                       aNPPBySpecies = mean(aNPPAct, na.rm = TRUE),
-                                       OldestCohortBySpp = max(age, na.rm = TRUE)),
+                                       BiomassBySpecies = sum(B*noPixels, na.rm = TRUE),
+                                       AgeBySppWeighted = sum(age*B*noPixels, na.rm = TRUE)/sum(B*noPixels, na.rm = TRUE),
+                                       aNPPBySpecies = sum(aNPPAct*noPixels, na.rm = TRUE),
+                                       OldestCohortBySpp = max(age)),
                                 by = .(speciesCode)]
 
   if (is.null(sim$summaryBySpecies)) {
@@ -1668,33 +1657,14 @@ plotVegAttributesMaps <- function(sim) {
 }
 
 plotAvgVegAttributes <- function(sim) {
-  ## AVERAGE STAND BIOMASS/AGE/ANPP IN THE LANDSCAPE
+  ## AVERAGE STAND BIOMASS/AGE/ANPP
   ## calculate acrosS pixels
-  if (FALSE) {
-    ## don't expand table, multiply by no. pixels.
-    pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
-    thisPeriod <- pixelCohortData[, list(sumB = sum(B*noPixels, na.rm = TRUE),
-                                         meanAge = mean(age, na.rm = TRUE),
-                                         meanANPP = mean(aNPPAct, na.rm = TRUE)),
-                                  by = pixelGroup]
-
-    thisPeriod <- thisPeriod[, list(year = time(sim),
-                                    BiomassLandscape = mean(sumB, na.rm = TRUE),
-                                    AgeLandscape = mean(meanAge, na.rm = TRUE),
-                                    aNPPLandscape = mean(meanANPP, na.rm = TRUE))]
-  }
-
-  pixelCohortData <- makePixelCohortData(sim$cohortData, sim$pixelGroupMap)
-  thisPeriod <- pixelCohortData[, list(sumB = sum(B, na.rm = TRUE),
-                                       meanAge = mean(age, na.rm = TRUE),
-                                       meanANPP = mean(aNPPAct, na.rm = TRUE)),
-                                by = pixelIndex]
-
-  thisPeriod <- thisPeriod[, list(year = time(sim),
-                                  BiomassLandscape = mean(sumB, na.rm = TRUE),
-                                  AgeLandscape = mean(meanAge, na.rm = TRUE),
-                                  aNPPLandscape = mean(meanANPP, na.rm = TRUE))]
-
+  ## don't expand table, multiply by no. pixels - faster
+  pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+  thisPeriod <- pixelCohortData[, list(year = time(sim),
+                                       sumB = sum(B*noPixels, na.rm = TRUE),
+                                       maxAge = max(age, na.rm = TRUE),
+                                       sumANPP = sum(aNPPAct*noPixels, na.rm = TRUE))]
   if (is.null(sim$summaryLandscape)) {
     sim$summaryLandscape <- thisPeriod
   } else {
