@@ -66,6 +66,8 @@ defineModule(sim, list(
     defineParameter(".plotInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the plotting time step.",
                                  "If NA, the default, .plotInterval is set to successionTimestep.")),
+    defineParameter(".plotMaps", "logic", TRUE, NA, NA,
+                    desc = "Controls whether maps should be plotted or not"),
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first save event should occur.",
                                  "Set to NA if no saving is desired. If not NA, then saving will occur at",
@@ -235,15 +237,18 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              dev.off()
              dev(height = 10, width = 14)
              clearPlot()
+
+             ## current window will be used for maps
+             ## a new one for summary stats
+             if (P(sim)$.plotMaps) {
+               mod$mapWindow <- dev.cur()
+               mod$statsWindow <- mod$mapWindow + 1
+             } else
+               mod$statsWindow <- dev.cur()
            }
 
            ## Run Init event
            sim <- Init(sim)
-
-           ## current window will be used for maps
-           ## a new one for summary stats
-           mod$mapWindow <- dev.cur()
-           mod$statsWindow <- mod$mapWindow + 1
 
            ## schedule events
            if (!is.null(summBGMPriority$start))
@@ -277,8 +282,9 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "summaryRegen", eventPriority = summRegenPriority)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "LBMR", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
+           if (P(sim)$.plotMaps)
+             sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
+                                  "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "LBMR", "plotAvgs", eventPriority = plotPriority + 0.5)
 
@@ -354,8 +360,9 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
+           if (P(sim)$.plotMaps)
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                  "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
          },
          save = {
            sim <- Save(sim)
