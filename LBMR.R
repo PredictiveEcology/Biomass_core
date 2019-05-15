@@ -1025,13 +1025,13 @@ MortalityAndGrowth <- function(sim) {
     # Die from old age -- rm from cohortData
     #########################################################
     subCohortPostLongevity <- subCohortData[age <= longevity,]
-    postLongevityDieOffNumCohorts <- NROW(subCohortPostLongevity)
-    numCohortsDiedOldAge <- startNumCohorts - postLongevityDieOffNumCohorts
+    diedCohortData <- subCohortData[age > longevity,]
+    numCohortsDiedOldAge <- startNumCohorts - NROW(diedCohortData)
+
     if ((numCohortsDiedOldAge) > 0) {
-      diedCohortData <- subCohortData[!subCohortPostLongevity, on = c("pixelGroup", "speciesCode"),
-                                      .(pixelGroup, speciesCode, ecoregionGroup, age)]
-      # Identify the PGs that are totally gone, not just an individual cohort that died
-      pgsToRm <- diedCohortData[!diedCohortData$pixelGroup %in% subCohortPostLongevity$pixelGroup]
+     # Identify the PGs that are totally gone, not just an individual cohort that died
+      pgsToRm <- diedCohortData[!pixelGroup %in% subCohortPostLongevity$pixelGroup]
+
       pixelsToRm <- which(getValues(sim$pixelGroupMap) %in% unique(pgsToRm$pixelGroup))
       # RM from the pixelGroupMap -- since it is a whole pixelGroup that is gone, not just a cohort, this is necessary
       if (isTRUE(getOption("LandR.assertions"))) {
