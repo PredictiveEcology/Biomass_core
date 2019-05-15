@@ -1677,20 +1677,22 @@ plotAvgVegAttributes <- function(sim) {
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
 
-      varLabels <- c(BiomassLandscape = "Biomass",
-                     AgeLandscape = "Age",
-                     aNPPLandscape = "aNPP")
+      varLabels <- c(sumB = "Biomass",
+                     maxAge = "Age",
+                     sumANPP = "aNPP")
 
-      plot1 <- ggplot(data = df2, aes(x = year, y = value, colour = variable)) +
-        geom_line(size = 1) + theme_bw() +
+      plot1 <- ggplot(data = df2,
+                      aes(x = year, y = value, colour = variable)) +
+        geom_line(size = 1) +
         scale_colour_brewer(labels = varLabels, type = "qual", palette = "Dark2") +
+        theme_bw() +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank(),
+              legend.position = "bottom") +
         facet_wrap(~ variable, scales = "free_y",
                    labeller = labeller(variable = varLabels)) +
-        labs(x = "Year", y = "Average value") +
-        theme(legend.text = element_text(size = 6), legend.title = element_blank(),
-              legend.position = "bottom")
+        labs(x = "Year", y = "Value")
 
-      Plot(plot1, title = "Average landscape biomass, age and aNPP" , new = TRUE)
+      Plot(plot1, title = "Total landscape biomass and aNPP and max stand age", new = TRUE)
     }
   }
   return(invisible(sim))
