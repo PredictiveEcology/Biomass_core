@@ -1081,7 +1081,7 @@ MortalityAndGrowth <- function(sim) {
 
     subCohortData <- calculateANPP(cohortData = subCohortData)  ## competion effect on aNPP via bPM
     set(subCohortData, NULL, "growthcurve", NULL)
-    set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
+    # set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
     #generate climate-sensitivity predictions
     #NULL w/o module biomassGMCS. age-related mortality is included in this model
@@ -1127,7 +1127,7 @@ MortalityAndGrowth <- function(sim) {
       set(subCohortData, NULL, c("deltaB", "sumB"), NULL)
     } else {
       set(subCohortData, NULL, "B",
-          subCohortData$B + asInteger(subCohortData$aNPPAct - subCohortData$mortality))
+          subCohortData$B + asInteger(subCohortData$aNPPAct - subCohortData$mortality))    ## removing mAge twice?
     }
     subCohortData[, `:=`(mortality = asInteger(mortality), aNPPAct = asInteger(aNPPAct))]
     sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
