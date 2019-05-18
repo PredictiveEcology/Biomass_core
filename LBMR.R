@@ -1034,7 +1034,7 @@ MortalityAndGrowth <- function(sim) {
     #########################################################
     subCohortPostLongevity <- subCohortData[age <= longevity,]
     diedCohortData <- subCohortData[age > longevity,]
-    numCohortsDiedOldAge <- startNumCohorts - NROW(diedCohortData)
+    numCohortsDiedOldAge <- NROW(diedCohortData)
 
     if ((numCohortsDiedOldAge) > 0) {
       # Identify the PGs that are totally gone, not just an individual cohort that died
