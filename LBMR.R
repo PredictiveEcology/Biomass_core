@@ -1589,6 +1589,21 @@ plotSummaryBySpecies <- function(sim) {
       Plot(plot5, title = paste("Oldest cohort age\n",
                                 "by species (across pixels)"), new = TRUE)
     }
+
+    ## test
+    if (!is.na(P(sim)$.plotInitialTime)) {
+      dev(mod$statsWindow)
+      plot6 <- ggplot(data = df, aes(x = year, y = aNPPBySpecies,
+                                     colour = species, group = species)) +
+        geom_line(size = 1) +
+        scale_color_manual(values = cols2) +
+        labs(x = "Year", y = "aNPP") +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank())
+
+      Plot(plot6, title = paste0("Total aNPP by species\n",
+                                 "across pixels"), new = TRUE)
+    }
+    ## end test
   }
 
   return(invisible(sim))
