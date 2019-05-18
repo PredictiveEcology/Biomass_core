@@ -1017,7 +1017,7 @@ MortalityAndGrowth <- function(sim) {
   for (subgroup in paste("Group", 1:(length(cutpoints) - 1), sep = "")) {
     subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
 
-    set(subCohortData, NULL, "age", subCohortData$age + 1L)
+    subCohortData[age > 1, age := age + 1L]
     subCohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
                                                       time = round(time(sim)),
                                                       cohortData = subCohortData)
