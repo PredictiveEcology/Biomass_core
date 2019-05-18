@@ -1487,7 +1487,7 @@ plotSummaryBySpecies <- function(sim) {
                                        BiomassBySpecies = sum(B*noPixels, na.rm = TRUE),
                                        AgeBySppWeighted = sum(age*B*noPixels, na.rm = TRUE)/sum(B*noPixels, na.rm = TRUE),
                                        aNPPBySpecies = sum(aNPPAct*noPixels, na.rm = TRUE),
-                                       OldestCohortBySpp = max(age)),
+                                       OldestCohortBySpp = max(age, na.rm = TRUE)),
                                 by = .(speciesCode)]
 
   if (is.null(sim$summaryBySpecies)) {
