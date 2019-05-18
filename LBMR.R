@@ -82,7 +82,7 @@ defineModule(sim, list(
                                  "If numeric, it will be passed to data.table::setDTthreads",
                                  "If TRUE, it will be passed to parallel:makeCluster,",
                                  "and if a cluster object, it will be passed to parallel::parClusterApplyB"))
-    ),
+  ),
   inputObjects = bind_rows(
     expectsInput("cohortData", "data.table",
                  desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
@@ -983,6 +983,7 @@ SummaryBGM <- function(sim) {
 }
 
 MortalityAndGrowth <- function(sim) {
+
   if (is.numeric(P(sim)$.useParallel)) {
     data.table::setDTthreads(P(sim)$.useParallel)
     message("Mortality and Growth should be using >100% CPU")
@@ -991,6 +992,7 @@ MortalityAndGrowth <- function(sim) {
                                            "speciesCode", "age", "B", "mortality", "aNPPAct")))
     sim$cohortData <- sim$cohortData[, .(pixelGroup, ecoregionGroup,
                                          speciesCode, age, B, mortality, aNPPAct)]
+
   #Install climate-sensitive functions (or not)
   a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers)) #This is not working. requireNamespace overrides try
   if (class(a) == "try-error") {
@@ -998,7 +1000,6 @@ MortalityAndGrowth <- function(sim) {
   }
   calculateClimateEffect <- getFromNamespace("calculateClimateEffect", P(sim)$growthAndMortalityDrivers)
   assignClimateEffect <- getFromNamespace("assignClimateEffect", P(sim)$growthAndMortalityDrivers)
-
 
   cohortData <- sim$cohortData
   sim$cohortData <- cohortData[0, ]
@@ -1036,7 +1037,7 @@ MortalityAndGrowth <- function(sim) {
     numCohortsDiedOldAge <- startNumCohorts - NROW(diedCohortData)
 
     if ((numCohortsDiedOldAge) > 0) {
-     # Identify the PGs that are totally gone, not just an individual cohort that died
+      # Identify the PGs that are totally gone, not just an individual cohort that died
       pgsToRm <- diedCohortData[!pixelGroup %in% subCohortPostLongevity$pixelGroup]
 
       pixelsToRm <- which(getValues(sim$pixelGroupMap) %in% unique(pgsToRm$pixelGroup))
@@ -1065,18 +1066,23 @@ MortalityAndGrowth <- function(sim) {
         }
       }
     }
+
     subCohortData <- subCohortPostLongevity
+
+    #########################################################
+    # Calculate age and competition effects
+    #########################################################
     subCohortData <- calculateAgeMortality(cohortData = subCohortData)
+
     set(subCohortData, NULL, c("longevity", "mortalityshape"), NULL)
     subCohortData <- calculateCompetition(cohortData = subCohortData)
     if (!P(sim)$calibrate) {
       set(subCohortData, NULL, "sumB", NULL)
     }
 
-    #### the below two lines of codes are to calculate actual ANPP
-    subCohortData <- calculateANPP(cohortData = subCohortData)
+    subCohortData <- calculateANPP(cohortData = subCohortData)  ## competion effect on aNPP via bPM
     set(subCohortData, NULL, "growthcurve", NULL)
-    set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
+    set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))   ## dip here
 
     #generate climate-sensitivity predictions
     #NULL w/o module biomassGMCS. age-related mortality is included in this model
