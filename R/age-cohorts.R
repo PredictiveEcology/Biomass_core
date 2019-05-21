@@ -1,9 +1,15 @@
 ageReclassification <- function(cohortData, successionTimestep, stage) {
+
+  # Slight faster to check only, if not needed, than always convert
+  if (!is.integer(successionTimestep))
+    successionTimestep <- asInteger(successionTimestep)
+
+  successionTimestepPlusOne <- successionTimestep + 1L
+
   if (stage == "spinup") {
     # for spin up stage
-    cohortData[age == successionTimestep + 1, age := successionTimestep]
+    cohortData[age == successionTimestepPlusOne, age := successionTimestep]
   } else {
-    successionTimestepPlusOne <- asInteger(successionTimestep + 1)
 
     # non- spinup stage
     targetData <- cohortData[age <= successionTimestepPlusOne, ]
