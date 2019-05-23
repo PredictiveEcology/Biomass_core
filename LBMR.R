@@ -983,7 +983,6 @@ SummaryBGM <- function(sim) {
 }
 
 MortalityAndGrowth <- function(sim) {
-
   if (is.numeric(P(sim)$.useParallel)) {
     data.table::setDTthreads(P(sim)$.useParallel)
     message("Mortality and Growth should be using >100% CPU")
@@ -1482,6 +1481,7 @@ plotSummaryBySpecies <- function(sim) {
   ## Averages are calculated across pixels
   ## don't expand table, multiply by no. pixels - faster
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+
   thisPeriod <- pixelCohortData[, list(year = time(sim),
                                        BiomassBySpecies = sum(B*noPixels, na.rm = TRUE),
                                        AgeBySppWeighted = sum(age*B*noPixels, na.rm = TRUE)/sum(B*noPixels, na.rm = TRUE),
