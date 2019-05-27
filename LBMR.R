@@ -232,8 +232,8 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              params(sim)$LBMR$.saveInterval <- P(sim)$successionTimestep
 
            ## make sure plotting window is big enough
-           if (!is.na(P(sim)$.plotInitialTime) &
-               dev.size()[2] < 14) {
+           if (!is.na(P(sim)$.plotInitialTime) &&
+               tryCatch(dev.size()[2] < 14, error = function(e) FALSE)) {
              dev.off()
              dev(height = 10, width = 14)
              clearPlot()
