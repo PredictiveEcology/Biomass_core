@@ -407,9 +407,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   if (!suppliedElsewhere("cohortData", sim) |
       !suppliedElsewhere("pixelGroupMap")) {
 
-    if ((!suppliedElsewhere("cohortData", sim) &
-         suppliedElsewhere("pixelGroupMap")) |
-        (suppliedElsewhere("cohortData", sim) &
+    if ((!suppliedElsewhere("cohortData", sim) &&
+         suppliedElsewhere("pixelGroupMap")) ||
+        (suppliedElsewhere("cohortData", sim) &&
          !suppliedElsewhere("pixelGroupMap"))) {
       stop("Either 'cohortData' or 'pixelGroupMap' are being supplied without the other.",
            "These two objects must be supplied together and conform to each other.",
@@ -1208,7 +1208,7 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   seedingData <- seedingData[specieseco_current, nomatch = 0]
   seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, c("establishprob"), NULL)
-  if (P(sim)$calibrate == TRUE & NROW(seedingData) > 0) {
+  if (P(sim)$calibrate == TRUE && NROW(seedingData) > 0) {
     newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                           numberOfReg = length(pixelIndex)),
                                       by = speciesCode]
