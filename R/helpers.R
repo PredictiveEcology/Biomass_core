@@ -64,33 +64,61 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
   # this function is used to calculate total stand biomass that does not include the new cohorts
   # the new cohorts are defined as the age younger than simulation time step
   # reset sumB
-  pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
-                            temID = 1:length(unique(cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 10^4), max(pixelGroups$temID))))
-  if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints + 1)}
-  pixelGroups[, groups := cut(temID, breaks = cutpoints,
-                              labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
-                              include.lowest = TRUE)]
-  for (subgroup in paste("Group",  1:(length(cutpoints) - 1), sep = "")) {
-    subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
-    set(subCohortData, NULL, "sumB", 0L)
-    if (simuTime == lastReg + successionTimestep - 2) {
-      sumBtable <- subCohortData[age > successionTimestep,
-                                 .(tempsumB = as.integer(sum(B, na.rm=TRUE))), by = pixelGroup]
-    } else {
-      sumBtable <- subCohortData[age >= successionTimestep,
-                                 .(tempsumB = as.integer(sum(B, na.rm=TRUE))), by = pixelGroup]
+  if (getOption("LandR.assertions")) {
+    cohortData2 <- data.table::copy(cohortData)
+
+    newCohortData <- cohortData[, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+    uniqueCohortDataPixelGroup <- unique(cohortData$pixelGroup)
+    pixelGroups <- setDT(list(pixelGroupIndex = uniqueCohortDataPixelGroup,
+                              temID = 1:length(uniqueCohortDataPixelGroup)))
+    if (getOption("LandR.assertions")) { # old algorithm -- May 29 Eliot changed to above
+      pixelGroups2 <- data.table(pixelGroupIndex = uniqueCohortDataPixelGroup,
+                                 temID = 1:length(uniqueCohortDataPixelGroup))
+      if (!identical(pixelGroups, pixelGroups2))
+        stop()
     }
-    subCohortData <- merge(subCohortData, sumBtable, by = "pixelGroup", all.x = TRUE)
-    subCohortData[is.na(tempsumB), tempsumB := as.integer(0L)][, ':='(sumB = tempsumB, tempsumB = NULL)]
-    if (subgroup == "Group1") {
-      newcohortData <- subCohortData
-    } else {
-      newcohortData <- rbindlist(list(newcohortData, subCohortData))
+
+    cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 10^4), max(pixelGroups$temID))))
+    if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints + 1)}
+    pixelGroups[, groups := cut(temID, breaks = cutpoints,
+                                labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
+                                include.lowest = TRUE)]
+    for (subgroup in paste("Group",  1:(length(cutpoints) - 1), sep = "")) {
+      subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
+      set(subCohortData, NULL, "sumB", 0L)
+      if (simuTime == lastReg + successionTimestep - 2) {
+        sumBtable <- subCohortData[age > successionTimestep,
+                                   .(tempsumB = as.integer(sum(B, na.rm=TRUE))), by = pixelGroup]
+      } else {
+        sumBtable <- subCohortData[age >= successionTimestep,
+                                   .(tempsumB = as.integer(sum(B, na.rm=TRUE))), by = pixelGroup]
+      }
+      subCohortData <- merge(subCohortData, sumBtable, by = "pixelGroup", all.x = TRUE)
+      subCohortData[is.na(tempsumB), tempsumB := as.integer(0L)][, ':='(sumB = tempsumB, tempsumB = NULL)]
+      if (subgroup == "Group1") {
+        newcohortData <- subCohortData
+      } else {
+        newcohortData <- rbindlist(list(newcohortData, subCohortData))
+      }
+      rm(subCohortData, sumBtable)
     }
-    rm(subCohortData, sumBtable)
+
+    rm(cohortData, pixelGroups, cutpoints)
+    cohortData <- data.table::copy(cohortData2)
   }
-  rm(cohortData, pixelGroups, cutpoints)
+
+  cohortData[, sumB := as.integer(sum(B[age >= successionTimestep], na.rm = TRUE)), by = "pixelGroup"]
+
+  if  (getOption("LandR.assertions")) {
+    setkeyv(newcohortData, c("pixelGroup", "speciesCode", "age"))
+    setkeyv(cohortData, c("pixelGroup", "speciesCode", "age"))
+    setcolorder(newcohortData, names(cohortData))
+
+    if (!(identical(newcohortData, cohortData))) {
+      stop("calculateSumB new algorithm differs from old algorithm")
+    }
+  }
+  newcohortData <- cohortData
   return(newcohortData)
 }
 
