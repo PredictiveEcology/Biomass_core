@@ -66,6 +66,8 @@ defineModule(sim, list(
     defineParameter(".plotInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the plotting time step.",
                                  "If NA, the default, .plotInterval is set to successionTimestep.")),
+    defineParameter(".plotMaps", "logic", TRUE, NA, NA,
+                    desc = "Controls whether maps should be plotted or not"),
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first save event should occur.",
                                  "Set to NA if no saving is desired. If not NA, then saving will occur at",
@@ -235,15 +237,18 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              dev.off()
              dev(height = 10, width = 14)
              clearPlot()
+
+             ## current window will be used for maps
+             ## a new one for summary stats
+             if (P(sim)$.plotMaps) {
+               mod$mapWindow <- dev.cur()
+               mod$statsWindow <- mod$mapWindow + 1
+             } else
+               mod$statsWindow <- dev.cur()
            }
 
            ## Run Init event
            sim <- Init(sim)
-
-           ## current window will be used for maps
-           ## a new one for summary stats
-           mod$mapWindow <- dev.cur()
-           mod$statsWindow <- mod$mapWindow + 1
 
            ## schedule events
            if (!is.null(summBGMPriority$start))
@@ -277,8 +282,9 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "LBMR", "summaryRegen", eventPriority = summRegenPriority)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "LBMR", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
+           if (P(sim)$.plotMaps)
+             sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
+                                  "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "LBMR", "plotAvgs", eventPriority = plotPriority + 0.5)
 
@@ -354,8 +360,9 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
+           if (P(sim)$.plotMaps)
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                  "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
          },
          save = {
            sim <- Save(sim)
@@ -984,6 +991,7 @@ MortalityAndGrowth <- function(sim) {
                                            "speciesCode", "age", "B", "mortality", "aNPPAct")))
     sim$cohortData <- sim$cohortData[, .(pixelGroup, ecoregionGroup,
                                          speciesCode, age, B, mortality, aNPPAct)]
+
   #Install climate-sensitive functions (or not)
   a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers)) #This is not working. requireNamespace overrides try
   if (class(a) == "try-error") {
@@ -991,7 +999,6 @@ MortalityAndGrowth <- function(sim) {
   }
   calculateClimateEffect <- getFromNamespace("calculateClimateEffect", P(sim)$growthAndMortalityDrivers)
   assignClimateEffect <- getFromNamespace("assignClimateEffect", P(sim)$growthAndMortalityDrivers)
-
 
   cohortData <- sim$cohortData
   sim$cohortData <- cohortData[0, ]
@@ -1008,9 +1015,8 @@ MortalityAndGrowth <- function(sim) {
   #                             include.lowest = FALSE)]
   for (subgroup in paste("Group", 1:(length(cutpoints) - 1), sep = "")) {
     subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
-    #   cohortData <- sim$cohortData
 
-    set(subCohortData, NULL, "age", subCohortData$age + 1L)
+    subCohortData[age > 1, age := age + 1L]
     subCohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
                                                       time = round(time(sim)),
                                                       cohortData = subCohortData)
@@ -1025,13 +1031,13 @@ MortalityAndGrowth <- function(sim) {
     # Die from old age -- rm from cohortData
     #########################################################
     subCohortPostLongevity <- subCohortData[age <= longevity,]
-    postLongevityDieOffNumCohorts <- NROW(subCohortPostLongevity)
-    numCohortsDiedOldAge <- startNumCohorts - postLongevityDieOffNumCohorts
+    diedCohortData <- subCohortData[age > longevity,]
+    numCohortsDiedOldAge <- NROW(diedCohortData)
+
     if ((numCohortsDiedOldAge) > 0) {
-      diedCohortData <- subCohortData[!subCohortPostLongevity, on = c("pixelGroup", "speciesCode"),
-                                      .(pixelGroup, speciesCode, ecoregionGroup, age)]
       # Identify the PGs that are totally gone, not just an individual cohort that died
-      pgsToRm <- diedCohortData[!diedCohortData$pixelGroup %in% subCohortPostLongevity$pixelGroup]
+      pgsToRm <- diedCohortData[!pixelGroup %in% subCohortPostLongevity$pixelGroup]
+
       pixelsToRm <- which(getValues(sim$pixelGroupMap) %in% unique(pgsToRm$pixelGroup))
       # RM from the pixelGroupMap -- since it is a whole pixelGroup that is gone, not just a cohort, this is necessary
       if (isTRUE(getOption("LandR.assertions"))) {
@@ -1058,18 +1064,25 @@ MortalityAndGrowth <- function(sim) {
         }
       }
     }
+
     subCohortData <- subCohortPostLongevity
+
+    #########################################################
+    # Calculate age and competition effects
+    #########################################################
     subCohortData <- calculateAgeMortality(cohortData = subCohortData)
+
     set(subCohortData, NULL, c("longevity", "mortalityshape"), NULL)
     subCohortData <- calculateCompetition(cohortData = subCohortData)
     if (!P(sim)$calibrate) {
       set(subCohortData, NULL, "sumB", NULL)
     }
 
-    #### the below two lines of codes are to calculate actual ANPP
-    subCohortData <- calculateANPP(cohortData = subCohortData)
+    subCohortData <- calculateANPP(cohortData = subCohortData)  ## competion effect on aNPP via bPM
     set(subCohortData, NULL, "growthcurve", NULL)
-    set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
+    ## Ceres: the following line is inactive because it causes age mortality to be counted double
+    ## don't delete it just yet, though...
+    # set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
     #generate climate-sensitivity predictions
     #NULL w/o module biomassGMCS. age-related mortality is included in this model
@@ -1470,11 +1483,12 @@ plotSummaryBySpecies <- function(sim) {
   ## Averages are calculated across pixels
   ## don't expand table, multiply by no. pixels - faster
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+
   thisPeriod <- pixelCohortData[, list(year = time(sim),
                                        BiomassBySpecies = sum(B*noPixels, na.rm = TRUE),
                                        AgeBySppWeighted = sum(age*B*noPixels, na.rm = TRUE)/sum(B*noPixels, na.rm = TRUE),
                                        aNPPBySpecies = sum(aNPPAct*noPixels, na.rm = TRUE),
-                                       OldestCohortBySpp = max(age)),
+                                       OldestCohortBySpp = max(age, na.rm = TRUE)),
                                 by = .(speciesCode)]
 
   if (is.null(sim$summaryBySpecies)) {
@@ -1577,6 +1591,21 @@ plotSummaryBySpecies <- function(sim) {
       Plot(plot5, title = paste("Oldest cohort age\n",
                                 "by species (across pixels)"), new = TRUE)
     }
+
+    ## test
+    if (!is.na(P(sim)$.plotInitialTime)) {
+      dev(mod$statsWindow)
+      plot6 <- ggplot(data = df, aes(x = year, y = aNPPBySpecies,
+                                     colour = species, group = species)) +
+        geom_line(size = 1) +
+        scale_color_manual(values = cols2) +
+        labs(x = "Year", y = "aNPP") +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank())
+
+      Plot(plot6, title = paste0("Total aNPP by species\n",
+                                 "across pixels"), new = TRUE)
+    }
+    ## end test
   }
 
   return(invisible(sim))

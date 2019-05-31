@@ -171,7 +171,7 @@ calculateANPP <- function(cohortData, stage = "nonSpinup") {
         cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
           exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM)
     set(cohortData, NULL, "aNPPAct",
-        pmin(cohortData$maxANPP*cohortData$bPM,cohortData$aNPPAct))
+        pmin(cohortData$maxANPP*cohortData$bPM, cohortData$aNPPAct))
   }
   return(cohortData)
 }
@@ -227,7 +227,7 @@ calculateCompetition <- function(cohortData, stage = "nonSpinup") {
     cohortData[age > 0, bPM := cMultiplier / cMultTotal]
     set(cohortData, NULL, c("cMultiplier", "cMultTotal"), NULL)
   } else {
-    set(cohortData, NULL, "bPot", pmax(1, cohortData$maxB - cohortData$sumB + cohortData$B))
+    set(cohortData, NULL, "bPot", pmax(1, cohortData$maxB - cohortData$sumB + cohortData$B))  ## differs from manual, follows source code
     set(cohortData, NULL, "bAP", cohortData$B/cohortData$bPot)
     set(cohortData, NULL, "bPot", NULL)
     set(cohortData, NULL, "cMultiplier", pmax(as.numeric(cohortData$B^0.95), 1))
