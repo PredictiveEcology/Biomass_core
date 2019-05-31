@@ -77,12 +77,12 @@ defineModule(sim, list(
                                  "If NA, the default, .saveInterval is set to successionTimestep.")),
     defineParameter(".useCache", "logical", TRUE,
                     desc = "use caching for the spinup simulation?"),
-    defineParameter(".useParallel", "ANY", parallel::detectCores(),
+    defineParameter(".useParallel", "ANY", 2,
                     desc = paste("Used only in seed dispersal.",
-                                 "If numeric, it will be passed to data.table::setDTthreads",
-                                 "If TRUE, it will be passed to parallel:makeCluster,",
-                                 "and if a cluster object, it will be passed to parallel::parClusterApplyB"))
-  ),
+                                 "If numeric, it will be passed to data.table::setDTthreads and should be <= 2;",
+                                 "If TRUE, it will be passed to parallel:makeCluster;",
+                                 "and if a cluster object, it will be passed to parallel::parClusterApplyB."))
+    ),
   inputObjects = bind_rows(
     expectsInput("cohortData", "data.table",
                  desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
@@ -232,8 +232,8 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
              params(sim)$LBMR$.saveInterval <- P(sim)$successionTimestep
 
            ## make sure plotting window is big enough
-           if (!is.na(P(sim)$.plotInitialTime) &
-               dev.size()[2] < 14) {
+           if (!is.na(P(sim)$.plotInitialTime) &&
+               tryCatch(dev.size()[2] < 14, error = function(e) FALSE)) {
              dev.off()
              dev(height = 10, width = 14)
              clearPlot()
@@ -407,9 +407,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   if (!suppliedElsewhere("cohortData", sim) |
       !suppliedElsewhere("pixelGroupMap")) {
 
-    if ((!suppliedElsewhere("cohortData", sim) &
-         suppliedElsewhere("pixelGroupMap")) |
-        (suppliedElsewhere("cohortData", sim) &
+    if ((!suppliedElsewhere("cohortData", sim) &&
+         suppliedElsewhere("pixelGroupMap")) ||
+        (suppliedElsewhere("cohortData", sim) &&
          !suppliedElsewhere("pixelGroupMap"))) {
       stop("Either 'cohortData' or 'pixelGroupMap' are being supplied without the other.",
            "These two objects must be supplied together and conform to each other.",
@@ -983,7 +983,6 @@ SummaryBGM <- function(sim) {
 }
 
 MortalityAndGrowth <- function(sim) {
-
   if (is.numeric(P(sim)$.useParallel)) {
     data.table::setDTthreads(P(sim)$.useParallel)
     message("Mortality and Growth should be using >100% CPU")
@@ -1081,7 +1080,9 @@ MortalityAndGrowth <- function(sim) {
 
     subCohortData <- calculateANPP(cohortData = subCohortData)  ## competion effect on aNPP via bPM
     set(subCohortData, NULL, "growthcurve", NULL)
-    set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
+    ## Ceres: the following line is inactive because it causes age mortality to be counted double
+    ## don't delete it just yet, though...
+    # set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
     #generate climate-sensitivity predictions
     #NULL w/o module biomassGMCS. age-related mortality is included in this model
@@ -1207,7 +1208,7 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   seedingData <- seedingData[specieseco_current, nomatch = 0]
   seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, c("establishprob"), NULL)
-  if (P(sim)$calibrate == TRUE & NROW(seedingData) > 0) {
+  if (P(sim)$calibrate == TRUE && NROW(seedingData) > 0) {
     newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
                                           numberOfReg = length(pixelIndex)),
                                       by = speciesCode]
@@ -1482,6 +1483,7 @@ plotSummaryBySpecies <- function(sim) {
   ## Averages are calculated across pixels
   ## don't expand table, multiply by no. pixels - faster
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+
   thisPeriod <- pixelCohortData[, list(year = time(sim),
                                        BiomassBySpecies = sum(B*noPixels, na.rm = TRUE),
                                        AgeBySppWeighted = sum(age*B*noPixels, na.rm = TRUE)/sum(B*noPixels, na.rm = TRUE),
