@@ -77,12 +77,12 @@ defineModule(sim, list(
                                  "If NA, the default, .saveInterval is set to successionTimestep.")),
     defineParameter(".useCache", "logical", TRUE,
                     desc = "use caching for the spinup simulation?"),
-    defineParameter(".useParallel", "ANY", parallel::detectCores(),
+    defineParameter(".useParallel", "ANY", 2,
                     desc = paste("Used only in seed dispersal.",
-                                 "If numeric, it will be passed to data.table::setDTthreads",
-                                 "If TRUE, it will be passed to parallel:makeCluster,",
-                                 "and if a cluster object, it will be passed to parallel::parClusterApplyB"))
-  ),
+                                 "If numeric, it will be passed to data.table::setDTthreads and should be <= 2;",
+                                 "If TRUE, it will be passed to parallel:makeCluster;",
+                                 "and if a cluster object, it will be passed to parallel::parClusterApplyB."))
+    ),
   inputObjects = bind_rows(
     expectsInput("cohortData", "data.table",
                  desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
