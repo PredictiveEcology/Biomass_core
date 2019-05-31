@@ -10,7 +10,6 @@ ageReclassification <- function(cohortData, successionTimestep, stage) {
     # for spin up stage
     cohortData[age == successionTimestepPlusOne, age := successionTimestep]
   } else {
-
     # non- spinup stage
     targetData <- cohortData[age <= successionTimestepPlusOne, ]
 
