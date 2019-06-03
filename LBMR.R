@@ -968,14 +968,13 @@ SummaryBGM <- function(sim) {
   sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
   setColors(sim$ANPPMap) <- c("light green", "dark green")
 
-  sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                       "uniqueSumMortality")
+  sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
   setColors(sim$mortalityMap) <- c("light green", "dark green")
 
   sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
                                         P(sim)$vegLeadingProportion,
                                         colors = sim$sppColorVect,
-                                        unitTest = TRUE)
+                                        unitTest = getOption("LandR.assertions", TRUE))
 
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
