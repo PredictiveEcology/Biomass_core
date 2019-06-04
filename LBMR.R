@@ -977,7 +977,7 @@ SummaryBGM <- function(sim) {
                                         unitTest = getOption("LandR.assertions", TRUE))
 
   # the following codes for preparing the data table for saving
-  rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
+  rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable) ## TODO: is this needed? on exit, should free the mem used for these
   return(invisible(sim))
 }
 
@@ -1703,18 +1703,14 @@ plotAvgVegAttributes <- function(sim) {
     sim$summaryLandscape <- rbindlist(list(sim$summaryLandscape, thisPeriod))
   }
 
-
   if (length(unique(sim$summaryLandscape$year)) > 1) {
     df2 <- melt(sim$summaryLandscape, id.vars = "year")
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
 
-      varLabels <- c(sumB = "Biomass",
-                     maxAge = "Age",
-                     sumANPP = "aNPP")
+      varLabels <- c(sumB = "Biomass", maxAge = "Age", sumANPP = "aNPP")
 
-      plot1 <- ggplot(data = df2,
-                      aes(x = year, y = value, colour = variable)) +
+      plot1 <- ggplot(data = df2, aes(x = year, y = value, colour = variable)) +
         geom_line(size = 1) +
         scale_colour_brewer(labels = varLabels, type = "qual", palette = "Dark2") +
         theme_bw() +
