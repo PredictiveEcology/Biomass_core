@@ -1081,11 +1081,11 @@ MortalityAndGrowth <- function(sim) {
     set(subCohortData, NULL, "growthcurve", NULL)
     set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
-    #generate climate-sensitivity predictions
-    #NULL w/o module biomassGMCS. age-related mortality is included in this model
-    # 20/03/2019 IE: after discussion we determined it is acceptable to include age
-    #because 1) the Landis age-related mortality fxn is very different from this model,
-    #and 2) because it would be difficult to separate the climate/age interaction
+    ## generate climate-sensitivity predictions
+    ## - NULL w/o module biomassGMCS. age-related mortality is included in this model
+    ## - 20/03/2019 IE: after discussion we determined it is acceptable to include age
+    ##   because 1) the Landis age-related mortality fxn is very different from this model,
+    ##   and 2) because it would be difficult to separate the climate/age interaction
     predObj <- calculateClimateEffect(gcsModel = sim$gcsModel,
                                       mcsModel = sim$mcsModel,
                                       CMI = sim$CMI,
