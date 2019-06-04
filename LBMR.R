@@ -1079,9 +1079,7 @@ MortalityAndGrowth <- function(sim) {
 
     subCohortData <- calculateANPP(cohortData = subCohortData)  ## competion effect on aNPP via bPM
     set(subCohortData, NULL, "growthcurve", NULL)
-    ## Ceres: the following line is inactive because it causes age mortality to be counted double
-    ## don't delete it just yet, though...
-    # set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
+    set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
     #generate climate-sensitivity predictions
     #NULL w/o module biomassGMCS. age-related mortality is included in this model
