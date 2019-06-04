@@ -968,14 +968,13 @@ SummaryBGM <- function(sim) {
   sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
   setColors(sim$ANPPMap) <- c("light green", "dark green")
 
-  sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap,
-                                       "uniqueSumMortality")
+  sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
   setColors(sim$mortalityMap) <- c("light green", "dark green")
 
   sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
                                         P(sim)$vegLeadingProportion,
                                         colors = sim$sppColorVect,
-                                        unitTest = TRUE)
+                                        unitTest = getOption("LandR.assertions", TRUE))
 
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
@@ -1485,9 +1484,10 @@ plotSummaryBySpecies <- function(sim) {
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
 
   thisPeriod <- pixelCohortData[, list(year = time(sim),
-                                       BiomassBySpecies = sum(B*noPixels, na.rm = TRUE),
-                                       AgeBySppWeighted = sum(age*B*noPixels, na.rm = TRUE)/sum(B*noPixels, na.rm = TRUE),
-                                       aNPPBySpecies = sum(aNPPAct*noPixels, na.rm = TRUE),
+                                       BiomassBySpecies = as.double(sum(B * noPixels, na.rm = TRUE)),
+                                       AgeBySppWeighted = as.double(sum(age * B * noPixels, na.rm = TRUE) /
+                                         sum(B * noPixels, na.rm = TRUE)),
+                                       aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
                                        OldestCohortBySpp = max(age, na.rm = TRUE)),
                                 by = .(speciesCode)]
 
@@ -1612,76 +1612,78 @@ plotSummaryBySpecies <- function(sim) {
 }
 
 plotVegAttributesMaps <- function(sim) {
-  biomassMapForPlot <- raster::mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
-  ANPPMapForPlot <- raster::mask(sim$ANPPMap, sim$studyAreaReporting)
-  mortalityMapForPlot <- raster::mask(sim$mortalityMap, sim$studyAreaReporting)
-  if (is.null(sim$reproductionMap)) {
-    reproductionMapForPlot <- biomassMapForPlot
-    reproductionMapForPlot[!is.na(reproductionMapForPlot)][] <- 0
-  } else {
-    reproductionMapForPlot <-  raster::mask(sim$reproductionMap, sim$studyAreaReporting)
-  }
-
-  levs <- raster::levels(sim$vegTypeMap)[[1]]
-  levelsName <- names(levs)[2]
-  # facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
-  #                                  att = levelsName,
-  #                                  na.rm = TRUE)
-
-  ## Doesn't change anything in the current default setting, but it does create
-  ##  an NA where there is "Mixed".
-  ## Other species in levs[[levelsName]] are already "Leading",
-  ##  but it needs to be here in case it is not Leading in the future.
-  # The ones we want
-  sppEquiv <- sim$sppEquiv[!is.na(sim$sppEquiv[[P(sim)$sppEquivCol]]),]
-
-  levsLeading <- equivalentName(levs[[levelsName]], sppEquiv, "Leading")
-
-  if (any(grepl("Mixed", levs[[levelsName]]))) {
-    hasOnlyMixedAsOther <- sum(is.na(levsLeading) == 1) &&
-      levs[[levelsName]][is.na(levsLeading)] == "Mixed"
-    #extraValues <- setdiff(levs[[levelsName]], levsLeading)
-    if (!isTRUE(hasOnlyMixedAsOther)) {
-      stop("'plotVegAttributesMaps' in LBMR can only deal with 'Mixed' category or the ones in sim$sppEquiv")
+  if (!is.na(P(sim)$.plotInitialTime)) {
+    biomassMapForPlot <- raster::mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
+    ANPPMapForPlot <- raster::mask(sim$ANPPMap, sim$studyAreaReporting)
+    mortalityMapForPlot <- raster::mask(sim$mortalityMap, sim$studyAreaReporting)
+    if (is.null(sim$reproductionMap)) {
+      reproductionMapForPlot <- biomassMapForPlot
+      reproductionMapForPlot[!is.na(reproductionMapForPlot)][] <- 0
+    } else {
+      reproductionMapForPlot <-  raster::mask(sim$reproductionMap, sim$studyAreaReporting)
     }
+
+    levs <- raster::levels(sim$vegTypeMap)[[1]]
+    levelsName <- names(levs)[2]
+    # facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
+    #                                  att = levelsName,
+    #                                  na.rm = TRUE)
+
+    ## Doesn't change anything in the current default setting, but it does create
+    ##  an NA where there is "Mixed".
+    ## Other species in levs[[levelsName]] are already "Leading",
+    ##  but it needs to be here in case it is not Leading in the future.
+    # The ones we want
+    sppEquiv <- sim$sppEquiv[!is.na(sim$sppEquiv[[P(sim)$sppEquivCol]]),]
+
+    levsLeading <- equivalentName(levs[[levelsName]], sppEquiv, "Leading")
+
+    if (any(grepl("Mixed", levs[[levelsName]]))) {
+      hasOnlyMixedAsOther <- sum(is.na(levsLeading) == 1) &&
+        levs[[levelsName]][is.na(levsLeading)] == "Mixed"
+      #extraValues <- setdiff(levs[[levelsName]], levsLeading)
+      if (!isTRUE(hasOnlyMixedAsOther)) {
+        stop("'plotVegAttributesMaps' in LBMR can only deal with 'Mixed' category or the ones in sim$sppEquiv")
+      }
+    }
+
+    whMixedLevs <- which(levs[[levelsName]] == "Mixed")
+    whMixedSppColors <- which(names(sim$sppColorVect) == "Mixed")
+
+    # Will return NA where there is no value, e.g., Mixed
+    levsLeading[whMixedLevs] <- "Mixed"
+
+    shortNames <- equivalentName(levsLeading, sppEquiv, "EN_generic_short")
+    shortNames[whMixedLevs] <- "Mixed"
+    levs[[levelsName]] <- shortNames
+    levels(sim$vegTypeMap) <- levs
+
+    colsLeading <- equivalentName(names(sim$sppColorVect), sppEquiv, "Leading")
+    colsLeading[whMixedSppColors] <- "Mixed"
+    sppColorVect <- sim$sppColorVect
+    names(sppColorVect) <- colsLeading
+    colours <- sppColorVect[na.omit(match(levsLeading, colsLeading))]
+    setColors(sim$vegTypeMap, levs$ID) <- colours
+
+    # Mask out NAs based on rasterToMatch (for plotting only!)
+    vegTypeMapForPlot <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
+    #vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA ## faster than raster::mask
+
+    ## Plot
+    dev(mod$mapWindow)
+    if (!is.null(biomassMapForPlot))
+      Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
+    if (!is.null(ANPPMapForPlot))
+      Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
+    if (!is.null(mortalityMapForPlot))
+      Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
+    Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
+    grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
+    grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
+
+    if (!is.null(reproductionMapForPlot))
+      Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
   }
-
-  whMixedLevs <- which(levs[[levelsName]] == "Mixed")
-  whMixedSppColors <- which(names(sim$sppColorVect) == "Mixed")
-
-  # Will return NA where there is no value, e.g., Mixed
-  levsLeading[whMixedLevs] <- "Mixed"
-
-  shortNames <- equivalentName(levsLeading, sppEquiv, "EN_generic_short")
-  shortNames[whMixedLevs] <- "Mixed"
-  levs[[levelsName]] <- shortNames
-  levels(sim$vegTypeMap) <- levs
-
-  colsLeading <- equivalentName(names(sim$sppColorVect), sppEquiv, "Leading")
-  colsLeading[whMixedSppColors] <- "Mixed"
-  sppColorVect <- sim$sppColorVect
-  names(sppColorVect) <- colsLeading
-  colours <- sppColorVect[na.omit(match(levsLeading, colsLeading))]
-  setColors(sim$vegTypeMap, levs$ID) <- colours
-
-  # Mask out NAs based on rasterToMatch (for plotting only!)
-  vegTypeMapForPlot <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
-  #vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA ## faster than raster::mask
-
-  # Plot
-  dev(mod$mapWindow)
-  if (!is.null(biomassMapForPlot))
-    Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
-  if (!is.null(ANPPMapForPlot))
-    Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
-  if (!is.null(mortalityMapForPlot))
-    Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
-  Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
-  grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
-  grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
-
-  if (!is.null(reproductionMapForPlot))
-    Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
 
   return(invisible(sim))
 }
