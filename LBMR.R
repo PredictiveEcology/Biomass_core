@@ -1484,11 +1484,11 @@ plotSummaryBySpecies <- function(sim) {
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
 
   thisPeriod <- pixelCohortData[, list(year = time(sim),
-                                       BiomassBySpecies = as.double(sum(B * noPixels, na.rm = TRUE)),
-                                       AgeBySppWeighted = as.double(sum(age * B * noPixels, na.rm = TRUE) /
-                                         sum(B * noPixels, na.rm = TRUE)),
-                                       aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
-                                       OldestCohortBySpp = max(age, na.rm = TRUE)),
+                                       BiomassBySpecies = asInteger(sum(B * noPixels, na.rm = TRUE)),
+                                       AgeBySppWeighted = asInteger(sum(age * B * noPixels, na.rm = TRUE) /
+                                                                      sum(B * noPixels, na.rm = TRUE)),
+                                       aNPPBySpecies = asInteger(sum(aNPPAct * noPixels, na.rm = TRUE)),
+                                       OldestCohortBySpp = asInteger(max(age, na.rm = TRUE))),
                                 by = .(speciesCode)]
 
   if (is.null(sim$summaryBySpecies)) {
@@ -1694,9 +1694,9 @@ plotAvgVegAttributes <- function(sim) {
   ## don't expand table, multiply by no. pixels - faster
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
   thisPeriod <- pixelCohortData[, list(year = time(sim),
-                                       sumB = sum(B*noPixels, na.rm = TRUE),
-                                       maxAge = max(age, na.rm = TRUE),
-                                       sumANPP = sum(aNPPAct*noPixels, na.rm = TRUE))]
+                                       sumB = asInteger(sum(B*noPixels, na.rm = TRUE)),
+                                       maxAge = asInteger(max(age, na.rm = TRUE)),
+                                       sumANPP = asInteger(sum(aNPPAct*noPixels, na.rm = TRUE)))]
   if (is.null(sim$summaryLandscape)) {
     sim$summaryLandscape <- thisPeriod
   } else {
