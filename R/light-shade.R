@@ -15,9 +15,9 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   # https://github.com/LANDIS-II-Foundation/Extensions-Succession/blob/master/biomass-succession/trunk/src/PlugIn.cs
   if (nrow(cohortData[age > 5,]) > 0) {
     bAMterm1 <- cohortData[age > 5, ':='(prevMortality = sum(mortality, na.rm = TRUE),
-                                         sumB = sum(B, na.rm = TRUE)),
+                                         sumB = asInteger(sum(B, na.rm = TRUE))),
                            by = .(pixelGroup, ecoregionGroup)]
-    bAMterm1[is.na(sumB), sumB := 0]
+    bAMterm1[is.na(sumB), sumB := 0L]
     bAMterm1[is.na(prevMortality), prevMortality := 0]
     bAMterm1 <- unique(bAMterm1, by = c("pixelGroup", "ecoregionGroup"))
     #set(cohortData, NULL, "prevMortality", NULL)
@@ -33,8 +33,8 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   setkey(bAM, ecoregionGroup)
   setkey(bAMterm1, ecoregionGroup)
   bAMterm1 <- bAM[bAMterm1, nomatch = 0]
-  bAMterm1[, sumB := pmin((maxMaxB - prevMortality), sumB)]
-  bAMterm1[, bAM := sumB/maxMaxB]
+  bAMterm1[, sumB := asInteger(pmin((maxMaxB - prevMortality), sumB))]
+  bAMterm1[, bAM := sumB / maxMaxB]
   minRelativeB <- data.table(minRelativeB)
   setkey(minRelativeB, ecoregionGroup)
   bAMterm1 <- minRelativeB[bAMterm1, nomatch = 0]
