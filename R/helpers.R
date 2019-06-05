@@ -111,7 +111,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
     cohortData <- data.table::copy(cohortData2)
   }
 
-  cohortData[, sumB := sum(B[age >= successionTimestep], na.rm = TRUE), by = "pixelGroup"]
+  cohortData[age >= successionTimestep, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
   if (!is.integer(cohortData[["sumB"]]))
     set(cohortData, NULL, "sumB", asInteger(cohortData[["sumB"]]))
 
@@ -173,11 +173,10 @@ calculateANPP <- function(cohortData, stage = "nonSpinup") {
                  exp(-(bAP^growthcurve)) * bPM]
     cohortData[age > 0, aNPPAct := pmin(maxANPP * bPM, aNPPAct)]
   } else {
+    aNPPAct <- cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
+          exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM
     set(cohortData, NULL, "aNPPAct",
-        cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
-          exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM)
-    set(cohortData, NULL, "aNPPAct",
-        pmin(cohortData$maxANPP*cohortData$bPM, cohortData$aNPPAct))
+        pmin(cohortData$maxANPP*cohortData$bPM, aNPPAct))
   }
   return(cohortData)
 }
