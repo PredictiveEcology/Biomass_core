@@ -475,8 +475,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       sim$sppColorVect[c(names(sim$speciesLayers), "Mixed")]
     }
 
-    coverMatrix <- matrix(asInteger(sim$speciesLayers[]),
-                          ncol = length(names(sim$speciesLayers)))
+    coverMatrix <- matrix(asInteger(sim$speciesLayers[]), ncol = length(names(sim$speciesLayers)))
     colnames(coverMatrix) <- names(sim$speciesLayers)
     coverColNames <- paste0("cover.", sim$species$species)
 
@@ -860,12 +859,11 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     set(cohortData, NULL, "B", NULL)
     cohortData[, totalSpeciesPresence := sum(speciesPresence), by = "pixelGroup"]
     cohortData <- cohortData[biomassTable, on = "pixelGroup"]
-    cohortData[, B := Bsum * speciesPresence / totalSpeciesPresence,
-               by = c("pixelGroup", "speciesCode")]
+    cohortData[, B := Bsum * speciesPresence / totalSpeciesPresence, by = c("pixelGroup", "speciesCode")]
     if (!is.integer(cohortData$B))
       set(cohortData, NULL, "B", asInteger(cohortData$B))
   }
-browser()
+
   pixelAll <- cohortData[, .(uniqueSumB = sum(B, na.rm = TRUE)), by = pixelGroup]
   if (!is.integer(pixelAll$uniqueSumB))
     set(pixelAll, NULL, "uniqueSumB", asInteger(pixelAll$uniqueSumB))
@@ -891,13 +889,13 @@ browser()
   simulationOutput <- setkey(simulationOutput, ecoregionGroup)[
     setkey(mod$activeEcoregionLength, ecoregionGroup), nomatch = 0]
   sim$simulationOutput <- simulationOutput[, .(ecoregionGroup, NofCell, Year = asInteger(time(sim)),
-                                               Biomass = asInteger(Biomass/NofCell),
+                                               Biomass = asInteger(Biomass / NofCell),
                                                ANPP = 0L, Mortality = 0L, Regeneration = 0L)]
   sim$lastReg <- 0
   speciesEcoregion[, identifier := year > P(sim)$successionTimestep]
-  speciesEcoregion_True <- speciesEcoregion[identifier == TRUE,]
-  speciesEcoregion_False <- speciesEcoregion[identifier == FALSE,]
-  speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(year),]
+  speciesEcoregion_True <- speciesEcoregion[identifier == TRUE, ]
+  speciesEcoregion_False <- speciesEcoregion[identifier == FALSE, ]
+  speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(year), ]
   sim$speciesEcoregion <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))[
     , ':='(year = year - min(year), identifier = NULL)]
   sim$lastFireYear <- "noFire"
