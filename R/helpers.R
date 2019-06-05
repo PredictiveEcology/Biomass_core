@@ -112,8 +112,8 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
   }
 
   cohortData[, sumB := sum(B[age >= successionTimestep], na.rm = TRUE), by = "pixelGroup"]
-  if (!is.integer(subCohortData[["sumB"]]))
-    set(subCohortData, NULL, "sumB", asInteger(subCohortData[["sumB"]]))
+  if (!is.integer(cohortData[["sumB"]]))
+    set(cohortData, NULL, "sumB", asInteger(cohortData[["sumB"]]))
 
   if  (getOption("LandR.assertions")) {
     setkeyv(newcohortData, c("pixelGroup", "speciesCode", "age"))
