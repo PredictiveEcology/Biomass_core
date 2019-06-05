@@ -19,7 +19,7 @@ defineModule(sim, list(
   documentation = list("README.txt", "LBMR.Rmd"),
   reqdPkgs = list("data.table", "dplyr", "fpCompare", "ggplot2", "grid",
                   "purrr", "quickPlot", "raster", "Rcpp", "scales", "sp", "tidyr",
-                  #"PredictiveEcology/LandR@development",
+                  "PredictiveEcology/LandR@development",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
@@ -862,6 +862,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                by = c("pixelGroup", "speciesCode")]
   }
 
+  browser()
   pixelAll <- cohortData[, .(uniqueSumB = asInteger(sum(B, na.rm = TRUE))), by = pixelGroup]
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
@@ -925,11 +926,15 @@ SummaryBGM <- function(sim) {
       subCohortData[, reproduction := 0]
     }
     subCohortData[is.na(reproduction), reproduction := 0L]
-    summarytable_sub <- subCohortData[, .(uniqueSumB = asInteger(sum(B, na.rm=TRUE)),
-                                          uniqueSumANPP = asInteger(sum(aNPPAct, na.rm=TRUE)),
-                                          uniqueSumMortality = asInteger(sum(mortality, na.rm=TRUE)),
-                                          uniqueSumRege = asInteger(mean(reproduction, na.rm = TRUE))),
+
+    # Don't need to do asInteger within the by group calculation. Separate to next step.
+    summarytable_sub <- subCohortData[, .(uniqueSumB = sum(B, na.rm=TRUE),
+                                          uniqueSumANPP = sum(aNPPAct, na.rm=TRUE),
+                                          uniqueSumMortality = sum(mortality, na.rm=TRUE),
+                                          uniqueSumRege = mean(reproduction, na.rm = TRUE)),
                                       by = pixelGroup]
+    for (column in names(summarytable_sub)) if (!is.integer(summarytable_sub[[column]]))
+      set(summarytable_sub, NULL, column, asInteger(summarytable_sub[[column]]))
 
     tempOutput <- setkey(ecoPixelgroup[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ],
                          pixelGroup)[setkey(summarytable_sub, pixelGroup), nomatch = 0]
