@@ -47,8 +47,8 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
       lastReg <- k - 1
       cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                          successionTimestep = successionTimestep)
-      cohortData[age == 2, B := as.integer(pmax(1, maxANPP * exp(-1.6 * sumB / maxB_eco)))]
-      cohortData[age == 2, B := as.integer(pmin(maxANPP, B))]
+      cohortData[age == 2, B := asInteger(pmax(1, maxANPP * exp(-1.6 * sumB / maxB_eco)))]
+      cohortData[age == 2, B := asInteger(pmin(maxANPP, B))]
     }
     if (maxAge != 1) {
       # 2. calculate age-related mortality
@@ -67,13 +67,13 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
       cohortData[age > 0, mBio := pmax(0, mBio - mAge)]
       cohortData[age > 0, mBio := pmin(mBio, aNPPAct)]
       cohortData[age > 0, mortality := mBio + mAge]
-      cohortData[age > 0, B := as.integer(B + as.integer(aNPPAct - mortality))]
+      cohortData[age > 0, B := asInteger(B + asInteger(aNPPAct - mortality))]
       set(cohortData, NULL, c("bPM", "mBio"), NULL)
     }
     if (calibrate) {
       if (maxAge != 1) {
         spoutput <- cohortData[origAge >= presimuT, .(pixelGroup, speciesCode, age,
-                                                      iniBiomass = B + as.integer(mortality - aNPPAct),
+                                                      iniBiomass = B + asInteger(mortality - aNPPAct),
                                                       ANPP = round(aNPPAct, 1),
                                                       Mortality = round(mortality, 1),finBiomass = B)]
         spoutput <- setkey(spoutput, speciesCode)[
@@ -101,8 +101,8 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     if (presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1) {
       cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
                                          successionTimestep = successionTimestep)
-      cohortData[origAge == 1,B := as.integer(pmax(1, maxANPP*exp(-1.6*sumB/maxB_eco)))]
-      cohortData[origAge == 1,B := as.integer(pmin(maxANPP, B))]
+      cohortData[origAge == 1, B := asInteger(pmax(1, maxANPP * exp(-1.6 * sumB / maxB_eco)))]
+      cohortData[origAge == 1, B := asInteger(pmin(maxANPP, B))]
     }
   }
   cohortData[, ':='(age = origAge, origAge = NULL)]

@@ -67,7 +67,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
   if (getOption("LandR.assertions")) {
     cohortData2 <- data.table::copy(cohortData)
 
-    newCohortData <- cohortData[, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+    newCohortData <- cohortData[, sumB := asInteger(sum(B, na.rm = TRUE)), by = "pixelGroup"]
     uniqueCohortDataPixelGroup <- unique(cohortData$pixelGroup)
     pixelGroups <- setDT(list(pixelGroupIndex = uniqueCohortDataPixelGroup,
                               temID = 1:length(uniqueCohortDataPixelGroup)))
@@ -88,13 +88,17 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
       set(subCohortData, NULL, "sumB", 0L)
       if (simuTime == lastReg + successionTimestep - 2) {
         sumBtable <- subCohortData[age > successionTimestep,
-                                   .(tempsumB = as.integer(sum(B, na.rm=TRUE))), by = pixelGroup]
+                                   .(tempsumB = sum(B, na.rm = TRUE)), by = pixelGroup]
       } else {
         sumBtable <- subCohortData[age >= successionTimestep,
-                                   .(tempsumB = as.integer(sum(B, na.rm=TRUE))), by = pixelGroup]
+                                   .(tempsumB = sum(B, na.rm = TRUE)), by = pixelGroup]
       }
+      if (!is.integer(sumBtable[["tempSumB"]]))
+        set(sumBtable, NULL, "tempSumB", asInteger(sumBtable[["tempSumB"]]))
+
       subCohortData <- merge(subCohortData, sumBtable, by = "pixelGroup", all.x = TRUE)
-      subCohortData[is.na(tempsumB), tempsumB := as.integer(0L)][, ':='(sumB = tempsumB, tempsumB = NULL)]
+      subCohortData[is.na(tempsumB), tempsumB := 0L][, ':='(sumB = tempsumB, tempsumB = NULL)]
+
       if (subgroup == "Group1") {
         newcohortData <- subCohortData
       } else {
@@ -107,7 +111,9 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
     cohortData <- data.table::copy(cohortData2)
   }
 
-  cohortData[, sumB := as.integer(sum(B[age >= successionTimestep], na.rm = TRUE)), by = "pixelGroup"]
+  cohortData[, sumB := sum(B[age >= successionTimestep], na.rm = TRUE), by = "pixelGroup"]
+  if (!is.integer(cohortData[["sumB"]]))
+    set(cohortData, NULL, "sumB", asInteger(cohortData[["sumB"]]))
 
   if  (getOption("LandR.assertions")) {
     setkeyv(newcohortData, c("pixelGroup", "speciesCode", "age"))
