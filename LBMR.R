@@ -1012,7 +1012,8 @@ MortalityAndGrowth <- function(sim) {
   sim$cohortData <- cohortData[0, ]
   pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
                             temID = 1:length(unique(cohortData$pixelGroup)))
-  groupSize <- 1e6
+  browser()
+  groupSize <- 3e6
   cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
   numGroups <- length(cutpoints) - 1
   #cutpoints <- c(1,max(pixelGroups$temID))
