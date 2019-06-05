@@ -113,7 +113,8 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
     cohortData <- data.table::copy(cohortData2)
   }
 
-  cohortData[, sumB := asInteger(sum(B[age >= successionTimestep], na.rm = TRUE)), by = "pixelGroup"]
+  cohortData[, sumB := sum(B[age >= successionTimestep], na.rm = TRUE), by = "pixelGroup"]
+  set(cohortData, NULL, "subB", asInteger(cohortData$sumB))
 
   if  (getOption("LandR.assertions")) {
     setkeyv(newcohortData, c("pixelGroup", "speciesCode", "age"))
