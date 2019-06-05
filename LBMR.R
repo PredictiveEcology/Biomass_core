@@ -970,8 +970,9 @@ MortalityAndGrowth <- function(sim) {
   sim$cohortData <- cohortData[0, ]
   pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
                             temID = 1:length(unique(cohortData$pixelGroup)))
-  groupSize <- 1e5
+  groupSize <- 1e6
   cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
+  numGroups <- length(cutpoints) - 1
   #cutpoints <- c(1,max(pixelGroups$temID))
   if (length(cutpoints) == 1) cutpoints <- c(cutpoints, cutpoints + 1)
   pixelGroups[, groups := rep(paste0("Group", seq(length(cutpoints)-1)),
@@ -980,7 +981,11 @@ MortalityAndGrowth <- function(sim) {
   #                             labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
   #                             include.lowest = FALSE)]
   for (subgroup in paste("Group", 1:(length(cutpoints) - 1), sep = "")) {
-    subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
+    if (numGroups == 1) {
+      subCohortData <- cohortData
+    } else {
+      subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
+    }
 
     subCohortData[age > 1, age := age + 1L]
     subCohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
@@ -1095,7 +1100,13 @@ MortalityAndGrowth <- function(sim) {
           subCohortData$B + asInteger(subCohortData$aNPPAct - subCohortData$mortality))
     }
     subCohortData[, `:=`(mortality = asInteger(mortality), aNPPAct = asInteger(aNPPAct))]
-    sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
+
+    #=#
+    if (numGroups == 1) {
+      sim$cohortData <- subCohortData
+    } else {
+      sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
+    }
     rm(subCohortData)
     # .gc() # TODO: use .gc()
   }
