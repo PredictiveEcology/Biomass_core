@@ -485,7 +485,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                              initialEcoregionCode = factor(factorValues2(ecoregionFiles$ecoregionMap,
                                                                          ecoregionFiles$ecoregionMap[],
                                                                          att = 5)),
-                             totalBiomass = asInteger(biomassMap[]) * 100, # change units
+                             totalBiomass = asInteger(biomassMap[] * 100), # change units
                              cover = coverMatrix,
                              pixelIndex = seq(ncell(sim$rasterToMatch)),
                              lcc = LCC2005[],
@@ -607,7 +607,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     speciesEcoregion[ , maxB := asInteger(predict(modelBiomass$mod,
                                                   newdata = speciesEcoregion,
                                                   type = "response"))]
-    speciesEcoregion[maxB < 0, maxB := 0L] # fix negative predictions
+    speciesEcoregion[maxB < 0L, maxB := 0L] # fix negative predictions
 
     ########################################################################
     # maxANPP
@@ -852,18 +852,24 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
     # In case there are non-identical biomasses in each pixelGroup -- this should be irrelevant with
     #   improved Boreal_LBMRDataPrep.R (Jan 6, 2019 -- Eliot)
-    biomassTable <- biomassTable[, list(Bsum = asInteger(mean(biomass, na.rm = TRUE))),
-                                 by = pixelGroup]
+    biomassTable <- biomassTable[, list(Bsum = mean(biomass, na.rm = TRUE)), by = pixelGroup]
+    if (!is.integer(biomassTable$Bsum))
+      set(biomassTable, NULL, "Bsum", asInteger(biomassTable$Bsum))
+
     # Delete the B from cohortData -- it will be joined from biomassTable
     set(cohortData, NULL, "B", NULL)
     cohortData[, totalSpeciesPresence := sum(speciesPresence), by = "pixelGroup"]
     cohortData <- cohortData[biomassTable, on = "pixelGroup"]
-    cohortData[, B := asInteger(Bsum * speciesPresence / totalSpeciesPresence),
+    cohortData[, B := Bsum * speciesPresence / totalSpeciesPresence,
                by = c("pixelGroup", "speciesCode")]
+    if (!is.integer(cohortData$B))
+      set(cohortData, NULL, "B", asInteger(cohortData$B))
   }
+browser()
+  pixelAll <- cohortData[, .(uniqueSumB = sum(B, na.rm = TRUE)), by = pixelGroup]
+  if (!is.integer(pixelAll$uniqueSumB))
+    set(pixelAll, NULL, "uniqueSumB", asInteger(pixelAll$uniqueSumB))
 
-  browser()
-  pixelAll <- cohortData[, .(uniqueSumB = asInteger(sum(B, na.rm = TRUE))), by = pixelGroup]
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
@@ -1462,8 +1468,11 @@ summaryRegen <- function(sim) {
     names(pixelGroupMap) <- "pixelGroup"
     # please note that the calculation of reproduction is based on successioinTime step interval,
     pixelAll <- sim$cohortData[age <= P(sim)$successionTimestep + 1,
-                               .(uniqueSumReproduction = asInteger(sum(B, na.rm = TRUE))),
+                               .(uniqueSumReproduction = sum(B, na.rm = TRUE)),
                                by = pixelGroup]
+    if (!is.integer(pixelAll$uniqueSumReproduction))
+        set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll$uniqueSumReproduction))
+
     if (NROW(pixelAll) > 0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
       setColors(reproductionMap) <- c("light green", "dark green")
@@ -1487,12 +1496,14 @@ plotSummaryBySpecies <- function(sim) {
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
 
   thisPeriod <- pixelCohortData[, list(year = time(sim),
-                                       BiomassBySpecies = asInteger(sum(B * noPixels, na.rm = TRUE)),
-                                       AgeBySppWeighted = asInteger(sum(age * B * noPixels, na.rm = TRUE) /
-                                                                      sum(B * noPixels, na.rm = TRUE)),
-                                       aNPPBySpecies = asInteger(sum(aNPPAct * noPixels, na.rm = TRUE)),
-                                       OldestCohortBySpp = asInteger(max(age, na.rm = TRUE))),
+                                       BiomassBySpecies = sum(B * noPixels, na.rm = TRUE),
+                                       AgeBySppWeighted = sum(age * B * noPixels, na.rm = TRUE) /
+                                                                      sum(B * noPixels, na.rm = TRUE),
+                                       aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
+                                       OldestCohortBySpp = max(age, na.rm = TRUE)),
                                 by = .(speciesCode)]
+  for (column in names(thisPeriod)) if (!is.integer(thisPeriod[[column]]))
+    set(thisPeriod, NULL, column, asInteger(thisPeriod[[column]]))
 
   if (is.null(sim$summaryBySpecies)) {
     sim$summaryBySpecies <- thisPeriod
