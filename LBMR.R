@@ -1009,20 +1009,21 @@ MortalityAndGrowth <- function(sim) {
   assignClimateEffect <- getFromNamespace("assignClimateEffect", P(sim)$growthAndMortalityDrivers)
 
   cohortData <- sim$cohortData
-  sim$cohortData <- cohortData[0, ]
-  pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
-                            temID = 1:length(unique(cohortData$pixelGroup)))
-  groupSize <- 3e6
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
-  numGroups <- length(cutpoints) - 1
-  #cutpoints <- c(1,max(pixelGroups$temID))
-  if (length(cutpoints) == 1) cutpoints <- c(cutpoints, cutpoints + 1)
-  pixelGroups[, groups := rep(paste0("Group", seq(length(cutpoints)-1)),
-                              each = groupSize, length.out = NROW(pixelGroups))]
-  # pixelGroups[, groups1 := cut(temID, breaks = cutpoints,
-  #                             labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
-  #                             include.lowest = FALSE)]
-  for (subgroup in paste("Group", 1:(length(cutpoints) - 1), sep = "")) {
+  pgs <- unique(cohortData$pixelGroup)
+  groupSize <- 1e7 # This should be large because this function is not the current RAM limitation
+  numGroups <- ceiling(length(pgs) / groupSize)
+  groupNames <- paste0("Group", seq(numGroups))
+  if (length(pgs) > groupSize) {
+    sim$cohortData <- cohortData[0, ]
+    pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
+                              temID = 1:length(unique(cohortData$pixelGroup)))
+    cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
+    #cutpoints <- c(1,max(pixelGroups$temID))
+    if (length(cutpoints) == 1) cutpoints <- c(cutpoints, cutpoints + 1)
+    pixelGroups[, groups := rep(groupNames,
+                                each = groupSize, length.out = NROW(pixelGroups))]
+  }
+  for (subgroup in groupNames) {
     if (numGroups == 1) {
       subCohortData <- cohortData
     } else {
@@ -1149,10 +1150,10 @@ MortalityAndGrowth <- function(sim) {
     } else {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
     }
-    rm(subCohortData)
+    rm(subCohortData, pixelGroups)
     # .gc() # TODO: use .gc()
   }
-  rm(cohortData, cutpoints, pixelGroups)
+  rm(cohortData)
 
   if (isTRUE(getOption("LandR.assertions"))) {
     if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1) stop()
