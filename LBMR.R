@@ -811,21 +811,21 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     # In case there are non-identical biomasses in each pixelGroup -- this should be irrelevant with
     #   improved Boreal_LBMRDataPrep.R (Jan 6, 2019 -- Eliot)
     biomassTable <- biomassTable[, list(Bsum = mean(biomass, na.rm = TRUE)), by = pixelGroup]
-    if (!is.integer(biomassTable$Bsum))
-      set(biomassTable, NULL, "Bsum", asInteger(biomassTable$Bsum))
+    if (!is.integer(biomassTable[["Bsum"]]))
+      set(biomassTable, NULL, "Bsum", asInteger(biomassTable[["Bsum"]]))
 
     # Delete the B from cohortData -- it will be joined from biomassTable
     set(cohortData, NULL, "B", NULL)
     cohortData[, totalSpeciesPresence := sum(speciesPresence), by = "pixelGroup"]
     cohortData <- cohortData[biomassTable, on = "pixelGroup"]
     cohortData[, B := Bsum * speciesPresence / totalSpeciesPresence, by = c("pixelGroup", "speciesCode")]
-    if (!is.integer(cohortData$B))
-      set(cohortData, NULL, "B", asInteger(cohortData$B))
+    if (!is.integer(cohortData[["B"]]))
+      set(cohortData, NULL, "B", asInteger(cohortData[["B"]]))
   }
 
   pixelAll <- cohortData[, .(uniqueSumB = sum(B, na.rm = TRUE)), by = pixelGroup]
-  if (!is.integer(pixelAll$uniqueSumB))
-    set(pixelAll, NULL, "uniqueSumB", asInteger(pixelAll$uniqueSumB))
+  if (!is.integer(pixelAll[["uniqueSumB"]]))
+    set(pixelAll, NULL, "uniqueSumB", asInteger(pixelAll[["uniqueSumB"]]))
 
   if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
@@ -1437,8 +1437,8 @@ summaryRegen <- function(sim) {
     pixelAll <- sim$cohortData[age <= P(sim)$successionTimestep + 1,
                                .(uniqueSumReproduction = sum(B, na.rm = TRUE)),
                                by = pixelGroup]
-    if (!is.integer(pixelAll$uniqueSumReproduction))
-        set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll$uniqueSumReproduction))
+    if (!is.integer(pixelAll[["uniqueSumReproduction"]]))
+        set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll[["uniqueSumReproduction"]]))
 
     if (NROW(pixelAll) > 0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
