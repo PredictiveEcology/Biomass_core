@@ -584,12 +584,14 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     #   doesn't include combinations with B = 0 because those places can't have the species/ecoregion combo
     ########################################################################
     message(blue("Create speciesEcoregion from "), red("DUMMY values"))
-    joinOn <- c("ecoregionGroup", "speciesCode")
-    speciesEcoregion <- unique(cohortDataNoBiomass, by = joinOn)
-    speciesEcoregion[, c("B", "logAge", "cover") := NULL]
-    sim$species[, speciesCode := as.factor(species)]
-    speciesEcoregion <- sim$species[, .(speciesCode, longevity)][speciesEcoregion, on = "speciesCode"]
-    speciesEcoregion[ , ecoregionGroup := factor(as.character(ecoregionGroup))]
+    speciesEcoregion <- makeSpeciesEcoregion(cohortData = cohortDataNoBiomass,
+                                             species = sim$species)
+    # joinOn <- c("ecoregionGroup", "speciesCode")
+    # speciesEcoregion <- unique(cohortDataNoBiomass, by = joinOn)
+    # speciesEcoregion[, c("B", "logAge", "cover") := NULL]
+    # sim$species[, speciesCode := as.factor(species)]
+    # speciesEcoregion <- sim$species[, .(speciesCode, longevity)][speciesEcoregion, on = "speciesCode"]
+    # speciesEcoregion[ , ecoregionGroup := factor(as.character(ecoregionGroup))]
 
     ########################################################################
     # Make predictions from statistical models for
