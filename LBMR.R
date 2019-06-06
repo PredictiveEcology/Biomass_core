@@ -604,6 +604,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ## that did not result from resprouting. Both reprouters and non-resprouters can be dealt with at the same time
     ## because resproutprob = 0 for non-resprouters
 
+    ## HERE
     # establishprob -- already is on the short dataset -- need to add back the zeros too
     establishprobBySuccessionTimestep <- 1 - (1 - modelCover$pred)^P(sim)$successionTimestep
     cohortDataShort[, establishprob := establishprobBySuccessionTimestep]
