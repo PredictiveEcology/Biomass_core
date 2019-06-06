@@ -530,7 +530,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     message(blue("Creating a", red("DUMMY"), blue("cohorData table.")))
     pixelCohortData <- Cache(makeAndCleanInitialCohortData, pixelTable,
                              sppColumns = coverColNames,
-                             pixelGroupBiomassClass = 100)
+                             pixelGroupBiomassClass = 100,
+                             doSubset = FALSE)
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
 
     ## When using dummy values ecoregion codes are not changed
@@ -560,7 +561,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     modelCover <- Cache(statsModel,
                         modelFn = coverModel,
                         uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(cohortDataShort$ecoregionGroup)),
-                        .specialData = cohortDataShort, family = binomial,
+                        .specialData = cohortDataShort,
                         omitArgs = c(".specialData"))
 
     message(blue("  The rsquared is: "))
@@ -572,7 +573,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
             blue("using the formula:\n"),
             magenta(paste0(format(biomassModel), collapse = "")))
     modelBiomass <- Cache(statsModel,
-                          modelFN = biomassModel,
+                          modelFn = biomassModel,
                           uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(pixelCohortData$ecoregionGroup)),
                           .specialData = pixelCohortData,
                           omitArgs = c(".specialData"))
