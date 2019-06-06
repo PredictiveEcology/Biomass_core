@@ -1462,17 +1462,17 @@ plotSummaryBySpecies <- function(sim) {
 
   ## Averages are calculated across pixels
   ## don't expand table, multiply by no. pixels - faster
-  pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+  thisPeriod <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
 
-  thisPeriod <- pixelCohortData[, list(year = time(sim),
-                                       BiomassBySpecies = sum(B * noPixels, na.rm = TRUE),
-                                       AgeBySppWeighted = sum(age * B * noPixels, na.rm = TRUE) /
-                                                                      sum(B * noPixels, na.rm = TRUE),
-                                       aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
-                                       OldestCohortBySpp = max(age, na.rm = TRUE)),
-                                by = .(speciesCode)]
-  for (column in names(thisPeriod)) if (!is.integer(thisPeriod[[column]]))
-    set(thisPeriod, NULL, column, asInteger(thisPeriod[[column]]))
+  for (column in names(thisPeriod)) if (is.integer(thisPeriod[[column]]))
+    set(thisPeriod, NULL, column, as.numeric(thisPeriod[[column]]))
+  thisPeriod <- thisPeriod[, list(year = time(sim),
+                                  BiomassBySpecies = sum(B * noPixels, na.rm = TRUE),
+                                  AgeBySppWeighted = sum(age * B * noPixels, na.rm = TRUE) /
+                                    sum(B * noPixels, na.rm = TRUE),
+                                  aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
+                                  OldestCohortBySpp = max(age, na.rm = TRUE)),
+                           by = .(speciesCode)]
 
   if (is.null(sim$summaryBySpecies)) {
     sim$summaryBySpecies <- thisPeriod
