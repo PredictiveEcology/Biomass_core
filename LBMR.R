@@ -82,7 +82,7 @@ defineModule(sim, list(
                                  "If numeric, it will be passed to data.table::setDTthreads and should be <= 2;",
                                  "If TRUE, it will be passed to parallel:makeCluster;",
                                  "and if a cluster object, it will be passed to parallel::parClusterApplyB."))
-    ),
+  ),
   inputObjects = bind_rows(
     expectsInput("cohortData", "data.table",
                  desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
@@ -464,17 +464,26 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                             rasterToMatch = sim$rasterToMatch,
                             userTags = "ecoregionFiles")
 
+    ################################################################
+    ## put together pixelTable object
+    ################################################################
+    #  Round age to pixelGroupAgeClass
     ## check if all species have traits
-    missTraits <- setdiff(names(sim$speciesLayers), sim$species$species)
-    missTraits <- c(missTraits, setdiff(sim$species$species,
-                                        sim$species[complete.cases(sim$species), species]))
-    if (length(missTraits)) {
-      message(blue("The following species in 'speciesLayers' have missing traits",
-                   "and will be excluded:\n", paste(missTraits, collapse = " "),
-                   "\n If this is wrong check if species synonyms are included in 'sppEquiv'"))
-      sim$speciesLayers <- sim$speciesLayers[[which(!names(sim$speciesLayers) %in% missTraits)]]
-      sim$sppColorVect[c(names(sim$speciesLayers), "Mixed")]
-    }
+    # missTraits <- setdiff(names(sim$speciesLayers), sim$species$species)
+    # missTraits <- c(missTraits, setdiff(sim$species$species,
+    #                                     sim$species[complete.cases(sim$species), species]))
+    # if (length(missTraits)) {
+    #   message(blue("The following species in 'speciesLayers' have missing traits",
+    #                "and will be excluded:\n", paste(missTraits, collapse = " "),
+    #                "\n If this is wrong check if species synonyms are included in 'sppEquiv'"))
+    #   sim$speciesLayers <- sim$speciesLayers[[which(!names(sim$speciesLayers) %in% missTraits)]]
+    #   sim$sppColorVect[c(names(sim$speciesLayers), "Mixed")]
+    # }
+
+    tempObjs <- checkSpeciesTraits(sim$speciesLayers, sim$species, sim$sppColorVect)
+    sim$speciesLayers <- tempObjs$speciesLayers
+    sim$sppColorVect <- tempObjs$sppColorVect
+    rm(tempObjs)
 
     coverMatrix <- matrix(asInteger(sim$speciesLayers[]), ncol = length(names(sim$speciesLayers)))
     colnames(coverMatrix) <- names(sim$speciesLayers)
@@ -842,7 +851,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                    by = c("ecoregionGroup", "pixelGroup")]
 
   simulationOutput <- setkey(simulationOutput, pixelGroup)[setkey(pixelAll, pixelGroup), nomatch = 0][
-      , .(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = ecoregionGroup] ## NOTE:
+    , .(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = ecoregionGroup] ## NOTE:
   ## above needs to be numeric because of integer overflow -- returned to integer in 2 lines
   simulationOutput <- setkey(simulationOutput, ecoregionGroup)[
     setkey(mod$activeEcoregionLength, ecoregionGroup), nomatch = 0]
@@ -1438,7 +1447,7 @@ summaryRegen <- function(sim) {
                                .(uniqueSumReproduction = sum(B, na.rm = TRUE)),
                                by = pixelGroup]
     if (!is.integer(pixelAll[["uniqueSumReproduction"]]))
-        set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll[["uniqueSumReproduction"]]))
+      set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll[["uniqueSumReproduction"]]))
 
     if (NROW(pixelAll) > 0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
@@ -1465,7 +1474,7 @@ plotSummaryBySpecies <- function(sim) {
   thisPeriod <- pixelCohortData[, list(year = time(sim),
                                        BiomassBySpecies = sum(B * noPixels, na.rm = TRUE),
                                        AgeBySppWeighted = sum(age * B * noPixels, na.rm = TRUE) /
-                                                                      sum(B * noPixels, na.rm = TRUE),
+                                         sum(B * noPixels, na.rm = TRUE),
                                        aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
                                        OldestCohortBySpp = max(age, na.rm = TRUE)),
                                 by = .(speciesCode)]
