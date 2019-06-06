@@ -469,6 +469,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ################################################################
     #  Round age to pixelGroupAgeClass
     ## check if all species have traits
+    browser()
+    tempObjs <- checkSpeciesTraits(sim$speciesLayers, sim$species, sim$sppColorVect)
+    sim$speciesLayers <- tempObjs$speciesLayers
+    sim$sppColorVect <- tempObjs$sppColorVect
+    rm(tempObjs)
+
     # missTraits <- setdiff(names(sim$speciesLayers), sim$species$species)
     # missTraits <- c(missTraits, setdiff(sim$species$species,
     #                                     sim$species[complete.cases(sim$species), species]))
@@ -480,42 +486,42 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     #   sim$sppColorVect[c(names(sim$speciesLayers), "Mixed")]
     # }
 
-    tempObjs <- checkSpeciesTraits(sim$speciesLayers, sim$species, sim$sppColorVect)
-    sim$speciesLayers <- tempObjs$speciesLayers
-    sim$sppColorVect <- tempObjs$sppColorVect
-    rm(tempObjs)
+    pixelTable <- makePixelTable(speciesLayers = sim$speciesLayers, species = sim$species,
+                                 standAgeMap = standAgeMap, ecoregionFiles = ecoregionFiles,
+                                 biomassMap = biomassMap, rasterToMatch = sim$rasterToMatch,
+                                 LCC2005 = LCC2005, pixelGroupAgeClass = 10)
 
-    coverMatrix <- matrix(asInteger(sim$speciesLayers[]), ncol = length(names(sim$speciesLayers)))
-    colnames(coverMatrix) <- names(sim$speciesLayers)
-    coverColNames <- paste0("cover.", sim$species$species)
-
-    pixelTable <- data.table(age = asInteger(round(standAgeMap[], -1)),  ## round to nearest 10th
-                             logAge = log(standAgeMap[]),
-                             initialEcoregionCode = factor(factorValues2(ecoregionFiles$ecoregionMap,
-                                                                         ecoregionFiles$ecoregionMap[],
-                                                                         att = 5)),
-                             totalBiomass = asInteger(biomassMap[] * 100), # change units
-                             cover = coverMatrix,
-                             pixelIndex = seq(ncell(sim$rasterToMatch)),
-                             lcc = LCC2005[],
-                             rasterToMatch = sim$rasterToMatch[])
-
-    coverColNames <- paste0("cover.", sim$species$species)
-    pixelTable1 <- na.omit(pixelTable, cols = c("rasterToMatch"))
-    pixelTable2 <- na.omit(pixelTable, cols = c("rasterToMatch", "initialEcoregionCode"))
-    pixelTable <- na.omit(pixelTable2, cols = c(coverColNames))
-
-    if (NROW(pixelTable1) != NROW(pixelTable))
-      warning("Setting pixels to NA where there is NA in sim$speciesLayers'. Vegetation succession",
-              "\n  parameters will only be calculated where there is data for species cover.",
-              "\n  Check if sim$rasterToMatch shoudn't also only have data where there is cover data,",
-              "\n  as this may affect other modules.")
-    if (NROW(pixelTable2) != NROW(pixelTable))
-      warning("Setting pixels to NA where there is NA in dummy 'ecoregionMap'")
-
-    message(blue("rm NAs, leaving", magenta(NROW(pixelTable)), "pixels with data"))
-    message(blue("This is the summary of the input data for age, ecoregionGroup, biomass, speciesLayers:"))
-    print(summary(pixelTable))
+    # coverMatrix <- matrix(asInteger(sim$speciesLayers[]), ncol = length(names(sim$speciesLayers)))
+    # colnames(coverMatrix) <- names(sim$speciesLayers)
+    # coverColNames <- paste0("cover.", sim$species$species)
+    #
+    # pixelTable <- data.table(age = asInteger(round(standAgeMap[], -1)),  ## round to nearest 10th
+    #                          logAge = log(standAgeMap[]),
+    #                          initialEcoregionCode = factor(factorValues2(ecoregionFiles$ecoregionMap,
+    #                                                                      ecoregionFiles$ecoregionMap[],
+    #                                                                      att = 5)),
+    #                          totalBiomass = asInteger(biomassMap[] * 100), # change units
+    #                          cover = coverMatrix,
+    #                          pixelIndex = seq(ncell(sim$rasterToMatch)),
+    #                          lcc = LCC2005[],
+    #                          rasterToMatch = sim$rasterToMatch[])
+    #
+    # coverColNames <- paste0("cover.", sim$species$species)
+    # pixelTable1 <- na.omit(pixelTable, cols = c("rasterToMatch"))
+    # pixelTable2 <- na.omit(pixelTable, cols = c("rasterToMatch", "initialEcoregionCode"))
+    # pixelTable <- na.omit(pixelTable2, cols = c(coverColNames))
+    #
+    # if (NROW(pixelTable1) != NROW(pixelTable))
+    #   warning("Setting pixels to NA where there is NA in sim$speciesLayers'. Vegetation succession",
+    #           "\n  parameters will only be calculated where there is data for species cover.",
+    #           "\n  Check if sim$rasterToMatch shoudn't also only have data where there is cover data,",
+    #           "\n  as this may affect other modules.")
+    # if (NROW(pixelTable2) != NROW(pixelTable))
+    #   warning("Setting pixels to NA where there is NA in dummy 'ecoregionMap'")
+    #
+    # message(blue("rm NAs, leaving", magenta(NROW(pixelTable)), "pixels with data"))
+    # message(blue("This is the summary of the input data for age, ecoregionGroup, biomass, speciesLayers:"))
+    # print(summary(pixelTable))
 
     #######################################################
     # Make the initial pixelCohortData table
