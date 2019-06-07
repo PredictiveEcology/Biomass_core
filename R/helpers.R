@@ -111,9 +111,9 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
     cohortData <- data.table::copy(cohortData2)
   }
 
-  if (getOption("LandR.assertions")) {
-    cohortData[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
-  }
+  # if (getOption("LandR.assertions")) {
+  #   cohortData[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+  # }
   # Faster than above by 5x
   new1 <- Sys.time()
   oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
@@ -124,7 +124,6 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
   setorderv(cohortData, c("sumB"), na.last = TRUE)
   a <- cohortData[, list(sumB2 = sumB[1]), by = "pixelGroup"]
   setorderv(cohortData, c("pixelGroup", "sumB"), na.last = TRUE)
-  setnafill(cohortData, type = "locf", cols = "sumB")
   sumB <- a[cohortData, on = "pixelGroup"]$sumB2
   set(cohortData, NULL, "sumB", sumB)
   if (!is.null(oldKey))
