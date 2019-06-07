@@ -1109,16 +1109,17 @@ MortalityAndGrowth <- function(sim) {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
     }
     rm(subCohortData, pixelGroups)
-    # .gc() # TODO: use .gc()
+    #.gc()
   }
   rm(cohortData)
 
   if (isTRUE(getOption("LandR.assertions"))) {
-    if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1) stop()
+    if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1)
+      stop()
+
     if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = c("pixelGroup", "speciesCode", "age", "B"))))) {
       stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
     }
-
   }
   assertCohortData(sim$cohortData, sim$pixelGroupMap)
   return(invisible(sim))
@@ -1175,8 +1176,9 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
 
   specieseco_current <- speciesEcoregionLatestYear(
-    sim$speciesEcoregion[,.(year, speciesCode, establishprob, ecoregionGroup)],
-    round(time(sim)))
+    sim$speciesEcoregion[, .(year, speciesCode, establishprob, ecoregionGroup)],
+    round(time(sim))
+  )
   specieseco_current <- setkey(specieseco_current, ecoregionGroup, speciesCode)
 
   #specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
@@ -1185,7 +1187,8 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, c("establishprob"), NULL)
   if (P(sim)$calibrate == TRUE && NROW(seedingData) > 0) {
-    newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, year = round(time(sim)),
+    newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm,
+                                          year = round(time(sim)),
                                           numberOfReg = length(pixelIndex)),
                                       by = speciesCode]
     newCohortData_summ <- setkey(newCohortData_summ, speciesCode)[
@@ -1280,14 +1283,6 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
 
 WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
                                  verbose = getOption("LandR.verbose", TRUE)) {
-  #if (sim$lastFireYear == round(time(sim))) {
-  # the current year is both fire year and succession year
-  # tempActivePixel <-
-  #   sim$activePixelIndex[!(sim$activePixelIndex %in%
-  #                            sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]$pixelIndex)]
-  #} else {
-  #  tempActivePixel <- sim$activePixelIndex
-  #}
   sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
                                   lastReg = sim$lastReg, simuTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
@@ -1295,12 +1290,12 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
                              sim$speciesEcoregion, sim$minRelativeB)
   activePixelGroup <- data.table(pixelGroup = unique(getValues(sim$pixelGroupMap)[tempActivePixel])) %>%
     na.omit()
-  #siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
   siteShade <- siteShade[activePixelGroup, on = "pixelGroup"]
   siteShade[is.na(siteShade),siteShade := 0]
-  # Seed source cells:
-  # 1. Select only sexually mature cohorts, then
-  # 2. collapse to pixelGroup by species, i.e,. doesn't matter that there is >1 cohort of same species
+
+  ## Seed source cells:
+  ## 1. Select only sexually mature cohorts, then
+  ## 2. collapse to pixelGroup by species, i.e,. doesn't matter that there is >1 cohort of same species
   sim$cohortData <- sim$species[, c("speciesCode", "sexualmature")][sim$cohortData,
                                                                     on = "speciesCode"]
   # sim$cohortData <- setkey(sim$cohortData, speciesCode)[setkey(sim$species[, .(speciesCode, sexualmature)],
@@ -1449,7 +1444,6 @@ summaryRegen <- function(sim) {
     }
     rm(pixelAll)
     sim$reproductionMap <- reproductionMap
-    #rm(cohortData, pixelGroupMap)
     rm(pixelGroupMap)
   }
   return(invisible(sim))
@@ -1812,8 +1806,8 @@ CohortAgeReclassification <- function(sim) {
       studyArea <- spTransform(studyArea, crs(sim$rasterToMatch))
       studyArea <- fixErrors(studyArea)
     }
-    #TODO: review whether this is necessary (or will break LandWeb if removed) see Git Issue #22
-    # layers provided by David Andison sometimes have LTHRC, sometimes LTHFC ... chose whichever
+    ## TODO: review whether this is necessary (or will break LandWeb if removed) see Git Issue #22
+    ## layers provided by David Andison sometimes have LTHRC, sometimes LTHFC ... chose whichever
     LTHxC <- grep("(LTH.+C)", names(studyArea), value = TRUE)
     fieldName <- if (length(LTHxC)) {
       LTHxC
@@ -1858,9 +1852,7 @@ CohortAgeReclassification <- function(sim) {
       initialCommunities <- initialCommunities[species != "LandisData",]
       cutRows <- grep(">>", initialCommunities$species)
       for (i in cutRows) {
-        initialCommunities[i,
-                           desc := paste(initialCommunities[i, 3:maxcol, with = FALSE],
-                                         collapse = " ")]
+        initialCommunities[i, desc := paste(initialCommunities[i, 3:maxcol, with = FALSE], collapse = " ")]
       }
 
       initialCommunities[, rowN := 1:nrow(initialCommunities)]
@@ -1887,7 +1879,8 @@ CohortAgeReclassification <- function(sim) {
       rm(cutRows, i, maxcol)
     }
   }
-  # load the initial community map
+
+  ## load the initial community map
   if (FALSE) { # No longer using this
     if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
       ## LANDIS-II demo data:
