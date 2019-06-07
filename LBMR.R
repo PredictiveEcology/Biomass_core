@@ -1107,7 +1107,6 @@ MortalityAndGrowth <- function(sim) {
       sim$cohortData <- subCohortData
     } else {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
-      rm(pixelGroups)
     }
     rm(subCohortData, pixelGroups)
     # .gc() # TODO: use .gc()
