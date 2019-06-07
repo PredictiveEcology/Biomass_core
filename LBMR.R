@@ -585,8 +585,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     #   doesn't include combinations with B = 0 because those places can't have the species/ecoregion combo
     ########################################################################
     message(blue("Create speciesEcoregion from "), red("DUMMY values"))
-    speciesEcoregion <- makeSpeciesEcoregion(cohortData = cohortDataNoBiomass,
-                                             species = sim$species)
+    speciesEcoregion <- makeSpeciesEcoregion(cohortDataNoBiomass, cohortDataShort, cohortDataShortNoCover, species,
+                                             speciesEcoregion, modelCover, modelBiomass,
+                                             successionTimestep = P(sim)$successionTimestep, currentYear = time(sim))
     # joinOn <- c("ecoregionGroup", "speciesCode")
     # speciesEcoregion <- unique(cohortDataNoBiomass, by = joinOn)
     # speciesEcoregion[, c("B", "logAge", "cover") := NULL]
@@ -604,42 +605,43 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ## that did not result from resprouting. Both reprouters and non-resprouters can be dealt with at the same time
     ## because resproutprob = 0 for non-resprouters
 
-    ## HERE
     # establishprob -- already is on the short dataset -- need to add back the zeros too
-    establishprobBySuccessionTimestep <- 1 - (1 - modelCover$pred)^P(sim)$successionTimestep
-    cohortDataShort[, establishprob := establishprobBySuccessionTimestep]
-    cohortDataShort <- sim$species[, .(resproutprob, postfireregen, speciesCode)][cohortDataShort, on = "speciesCode"]
-    cohortDataShort[, establishprob := pmax(0, pmin(1, (establishprob * (1 - resproutprob))))]
 
-    cohortDataShort <- rbindlist(list(cohortDataShort, cohortDataShortNoCover),
-                                 use.names = TRUE, fill = TRUE)
-    cohortDataShort[is.na(establishprob), establishprob := 0]
 
-    # Join cohortDataShort with establishprob predictions to speciesEcoregion
-    speciesEcoregion <- cohortDataShort[, .(ecoregionGroup, speciesCode, establishprob)][
-      speciesEcoregion, on = joinOn]
+    # establishprobBySuccessionTimestep <- 1 - (1 - modelCover$pred)^P(sim)$successionTimestep
+    # cohortDataShort[, establishprob := establishprobBySuccessionTimestep]
+    # cohortDataShort <- sim$species[, .(resproutprob, postfireregen, speciesCode)][cohortDataShort, on = "speciesCode"]
+    # cohortDataShort[, establishprob := pmax(0, pmin(1, (establishprob * (1 - resproutprob))))]
+    #
+    # cohortDataShort <- rbindlist(list(cohortDataShort, cohortDataShortNoCover),
+    #                              use.names = TRUE, fill = TRUE)
+    # cohortDataShort[is.na(establishprob), establishprob := 0]
+    #
+    # # Join cohortDataShort with establishprob predictions to speciesEcoregion
+    # speciesEcoregion <- cohortDataShort[, .(ecoregionGroup, speciesCode, establishprob)][
+    #   speciesEcoregion, on = joinOn]
 
-    #################################################
-    # maxB
-    # Set age to the age of longevity and cover to 100%
-    speciesEcoregion[, `:=`(logAge = log(longevity), cover = 100)]
-    speciesEcoregion[ , maxB := asInteger(predict(modelBiomass$mod,
-                                                  newdata = speciesEcoregion,
-                                                  type = "response"))]
-    speciesEcoregion[maxB < 0L, maxB := 0L] # fix negative predictions
-
-    ########################################################################
-    # maxANPP
-    message(blue("Add maxANPP to speciesEcoregion -- currently --> maxB/30"))
-    speciesEcoregion[ , maxANPP := asInteger(maxB / 30)]
-
-    ########################################################################
-    # Clean up unneeded columns
-    speciesEcoregion[ , `:=`(logAge = NULL, cover = NULL, longevity = NULL, #pixelIndex = NULL,
-                             lcc = NULL)]
-
-    speciesEcoregion[ , year := time(sim)]
-
+    # #################################################
+    # # maxB
+    # # Set age to the age of longevity and cover to 100%
+    # speciesEcoregion[, `:=`(logAge = log(longevity), cover = 100)]
+    # speciesEcoregion[ , maxB := asInteger(predict(modelBiomass$mod,
+    #                                               newdata = speciesEcoregion,
+    #                                               type = "response"))]
+    # speciesEcoregion[maxB < 0L, maxB := 0L] # fix negative predictions
+    #
+    # ########################################################################
+    # # maxANPP
+    # message(blue("Add maxANPP to speciesEcoregion -- currently --> maxB/30"))
+    # speciesEcoregion[ , maxANPP := asInteger(maxB / 30)]
+    #
+    # ########################################################################
+    # # Clean up unneeded columns
+    # speciesEcoregion[ , `:=`(logAge = NULL, cover = NULL, longevity = NULL, #pixelIndex = NULL,
+    #                          lcc = NULL)]
+    #
+    # speciesEcoregion[ , year := time(sim)]
+    #
     if (ncell(sim$rasterToMatch) > 3e6) .gc()
 
     ########################################################################
