@@ -647,6 +647,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ########################################################################
     # Create initial communities, i.e., pixelGroups
     ########################################################################
+
+    ## HERE
+
     pixelCohortData[, ecoregionGroup := factor(as.character(ecoregionGroup))]
     pixelCohortData[ , `:=`(logAge = NULL, coverOrig = NULL, totalBiomass = NULL, #pixelIndex = NULL,
                             cover = NULL, lcc = NULL)]
