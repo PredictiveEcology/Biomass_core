@@ -1109,7 +1109,7 @@ MortalityAndGrowth <- function(sim) {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
       rm(pixelGroups)
     }
-    rm(subCohortData)
+    rm(subCohortData, pixelGroups)
     # .gc() # TODO: use .gc()
   }
   rm(cohortData)
@@ -1186,12 +1186,12 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, c("establishprob"), NULL)
   if (P(sim)$calibrate == TRUE && NROW(seedingData) > 0) {
-    newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
+    newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, year = round(time(sim)),
                                           numberOfReg = length(pixelIndex)),
                                       by = speciesCode]
     newCohortData_summ <- setkey(newCohortData_summ, speciesCode)[
       setkey(sim$species[, .(species,speciesCode)], speciesCode),
-      nomatch = 0][, .(species, seedingAlgorithm, Year, numberOfReg)]
+      nomatch = 0][, .(species, seedingAlgorithm, year, numberOfReg)]
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
 
