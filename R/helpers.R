@@ -111,9 +111,49 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
     cohortData <- data.table::copy(cohortData2)
   }
 
-  cohortData[, sumB := sum(B[age >= successionTimestep], na.rm = TRUE), by = "pixelGroup"]
+  # if (getOption("LandR.assertions")) {
+  #   cohortData[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+  # }
+  # Faster than above by 5x
+  new1 <- Sys.time()
+  oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
+  wh <- which(cohortData$age >= successionTimestep)
+  sumBtmp <- cohortData[wh, list(N = .N, sumB = sum(B, na.rm = TRUE)), by = "pixelGroup"]
+  # cohortData[, sumB := NULL]
+  set(cohortData, wh, "sumB", rep.int(sumBtmp$sumB, sumBtmp$N))
+  setorderv(cohortData, c("sumB"), na.last = TRUE)
+  a <- cohortData[, list(sumB2 = sumB[1]), by = "pixelGroup"]
+  setorderv(cohortData, c("pixelGroup", "sumB"), na.last = TRUE)
+  sumB <- a[cohortData, on = "pixelGroup"]$sumB2
+  set(cohortData, NULL, "sumB", sumB)
+  if (!is.null(oldKey))
+    setkeyv(cohortData, oldKey)
+
+  new2 <- Sys.time()
   if (!is.integer(cohortData[["sumB"]]))
     set(cohortData, NULL, "sumB", asInteger(cohortData[["sumB"]]))
+
+  if (getOption("LandR.assertions")) { # much slower than next lines 5x  -- Eliot June 2, 2019
+    old1 <- Sys.time()
+
+    cohortData[age >= successionTimestep, sumB2 := sum(B, na.rm = TRUE), by = "pixelGroup"]
+    setorderv(cohortData, c("sumB2"), na.last = TRUE)
+    a2 <- cohortData[, list(sumB3 = sumB2[1]), by = "pixelGroup"]
+    sumB2 <- a2[cohortData, on = "pixelGroup"]$sumB3
+    set(cohortData, NULL, "sumB2", sumB2)
+    if (!isTRUE(all.equal(cohortData$sumB, cohortData$sumB2)))
+      stop("Failed test in calculateSumB")
+    set(cohortData, NULL, "sumB2", NULL)
+    old2 <- Sys.time()
+
+    if (!exists("oldAlgo")) oldAlgo <<- 0
+    if (!exists("newAlgo")) newAlgo <<- 0
+
+    oldAlgo <<- oldAlgo + (old2 - old1)
+    newAlgo <<- newAlgo + (new2 - new1)
+
+  }
+
 
   if  (getOption("LandR.assertions")) {
     setkeyv(newcohortData, c("pixelGroup", "speciesCode", "age"))
@@ -173,11 +213,10 @@ calculateANPP <- function(cohortData, stage = "nonSpinup") {
                  exp(-(bAP^growthcurve)) * bPM]
     cohortData[age > 0, aNPPAct := pmin(maxANPP * bPM, aNPPAct)]
   } else {
+    aNPPAct <- cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
+          exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM
     set(cohortData, NULL, "aNPPAct",
-        cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
-          exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM)
-    set(cohortData, NULL, "aNPPAct",
-        pmin(cohortData$maxANPP*cohortData$bPM, cohortData$aNPPAct))
+        pmin(cohortData$maxANPP*cohortData$bPM, aNPPAct))
   }
   return(cohortData)
 }
@@ -237,9 +276,35 @@ calculateCompetition <- function(cohortData, stage = "nonSpinup") {
     set(cohortData, NULL, "bAP", cohortData$B/cohortData$bPot)
     set(cohortData, NULL, "bPot", NULL)
     set(cohortData, NULL, "cMultiplier", pmax(as.numeric(cohortData$B^0.95), 1))
-    cohortData[, cMultTotal := sum(cMultiplier), by = pixelGroup]
-    set(cohortData, NULL, "bPM", cohortData$cMultiplier / cohortData$cMultTotal)
-    set(cohortData, NULL, c("cMultiplier", "cMultTotal"), NULL)
+
+    # These 2 lines are 5x slower compared to replacement 6 lines below -- Eliot June 2, 2019
+    if (FALSE) {
+      cohortData[, cMultTotal := sum(cMultiplier), by = pixelGroup]
+      set(cohortData, NULL, "bPM", cohortData$cMultiplier / cohortData$cMultTotal)
+    }
+
+    # Faster replacement
+    oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
+    cMultTotalTmp <- cohortData[, list(N = .N, Sum = sum(cMultiplier)), by = pixelGroup]
+    cMultTotal <- rep.int(cMultTotalTmp$Sum, cMultTotalTmp$N)
+    set(cohortData, NULL, "bPM", cohortData$cMultiplier / cMultTotal)
+    if (!is.null(oldKey))
+      setkeyv(cohortData, oldKey)
+
+
+    set(cohortData, NULL, c("cMultiplier"), NULL)
   }
   return(cohortData)
+}
+
+checkAndChangeKey <- function(obj, key) {
+  oldKey <- key(obj)
+  oldKeyWasFine <- !identical(oldKey, key)
+  returnKey <- if (oldKeyWasFine) {
+    setkeyv(obj, key)
+    oldKey
+  } else {
+    NULL
+  }
+  returnKey
 }

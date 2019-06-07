@@ -986,20 +986,21 @@ MortalityAndGrowth <- function(sim) {
   assignClimateEffect <- getFromNamespace("assignClimateEffect", P(sim)$growthAndMortalityDrivers)
 
   cohortData <- sim$cohortData
-  sim$cohortData <- cohortData[0, ]
-  pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
-                            temID = 1:length(unique(cohortData$pixelGroup)))
-  groupSize <- 3e6
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
-  numGroups <- length(cutpoints) - 1
-  #cutpoints <- c(1,max(pixelGroups$temID))
-  if (length(cutpoints) == 1) cutpoints <- c(cutpoints, cutpoints + 1)
-  pixelGroups[, groups := rep(paste0("Group", seq(length(cutpoints)-1)),
-                              each = groupSize, length.out = NROW(pixelGroups))]
-  # pixelGroups[, groups1 := cut(temID, breaks = cutpoints,
-  #                             labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
-  #                             include.lowest = FALSE)]
-  for (subgroup in paste("Group", 1:(length(cutpoints) - 1), sep = "")) {
+  pgs <- unique(cohortData$pixelGroup)
+  groupSize <- 1e7 # This should be large because this function is not the current RAM limitation
+  numGroups <- ceiling(length(pgs) / groupSize)
+  groupNames <- paste0("Group", seq(numGroups))
+  if (length(pgs) > groupSize) {
+    sim$cohortData <- cohortData[0, ]
+    pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
+                              temID = 1:length(unique(cohortData$pixelGroup)))
+    cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
+    #cutpoints <- c(1,max(pixelGroups$temID))
+    if (length(cutpoints) == 1) cutpoints <- c(cutpoints, cutpoints + 1)
+    pixelGroups[, groups := rep(groupNames,
+                                each = groupSize, length.out = NROW(pixelGroups))]
+  }
+  for (subgroup in groupNames) {
     if (numGroups == 1) {
       subCohortData <- cohortData
     } else {
@@ -1125,11 +1126,12 @@ MortalityAndGrowth <- function(sim) {
       sim$cohortData <- subCohortData
     } else {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
+      rm(pixelGroups)
     }
-    rm(subCohortData)
+    rm(subCohortData, pixelGroups)
     # .gc() # TODO: use .gc()
   }
-  rm(cohortData, cutpoints, pixelGroups)
+  rm(cohortData)
 
   if (isTRUE(getOption("LandR.assertions"))) {
     if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1) stop()
@@ -1203,12 +1205,12 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, c("establishprob"), NULL)
   if (P(sim)$calibrate == TRUE && NROW(seedingData) > 0) {
-    newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, Year = round(time(sim)),
+    newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, year = round(time(sim)),
                                           numberOfReg = length(pixelIndex)),
                                       by = speciesCode]
     newCohortData_summ <- setkey(newCohortData_summ, speciesCode)[
       setkey(sim$species[, .(species,speciesCode)], speciesCode),
-      nomatch = 0][, .(species, seedingAlgorithm, Year, numberOfReg)]
+      nomatch = 0][, .(species, seedingAlgorithm, year, numberOfReg)]
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
 
@@ -1457,7 +1459,7 @@ summaryRegen <- function(sim) {
                                .(uniqueSumReproduction = sum(B, na.rm = TRUE)),
                                by = pixelGroup]
     if (!is.integer(pixelAll[["uniqueSumReproduction"]]))
-      set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll[["uniqueSumReproduction"]]))
+        set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll[["uniqueSumReproduction"]]))
 
     if (NROW(pixelAll) > 0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
@@ -1479,17 +1481,17 @@ plotSummaryBySpecies <- function(sim) {
 
   ## Averages are calculated across pixels
   ## don't expand table, multiply by no. pixels - faster
-  pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+  thisPeriod <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
 
-  thisPeriod <- pixelCohortData[, list(year = time(sim),
-                                       BiomassBySpecies = sum(B * noPixels, na.rm = TRUE),
-                                       AgeBySppWeighted = sum(age * B * noPixels, na.rm = TRUE) /
-                                         sum(B * noPixels, na.rm = TRUE),
-                                       aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
-                                       OldestCohortBySpp = max(age, na.rm = TRUE)),
-                                by = .(speciesCode)]
-  for (column in names(thisPeriod)) if (!is.integer(thisPeriod[[column]]))
-    set(thisPeriod, NULL, column, asInteger(thisPeriod[[column]]))
+  for (column in names(thisPeriod)) if (is.integer(thisPeriod[[column]]))
+    set(thisPeriod, NULL, column, as.numeric(thisPeriod[[column]]))
+  thisPeriod <- thisPeriod[, list(year = time(sim),
+                                  BiomassBySpecies = sum(B * noPixels, na.rm = TRUE),
+                                  AgeBySppWeighted = sum(age * B * noPixels, na.rm = TRUE) /
+                                    sum(B * noPixels, na.rm = TRUE),
+                                  aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
+                                  OldestCohortBySpp = max(age, na.rm = TRUE)),
+                           by = .(speciesCode)]
 
   if (is.null(sim$summaryBySpecies)) {
     sim$summaryBySpecies <- thisPeriod
