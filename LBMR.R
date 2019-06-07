@@ -1108,10 +1108,10 @@ MortalityAndGrowth <- function(sim) {
     } else {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
     }
-    rm(subCohortData, pixelGroups)
+    rm(subCohortData)
     #.gc()
   }
-  rm(cohortData)
+  rm(cohortData, pixelGroups)
 
   if (isTRUE(getOption("LandR.assertions"))) {
     if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1)
