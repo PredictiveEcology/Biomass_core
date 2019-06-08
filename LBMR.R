@@ -382,14 +382,15 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 
 ### EVENT FUNCTIONS
 Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
-  # A numeric scalar indicating how large each chunk of an internal data.table with processing by chuncks
+  ## A numeric scalar indicating how large each chunk of an internal data.table with processing by chunks
   mod$cutpoint <- 1e10
+
   ##############################################
-  # Prepare individual objects
+  ## Prepare individual objects
   ##############################################
 
   ##############################################
-  # species
+  ## species
   ##############################################
   species <- setDT(sim$species)[, speciesCode := as.factor(species)]
   LandR::assertColumns(species,
@@ -711,7 +712,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   #ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
 
   ##############################################
-  # speciesEcoregion -checks
+  # speciesEcoregion - checks
   ##############################################
   LandR::assertColumns(sim$speciesEcoregion,
                        c(ecoregionGroup = "factor", speciesCode = "factor",
@@ -755,56 +756,14 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                                  cohortData = cohortData)
   cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
 
-  ################
-  # if (FALSE) { # OLD STUFF
-  #
-  #   communities <- sim$initialCommunities %>%
-  #     gather(key = cohort, value = age, -mapcode, -description, -species, na.rm = TRUE) %>%
-  #     data.table() %>% ## this needs to be here to appease the data.table gods
-  #     .[, ':='(age = as.integer(ceiling(as.numeric(age) / P(sim)$successionTimestep) *
-  #                                 P(sim)$successionTimestep),
-  #              communityGroup = as.integer(mapcode),
-  #              mapcode = NULL)] %>%
-  #     unique(., by = c("communityGroup", "species", "age"))
-  #   species <- data.table(sim$species)[, speciesCode := as.integer(as.factor(species))]
-  #   tempspecies <- setkey(species[, .(species, speciesCode)], species)
-  #   communities <- setkey(communities, species)[tempspecies, nomatch = 0]
-  #   speciesEcoregion <- setkey(data.table(sim$speciesEcoregion), species)[tempspecies, nomatch = 0]
-  #   sim$species <- setkey(species, speciesCode)
-  #   ecoregion <- data.table(sim$ecoregion)[, ecoregionGroup := as.integer(mapcode)]
-  #   ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
-  #   sim$minRelativeB <- data.table(sim$minRelativeB, key = "ecoregion")[ecoregion_temp, nomatch = 0]
-  #   speciesEcoregion <- setkey(speciesEcoregion, ecoregion)[ecoregion_temp, nomatch = 0]
-  #   sim$speciesEcoregion <- setkey(speciesEcoregion, ecoregionGroup, speciesCode)
-  #   nrowCommunities <- nrow(communities) #line 197 in Yong code
-  #   initialCommunitiesMap <- setValues(sim$initialCommunitiesMap, as.integer(sim$initialCommunitiesMap[]))
-  #   napixels <- which(is.na(getValues(initialCommunitiesMap)))
-  #   initialCommunitiesMap[napixels] <- as.integer(maxValue(initialCommunitiesMap) + 1)
-  #   pixelGroupFactor <- as.integer(10^ceiling(log10((maxValue(initialCommunitiesMap) + 1))))
-  #   #ecoregionMap <- sim$ecoregionMap
-  #   pixelGroupMap <- setValues(initialCommunitiesMap, as.integer((initialCommunitiesMap +
-  #                                                                   sim$ecoregionMap*pixelGroupFactor)[]))
-  #   sim$initialCommunitiesMap <- NULL
-  #   active_ecoregion <- setkey(ecoregion[active == "yes", .(k = 1, ecoregionGroup)], k)
-  #   cohortData <- setkey(communities[, k := 1], k)[active_ecoregion, allow.cartesian = TRUE][, k := NULL]
-  #   set(cohortData, NULL, "pixelGroup", cohortData$communityGroup + cohortData$ecoregionGroup*pixelGroupFactor)
-  #   set(cohortData, NULL, "B", as.integer(0L))
-  #   cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B)] # removed communityGroup column
-  #   # the cohortData here is a full joint table of community Group and ecoregion Group
-  #   # some redundant pixelGroups are removed, because they are not present on the pixelGroupMap
-  #   # we are dealing with the case that all the ecoregion is active, how about some ecoregion is not active
-  #
-  # }
-  # # # pixels with -1 in the pixelGroupMap are inactive #  ELIOT -- WHY NOT JUST LEAVE AS NA? TRY RM -1
-  # # if (length(inactivePixelIndex) > 0) {
-  # #   pixelGroupMap[inactivePixelIndex] <- -1L
-  # # }
 
+  #############################################
   initialBiomassSourcePoss <- c('spinUp', 'cohortData', 'biomassMap')
   if (!any(grepl(P(sim)$initialBiomassSource, initialBiomassSourcePoss))) {
     stop("P(sim)$initialBiomassSource must be one of: ", paste(initialBiomassSourcePoss, collapse = ", "))
   }
 
+  ## spinup
   if (grepl("spin", tolower(P(sim)$initialBiomassSource))) { # negate the TRUE to allow for default to be this, even if NULL or NA
     stop("'spinUp as a value for P(sim)$initialBiomassSource is not working currently; ",
          "please use 'cohortData'")
@@ -882,8 +841,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                    , .(NofPixel = length(pixelIndex)),
                                    by = c("ecoregionGroup", "pixelGroup")]
 
-  simulationOutput <- setkey(simulationOutput, pixelGroup)[
-    setkey(pixelAll, pixelGroup), nomatch = 0][
+  simulationOutput <- setkey(simulationOutput, pixelGroup)[setkey(pixelAll, pixelGroup), nomatch = 0][
       , .(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = ecoregionGroup] ## NOTE:
   ## above needs to be numeric because of integer overflow -- returned to integer in 2 lines
   simulationOutput <- setkey(simulationOutput, ecoregionGroup)[
@@ -986,7 +944,7 @@ SummaryBGM <- function(sim) {
                                         unitTest = getOption("LandR.assertions", TRUE))
 
   # the following codes for preparing the data table for saving
-  rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable)
+  rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable) ## TODO: is this needed? on exit, should free the mem used for these
   return(invisible(sim))
 }
 
@@ -1149,19 +1107,19 @@ MortalityAndGrowth <- function(sim) {
       sim$cohortData <- subCohortData
     } else {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
-      rm(pixelGroups)
     }
-    rm(subCohortData, pixelGroups)
-    # .gc() # TODO: use .gc()
+    rm(subCohortData)
+    #.gc()
   }
-  rm(cohortData)
+  rm(cohortData, pixelGroups)
 
   if (isTRUE(getOption("LandR.assertions"))) {
-    if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1) stop()
+    if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1)
+      stop()
+
     if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = c("pixelGroup", "speciesCode", "age", "B"))))) {
       stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
     }
-
   }
   assertCohortData(sim$cohortData, sim$pixelGroupMap)
   return(invisible(sim))
@@ -1218,8 +1176,9 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
 
   specieseco_current <- speciesEcoregionLatestYear(
-    sim$speciesEcoregion[,.(year, speciesCode, establishprob, ecoregionGroup)],
-    round(time(sim)))
+    sim$speciesEcoregion[, .(year, speciesCode, establishprob, ecoregionGroup)],
+    round(time(sim))
+  )
   specieseco_current <- setkey(specieseco_current, ecoregionGroup, speciesCode)
 
   #specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
@@ -1228,7 +1187,8 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, c("establishprob"), NULL)
   if (P(sim)$calibrate == TRUE && NROW(seedingData) > 0) {
-    newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm, year = round(time(sim)),
+    newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm,
+                                          year = round(time(sim)),
                                           numberOfReg = length(pixelIndex)),
                                       by = speciesCode]
     newCohortData_summ <- setkey(newCohortData_summ, speciesCode)[
@@ -1323,14 +1283,6 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
 
 WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
                                  verbose = getOption("LandR.verbose", TRUE)) {
-  #if (sim$lastFireYear == round(time(sim))) {
-  # the current year is both fire year and succession year
-  # tempActivePixel <-
-  #   sim$activePixelIndex[!(sim$activePixelIndex %in%
-  #                            sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]$pixelIndex)]
-  #} else {
-  #  tempActivePixel <- sim$activePixelIndex
-  #}
   sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
                                   lastReg = sim$lastReg, simuTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
@@ -1338,12 +1290,12 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
                              sim$speciesEcoregion, sim$minRelativeB)
   activePixelGroup <- data.table(pixelGroup = unique(getValues(sim$pixelGroupMap)[tempActivePixel])) %>%
     na.omit()
-  #siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
   siteShade <- siteShade[activePixelGroup, on = "pixelGroup"]
   siteShade[is.na(siteShade),siteShade := 0]
-  # Seed source cells:
-  # 1. Select only sexually mature cohorts, then
-  # 2. collapse to pixelGroup by species, i.e,. doesn't matter that there is >1 cohort of same species
+
+  ## Seed source cells:
+  ## 1. Select only sexually mature cohorts, then
+  ## 2. collapse to pixelGroup by species, i.e,. doesn't matter that there is >1 cohort of same species
   sim$cohortData <- sim$species[, c("speciesCode", "sexualmature")][sim$cohortData,
                                                                     on = "speciesCode"]
   # sim$cohortData <- setkey(sim$cohortData, speciesCode)[setkey(sim$species[, .(speciesCode, sexualmature)],
@@ -1492,7 +1444,6 @@ summaryRegen <- function(sim) {
     }
     rm(pixelAll)
     sim$reproductionMap <- reproductionMap
-    #rm(cohortData, pixelGroupMap)
     rm(pixelGroupMap)
   }
   return(invisible(sim))
@@ -1728,18 +1679,14 @@ plotAvgVegAttributes <- function(sim) {
     sim$summaryLandscape <- rbindlist(list(sim$summaryLandscape, thisPeriod))
   }
 
-
   if (length(unique(sim$summaryLandscape$year)) > 1) {
     df2 <- melt(sim$summaryLandscape, id.vars = "year")
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
 
-      varLabels <- c(sumB = "Biomass",
-                     maxAge = "Age",
-                     sumANPP = "aNPP")
+      varLabels <- c(sumB = "Biomass", maxAge = "Age", sumANPP = "aNPP")
 
-      plot1 <- ggplot(data = df2,
-                      aes(x = year, y = value, colour = variable)) +
+      plot1 <- ggplot(data = df2, aes(x = year, y = value, colour = variable)) +
         geom_line(size = 1) +
         scale_colour_brewer(labels = varLabels, type = "qual", palette = "Dark2") +
         theme_bw() +
@@ -1859,8 +1806,8 @@ CohortAgeReclassification <- function(sim) {
       studyArea <- spTransform(studyArea, crs(sim$rasterToMatch))
       studyArea <- fixErrors(studyArea)
     }
-    #TODO: review whether this is necessary (or will break LandWeb if removed) see Git Issue #22
-    # layers provided by David Andison sometimes have LTHRC, sometimes LTHFC ... chose whichever
+    ## TODO: review whether this is necessary (or will break LandWeb if removed) see Git Issue #22
+    ## layers provided by David Andison sometimes have LTHRC, sometimes LTHFC ... chose whichever
     LTHxC <- grep("(LTH.+C)", names(studyArea), value = TRUE)
     fieldName <- if (length(LTHxC)) {
       LTHxC
@@ -1905,9 +1852,7 @@ CohortAgeReclassification <- function(sim) {
       initialCommunities <- initialCommunities[species != "LandisData",]
       cutRows <- grep(">>", initialCommunities$species)
       for (i in cutRows) {
-        initialCommunities[i,
-                           desc := paste(initialCommunities[i, 3:maxcol, with = FALSE],
-                                         collapse = " ")]
+        initialCommunities[i, desc := paste(initialCommunities[i, 3:maxcol, with = FALSE], collapse = " ")]
       }
 
       initialCommunities[, rowN := 1:nrow(initialCommunities)]
@@ -1934,7 +1879,8 @@ CohortAgeReclassification <- function(sim) {
       rm(cutRows, i, maxcol)
     }
   }
-  # load the initial community map
+
+  ## load the initial community map
   if (FALSE) { # No longer using this
     if (!suppliedElsewhere("initialCommunitiesMap", sim)) {
       ## LANDIS-II demo data:
@@ -1986,29 +1932,6 @@ CohortAgeReclassification <- function(sim) {
       ecoregionMap[!is.na(getValues(ecoregionMap))][] <- mapvals
 
       sim$ecoregionMap <- ecoregionMap
-    }
-  }
-
-  if (FALSE) {   ## Ceres: March 25th no longer using this, default minRelativeB is a dummy.
-    if (!suppliedElsewhere("minRelativeB", sim)) {
-      minRelativeB <- data.frame(mainInput)
-      startRow <- which(minRelativeB$col1 == "MinRelativeBiomass")
-      minRelativeB <- minRelativeB[(startRow + 1):(startRow + 6),]
-      minRelativeB[1, 2:ncol(minRelativeB)] <- minRelativeB[1, 1:(ncol(minRelativeB) - 1)]
-      names(minRelativeB) <- NULL
-      minRelativeB <- minRelativeB[, apply(minRelativeB, 2, function(x) all(nzchar(x)))]
-      minRelativeB <- minRelativeB[, -1] %>%
-        t(.) %>%
-        gsub(pattern = "%", replacement = "") %>%
-        data.table()
-
-      colNames <- c("ecoregion", "X1", "X2", "X3", "X4", "X5")
-      names(minRelativeB) <- colNames
-      minRelativeB[, (colNames[-1]) := lapply(.SD, function(x)
-        as.numeric(as.character(x))), .SDcols = colNames[-1]]
-      # minRelativeB <- minRelativeB %>%
-      #   mutate_at(funs(as.numeric(as.character(.))/100), .vars=-ecoregion)
-      sim$minRelativeB <- minRelativeB
     }
   }
 
