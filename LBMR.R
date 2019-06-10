@@ -648,7 +648,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     # Create initial communities, i.e., pixelGroups
     ########################################################################
 
-    ## HERE
+    ## TODO: HERE - code below needs to be converted to funtions to avoid repeating code across modules (Boreal_LBMRDataPrep)
 
     pixelCohortData[, ecoregionGroup := factor(as.character(ecoregionGroup))]
     pixelCohortData[ , `:=`(logAge = NULL, coverOrig = NULL, totalBiomass = NULL, #pixelIndex = NULL,
