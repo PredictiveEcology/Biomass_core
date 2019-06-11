@@ -533,7 +533,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     modelBiomass <- Cache(statsModel,
                           modelFn = biomassModel,
                           uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(pixelCohortData$ecoregionGroup)),
-                          .specialData = pixelCohortData,
+                          .specialData = cohortDataNoBiomass,
                           omitArgs = c(".specialData"))
     message(blue("  The rsquared is: "))
     print(modelBiomass$rsq)
