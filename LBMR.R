@@ -1457,7 +1457,7 @@ plotSummaryBySpecies <- function(sim) {
                                  "across pixels"), new = TRUE)
     }
 
-    maxNpixels <- sum(!is.na(sim$pixelGroupMap[]))
+    maxNpixels <- sum(!is.na(sim$rasterToMatchReporting[]))
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
 
