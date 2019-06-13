@@ -11,7 +11,7 @@ defineModule(sim, list(
     person(c("Alex", "M."), "Chubaty", email = "achubaty@friresearch.ca", role = "ctb")
   ),
   childModules = character(0),
-  version = list(SpaDES.core = "0.2.3.9009", numeric_version("1.3.1.9000")),
+  version = list(SpaDES.core = "0.2.3.9009", LBMR = numeric_version("1.3.1.9000")),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
