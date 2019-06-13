@@ -67,7 +67,6 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
   if (getOption("LandR.assertions")) {
     cohortData2 <- data.table::copy(cohortData)
 
-    newCohortData <- cohortData[, sumB := asInteger(sum(B, na.rm = TRUE)), by = "pixelGroup"]
     uniqueCohortDataPixelGroup <- unique(cohortData$pixelGroup)
     pixelGroups <- setDT(list(pixelGroupIndex = uniqueCohortDataPixelGroup,
                               temID = 1:length(uniqueCohortDataPixelGroup)))
@@ -125,6 +124,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
   a <- cohortData[, list(sumB2 = sumB[1]), by = "pixelGroup"]
   setorderv(cohortData, c("pixelGroup", "sumB"), na.last = TRUE)
   sumB <- a[cohortData, on = "pixelGroup"]$sumB2
+  sumB[is.na(sumB)] <- 0L
   set(cohortData, NULL, "sumB", sumB)
   if (!is.null(oldKey))
     setkeyv(cohortData, oldKey)
@@ -140,6 +140,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
     setorderv(cohortData, c("sumB2"), na.last = TRUE)
     a2 <- cohortData[, list(sumB3 = sumB2[1]), by = "pixelGroup"]
     sumB2 <- a2[cohortData, on = "pixelGroup"]$sumB3
+    sumB2[is.na(sumB2)] <- 0L
     set(cohortData, NULL, "sumB2", sumB2)
     if (!isTRUE(all.equal(cohortData$sumB, cohortData$sumB2)))
       stop("Failed test in calculateSumB")
@@ -158,7 +159,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
     setkeyv(cohortData, c("pixelGroup", "speciesCode", "age"))
     setcolorder(newcohortData, names(cohortData))
 
-    if (!(identical(newcohortData, cohortData))) {
+    if (!identical(newcohortData, cohortData)) {
       stop("calculateSumB new algorithm differs from old algorithm")
     }
   }
