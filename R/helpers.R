@@ -67,7 +67,6 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
   if (getOption("LandR.assertions")) {
     cohortData2 <- data.table::copy(cohortData)
 
-    newCohortData <- cohortData[, sumB := asInteger(sum(B, na.rm = TRUE)), by = "pixelGroup"]
     uniqueCohortDataPixelGroup <- unique(cohortData$pixelGroup)
     pixelGroups <- setDT(list(pixelGroupIndex = uniqueCohortDataPixelGroup,
                               temID = 1:length(uniqueCohortDataPixelGroup)))
