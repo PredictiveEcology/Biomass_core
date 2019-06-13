@@ -1468,8 +1468,7 @@ plotSummaryBySpecies <- function(sim) {
         labs(x = "Year", y = "Count") +
         geom_area() +
         theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
-        geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey",
-                   size = 1)
+        geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey", size = 1)
 
       Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
     }
