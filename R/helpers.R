@@ -157,7 +157,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
     setkeyv(cohortData, c("pixelGroup", "speciesCode", "age"))
     setcolorder(newcohortData, names(cohortData))
 
-    if (!(identical(newcohortData, cohortData))) {
+    if (!identical(newcohortData, cohortData)) {
       stop("calculateSumB new algorithm differs from old algorithm")
     }
   }
