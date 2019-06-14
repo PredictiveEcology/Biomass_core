@@ -17,13 +17,11 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData)
   specieseco_current <- speciesEcoregionLatestYear(speciesEcoregion, time)
 
   #specieseco_current <- speciesEcoregion[year <= time]
-  specieseco_current <- setkey(specieseco_current[, .(speciesCode, maxANPP,
-                                                      maxB, ecoregionGroup)],
+  specieseco_current <- setkey(specieseco_current[, .(speciesCode, maxANPP, maxB, ecoregionGroup)],
                                speciesCode, ecoregionGroup)
   specieseco_current[, maxB_eco := max(maxB), by = ecoregionGroup]
 
-  cohortData <- specieseco_current[cohortData, on = c("speciesCode", "ecoregionGroup"),
-                                   nomatch = NA]#[specieseco_current, nomatch = NA]
+  cohortData <- specieseco_current[cohortData, on = c("speciesCode", "ecoregionGroup"), nomatch = 0]
   return(cohortData)
 }
 
@@ -40,8 +38,7 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData)
 #' @importFrom data.table setkey
 updateSpeciesAttributes <- function(species, cohortData) {
   # to assign longevity, mortalityshape, growthcurve to cohortData
-  species_temp <- setkey(species[, .(speciesCode, longevity, mortalityshape,
-                                     growthcurve)], speciesCode)
+  species_temp <- setkey(species[, .(speciesCode, longevity, mortalityshape, growthcurve)], speciesCode)
   setkey(cohortData, speciesCode)
   cohortData <- cohortData[species_temp, nomatch = 0]
   return(cohortData)
