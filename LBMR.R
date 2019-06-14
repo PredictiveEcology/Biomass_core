@@ -682,12 +682,11 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                             ecoregionGroup %in% active_ecoregion$ecoregionGroup,
                                             .(NofCell = length(pixelIndex)), by = "ecoregionGroup"]
 
-  cohortData <- sim$cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)[sim$activePixelIndex]),]
+  cohortData <- sim$cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)[sim$activePixelIndex]), ]
   cohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = speciesEcoregion,
                                                  time = round(time(sim)),
                                                  cohortData = cohortData)
   cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
-
 
   #############################################
   initialBiomassSourcePoss <- c('spinUp', 'cohortData', 'biomassMap')
@@ -702,6 +701,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
     if (verbose > 0)
       message("Running spinup")
+
     spinupstage <- Cache(spinUp,
                          cohortData = cohortData,
                          calibrate = P(sim)$calibrate,
@@ -763,8 +763,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
-  sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age,
-                                   B, mortality = 0L, aNPPAct = 0L)]
+  sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L, aNPPAct = 0L)]
   simulationOutput <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
                                                                 getValues(sim$ecoregionMap),
                                                                 att = "ecoregionGroup"),
@@ -822,9 +821,9 @@ SummaryBGM <- function(sim) {
     subCohortData[is.na(reproduction), reproduction := 0L]
 
     # Don't need to do asInteger within the by group calculation. Separate to next step.
-    summarytable_sub <- subCohortData[, .(uniqueSumB = sum(B, na.rm=TRUE),
-                                          uniqueSumANPP = sum(aNPPAct, na.rm=TRUE),
-                                          uniqueSumMortality = sum(mortality, na.rm=TRUE),
+    summarytable_sub <- subCohortData[, .(uniqueSumB = sum(B, na.rm = TRUE),
+                                          uniqueSumANPP = sum(aNPPAct, na.rm = TRUE),
+                                          uniqueSumMortality = sum(mortality, na.rm = TRUE),
                                           uniqueSumRege = mean(reproduction, na.rm = TRUE)),
                                       by = pixelGroup]
     for (column in names(summarytable_sub)) if (!is.integer(summarytable_sub[[column]]))
@@ -891,7 +890,7 @@ MortalityAndGrowth <- function(sim) {
                                          speciesCode, age, B, mortality, aNPPAct)]
 
   #Install climate-sensitive functions (or not)
-  a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers)) #This is not working. requireNamespace overrides try
+  a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers)) ## TODO: this is not working. requireNamespace overrides try
   if (class(a) == "try-error") {
     stop("The package you specified for P(sim)$growthAndMortalityDrivers must be installed.")
   }
@@ -900,7 +899,7 @@ MortalityAndGrowth <- function(sim) {
 
   cohortData <- sim$cohortData
   pgs <- unique(cohortData$pixelGroup)
-  groupSize <- 1e7 # This should be large because this function is not the current RAM limitation
+  groupSize <- 1e7 ## This should be large because this function is not the current RAM limitation
   numGroups <- ceiling(length(pgs) / groupSize)
   groupNames <- paste0("Group", seq(numGroups))
   if (length(pgs) > groupSize) {
@@ -934,11 +933,11 @@ MortalityAndGrowth <- function(sim) {
     #########################################################
     # Die from old age -- rm from cohortData
     #########################################################
-    subCohortPostLongevity <- subCohortData[age <= longevity,]
-    diedCohortData <- subCohortData[age > longevity,]
+    subCohortPostLongevity <- subCohortData[age <= longevity, ]
+    diedCohortData <- subCohortData[age > longevity, ]
     numCohortsDiedOldAge <- NROW(diedCohortData)
 
-    if ((numCohortsDiedOldAge) > 0) {
+    if (numCohortsDiedOldAge > 0) {
       # Identify the PGs that are totally gone, not just an individual cohort that died
       pgsToRm <- diedCohortData[!pixelGroup %in% subCohortPostLongevity$pixelGroup]
 
@@ -952,7 +951,7 @@ MortalityAndGrowth <- function(sim) {
       }
       if (length(pixelsToRm) > 0) {
         if (getOption("LandR.verbose", TRUE) > 0) {
-          numPixelGrps <- sum(sim$pixelGroupMap[]!=0, na.rm = TRUE)
+          numPixelGrps <- sum(sim$pixelGroupMap[] != 0, na.rm = TRUE)
         }
         sim$pixelGroupMap[pixelsToRm] <- 0L
         if (getOption("LandR.verbose", TRUE) > 1) {
@@ -964,7 +963,7 @@ MortalityAndGrowth <- function(sim) {
         }
         if (getOption("LandR.verbose", TRUE) > 0) {
           message(blue("\n   Total number of pixelGroups -- Was:", numPixelGrps,
-                       ", Now:", magenta(sum(sim$pixelGroupMap[]!=0, na.rm = TRUE))))
+                       ", Now:", magenta(sum(sim$pixelGroupMap[] != 0, na.rm = TRUE))))
         }
       }
     }
