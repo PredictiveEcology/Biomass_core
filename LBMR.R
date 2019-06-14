@@ -1587,8 +1587,8 @@ plotVegAttributesMaps <- function(sim) {
     grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
     grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
 
-    if (!is.null(reproductionMapForPlot))
-      Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
+    #if (!is.null(reproductionMapForPlot))
+    #  Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
   }
 
   return(invisible(sim))
