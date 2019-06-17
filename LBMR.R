@@ -75,7 +75,7 @@ defineModule(sim, list(
     defineParameter(".saveInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the saving time step.",
                                  "If NA, the default, .saveInterval is set to successionTimestep.")),
-    defineParameter(".useCache", "logical", TRUE,
+    defineParameter(".useCache", "logical", "init",
                     desc = "use caching for the spinup simulation?"),
     defineParameter(".useParallel", "ANY", 2,
                     desc = paste("Used only in seed dispersal.",
