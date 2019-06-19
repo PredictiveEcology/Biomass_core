@@ -676,13 +676,14 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   # Changed mechanism for active and inactive -- just use NA on ecoregionMap
   ecoregionMapNAs <- is.na(sim$ecoregionMap[])
-  sim$activePixelIndex <- which(!ecoregionMapNAs) # store this for future use
-  sim$inactivePixelIndex <- which(ecoregionMapNAs) # store this for future use
-
   ecoregionMapReporting <- mask(sim$ecoregionMap, sim$studyAreaReporting)
   ecoregionMapReportingNAs <- is.na(ecoregionMapReporting[])
-  sim$activePixelIndexReporting <- which(!ecoregionMapReportingNAs) # store this for future use
-  sim$inactivePixelIndexReporting <- which(ecoregionMapReportingNAs) # store this for future use
+
+  sim$activePixelIndex <- which(!ecoregionMapNAs)                    ## store for future use
+  sim$activePixelIndexReporting <- which(!ecoregionMapReportingNAs)  ## store for future use
+
+  sim$inactivePixelIndex <- which(ecoregionMapNAs)                   ## store for future use
+  sim$inactivePixelIndexReporting <- which(ecoregionMapReportingNAs) ## store for future use
 
   # Keeps track of the length of the ecoregion
   mod$activeEcoregionLength <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
