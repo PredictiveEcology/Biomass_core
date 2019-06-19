@@ -145,9 +145,9 @@ defineModule(sim, list(
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
   ),
   outputObjects = bind_rows(
-    createsOutput("activePixelIndex", "double",
+    createsOutput("activePixelIndex", "integer",
                   desc = "internal use. Keeps track of which pixels are active"),
-    createsOutput("activePixelIndexReporting", "double",
+    createsOutput("activePixelIndexReporting", "integer",
                   desc = "internal use. Keeps track of which pixels are active in the reporting study area"),
     createsOutput("ANPPMap", "RasterLayer",
                   desc = "ANPP map at each succession time step"),
@@ -155,9 +155,9 @@ defineModule(sim, list(
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step"),
     createsOutput(objectName = "simulatedBiomassMap", objectClass = "RasterLayer",
                   desc = "Biomass map at each succession time step"),
-    createsOutput("inactivePixelIndex", "double",
+    createsOutput("inactivePixelIndex", "integer",
                   desc = "internal use. Keeps track of which pixels are inactive"),
-    createsOutput("inactivePixelIndexReporting", "double",
+    createsOutput("inactivePixelIndexReporting", "integer",
                   desc = "internal use. Keeps track of which pixels are inactive in the reporting study area"),
     createsOutput("initialCommunities", "character",
                   desc = "Because the initialCommunities object can be LARGE, it is saved to disk with this filename"),
