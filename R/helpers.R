@@ -115,7 +115,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
   oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
   wh <- which(cohortData$age >= successionTimestep)
   sumBtmp <- cohortData[wh, list(N = .N, sumB = sum(B, na.rm = TRUE)), by = "pixelGroup"]
-  # cohortData[, sumB := NULL]
+  if ("sumB" %in% names(cohortData)) set(cohortData, NULL, "sumB", NULL)
   set(cohortData, wh, "sumB", rep.int(sumBtmp$sumB, sumBtmp$N))
   setorderv(cohortData, c("sumB"), na.last = TRUE)
   a <- cohortData[, list(sumB2 = sumB[1]), by = "pixelGroup"]
