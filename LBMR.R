@@ -153,9 +153,7 @@ defineModule(sim, list(
                   desc = "ANPP map at each succession time step"),
     createsOutput("cohortData", "data.table",
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step"),
-    createsOutput(objectName = "simulatedBiomassMap", objectClass = "RasterLayer",
-                  desc = "Biomass map at each succession time step"),
-    createsOutput("inactivePixelIndex", "integer",
+    createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
     createsOutput("inactivePixelIndexReporting", "integer",
                   desc = "internal use. Keeps track of which pixels are inactive in the reporting study area"),
@@ -171,9 +169,12 @@ defineModule(sim, list(
                   desc = "Mortality map at each succession time step"),
     createsOutput("pixelGroupMap", "RasterLayer",
                   desc = "updated community map at each succession time step"),
-    createsOutput("regenerationOutput", "data.table", desc = ""),
+    createsOutput("regenerationOutput", "data.table",
+                  desc = "TODO: description needed"),
     createsOutput("reproductionMap", "RasterLayer",
                   desc = "Regeneration map at each succession time step"),
+    createsOutput("simulatedBiomassMap", "RasterLayer",
+                  desc = "Biomass map at each succession time step"),
     createsOutput("simulationOutput", "data.table",
                   desc = "contains simulation results by ecoregion (main output)"),
     createsOutput("simulationTreeOutput", "data.table",
@@ -675,13 +676,14 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   # Changed mechanism for active and inactive -- just use NA on ecoregionMap
   ecoregionMapNAs <- is.na(sim$ecoregionMap[])
-  sim$activePixelIndex <- which(!ecoregionMapNAs) # store this for future use
-  sim$inactivePixelIndex <- which(ecoregionMapNAs) # store this for future use
-
   ecoregionMapReporting <- mask(sim$ecoregionMap, sim$studyAreaReporting)
   ecoregionMapReportingNAs <- is.na(ecoregionMapReporting[])
-  sim$activePixelIndexReporting <- which(!ecoregionMapReportingNAs) # store this for future use
-  sim$inactivePixelIndexReporting <- which(ecoregionMapReportingNAs) # store this for future use
+
+  sim$activePixelIndex <- which(!ecoregionMapNAs)                    ## store for future use
+  sim$activePixelIndexReporting <- which(!ecoregionMapReportingNAs)  ## store for future use
+
+  sim$inactivePixelIndex <- which(ecoregionMapNAs)                   ## store for future use
+  sim$inactivePixelIndexReporting <- which(ecoregionMapReportingNAs) ## store for future use
 
   # Keeps track of the length of the ecoregion
   mod$activeEcoregionLength <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
