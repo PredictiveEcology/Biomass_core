@@ -147,6 +147,8 @@ defineModule(sim, list(
   outputObjects = bind_rows(
     createsOutput("activePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are active"),
+    createsOutput("activePixelIndexReporting", "double",
+                  desc = "internal use. Keeps track of which pixels are active in the reporting study area"),
     createsOutput("ANPPMap", "RasterLayer",
                   desc = "ANPP map at each succession time step"),
     createsOutput("cohortData", "data.table",
@@ -155,6 +157,8 @@ defineModule(sim, list(
                   desc = "Biomass map at each succession time step"),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
+    createsOutput("inactivePixelIndexReporting", "double",
+                  desc = "internal use. Keeps track of which pixels are inactive in the reporting study area"),
     createsOutput("initialCommunities", "character",
                   desc = "Because the initialCommunities object can be LARGE, it is saved to disk with this filename"),
     createsOutput("lastFireYear", "numeric",
