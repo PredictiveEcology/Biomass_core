@@ -151,7 +151,7 @@ calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
     newAlgo <<- newAlgo + (new2 - new1)
   }
 
-  if  (getOption("LandR.assertions")) {
+  if  (isTRUE(getOption("LandR.assertions"))) {
     setkeyv(newcohortData, c("pixelGroup", "speciesCode", "age"))
     setkeyv(cohortData, c("pixelGroup", "speciesCode", "age"))
     setcolorder(newcohortData, names(cohortData))
