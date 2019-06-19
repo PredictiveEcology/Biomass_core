@@ -674,6 +674,11 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sim$activePixelIndex <- which(!ecoregionMapNAs) # store this for future use
   sim$inactivePixelIndex <- which(ecoregionMapNAs) # store this for future use
 
+  ecoregionMapReporting <- mask(sim$ecoregionMap, sim$studyAreaReporting)
+  ecoregionMapReportingNAs <- is.na(ecoregionMapReporting[])
+  sim$activePixelIndexReporting <- which(!ecoregionMapReportingNAs) # store this for future use
+  sim$inactivePixelIndexReporting <- which(ecoregionMapReportingNAs) # store this for future use
+
   # Keeps track of the length of the ecoregion
   mod$activeEcoregionLength <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
                                                                          getValues(sim$ecoregionMap),
@@ -1456,7 +1461,7 @@ plotSummaryBySpecies <- function(sim) {
                                  "across pixels"), new = TRUE)
     }
 
-    maxNpixels <- length(sim$activePixelIndex)
+    maxNpixels <- length(sim$activePixelIndexReporting)
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
 
