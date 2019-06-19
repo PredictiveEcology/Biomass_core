@@ -145,7 +145,7 @@ defineModule(sim, list(
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
   ),
   outputObjects = bind_rows(
-    createsOutput("activePixelIndex", "logical",
+    createsOutput("activePixelIndex", "double",
                   desc = "internal use. Keeps track of which pixels are active"),
     createsOutput("activePixelIndexReporting", "double",
                   desc = "internal use. Keeps track of which pixels are active in the reporting study area"),
@@ -155,7 +155,7 @@ defineModule(sim, list(
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step"),
     createsOutput(objectName = "simulatedBiomassMap", objectClass = "RasterLayer",
                   desc = "Biomass map at each succession time step"),
-    createsOutput("inactivePixelIndex", "logical",
+    createsOutput("inactivePixelIndex", "double",
                   desc = "internal use. Keeps track of which pixels are inactive"),
     createsOutput("inactivePixelIndexReporting", "double",
                   desc = "internal use. Keeps track of which pixels are inactive in the reporting study area"),
