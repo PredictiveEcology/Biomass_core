@@ -1284,7 +1284,7 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
                               reducedPixelGroupMap,
-                              maxPotentialsLength = 1e5,
+                              maxPotentialsLength = 5e5,
                               successionTimestep = P(sim)$successionTimestep,
                               verbose = FALSE,
                               useParallel = P(sim)$.useParallel)

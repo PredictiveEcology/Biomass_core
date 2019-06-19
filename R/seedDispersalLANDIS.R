@@ -146,7 +146,7 @@ WardFast <- expression(ifelse(cellSize <= effDist, {
 #'   Plot(seedRcvRaster, cols="black")
 #' }
 LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = WardFast,
-                       b = 0.01, k = 0.95, plot.it = FALSE, maxPotentialsLength = 1e3,
+                       b = 0.01, k = 0.95, plot.it = FALSE, maxPotentialsLength = 1e5,
                        successionTimestep,
                        verbose = getOption("LandR.verbose", TRUE),
                        useParallel, ...) {
