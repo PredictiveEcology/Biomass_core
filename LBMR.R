@@ -145,14 +145,18 @@ defineModule(sim, list(
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
   ),
   outputObjects = bind_rows(
-    createsOutput("activePixelIndex", "logical",
+    createsOutput("activePixelIndex", "double",
                   desc = "internal use. Keeps track of which pixels are active"),
+    createsOutput("activePixelIndexReporting", "double",
+                  desc = "internal use. Keeps track of which pixels are active in the reporting study area"),
     createsOutput("ANPPMap", "RasterLayer",
                   desc = "ANPP map at each succession time step"),
     createsOutput("cohortData", "data.table",
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step"),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
+    createsOutput("inactivePixelIndexReporting", "double",
+                  desc = "internal use. Keeps track of which pixels are inactive in the reporting study area"),
     createsOutput("initialCommunities", "character",
                   desc = "Because the initialCommunities object can be LARGE, it is saved to disk with this filename"),
     createsOutput("lastFireYear", "numeric",
@@ -674,6 +678,11 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ecoregionMapNAs <- is.na(sim$ecoregionMap[])
   sim$activePixelIndex <- which(!ecoregionMapNAs) # store this for future use
   sim$inactivePixelIndex <- which(ecoregionMapNAs) # store this for future use
+
+  ecoregionMapReporting <- mask(sim$ecoregionMap, sim$studyAreaReporting)
+  ecoregionMapReportingNAs <- is.na(ecoregionMapReporting[])
+  sim$activePixelIndexReporting <- which(!ecoregionMapReportingNAs) # store this for future use
+  sim$inactivePixelIndexReporting <- which(ecoregionMapReportingNAs) # store this for future use
 
   # Keeps track of the length of the ecoregion
   mod$activeEcoregionLength <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
@@ -1456,8 +1465,8 @@ plotSummaryBySpecies <- function(sim) {
       Plot(plot2, title = paste0("Total biomass by species\n",
                                  "across pixels"), new = TRUE)
     }
-    ## TODO: make sure only "active" pixels are selected
-    maxNpixels <- sum(!is.na(sim$rasterToMatchReporting[]))
+
+    maxNpixels <- length(sim$activePixelIndexReporting)
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
 
