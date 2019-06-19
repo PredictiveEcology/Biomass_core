@@ -1455,8 +1455,8 @@ plotSummaryBySpecies <- function(sim) {
       Plot(plot2, title = paste0("Total biomass by species\n",
                                  "across pixels"), new = TRUE)
     }
-    ## TODO: make sure only "active" pixels are selected
-    maxNpixels <- sum(!is.na(sim$rasterToMatchReporting[]))
+
+    maxNpixels <- length(sim$activePixelIndex)
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
 
