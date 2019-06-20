@@ -1392,6 +1392,8 @@ summaryRegen <- function(sim) {
 }
 
 plotSummaryBySpecies <- function(sim) {
+  LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
+
   ## BIOMASS, WEIGHTED AVERAGE AGE, AVERAGE ANPP
   ## AND AGE OF OLDEST COHORT PER SPECIES
 
@@ -1529,6 +1531,8 @@ plotSummaryBySpecies <- function(sim) {
 }
 
 plotVegAttributesMaps <- function(sim) {
+  LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
+
   if (!is.na(P(sim)$.plotInitialTime)) {
     biomassMapForPlot <- raster::mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
     ANPPMapForPlot <- raster::mask(sim$ANPPMap, sim$studyAreaReporting)
@@ -1606,6 +1610,8 @@ plotVegAttributesMaps <- function(sim) {
 }
 
 plotAvgVegAttributes <- function(sim) {
+  LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
+
   ## AVERAGE STAND BIOMASS/AGE/ANPP
   ## calculate acrosS pixels
   ## don't expand table, multiply by no. pixels - faster
