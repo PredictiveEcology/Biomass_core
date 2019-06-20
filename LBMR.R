@@ -631,7 +631,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                       speciesEcoregion = speciesEcoregion,
                       minRelativeB = sim$minRelativeB)
 
-    assertCohortData(sim$cohortData, sim$pixelGroupMap)
+    LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap)
 
     LandR::assertUniqueCohortData(sim$cohortData, c("pixelGroup", "ecoregionGroup", "speciesCode"))
   }
@@ -1063,7 +1063,7 @@ MortalityAndGrowth <- function(sim) {
       stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
     }
   }
-  assertCohortData(sim$cohortData, sim$pixelGroupMap)
+  LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap)
   return(invisible(sim))
 }
 
@@ -1328,7 +1328,7 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
       ##############################################
       # Run probability of establishment
       ##############################################
-      assertCohortData(sim$cohortData, sim$pixelGroupMap)
+      LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap)
 
       seedingData <- seedingData[runif(nrow(seedingData)) <= establishprob, ]
       if (getOption("LandR.verbose", TRUE) > 0) {
