@@ -1287,15 +1287,20 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     #   inactivePixelIndex <- sim$inactivePixelIndex
     # }
     reducedPixelGroupMap <- sim$pixelGroupMap
+
+    # Calculate the maximum size of the chunks for LANDISDisp
     if (length(pixelsFromCurYrBurn) > 0) {
       reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
     }
-
+    maxPotLength <- try(as.integer(availableMemory()/(NROW(seedReceive)+NROW(seedSource)) * 100),
+                        silent = TRUE)
+    if (is(maxPotLength, "try-error") || length(maxPotLength) == 0)
+      maxPotLength <- 1e5
     seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
                               reducedPixelGroupMap,
-                              maxPotentialsLength = 5e5,
+                              maxPotentialsLength = maxPotLength,
                               successionTimestep = P(sim)$successionTimestep,
                               verbose = FALSE,
                               useParallel = P(sim)$.useParallel)
