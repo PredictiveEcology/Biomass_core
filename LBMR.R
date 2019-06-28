@@ -35,12 +35,9 @@ defineModule(sim, list(
                                  "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
-    defineParameter("dispersalTimestep", "numeric", 10, NA, NA,
-                    paste("defines the seed dispersal time step, default matches successionTimeStep of 10 years.",
-                          "Note that growth and mortality always happen on a yearly basis.")),
     defineParameter("growthAndMortalityDrivers", "character", "LandR", NA, NA,
-                    desc = paste("package name where the following functions can be found:",
-                                  "calculateClimateEffect, assignClimateEffect")),
+                    desc = "package name where the following functions can be found: calculateClimateEffect,
+                    assignClimateEffect"),
     defineParameter("growthInitialTime", "numeric", start(sim), NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
     defineParameter("initialBiomassSource", "character", "cohortData", NA, NA,
@@ -230,6 +227,8 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 
   switch(eventType,
          init = {
+           ## do stuff for this event
+
            ## Define .plotInterval/.saveInterval if need be
            if (is.na(P(sim)$.plotInterval))
              params(sim)$LBMR$.plotInterval <- P(sim)$successionTimestep
@@ -260,7 +259,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            if (!is.null(summBGMPriority$start))
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                   "LBMR", "summaryBGMstart", eventPriority = summBGMPriority$start)
-           sim <- scheduleEvent(sim, start(sim) + P(sim)$dispersalTimestep,
+           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = dispEvtPriority)
            sim <- scheduleEvent(sim, P(sim)$growthInitialTime,
                                 "LBMR", "mortalityAndGrowth", GMEvtPriority)
@@ -312,7 +311,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
          },
          Dispersal = {
            sim <- Dispersal(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$dispersalTimestep,
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
                                 "LBMR", "Dispersal", eventPriority = dispEvtPriority)
          },
          mortalityAndGrowth = {
