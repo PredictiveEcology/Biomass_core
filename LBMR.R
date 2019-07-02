@@ -685,6 +685,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sim$inactivePixelIndex <- which(ecoregionMapNAs)                   ## store for future use
   sim$inactivePixelIndexReporting <- which(ecoregionMapReportingNAs) ## store for future use
 
+  assertthat::assert_that(all(is.na(sim$ecoregionMap[]) == is.na(pixelGroupMap[])))
+
   # Keeps track of the length of the ecoregion
   mod$activeEcoregionLength <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
                                                                          getValues(sim$ecoregionMap),
