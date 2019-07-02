@@ -1401,6 +1401,8 @@ summaryRegen <- function(sim) {
 plotSummaryBySpecies <- function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
+  checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
+
   ## BIOMASS, WEIGHTED AVERAGE AGE, AVERAGE ANPP
   ## AND AGE OF OLDEST COHORT PER SPECIES
 
@@ -1410,6 +1412,7 @@ plotSummaryBySpecies <- function(sim) {
 
   for (column in names(thisPeriod)) if (is.integer(thisPeriod[[column]]))
     set(thisPeriod, NULL, column, as.numeric(thisPeriod[[column]]))
+
   thisPeriod <- thisPeriod[, list(year = time(sim),
                                   BiomassBySpecies = sum(B * noPixels, na.rm = TRUE),
                                   AgeBySppWeighted = sum(age * B * noPixels, na.rm = TRUE) /
@@ -1472,8 +1475,10 @@ plotSummaryBySpecies <- function(sim) {
         labs(x = "Year", y = "Biomass") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
-      Plot(plot2, title = paste0("Total biomass by species\n",
-                                 "across pixels"), new = TRUE)
+      Plot(plot2, title = paste0("Total biomass by species\n", "across pixels"), new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
     }
 
     maxNpixels <- length(sim$activePixelIndexReporting)
@@ -1490,6 +1495,9 @@ plotSummaryBySpecies <- function(sim) {
         geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey", size = 1)
 
       Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
     }
 
     if (!is.na(P(sim)$.plotInitialTime)) {
@@ -1503,6 +1511,9 @@ plotSummaryBySpecies <- function(sim) {
 
       Plot(plot4, title = paste0("Biomass-weighted species age\n",
                                  "(averaged across pixels)"), new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
     }
 
     if (!is.na(P(sim)$.plotInitialTime)) {
@@ -1516,6 +1527,9 @@ plotSummaryBySpecies <- function(sim) {
 
       Plot(plot5, title = paste("Oldest cohort age\n",
                                 "by species (across pixels)"), new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "oldest_cohorts.png"), plot5)
     }
 
     ## test
@@ -1530,6 +1544,9 @@ plotSummaryBySpecies <- function(sim) {
 
       Plot(plot6, title = paste0("Total aNPP by species\n",
                                  "across pixels"), new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"), plot6)
     }
     ## end test
   }
@@ -1651,6 +1668,9 @@ plotAvgVegAttributes <- function(sim) {
         labs(x = "Year", y = "Value")
 
       Plot(plot1, title = "Total landscape biomass and aNPP and max stand age", new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
     }
   }
   return(invisible(sim))
