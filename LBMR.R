@@ -1294,10 +1294,12 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     if (length(pixelsFromCurYrBurn) > 0) {
       reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
     }
-    maxPotLength <- try(as.integer(availableMemory()/(NROW(seedReceive)+NROW(seedSource)) * 100),
+    maxPotLength <- 1e5
+    maxPotLengthAdj <- try(as.integer(availableMemory()/(NROW(seedReceive)+NROW(seedSource)) * 100),
                         silent = TRUE)
-    if (is(maxPotLength, "try-error") || length(maxPotLength) == 0)
-      maxPotLength <- 1e5
+    if (is.numeric(maxPotLengthAdj) )
+      if (maxPotLengthAdj > 1e5)
+        maxPotLength <- maxPotLengthAdj
     seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
