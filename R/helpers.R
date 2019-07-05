@@ -180,7 +180,7 @@ calculateAgeMortality <- function(cohortData, stage = "nonSpinup", spinupMortali
   # for age-related mortality calculation
   if (stage == "spinup") {
     cohortData[age > 0, mAge := B*(exp((age) / longevity*mortalityshape) / exp(mortalityshape))]
-    cohortData[age > 0, mAge := mAge+B*spinupMortalityfraction]
+    cohortData[age > 0, mAge := mAge + B*spinupMortalityfraction]
     cohortData[age > 0, mAge := pmin(B, mAge)]
   } else {
     set(cohortData, NULL, "mAge",
