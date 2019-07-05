@@ -48,6 +48,9 @@ defineModule(sim, list(
                           "`spinUp`` uses sim$ageMap as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
                           "about biomass, unless this is set to TRUE, and a sim$biomassMap is supplied")),
+    defineParameter("mixedType", "numeric", 2,
+                    desc = paste("How to define mixed stands: 1 for any species admixture;",
+                                 "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
                     desc = paste("choose which seeding algorithm will be used among",
                                  "noDispersal, universalDispersal, and wardDispersal (default).")),
@@ -883,7 +886,8 @@ SummaryBGM <- function(sim) {
   setColors(sim$mortalityMap) <- c("light green", "dark green")
 
   sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
-                                        P(sim)$vegLeadingProportion,
+                                        P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
+                                        sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
                                         colors = sim$sppColorVect,
                                         doAssertion = getOption("LandR.assertions", TRUE))
 
