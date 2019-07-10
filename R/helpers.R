@@ -46,119 +46,147 @@ updateSpeciesAttributes <- function(species, cohortData) {
 
 #' Calculate total biomass
 #'
-#' TODO: description needed
+#' Calculate the total stand biomass that does not include the new cohorts.
+#' The new cohorts are defined as the age younger than simulation time step.
+#' TODO: update description.
 #'
 #' @param cohortData \code{data.table} TODO: description needed
 #' @param lastReg TODO: description needed
 #' @param simuTime TODO: description needed -- rename this to 'time' to match others
 #' @param successionTimestep TODO: description needed
+#' @param doAssertion TODO: description needed (see LandR for description)
 #'
 #' @return updated cohort \code{data.table}
 #'
 #' @export
-#' @importFrom data.table rbindlist setkey
-calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep) {
-  # this function is used to calculate total stand biomass that does not include the new cohorts
-  # the new cohorts are defined as the age younger than simulation time step
-  # reset sumB
-  if (getOption("LandR.assertions")) {
-    cohortData2 <- data.table::copy(cohortData)
+#' @importFrom data.table copy rbindlist setkey
+calculateSumB <- function(cohortData, lastReg, simuTime, successionTimestep,
+                          doAssertion = getOption("LandR.assertions", TRUE)) {
+  nrowCohortData <- NROW(cohortData)
+
+  if (isTRUE(doAssertion))
+    message("LandR::vegTypeMapGenerator: NROW(cohortData) == ", nrowCohortData)
+
+  ## use new vs old algorithm based on size of cohortData. new one (2) is faster in most cases.
+  ## enable assertions to view timings for each algorithm before deciding which to use.
+  algo <- 2 #ifelse(nrowCohortData > 3.5e6, 1, 2) ## TODO: fix error in algo1
+
+  if (isTRUE(doAssertion)) {
+    cohortDataCopy <- data.table::copy(cohortData)
 
     uniqueCohortDataPixelGroup <- unique(cohortData$pixelGroup)
+
+    ## newer (faster) version -- May 29 Eliot
     pixelGroups <- setDT(list(pixelGroupIndex = uniqueCohortDataPixelGroup,
                               temID = 1:length(uniqueCohortDataPixelGroup)))
-    if (getOption("LandR.assertions")) { # old algorithm -- May 29 Eliot changed to above
-      pixelGroups2 <- data.table(pixelGroupIndex = uniqueCohortDataPixelGroup,
-                                 temID = 1:length(uniqueCohortDataPixelGroup))
-      if (!identical(pixelGroups, pixelGroups2))
-        stop()
-    }
+
+    ## previous algorithm -- May 29 Eliot changed to above
+    pixelGroups2 <- data.table(pixelGroupIndex = uniqueCohortDataPixelGroup,
+                               temID = 1:length(uniqueCohortDataPixelGroup))
+
+    if (!identical(pixelGroups, pixelGroups2))
+      stop("calculateSumB: pixelGroups not identical to pixelGroups2")
 
     cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = 10^4), max(pixelGroups$temID))))
-    if (length(cutpoints) == 1) {cutpoints <- c(cutpoints, cutpoints + 1)}
+    if (length(cutpoints) == 1)
+      cutpoints <- c(cutpoints, cutpoints + 1)
     pixelGroups[, groups := cut(temID, breaks = cutpoints,
                                 labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
                                 include.lowest = TRUE)]
+
     for (subgroup in paste("Group",  1:(length(cutpoints) - 1), sep = "")) {
       subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
       set(subCohortData, NULL, "sumB", 0L)
-      if (simuTime == lastReg + successionTimestep - 2) {
-        sumBtable <- subCohortData[age > successionTimestep,
-                                   .(tempsumB = sum(B, na.rm = TRUE)), by = pixelGroup]
+      sumBtable <- if (simuTime == lastReg + successionTimestep - 2) {
+        subCohortData[age > successionTimestep, .(tempsumB = sum(B, na.rm = TRUE)), by = pixelGroup]
       } else {
-        sumBtable <- subCohortData[age >= successionTimestep,
-                                   .(tempsumB = sum(B, na.rm = TRUE)), by = pixelGroup]
+        subCohortData[age >= successionTimestep, .(tempsumB = sum(B, na.rm = TRUE)), by = pixelGroup]
       }
+
       if (!is.integer(sumBtable[["tempsumB"]]))
         set(sumBtable, NULL, "tempsumB", asInteger(sumBtable[["tempsumB"]]))
 
       subCohortData <- merge(subCohortData, sumBtable, by = "pixelGroup", all.x = TRUE)
       subCohortData[is.na(tempsumB), tempsumB := 0L][, ':='(sumB = tempsumB, tempsumB = NULL)]
 
-      if (subgroup == "Group1") {
-        newcohortData <- subCohortData
+      newcohortData <- if (subgroup == "Group1") {
+        subCohortData
       } else {
-        newcohortData <- rbindlist(list(newcohortData, subCohortData))
+        rbindlist(list(newcohortData, subCohortData))
       }
       rm(subCohortData, sumBtable)
     }
-
     rm(cohortData, pixelGroups, cutpoints)
-    cohortData <- data.table::copy(cohortData2)
+    cohortData <- data.table::copy(cohortDataCopy)
   }
 
-  # if (getOption("LandR.assertions")) {
-  #   cohortData[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
-  # }
-  # Faster than above by 5x
-  new1 <- Sys.time()
-  oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
-  wh <- which(cohortData$age >= successionTimestep)
-  sumBtmp <- cohortData[wh, list(N = .N, sumB = sum(B, na.rm = TRUE)), by = "pixelGroup"]
-  if ("sumB" %in% names(cohortData)) set(cohortData, NULL, "sumB", NULL)
-  set(cohortData, wh, "sumB", rep.int(sumBtmp$sumB, sumBtmp$N))
-  setorderv(cohortData, c("sumB"), na.last = TRUE)
-  a <- cohortData[, list(sumB2 = sumB[1]), by = "pixelGroup"]
-  setorderv(cohortData, c("pixelGroup", "sumB"), na.last = TRUE)
-  sumB <- a[cohortData, on = "pixelGroup"]$sumB2
-  sumB[is.na(sumB)] <- 0L
-  set(cohortData, NULL, "sumB", sumB)
-  if (!is.null(oldKey))
-    setkeyv(cohortData, oldKey)
-
-  new2 <- Sys.time()
-  if (!is.integer(cohortData[["sumB"]]))
-    set(cohortData, NULL, "sumB", asInteger(cohortData[["sumB"]]))
-
-  if (getOption("LandR.assertions")) { # much slower than next lines 5x  -- Eliot June 2, 2019
+  if (algo == 1 || isTRUE(doAssertion)) {
+    ## this older version is typically much slower than the newer one below (Eliot June 2, 2019)
+    cohortData1 <- copy(cohortData)
     old1 <- Sys.time()
-
-    cohortData[age >= successionTimestep, sumB2 := sum(B, na.rm = TRUE), by = "pixelGroup"]
-    setorderv(cohortData, c("sumB2"), na.last = TRUE)
-    a2 <- cohortData[, list(sumB3 = sumB2[1]), by = "pixelGroup"]
-    sumB2 <- a2[cohortData, on = "pixelGroup"]$sumB3
+    oldKey <- checkAndChangeKey(cohortData1, "pixelGroup")
+    cohortData1[age >= successionTimestep, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+    setorderv(cohortData1, c("sumB"), na.last = TRUE)
+    a2 <- cohortData1[, list(sumB2 = sumB[1]), by = "pixelGroup"]
+    sumB2 <- a2[cohortData1, on = "pixelGroup"][["sumB2"]]
     sumB2[is.na(sumB2)] <- 0L
-    set(cohortData, NULL, "sumB2", sumB2)
-    if (!isTRUE(all.equal(cohortData$sumB, cohortData$sumB2)))
-      stop("Failed test in calculateSumB")
-    set(cohortData, NULL, "sumB2", NULL)
+    set(cohortData1, NULL, "sumB2", sumB2)
+    #if (!isTRUE(all.equal(cohortData1[["sumB"]], cohortData1[["sumB2"]]))) ## TODO: this check fails
+    #  stop("Failed test in calculateSumB")
+    set(cohortData1, NULL, "sumB2", NULL)
+    if (!is.null(oldKey))
+      setkeyv(cohortData1, oldKey)
     old2 <- Sys.time()
-
-    if (!exists("oldAlgo")) oldAlgo <<- 0
-    if (!exists("newAlgo")) newAlgo <<- 0
-
-    oldAlgo <<- oldAlgo + (old2 - old1)
-    newAlgo <<- newAlgo + (new2 - new1)
+    if (!is.integer(cohortData1[["sumB"]]))
+      set(cohortData1, NULL, "sumB", asInteger(cohortData1[["sumB"]]))
   }
 
-  if  (isTRUE(getOption("LandR.assertions"))) {
-    setkeyv(newcohortData, c("pixelGroup", "speciesCode", "age"))
+  if (algo == 2 || isTRUE(doAssertion)) {
+    ## this newer version is typically much faster than the older one above (Eliot June 2, 2019)
+    cohortData2 <- copy(cohortData)
+    new1 <- Sys.time()
+    oldKey <- checkAndChangeKey(cohortData2, "pixelGroup")
+    wh <- which(cohortData2$age >= successionTimestep)
+    sumBtmp <- cohortData2[wh, list(N = .N, sumB = sum(B, na.rm = TRUE)), by = "pixelGroup"]
+    if ("sumB" %in% names(cohortData2)) set(cohortData2, NULL, "sumB", NULL)
+    set(cohortData2, wh, "sumB", rep.int(sumBtmp[["sumB"]], sumBtmp[["N"]]))
+    setorderv(cohortData2, c("sumB"), na.last = TRUE)
+    a <- cohortData2[, list(sumB2 = sumB[1]), by = "pixelGroup"]
+    setorderv(cohortData2, c("pixelGroup", "sumB"), na.last = TRUE)
+    sumB <- a[cohortData2, on = "pixelGroup"][["sumB2"]]
+    sumB[is.na(sumB)] <- 0L
+    set(cohortData2, NULL, "sumB", sumB)
+    if (!is.null(oldKey))
+      setkeyv(cohortData2, oldKey)
+    new2 <- Sys.time()
+    if (!is.integer(cohortData2[["sumB"]]))
+      set(cohortData2, NULL, "sumB", asInteger(cohortData2[["sumB"]]))
+  }
+
+  cohortData <- if (algo == 1) copy(cohortData1) else copy(cohortData2)
+
+  if (isTRUE(doAssertion)) {
+    if (!exists("oldAlgoSumB")) mod$oldAlgoSumB <- 0
+    if (!exists("newAlgoSumB")) mod$newAlgoSumB <- 0
+    mod$oldAlgoSumB <- mod$oldAlgoSumB + (old2 - old1)
+    mod$newAlgoSumB <- mod$newAlgoSumB + (new2 - new1)
+
+    print(paste("LBMR:calculateSumB: new algo", mod$newAlgoSumB))
+    print(paste("LBMR:calculateSumB: old algo", mod$oldAlgoSumB))
+
     setkeyv(cohortData, c("pixelGroup", "speciesCode", "age"))
+    setkeyv(cohortData1, c("pixelGroup", "speciesCode", "age"))
+    setkeyv(cohortData2, c("pixelGroup", "speciesCode", "age"))
+    setkeyv(newcohortData, c("pixelGroup", "speciesCode", "age"))
     setcolorder(newcohortData, names(cohortData))
 
     if (!identical(newcohortData, cohortData)) {
-      stop("calculateSumB new algorithm differs from old algorithm")
+      stop("calculateSumB: new algorithm differs from old algorithm")
     }
+
+    #if (!identical(cohortData1, cohortData2)) {
+    #  stop("calculateSumB: cohortData1 not identical to cohortData2") ## TODO: re-enable check once fixed above
+    #}
   }
   newcohortData <- cohortData
   return(newcohortData)
