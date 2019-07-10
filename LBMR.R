@@ -1991,7 +1991,7 @@ CohortAgeReclassification <- function(sim) {
   }
 
   ## additional species traits
-  if(!suppliedElsewhere("species", sim)) {
+  if (!suppliedElsewhere("species", sim)) {
     speciesTable <- getSpeciesTable(dPath = dPath, cacheTags = cacheTags)
     sim$species <- prepSpeciesTable(speciesTable = speciesTable,
                                     speciesLayers = sim$speciesLayers,
