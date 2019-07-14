@@ -1299,7 +1299,8 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
       reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
     }
     maxPotLength <- 1e5
-    maxPotLengthAdj <- try(as.integer(availableMemory()/(NROW(seedReceive)+NROW(seedSource)) * 100),
+    # should be between
+    maxPotLengthAdj <- try(as.integer(log(availableMemory()/1e9+2)^5*1e4)),
                         silent = TRUE)
     if (is.numeric(maxPotLengthAdj) )
       if (maxPotLengthAdj > 1e5)
