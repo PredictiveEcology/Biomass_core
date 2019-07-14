@@ -1300,7 +1300,7 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     }
     maxPotLength <- 1e5
     # should be between
-    maxPotLengthAdj <- try(as.integer(log(availableMemory()/1e9+2)^5*1e4)),
+    maxPotLengthAdj <- try(as.integer(log(availableMemory()/1e9+2)^5*1e4),
                         silent = TRUE)
     if (is.numeric(maxPotLengthAdj) )
       if (maxPotLengthAdj > 1e5)
