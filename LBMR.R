@@ -48,6 +48,9 @@ defineModule(sim, list(
                           "`spinUp`` uses sim$ageMap as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
                           "about biomass, unless this is set to TRUE, and a sim$biomassMap is supplied")),
+    defineParameter("mixedType", "numeric", 2,
+                    desc = paste("How to define mixed stands: 1 for any species admixture;",
+                                 "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
                     desc = paste("choose which seeding algorithm will be used among",
                                  "noDispersal, universalDispersal, and wardDispersal (default).")),
@@ -685,6 +688,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sim$inactivePixelIndex <- which(ecoregionMapNAs)                   ## store for future use
   sim$inactivePixelIndexReporting <- which(ecoregionMapReportingNAs) ## store for future use
 
+  assertthat::assert_that(all(is.na(sim$ecoregionMap[]) == is.na(pixelGroupMap[])))
+
   # Keeps track of the length of the ecoregion
   mod$activeEcoregionLength <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
                                                                          getValues(sim$ecoregionMap),
@@ -881,9 +886,10 @@ SummaryBGM <- function(sim) {
   setColors(sim$mortalityMap) <- c("light green", "dark green")
 
   sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
-                                        P(sim)$vegLeadingProportion,
+                                        P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
+                                        sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
                                         colors = sim$sppColorVect,
-                                        unitTest = getOption("LandR.assertions", TRUE))
+                                        doAssertion = getOption("LandR.assertions", TRUE))
 
   # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable) ## TODO: is this needed? on exit, should free the mem used for these
@@ -1287,15 +1293,23 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     #   inactivePixelIndex <- sim$inactivePixelIndex
     # }
     reducedPixelGroupMap <- sim$pixelGroupMap
+
+    # Calculate the maximum size of the chunks for LANDISDisp
     if (length(pixelsFromCurYrBurn) > 0) {
       reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
     }
-
+    maxPotLength <- 1e5
+    # should be between
+    maxPotLengthAdj <- try(as.integer(log(availableMemory()/1e9+2)^5*1e4),
+                        silent = TRUE)
+    if (is.numeric(maxPotLengthAdj) )
+      if (maxPotLengthAdj > 1e5)
+        maxPotLength <- maxPotLengthAdj
     seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
                               reducedPixelGroupMap,
-                              maxPotentialsLength = 5e5,
+                              maxPotentialsLength = maxPotLength,
                               successionTimestep = P(sim)$successionTimestep,
                               verbose = FALSE,
                               useParallel = P(sim)$.useParallel)
@@ -1394,6 +1408,8 @@ summaryRegen <- function(sim) {
 plotSummaryBySpecies <- function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
+  checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
+
   ## BIOMASS, WEIGHTED AVERAGE AGE, AVERAGE ANPP
   ## AND AGE OF OLDEST COHORT PER SPECIES
 
@@ -1403,6 +1419,7 @@ plotSummaryBySpecies <- function(sim) {
 
   for (column in names(thisPeriod)) if (is.integer(thisPeriod[[column]]))
     set(thisPeriod, NULL, column, as.numeric(thisPeriod[[column]]))
+
   thisPeriod <- thisPeriod[, list(year = time(sim),
                                   BiomassBySpecies = sum(B * noPixels, na.rm = TRUE),
                                   AgeBySppWeighted = sum(age * B * noPixels, na.rm = TRUE) /
@@ -1465,8 +1482,10 @@ plotSummaryBySpecies <- function(sim) {
         labs(x = "Year", y = "Biomass") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
 
-      Plot(plot2, title = paste0("Total biomass by species\n",
-                                 "across pixels"), new = TRUE)
+      Plot(plot2, title = paste0("Total biomass by species\n", "across pixels"), new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
     }
 
     maxNpixels <- length(sim$activePixelIndexReporting)
@@ -1483,6 +1502,9 @@ plotSummaryBySpecies <- function(sim) {
         geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey", size = 1)
 
       Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
     }
 
     if (!is.na(P(sim)$.plotInitialTime)) {
@@ -1496,6 +1518,9 @@ plotSummaryBySpecies <- function(sim) {
 
       Plot(plot4, title = paste0("Biomass-weighted species age\n",
                                  "(averaged across pixels)"), new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
     }
 
     if (!is.na(P(sim)$.plotInitialTime)) {
@@ -1509,6 +1534,9 @@ plotSummaryBySpecies <- function(sim) {
 
       Plot(plot5, title = paste("Oldest cohort age\n",
                                 "by species (across pixels)"), new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "oldest_cohorts.png"), plot5)
     }
 
     ## test
@@ -1523,6 +1551,9 @@ plotSummaryBySpecies <- function(sim) {
 
       Plot(plot6, title = paste0("Total aNPP by species\n",
                                  "across pixels"), new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"), plot6)
     }
     ## end test
   }
@@ -1644,6 +1675,9 @@ plotAvgVegAttributes <- function(sim) {
         labs(x = "Year", y = "Value")
 
       Plot(plot1, title = "Total landscape biomass and aNPP and max stand age", new = TRUE)
+
+      if (current(sim)$eventTime == end(sim))
+        ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
     }
   }
   return(invisible(sim))
@@ -1962,7 +1996,7 @@ CohortAgeReclassification <- function(sim) {
   }
 
   ## additional species traits
-  if(!suppliedElsewhere("species", sim)) {
+  if (!suppliedElsewhere("species", sim)) {
     speciesTable <- getSpeciesTable(dPath = dPath, cacheTags = cacheTags)
     sim$species <- prepSpeciesTable(speciesTable = speciesTable,
                                     speciesLayers = sim$speciesLayers,
