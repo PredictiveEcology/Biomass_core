@@ -63,6 +63,8 @@ defineModule(sim, list(
                           "Note that growth and mortality always happen on a yearly basis.")),
     defineParameter("vegLeadingProportion", "numeric", 0.8, 0, 1,
                     desc = "a number that define whether a species is leading for a given pixel"),
+    defineParameter(".maxMemory", "numeric", 5, NA, NA,
+                    desc = "maximum amount of memory (in GB) to use for dispersal calculations."),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first plot event should occur.",
                                  "Set to NA to turn plotting off.")),
@@ -1300,8 +1302,8 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     }
     maxPotLength <- 1e5
     # should be between
-    maxPotLengthAdj <- try(as.integer(log(availableMemory()/1e9+2)^5*1e4),
-                        silent = TRUE)
+    maxMem <- min(as.numeric(availableMemory()) / 1e9, P(sim)$.maxMemory) ## memory (GB) avail.
+    maxPotLengthAdj <- try(as.integer(log(maxMem + 2)^5 * 1e4), silent = TRUE)
     if (is.numeric(maxPotLengthAdj) )
       if (maxPotLengthAdj > 1e5)
         maxPotLength <- maxPotLengthAdj
