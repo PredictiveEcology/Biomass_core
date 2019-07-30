@@ -78,9 +78,9 @@ defineModule(sim, list(
     defineParameter(".saveInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the saving time step.",
                                  "If NA, the default, .saveInterval is set to successionTimestep.")),
-    defineParameter(".useCache", "logical", "init",
+    defineParameter(".useCache", "logical", "init", NA, NA,
                     desc = "use caching for the spinup simulation?"),
-    defineParameter(".useParallel", "ANY", 2,
+    defineParameter(".useParallel", "ANY", 2, NA, NA,
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to data.table::setDTthreads and should be <= 2;",
                                  "If TRUE, it will be passed to parallel:makeCluster;",
@@ -1284,7 +1284,7 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     # Add inSituReceived data.table from the inSitu seeding function or event
     inSituReceived <- data.table(fromInit = integer(), species = character())
 
-    # it could be more effecient if sim$pixelGroupMap is reduced map by removing the pixels that have
+    # it could be more efficient if sim$pixelGroupMap is reduced map by removing the pixels that have
     # successful postdisturbance regeneration and the inactive pixels
     # how to subset the reducedmap
     # if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
