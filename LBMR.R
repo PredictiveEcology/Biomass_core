@@ -63,6 +63,8 @@ defineModule(sim, list(
                           "Note that growth and mortality always happen on a yearly basis.")),
     defineParameter("vegLeadingProportion", "numeric", 0.8, 0, 1,
                     desc = "a number that define whether a species is leading for a given pixel"),
+    defineParameter(".maxMemory", "numeric", 5, NA, NA,
+                    desc = "maximum amount of memory (in GB) to use for dispersal calculations."),
     defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first plot event should occur.",
                                  "Set to NA to turn plotting off.")),
@@ -78,9 +80,9 @@ defineModule(sim, list(
     defineParameter(".saveInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the saving time step.",
                                  "If NA, the default, .saveInterval is set to successionTimestep.")),
-    defineParameter(".useCache", "logical", "init",
+    defineParameter(".useCache", "logical", "init", NA, NA,
                     desc = "use caching for the spinup simulation?"),
-    defineParameter(".useParallel", "ANY", 2,
+    defineParameter(".useParallel", "ANY", 2, NA, NA,
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to data.table::setDTthreads and should be <= 2;",
                                  "If TRUE, it will be passed to parallel:makeCluster;",
@@ -1284,7 +1286,7 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     # Add inSituReceived data.table from the inSitu seeding function or event
     inSituReceived <- data.table(fromInit = integer(), species = character())
 
-    # it could be more effecient if sim$pixelGroupMap is reduced map by removing the pixels that have
+    # it could be more efficient if sim$pixelGroupMap is reduced map by removing the pixels that have
     # successful postdisturbance regeneration and the inactive pixels
     # how to subset the reducedmap
     # if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
@@ -1300,8 +1302,8 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
     }
     maxPotLength <- 1e5
     # should be between
-    maxPotLengthAdj <- try(as.integer(log(availableMemory()/1e9+2)^5*1e4),
-                        silent = TRUE)
+    maxMem <- min(as.numeric(availableMemory()) / 1e9, P(sim)$.maxMemory) ## memory (GB) avail.
+    maxPotLengthAdj <- try(as.integer(log(maxMem + 2)^5 * 1e4), silent = TRUE)
     if (is.numeric(maxPotLengthAdj) )
       if (maxPotLengthAdj > 1e5)
         maxPotLength <- maxPotLengthAdj
