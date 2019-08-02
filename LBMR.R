@@ -1033,7 +1033,7 @@ MortalityAndGrowth <- function(sim) {
     #Ian added this check 04/04/2019 - without climate-sensitivity, mortality never exceeds biomass
     subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
 
-    set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM", "climGrowth", "climMort"), NULL)
+    set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
     if (P(sim)$calibrate) {
       set(subCohortData, NULL, "deltaB", asInteger(subCohortData$aNPPAct - subCohortData$mortality))
       set(subCohortData, NULL, "B", subCohortData$B + subCohortData$deltaB)

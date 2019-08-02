@@ -31,7 +31,9 @@ ageReclassification <- function(cohortData, successionTimestep, stage) {
                    age = successionTimestepPlusOne,
                    B = sum(B, na.rm = TRUE),
                    mortality = sum(mortality, na.rm = TRUE),
-                   aNPPAct = sum(aNPPAct, na.rm = TRUE)),
+                   aNPPAct = sum(aNPPAct, na.rm = TRUE),
+                   climGrowth = sum(climGrowth, na.rm = TRUE),
+                   climMort = sum(climMort, na.rm = TRUE)),
                by = byGroups]
       td <- td[, ..cdColNames] # keep only the columns, in the correct order, as cohortData
       tdNonDups <- targetData[-tdDuplicates]
