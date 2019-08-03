@@ -2,7 +2,7 @@
 # are put into the simList. To use objects and functions, use sim$xxx.
 defineModule(sim, list(
   name = "LBMR",
-  description = "A fast and large landscape biomass succession model modified from LANDIS II",
+  description = "A fast and large landscape biomass succession model modified from LANDIS-II Biomass Succession extension, v3.2.1",
   keywords = c("forest succession", "LANDIS II", "Biomass"),
   authors = c(
     person("Yong", "Luo", email = "yluo1@lakeheadu.ca", role = "aut"),
@@ -111,10 +111,10 @@ defineModule(sim, list(
                  desc = paste("Raster layer of buffered study area used for cropping, masking and projecting.",
                               "Defaults to the kNN biomass map masked with `studyArea`"),
                  sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
-    expectsInput("rasterToMatchReporting", "RasterLayer",
-                 desc = paste("Raster layer of study area used for plotting and reporting only.",
-                              "Defaults to the kNN biomass map masked with `studyArea`"),
-                 sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
+    # expectsInput("rasterToMatchReporting", "RasterLayer",
+    #              desc = paste("Raster layer of study area used for plotting and reporting only.",
+    #                           "Defaults to the kNN biomass map masked with `studyArea`"),
+    #              sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
     expectsInput("species", "data.table",
                  desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
                               "Default is partially based on Dominic Cir and Yan's project"),
@@ -162,8 +162,8 @@ defineModule(sim, list(
                   desc = "internal use. Keeps track of which pixels are inactive"),
     createsOutput("inactivePixelIndexReporting", "integer",
                   desc = "internal use. Keeps track of which pixels are inactive in the reporting study area"),
-    createsOutput("initialCommunities", "character",
-                  desc = "Because the initialCommunities object can be LARGE, it is saved to disk with this filename"),
+    # createsOutput("initialCommunities", "character",
+    #               desc = "Because the initialCommunities object can be LARGE, it is saved to disk with this filename"),
     createsOutput("lastFireYear", "numeric",
                   desc = "Year of the most recent fire year"),
     createsOutput("lastReg", "numeric",
@@ -196,7 +196,9 @@ defineModule(sim, list(
     createsOutput("summaryBySpecies1", "data.table",
                   desc = "No. pixels of each leading vegetation type (used for plotting and reporting)."),
     createsOutput("summaryLandscape", "data.table",
-                  desc = "The averages of total biomass, age and aNPP across the landscape (used for plotting and reporting).")
+                  desc = "The averages of total biomass, age and aNPP across the landscape (used for plotting and reporting)."),
+    createsOutput("treedFirePixelTableSinceLastDisp", "",
+                  desc = "")
   )
 ))
 
@@ -1160,7 +1162,7 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   return(invisible(sim))
 }
 
-UniversalDispersalSeeding <- function(sim, tempActivePixel) {
+UniversalDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   # if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
   #   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
   # } else {
@@ -1808,9 +1810,9 @@ CohortAgeReclassification <- function(sim) {
                                datatype = "INT2U", overwrite = TRUE)
   }
 
-  if (!suppliedElsewhere("rasterToMatchReporting")) {
-    sim$rasterToMatchReporting <- sim$rasterToMatch
-  }
+  # if (!suppliedElsewhere("rasterToMatchReporting")) {
+  #   sim$rasterToMatchReporting <- sim$rasterToMatch
+  # }
 
   if (FALSE) { # not using this -- Eliot Jan 22, 2019 -- use pixelGroupMap and pixelGroups instead
     if (!suppliedElsewhere("initialCommunities", sim)) {
