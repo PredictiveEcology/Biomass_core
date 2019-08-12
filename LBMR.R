@@ -893,7 +893,6 @@ SummaryBGM <- function(sim) {
                                         colors = sim$sppColorVect,
                                         doAssertion = getOption("LandR.assertions", TRUE))
 
-  # the following codes for preparing the data table for saving
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable) ## TODO: is this needed? on exit, should free the mem used for these
   return(invisible(sim))
 }
