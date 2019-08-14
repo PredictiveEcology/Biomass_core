@@ -17,7 +17,7 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "LBMR.Rmd"),
-  reqdPkgs = list("data.table", "dplyr", "fpCompare", "ggplot2", "grid",
+  reqdPkgs = list("compiler", "data.table", "dplyr", "fpCompare", "ggplot2", "grid",
                   "purrr", "quickPlot", "raster", "Rcpp", "scales", "sp", "tidyr",
                   "PredictiveEcology/LandR@development",
                   "PredictiveEcology/pemisc@development",
@@ -812,7 +812,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   return(invisible(sim))
 }
 
-SummaryBGM <- function(sim) {
+SummaryBGM <- compiler::cmpfun(function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup),
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
   cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = mod$cutpoint),
@@ -896,9 +896,9 @@ SummaryBGM <- function(sim) {
 
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable) ## TODO: is this needed? on exit, should free the mem used for these
   return(invisible(sim))
-}
+})
 
-MortalityAndGrowth <- function(sim) {
+MortalityAndGrowth <- compiler::cmpfun(function(sim) {
   if (is.numeric(P(sim)$.useParallel)) {
     data.table::setDTthreads(P(sim)$.useParallel)
     message("Mortality and Growth should be using >100% CPU")
@@ -1073,7 +1073,7 @@ MortalityAndGrowth <- function(sim) {
   }
   LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap)
   return(invisible(sim))
-}
+})
 
 Dispersal <- function(sim) {
   treedFirePixelTableCurYr <- sim$treedFirePixelTableSinceLastDisp[burnTime == time(sim)]
@@ -1093,7 +1093,7 @@ Dispersal <- function(sim) {
   return(invisible(sim))
 }
 
-NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
+NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFromCurYrBurn) {
   # if (sim$lastFireYear == round(time(sim))) { # if current year is both fire year and succession year
   #   # find new active pixel that remove successful postfire regeneration
   #   # since this is on site regeneration, all the burnt pixels can not seeding
@@ -1158,9 +1158,9 @@ NoDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn) {
 
   sim$lastReg <- round(time(sim))
   return(invisible(sim))
-}
+})
 
-UniversalDispersalSeeding <- function(sim, tempActivePixel) {
+UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   # if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
   #   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
   # } else {
@@ -1229,10 +1229,10 @@ UniversalDispersalSeeding <- function(sim, tempActivePixel) {
   }
   sim$lastReg <- round(time(sim))
   return(invisible(sim))
-}
+})
 
-WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
-                                 verbose = getOption("LandR.verbose", TRUE)) {
+WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFromCurYrBurn,
+                                                  verbose = getOption("LandR.verbose", TRUE)) {
   sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
                                   lastReg = sim$lastReg, simuTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
@@ -1380,9 +1380,9 @@ WardDispersalSeeding <- function(sim, tempActivePixel, pixelsFromCurYrBurn,
   }
   sim$lastReg <- round(time(sim))
   return(invisible(sim))
-}
+})
 
-summaryRegen <- function(sim) {
+summaryRegen <- compiler::cmpfun(function(sim) {
   #cohortData <- sim$cohortData
   if (!is.na(P(sim)$.plotInitialTime) | !is.na(P(sim)$.saveInitialTime)) {
     pixelGroupMap <- sim$pixelGroupMap
@@ -1405,9 +1405,9 @@ summaryRegen <- function(sim) {
     rm(pixelGroupMap)
   }
   return(invisible(sim))
-}
+})
 
-plotSummaryBySpecies <- function(sim) {
+plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
   checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
@@ -1561,9 +1561,9 @@ plotSummaryBySpecies <- function(sim) {
   }
 
   return(invisible(sim))
-}
+})
 
-plotVegAttributesMaps <- function(sim) {
+plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
   if (!is.na(P(sim)$.plotInitialTime)) {
@@ -1640,9 +1640,9 @@ plotVegAttributesMaps <- function(sim) {
   }
 
   return(invisible(sim))
-}
+})
 
-plotAvgVegAttributes <- function(sim) {
+plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
   ## AVERAGE STAND BIOMASS/AGE/ANPP
@@ -1683,9 +1683,9 @@ plotAvgVegAttributes <- function(sim) {
     }
   }
   return(invisible(sim))
-}
+})
 
-Save <- function(sim) {
+Save <- compiler::cmpfun(function(sim) {
   raster::projection(sim$simulatedBiomassMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$ANPPMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
@@ -1703,7 +1703,7 @@ Save <- function(sim) {
               file.path(outputPath(sim), paste("reproductionMap_Year", round(time(sim)), ".tif", sep = "")),
               datatype = 'INT4S', overwrite = TRUE)
   return(invisible(sim))
-}
+})
 
 CohortAgeReclassification <- function(sim) {
   if (time(sim) != 0) {
@@ -1716,7 +1716,7 @@ CohortAgeReclassification <- function(sim) {
   }
 }
 
-.inputObjects <- function(sim) {
+.inputObjects <- compiler::cmpfun(function(sim) {
   cacheTags <- c(currentModule(sim), "function:.inputObjects")
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   if (getOption("LandR.verbose", TRUE) > 0)
@@ -2008,4 +2008,4 @@ CohortAgeReclassification <- function(sim) {
   }
 
   return(invisible(sim))
-}
+})

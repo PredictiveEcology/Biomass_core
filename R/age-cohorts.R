@@ -1,4 +1,4 @@
-ageReclassification <- function(cohortData, successionTimestep, stage) {
+ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep, stage) {
 
   # Slight faster to check only, if not needed, than always convert
   if (!is.integer(successionTimestep))
@@ -55,4 +55,4 @@ ageReclassification <- function(cohortData, successionTimestep, stage) {
     }
   }
   return(cohortData)
-}
+})
