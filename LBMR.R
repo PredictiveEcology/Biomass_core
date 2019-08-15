@@ -90,6 +90,11 @@ defineModule(sim, list(
                                  "and if a cluster object, it will be passed to parallel::parClusterApplyB."))
   ),
   inputObjects = bind_rows(
+    expectsInput("biomassMap", "RasterLayer",
+                 desc = paste("total biomass raster layer in study area,",
+                              "filtered for pixels covered by cohortData.",
+                              "Only used if P(sim)$initialBiomassSource == 'biomassMap'"),
+                 sourceURL = ""),
     expectsInput("cohortData", "data.table",
                  desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
     expectsInput("ecoregion", "data.table",
