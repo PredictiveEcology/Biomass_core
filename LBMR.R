@@ -44,11 +44,11 @@ defineModule(sim, list(
                     paste("Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. ",
                           "If 'spinUp', it will derive biomass by running spinup derived from Landis-II.",
                           "If 'cohortData', it will be taken from the 'cohortData' object, i.e., it is already correct, by cohort.",
-                          "If 'biomassMap', it will be taken from sim$biomassMap,",
+                          "If 'rawBiomassMap', it will be taken from sim$biomassMap,",
                           "divided across species using sim$speciesLayers percent cover values",
                           "`spinUp`` uses sim$ageMap as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
-                          "about biomass, unless this is set to TRUE, and a sim$biomassMap is supplied")),
+                          "about biomass, unless this is set to TRUE, and a sim$rawBiomassMap is supplied")),
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
                                  "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
@@ -489,8 +489,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
     pixelTable <- makePixelTable(speciesLayers = sim$speciesLayers, species = sim$species,
                                  standAgeMap = standAgeMap, ecoregionFiles = ecoregionFiles,
-                                 biomassMap = biomassMap, rasterToMatch = sim$rasterToMatch,
-                                 LCC2005 = LCC2005, pixelGroupAgeClass = 10)
+                                 biomassMap = rawBiomassMap, rasterToMatch = sim$rasterToMatch,
+                                 rstLCC = rstLCC, pixelGroupAgeClass = 10)
 
     #######################################################
     # Make the initial pixelCohortData table
@@ -1742,7 +1742,7 @@ CohortAgeReclassification <- function(sim) {
   if (is.null(sim$rasterToMatch)) {
     if (!suppliedElsewhere("rasterToMatch", sim)) {
       needRTM <- TRUE
-      message("There is no rasterToMatch supplied; will attempt to use biomassMap")
+      message("There is no rasterToMatch supplied; will attempt to use rawBiomassMap")
     } else {
       stop("rasterToMatch is going to be supplied, but ", currentModule(sim), " requires it ",
            "as part of its .inputObjects. Please make it accessible to ", currentModule(sim),
@@ -1752,29 +1752,29 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (needRTM) {
-    if (!suppliedElsewhere("biomassMap", sim)) {
-      biomassMapFilename <- file.path(dPath, "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.tif")
-      biomassMapURL <- "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"
-      biomassMap <- Cache(prepInputs,
-                          targetFile = asPath(basename(biomassMapFilename)),
-                          archive = asPath(c("kNN-StructureBiomass.tar",
-                                             "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.zip")),
-                          url = biomassMapURL,
-                          destinationPath = dPath,
-                          studyArea = sim$studyArea,
-                          rasterToMatch = NULL,
-                          maskWithRTM = FALSE,
-                          useSAcrs = TRUE,
-                          method = "bilinear",
-                          datatype = "INT2U",
-                          filename2 = TRUE, overwrite = TRUE,
-                          omitArgs = c("destinationPath", "targetFile", cacheTags, "stable"))
+    if (!suppliedElsewhere("rawBiomassMap", sim)) {
+      rawBiomassMapFilename <- file.path(dPath, "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.tif")
+      rawBiomassMapURL <- "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"
+      rawBiomassMap <- Cache(prepInputs,
+                             targetFile = asPath(basename(rawBiomassMapFilename)),
+                             archive = asPath(c("kNN-StructureBiomass.tar",
+                                                "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.zip")),
+                             url = rawBiomassMapURL,
+                             destinationPath = dPath,
+                             studyArea = sim$studyArea,
+                             rasterToMatch = NULL,
+                             maskWithRTM = FALSE,
+                             useSAcrs = TRUE,
+                             method = "bilinear",
+                             datatype = "INT2U",
+                             filename2 = TRUE, overwrite = TRUE,
+                             omitArgs = c("destinationPath", "targetFile", cacheTags, "stable"))
     } else {
-      biomassMap <- sim$biomassMap
+      rawBiomassMap <- sim$rawBiomassMap
     }
 
-    # if we need rasterToMatch, that means a) we don't have it, but b) we will have biomassMap
-    sim$rasterToMatch <- biomassMap
+    # if we need rasterToMatch, that means a) we don't have it, but b) we will have rawBiomassMap
+    sim$rasterToMatch <- rawBiomassMap
     studyArea <- sim$studyArea # temporary copy because it will be overwritten if it is suppliedElsewhere
     message("  Rasterizing the studyArea polygon map")
     if (!is(studyArea, "SpatialPolygonsDataFrame")) {
