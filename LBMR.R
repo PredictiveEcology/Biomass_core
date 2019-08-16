@@ -572,9 +572,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     pixelCohortData <- cohortDataFiles$pixelCohortData
     rm(cohortDataFiles)
 
-    cd <- pixelCohortData[, .SD, .SDcols = c("pixelIndex", columnsForPixelGroups)]
-    pixelCohortData[, pixelGroup := Cache(generatePixelGroups, cd, maxPixelGroup = 0,
-                                          columns = columnsForPixelGroups)]
+    ## make a table of available active and inactive (no biomass) ecoregions
+    sim$ecoregion <- makeEcoregionDT(pixelCohortData, speciesEcoregion)
 
     ########################################################################
     ## build ecoregion, ecoregionMap objects
