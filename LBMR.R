@@ -560,17 +560,17 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     # Create initial communities, i.e., pixelGroups
     ########################################################################
 
-    ## TODO: code below needs to be converted to funtions to avoid repeating code across modules (Boreal_LBMRDataPrep)
-    pixelCohortData[, ecoregionGroup := factor(as.character(ecoregionGroup))]
-    pixelCohortData[ , `:=`(logAge = NULL, coverOrig = NULL, totalBiomass = NULL, #pixelIndex = NULL,
-                            cover = NULL, lcc = NULL)]
-    pixelCohortData <- pixelCohortData[B > 0]
-
     if (!suppliedElsewhere("columnsForPixelGroups", sim)) {
       columnsForPixelGroups <- LandR::columnsForPixelGroups
     } else {
       columnsForPixelGroups <- sim$columnsForPixelGroups
     }
+    ## make cohortDataFiles: pixelCohortData (rm unnecessary cols, subset pixels with B>0,
+    ## generate pixelGroups, add ecoregionGroup and totalBiomass) and cohortData
+    cohortDataFiles <- makeCohortDataFiles(pixelCohortData, columnsForPixelGroups, speciesEcoregion)
+    sim$cohortData <- cohortDataFiles$cohortData
+    pixelCohortData <- cohortDataFiles$pixelCohortData
+    rm(cohortDataFiles)
 
     cd <- pixelCohortData[, .SD, .SDcols = c("pixelIndex", columnsForPixelGroups)]
     pixelCohortData[, pixelGroup := Cache(generatePixelGroups, cd, maxPixelGroup = 0,
