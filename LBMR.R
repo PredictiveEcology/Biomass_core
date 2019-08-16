@@ -82,7 +82,7 @@ defineModule(sim, list(
                     desc = paste("defines the saving time step.",
                                  "If NA, the default, .saveInterval is set to successionTimestep.")),
     defineParameter(".useCache", "logical", "init", NA, NA,
-                    desc = "use caching for the spinup simulation?"),
+                    desc = "Controls cache; caches the init event by default"),
     defineParameter(".useParallel", "ANY", 2, NA, NA,
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to data.table::setDTthreads and should be <= 2;",
