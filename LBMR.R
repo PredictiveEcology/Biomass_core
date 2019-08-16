@@ -581,7 +581,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ########################################################################
     ecoregionsWeHaveParametersFor <- levels(speciesEcoregion$ecoregionGroup)
 
-    pixelCohortData <- pixelCohortData[ecoregionGroup %in% ecoregionsWeHaveParametersFor] # keep only ones we have params for
+    ## make ecoregionGroup a factor and export speciesEcoregion to sim
     pixelCohortData[ , ecoregionGroup := factor(as.character(ecoregionGroup))]
     pixelCohortData[, totalBiomass := sum(B), by = "pixelIndex"]
 
@@ -610,10 +610,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                    X4 = 0.7, X5 = 0.9)
 
     speciesEcoregion[, ecoregionGroup := factor(as.character(ecoregionGroup))]
-
     sim$speciesEcoregion <- speciesEcoregion
 
-    ##############################################################################
+    ## do assertions
     ##  Collapse pixelCohortData to its cohortData : need pixelGroupMap
     sim$pixelGroupMap <- raster(sim$rasterToMatch)
     sim$pixelGroupMap[pixelData$pixelIndex] <- as.integer(pixelData$pixelGroup)
@@ -1383,7 +1382,7 @@ summaryRegen <- compiler::cmpfun(function(sim) {
                                .(uniqueSumReproduction = sum(B, na.rm = TRUE)),
                                by = pixelGroup]
     if (!is.integer(pixelAll[["uniqueSumReproduction"]]))
-        set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll[["uniqueSumReproduction"]]))
+      set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll[["uniqueSumReproduction"]]))
 
     if (NROW(pixelAll) > 0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
