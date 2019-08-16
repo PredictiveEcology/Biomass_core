@@ -1017,6 +1017,7 @@ MortalityAndGrowth <- function(sim) {
                                       ATA = sim$ATA,
                                       cohortData = subCohortData,
                                       pixelGroupMap = sim$pixelGroupMap,
+                                      CMInormal = sim$CMInormal,
                                       centeringVec = sim$centeringVec)
 
     #This line will return aNPPAct unchanged unless LandR_BiomassGMCS is also run
