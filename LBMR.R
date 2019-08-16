@@ -698,7 +698,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       sim$regenerationOutput <- data.table(seedingAlgorithm = character(), species = character(),
                                            Year = numeric(), numberOfReg = numeric())
     }
-  } else if (grepl("biomassmap", tolower(P(sim)$initialBiomassSource))) {
+  } else if (grepl("biomassMap", tolower(P(sim)$initialBiomassSource))) {
     stop("'biomassMap as a value for P(sim)$initialBiomassSource is not working currently; ",
          "please use 'cohortData'")
     if (verbose > 0)
