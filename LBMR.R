@@ -435,52 +435,37 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
            "Either supply both of them manually, or use a module like Biomass_BorealDataPrep to do so.")
     }
 
+
     if (suppliedElsewhere("ecoregionMap", sim))
       message(blue("'ecoregionMap' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'ecoregionMap'"))
-    ecoregionMap <- randomPolygons(ras = sim$rasterToMatch,
-                                   res = res(sim$rasterToMatch),
-                                   numTypes = 2)
-    ecoregionMap <- mask(ecoregionMap, sim$rasterToMatch)
+    ecoregionMap <- makeDummyEcoregionMap(sim$rasterToMatch)
 
     if (suppliedElsewhere("biomassMap", sim))
       message(blue("'biomassMap' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'biomassMap'"))
-    biomassMap <- gaussMap(sim$rasterToMatch)
-    biomassMap <- setValues(biomassMap, rescale(getValues(biomassMap), c(100, 20000)))
-    biomassMap <- mask(biomassMap, sim$rasterToMatch)
+    ## note that to make the dummy sim$biomassMap, we need to first make a dummy rawBiomassMap
+    rawBiomassMap <- makeDummyRawBiomassMap(sim$rasterToMatch)
 
     if (suppliedElsewhere("standAgeMap", sim))
       message(blue("'standAgeMap' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'standAgeMap'"))
-    standAgeMap <- setValues(biomassMap, asInteger(rescale(getValues(biomassMap), c(1, 300))))
+    standAgeMap <- makeDummyStandAgeMap(rawBiomassMap)
 
-    if (suppliedElsewhere("LCC2005", sim))
-      message(blue("'LCC2005' was supplied, but "),
+    if (suppliedElsewhere("rstLCC", sim))
+      message(blue("'rstLCC' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
-                   "'cohortData', 'pixelGroupMap' and 'LCC2005'"))
-    LCC2005 <- randomPolygons(ras = sim$rasterToMatch,
-                              res = res(sim$rasterToMatch),
-                              numTypes = 5)
-    LCC2005 <- mask(LCC2005, sim$rasterToMatch)
+                   "'cohortData', 'pixelGroupMap' and 'rstLCC'"))
+    rstLCC <- makeDummyRstLCC(sim$rasterToMatch)
 
-    ecoregionstatus <- data.table(active = "yes",
-                                  ecoregion = unique(ecoregionMap[]))
-    ecoregionstatus <- ecoregionstatus[complete.cases(ecoregionstatus)]
-
-    ecoregionFiles <- Cache(ecoregionProducer,
-                            ecoregionMaps = list(ecoregionMap, LCC2005),
-                            ecoregionName = "ECODISTRIC",
-                            ecoregionActiveStatus = ecoregionstatus,
-                            rasterToMatch = sim$rasterToMatch,
-                            userTags = "ecoregionFiles")
+    ecoregionFiles <- makeDummyEcoregionFiles(ecoregionMap, rstLCC, sim$rasterToMatch)
 
     ################################################################
     ## put together pixelTable object
