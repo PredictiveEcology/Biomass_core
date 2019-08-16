@@ -575,51 +575,17 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ## make a table of available active and inactive (no biomass) ecoregions
     sim$ecoregion <- makeEcoregionDT(pixelCohortData, speciesEcoregion)
 
-    ########################################################################
-    ## build ecoregion, ecoregionMap objects
-    ## build biomassMap object -- biomasses have been adjusted
-    ########################################################################
-    ecoregionsWeHaveParametersFor <- levels(speciesEcoregion$ecoregionGroup)
+    ## make biomassMap, ecoregionMap, minRelativeB, pixelGroupMap
+    sim$biomassMap <- makeBiomassMap(pixelCohortData, sim$rasterToMatch)
+    sim$ecoregionMap <- makeEcoregionMap(ecoregionFiles, pixelCohortData)
+    sim$minRelativeB <- makeMinRelativeB(pixelCohortData)
+    sim$pixelGroupMap <- makePixelGroupMap(pixelCohortData, sim$rasterToMatch)
 
     ## make ecoregionGroup a factor and export speciesEcoregion to sim
-    pixelCohortData[ , ecoregionGroup := factor(as.character(ecoregionGroup))]
-    pixelCohortData[, totalBiomass := sum(B), by = "pixelIndex"]
-
-    sim$ecoregion <- data.table(active = "yes",
-                                ecoregionGroup = factor(as.character(unique(pixelCohortData$ecoregionGroup))))
-
-    # Some ecoregions have NO BIOMASS -- so they are not active
-    sim$ecoregion[!ecoregionGroup %in% unique(speciesEcoregion$ecoregionGroup), active := "no"]
-
-    pixelData <- unique(pixelCohortData, by = "pixelIndex")
-    pixelData[, ecoregionGroup := factor(as.character(ecoregionGroup))] # resorts them in order
-
-    ## re-do biomassMap and ecoregionMap
-    sim$biomassMap <- raster(sim$rasterToMatch)
-    sim$biomassMap[pixelData$pixelIndex] <- pixelData$totalBiomass
-
-    sim$ecoregionMap <-  raster(ecoregionFiles$ecoregionMap)
-    sim$ecoregionMap[pixelData$pixelIndex] <- as.integer(pixelData$ecoregionGroup)
-    levels(sim$ecoregionMap) <- data.frame(ID = seq(levels(pixelData$ecoregionGroup)),
-                                           ecoregion = gsub("_.*", "", levels(pixelData$ecoregionGroup)),
-                                           ecoregionGroup = levels(pixelData$ecoregionGroup),
-                                           stringsAsFactors = TRUE)
-
-    sim$minRelativeB <- data.frame(ecoregionGroup = levels(pixelData$ecoregionGroup),
-                                   X1 = 0.2, X2 = 0.4, X3 = 0.5,
-                                   X4 = 0.7, X5 = 0.9)
-
     speciesEcoregion[, ecoregionGroup := factor(as.character(ecoregionGroup))]
     sim$speciesEcoregion <- speciesEcoregion
 
     ## do assertions
-    ##  Collapse pixelCohortData to its cohortData : need pixelGroupMap
-    sim$pixelGroupMap <- raster(sim$rasterToMatch)
-    sim$pixelGroupMap[pixelData$pixelIndex] <- as.integer(pixelData$pixelGroup)
-
-    sim$cohortData <- unique(pixelCohortData, by = c("pixelGroup", columnsForPixelGroups))
-    sim$cohortData[ , `:=`(pixelIndex = NULL)]
-
     message(blue("Create pixelGroups based on: ", paste(columnsForPixelGroups, collapse = ", "),
                  "\n  Resulted in", magenta(length(unique(sim$cohortData$pixelGroup))),
                  "unique pixelGroup values"))
