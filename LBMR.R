@@ -44,7 +44,7 @@ defineModule(sim, list(
                     paste("Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. ",
                           "If 'spinUp', it will derive biomass by running spinup derived from Landis-II.",
                           "If 'cohortData', it will be taken from the 'cohortData' object, i.e., it is already correct, by cohort.",
-                          "If 'rawBiomassMap', it will be taken from sim$biomassMap,",
+                          "If 'biomassMap', it will be taken from sim$biomassMap,",
                           "divided across species using sim$speciesLayers percent cover values",
                           "`spinUp`` uses sim$ageMap as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
