@@ -480,26 +480,25 @@ ringCells <- compiler::cmpfun(function(x, index, minDist, maxDist) {
 #   return(dis)
 # }
 
-WardEqn <-
-  compiler::cmpfun(function(dis, cellSize, effDist, maxDist, k, b) {
-    if (cellSize %<=% effDist) {
-      ifelse(
-        dis %<=% effDist,
-        exp((dis - cellSize) * log(1 - k) / effDist) -
-          exp(dis * log(1 - k) / effDist),
-        (1 - k) * exp((dis - cellSize - effDist) * log(b) / maxDist) -
-          (1 - k) * exp((dis - effDist) * log(b) / maxDist)
-      )
-    } else {
-      ifelse(
-        dis %<=% cellSize,
-        exp((dis - cellSize) * log(1 - k) / effDist) - (1 - k) *
-          exp((dis - effDist) * log(b) / maxDist),
-        (1 - k) * exp((dis - cellSize - effDist) * log(b) / maxDist) -
-          (1 - k) * exp((dis - effDist) * log(b) / maxDist)
-      )
-    }
-  })
+WardEqn <- compiler::cmpfun(function(dis, cellSize, effDist, maxDist, k, b) {
+  if (cellSize %<=% effDist) {
+    ifelse(
+      dis %<=% effDist,
+      exp((dis - cellSize) * log(1 - k) / effDist) -
+        exp(dis * log(1 - k) / effDist),
+      (1 - k) * exp((dis - cellSize - effDist) * log(b) / maxDist) -
+        (1 - k) * exp((dis - effDist) * log(b) / maxDist)
+    )
+  } else {
+    ifelse(
+      dis %<=% cellSize,
+      exp((dis - cellSize) * log(1 - k) / effDist) - (1 - k) *
+        exp((dis - effDist) * log(b) / maxDist),
+      (1 - k) * exp((dis - cellSize - effDist) * log(b) / maxDist) -
+        (1 - k) * exp((dis - effDist) * log(b) / maxDist)
+    )
+  }
+})
 
 # WardFn <- function(dis, maxDist=3000, effDist=30, ...) {
 #   #effDist = 100
