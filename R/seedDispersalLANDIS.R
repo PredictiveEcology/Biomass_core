@@ -438,16 +438,11 @@ speciesComm <- function(num, sc) {
                     function(x)
                       rev(as.logical(as.numeric(x))))
 
-  speciesCode <-
-    lapply(indices, function(x)
-      (seq_len(length(x)) - 1)[x])
-  data.table(
-    RcvCommunity = as.integer(rep(num, sapply(
-      speciesCode, length
-    ))),
-    speciesCode = unlist(speciesCode),
-    key = "speciesCode"
-  )[!is.na(speciesCode)] %>%
+  speciesCode <- lapply(indices, function(x) (seq_len(length(x)) - 1)[x])
+
+  data.table(RcvCommunity = as.integer(rep(num, sapply(speciesCode, length))),
+             speciesCode = unlist(speciesCode),
+             key = "speciesCode")[!is.na(speciesCode)] %>%
     sc[.]
 }
 
