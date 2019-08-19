@@ -434,9 +434,9 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
   })
 
 speciesComm <- function(num, sc) {
-  indices <- lapply(strsplit(R.utils::intToBin(num), split = ""),
-                    function(x)
-                      rev(as.logical(as.numeric(x))))
+  indices <- lapply(strsplit(R.utils::intToBin(num), split = ""), function(x) {
+    rev(as.logical(as.numeric(x)))
+  })
 
   speciesCode <- lapply(indices, function(x) (seq_len(length(x)) - 1)[x])
 
