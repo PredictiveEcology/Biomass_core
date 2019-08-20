@@ -1015,7 +1015,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
     }
     rm(subCohortData)
-    #.gc()
+    gc() ## restored this gc call 2019-08-20 (AMC)
   }
   rm(cohortData)
 
