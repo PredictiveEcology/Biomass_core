@@ -983,11 +983,11 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "mBio", pmin(subCohortData$mBio, subCohortData$aNPPAct))
     set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
-    #This line will return mortality unchanged unless LandR_BiomassGMCS is also run
+    ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
     subCohortData$climMort <- assignClimateEffect(predObj, subCohortData = subCohortData, type = "mortPred")
-    #Total mortality can't be negative
+    ## total mortality can't be negative
     subCohortData$mortality <- pmax(0, subCohortData$mortality + subCohortData$climMort)
-    #Ian added this check 04/04/2019 - without climate-sensitivity, mortality never exceeds biomass
+    ## without climate-sensitivity, mortality never exceeds biomass (Ian added this 2019-04-04)
     subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
 
     set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM", "climGrowth", "climMort"), NULL)
@@ -1009,7 +1009,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     }
     subCohortData[, `:=`(mortality = asInteger(mortality), aNPPAct = asInteger(aNPPAct))]
 
-    #=#
     if (numGroups == 1) {
       sim$cohortData <- subCohortData
     } else {
