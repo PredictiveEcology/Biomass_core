@@ -1963,5 +1963,7 @@ CohortAgeReclassification <- function(sim) {
                                     sppEquivCol = P(sim)$sppEquivCol)
   }
 
+  gc() ## AMC added this 2019-08-20
+
   return(invisible(sim))
 })
