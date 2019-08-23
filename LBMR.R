@@ -49,7 +49,7 @@ defineModule(sim, list(
                           "divided across species using sim$speciesLayers percent cover values",
                           "`spinUp` uses `sim$ageMap` as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
-                          "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap`` is supplied.")),
+                          "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied.")),
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
                                  "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
