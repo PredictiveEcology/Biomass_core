@@ -1443,6 +1443,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot2, title = paste0("Total biomass by species\n", "across pixels"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
     }
 
@@ -1462,6 +1463,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
     }
 
@@ -1478,6 +1480,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                  "(averaged across pixels)"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
     }
 
@@ -1494,6 +1497,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                 "by species (across pixels)"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "oldest_cohorts.png"), plot5)
     }
 
@@ -1511,6 +1515,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                  "across pixels"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"), plot6)
     }
     ## end test
@@ -1635,6 +1640,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
       Plot(plot1, title = "Total landscape biomass and aNPP and max stand age", new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
     }
   }
