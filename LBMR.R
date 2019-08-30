@@ -18,8 +18,8 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "LBMR.Rmd"),
-  reqdPkgs = list("compiler", "data.table", "dplyr", "fpCompare", "ggplot2", "grid",
-                  "purrr", "quickPlot", "raster", "Rcpp", "scales", "sp", "tidyr",
+  reqdPkgs = list("compiler", "data.table", "dplyr", "fpCompare", "ggplot2", "grid", "parallel",
+                  "purrr", "quickPlot", "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
                   "PredictiveEcology/LandR@development",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
@@ -47,9 +47,9 @@ defineModule(sim, list(
                           "If 'cohortData', it will be taken from the 'cohortData' object, i.e., it is already correct, by cohort.",
                           "If 'biomassMap', it will be taken from sim$biomassMap,",
                           "divided across species using sim$speciesLayers percent cover values",
-                          "`spinUp`` uses sim$ageMap as the driver, so biomass",
+                          "`spinUp` uses `sim$ageMap` as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
-                          "about biomass, unless this is set to TRUE, and a sim$rawBiomassMap is supplied")),
+                          "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied.")),
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
                                  "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
@@ -984,11 +984,11 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "mBio", pmin(subCohortData$mBio, subCohortData$aNPPAct))
     set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
-    #This line will return mortality unchanged unless LandR_BiomassGMCS is also run
+    ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
     subCohortData$climMort <- assignClimateEffect(predObj, subCohortData = subCohortData, type = "mortPred")
-    #Total mortality can't be negative
+    ## total mortality can't be negative
     subCohortData$mortality <- pmax(0, subCohortData$mortality + subCohortData$climMort)
-    #Ian added this check 04/04/2019 - without climate-sensitivity, mortality never exceeds biomass
+    ## without climate-sensitivity, mortality never exceeds biomass (Ian added this 2019-04-04)
     subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
 
     set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
@@ -1010,14 +1010,13 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     }
     subCohortData[, `:=`(mortality = asInteger(mortality), aNPPAct = asInteger(aNPPAct))]
 
-    #=#
     if (numGroups == 1) {
       sim$cohortData <- subCohortData
     } else {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
     }
     rm(subCohortData)
-    #.gc()
+    gc() ## restored this gc call 2019-08-20 (AMC)
   }
   rm(cohortData)
 
@@ -1964,6 +1963,8 @@ CohortAgeReclassification <- function(sim) {
                                                               names(sim$speciesLayers)],
                                     sppEquivCol = P(sim)$sppEquivCol)
   }
+
+  gc() ## AMC added this 2019-08-20
 
   return(invisible(sim))
 })

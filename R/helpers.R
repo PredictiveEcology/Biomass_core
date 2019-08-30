@@ -188,8 +188,7 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, simuTime, succes
     #  stop("calculateSumB: cohortData1 not identical to cohortData2") ## TODO: re-enable check once fixed above
     #}
   }
-  newcohortData <- cohortData
-  return(newcohortData)
+  return(cohortData)
 })
 
 #' calculateAgeMortality
