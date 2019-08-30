@@ -5,12 +5,12 @@
 #' @param speciesEcoregion TODO: description neeede
 #' @param minRelativeB TODO: description neeede
 #'
-#' @return TODO: description neeede
+#' @return TODO: description needed
 #'
 #' @export
 #' @importFrom data.table data.table set setkey
 #'
-calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
+calcSiteShade <- compiler::cmpfun(function(time, cohortData, speciesEcoregion, minRelativeB) {
   # the siteshade was calculated based on the code:
   # https://github.com/LANDIS-II-Foundation/Extensions-Succession/blob/master/biomass-succession/trunk/src/PlugIn.cs
   if (nrow(cohortData[age > 5,]) > 0) {
@@ -41,7 +41,7 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   bAMterm1$bAM <- round(bAMterm1$bAM, 3)
 
   # This is faster than using cut
-  bAMterm1[, siteShade := which(bAM < unique(c(0, X1, X2, X3, X4, X5, 1.1)))[1]-2,
+  bAMterm1[, siteShade := which(bAM < unique(c(0, X1, X2, X3, X4, X5, 1.1)))[1] - 2,
            by = pixelGroup]
   # b[, siteShade := as.integer(cut(bAM, sort(unique(c(0, X1, X2, X3, X4, X5, 1))),
   #                            labels = FALSE, right = FALSE, include.lowest = TRUE) - 1),
@@ -50,4 +50,4 @@ calcSiteShade <- function(time, cohortData, speciesEcoregion, minRelativeB) {
   #   stop("aaaaa")
   bAMterm1 <- bAMterm1[, .(pixelGroup, siteShade)]
   return(bAMterm1)
-}
+})

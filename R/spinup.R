@@ -1,4 +1,4 @@
-#' Title
+#' spinUp
 #'
 #' @param fnList TODO: remove this once the functions are in the package!
 #' @param cohortData TODO: description needed
@@ -12,7 +12,8 @@
 #' @export
 #' @importFrom data.table data.table set setkey
 #'
-spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species) {
+spinUp <- compiler::cmpfun(function(cohortData, calibrate, successionTimestep,
+                                    spinupMortalityfraction, species) {
   maxAge <- max(cohortData$age, na.rm = TRUE) # determine the pre-simulation length
   set(cohortData, NULL, "origAge", cohortData$age)
   set(cohortData, NULL, c("age", "sumB"), as.integer(0L))
@@ -112,7 +113,7 @@ spinUp <- function(cohortData, calibrate, successionTimestep, spinupMortalityfra
     all <- list(cohortData = cohortData)
   }
   return(all)
-}
+})
 
 # cacheSpinUpFunction <- function(sim, cachePath) {
 #   # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
