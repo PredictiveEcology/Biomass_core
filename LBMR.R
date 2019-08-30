@@ -110,6 +110,8 @@ defineModule(sim, list(
     # expectsInput("initialCommunitiesMap", "RasterLayer",
     #              desc = "initial community map that has mapcodes match initial community table",
     #              sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
+    expectsInput("lastReg", "numeric",
+                 desc = "an internal counter keeping track of when the last regeneration event occurred"),
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness"),
     expectsInput("pixelGroupMap", "RasterLayer",
