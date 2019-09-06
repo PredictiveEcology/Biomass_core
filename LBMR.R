@@ -875,7 +875,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
   cohortData <- sim$cohortData
   pgs <- unique(cohortData$pixelGroup)
-  groupSize <- 1e7 ## This should be large because this function is not the current RAM limitation
+  groupSize <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory)
   numGroups <- ceiling(length(pgs) / groupSize)
   groupNames <- paste0("Group", seq(numGroups))
   if (length(pgs) > groupSize) {
@@ -1257,13 +1257,9 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
     if (length(pixelsFromCurYrBurn) > 0) {
       reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
     }
-    maxPotLength <- 1e5
-    # should be between
-    maxMem <- min(as.numeric(availableMemory()) / 1e9, P(sim)$.maxMemory) ## memory (GB) avail.
-    maxPotLengthAdj <- try(as.integer(log(maxMem + 2)^5 * 1e4), silent = TRUE)
-    if (is.numeric(maxPotLengthAdj) )
-      if (maxPotLengthAdj > 1e5)
-        maxPotLength <- maxPotLengthAdj
+
+    maxPotLength <- maxRowsDT(maxLen = 1e5, maxMem = P(sim)$.maxMemory)
+
     seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
