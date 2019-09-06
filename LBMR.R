@@ -1016,9 +1016,9 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
     }
     rm(subCohortData)
-    gc() ## restored this gc call 2019-08-20 (AMC)
   }
   rm(cohortData)
+  gc() ## restored this gc call 2019-08-20 (AMC)
 
   if (isTRUE(getOption("LandR.assertions"))) {
     if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1)
