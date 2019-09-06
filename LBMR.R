@@ -865,7 +865,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     sim$cohortData <- sim$cohortData[, .(pixelGroup, ecoregionGroup,
                                          speciesCode, age, B, mortality, aNPPAct)]
 
-  #Install climate-sensitive functions (or not)
+  ## Install climate-sensitive functions (or not)
   a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers)) ## TODO: this is not working. requireNamespace overrides try
   if (class(a) == "try-error") {
     stop("The package you specified for P(sim)$growthAndMortalityDrivers must be installed.")
@@ -884,9 +884,10 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                               temID = 1:length(unique(cohortData$pixelGroup)))
     cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
     #cutpoints <- c(1,max(pixelGroups$temID))
-    if (length(cutpoints) == 1) cutpoints <- c(cutpoints, cutpoints + 1)
-    pixelGroups[, groups := rep(groupNames,
-                                each = groupSize, length.out = NROW(pixelGroups))]
+    if (length(cutpoints) == 1)
+      cutpoints <- c(cutpoints, cutpoints + 1)
+
+    pixelGroups[, groups := rep(groupNames, each = groupSize, length.out = NROW(pixelGroups))]
   }
   for (subgroup in groupNames) {
     if (numGroups == 1) {
