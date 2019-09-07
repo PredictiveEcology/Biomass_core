@@ -867,7 +867,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     sim$cohortData <- sim$cohortData[, .(pixelGroup, ecoregionGroup,
                                          speciesCode, age, B, mortality, aNPPAct)]
 
-  #Install climate-sensitive functions (or not)
+  ## Install climate-sensitive functions (or not)
   a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers)) ## TODO: this is not working. requireNamespace overrides try
   if (class(a) == "try-error") {
     stop("The package you specified for P(sim)$growthAndMortalityDrivers must be installed.")
@@ -877,7 +877,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
   cohortData <- sim$cohortData
   pgs <- unique(cohortData$pixelGroup)
-  groupSize <- 1e7 ## This should be large because this function is not the current RAM limitation
+  groupSize <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory)
   numGroups <- ceiling(length(pgs) / groupSize)
   groupNames <- paste0("Group", seq(numGroups))
   if (length(pgs) > groupSize) {
@@ -886,9 +886,10 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                               temID = 1:length(unique(cohortData$pixelGroup)))
     cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
     #cutpoints <- c(1,max(pixelGroups$temID))
-    if (length(cutpoints) == 1) cutpoints <- c(cutpoints, cutpoints + 1)
-    pixelGroups[, groups := rep(groupNames,
-                                each = groupSize, length.out = NROW(pixelGroups))]
+    if (length(cutpoints) == 1)
+      cutpoints <- c(cutpoints, cutpoints + 1)
+
+    pixelGroups[, groups := rep(groupNames, each = groupSize, length.out = NROW(pixelGroups))]
   }
   for (subgroup in groupNames) {
     if (numGroups == 1) {
@@ -1017,9 +1018,9 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
     }
     rm(subCohortData)
-    gc() ## restored this gc call 2019-08-20 (AMC)
   }
   rm(cohortData)
+  gc() ## restored this gc call 2019-08-20 (AMC)
 
   if (isTRUE(getOption("LandR.assertions"))) {
     if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1)
@@ -1258,13 +1259,9 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
     if (length(pixelsFromCurYrBurn) > 0) {
       reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
     }
-    maxPotLength <- 1e5
-    # should be between
-    maxMem <- min(as.numeric(availableMemory()) / 1e9, P(sim)$.maxMemory) ## memory (GB) avail.
-    maxPotLengthAdj <- try(as.integer(log(maxMem + 2)^5 * 1e4), silent = TRUE)
-    if (is.numeric(maxPotLengthAdj) )
-      if (maxPotLengthAdj > 1e5)
-        maxPotLength <- maxPotLengthAdj
+
+    maxPotLength <- maxRowsDT(maxLen = 1e5, maxMem = P(sim)$.maxMemory)
+
     seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
