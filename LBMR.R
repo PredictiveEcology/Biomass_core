@@ -110,6 +110,8 @@ defineModule(sim, list(
     # expectsInput("initialCommunitiesMap", "RasterLayer",
     #              desc = "initial community map that has mapcodes match initial community table",
     #              sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
+    expectsInput("lastReg", "numeric",
+                 desc = "an internal counter keeping track of when the last regeneration event occurred"),
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness"),
     expectsInput("pixelGroupMap", "RasterLayer",
@@ -1440,6 +1442,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot2, title = paste0("Total biomass by species\n", "across pixels"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
     }
 
@@ -1459,6 +1462,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
     }
 
@@ -1475,6 +1479,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                  "(averaged across pixels)"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
     }
 
@@ -1491,6 +1496,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                 "by species (across pixels)"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "oldest_cohorts.png"), plot5)
     }
 
@@ -1508,6 +1514,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                  "across pixels"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"), plot6)
     }
     ## end test
@@ -1632,6 +1639,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
       Plot(plot1, title = "Total landscape biomass and aNPP and max stand age", new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
     }
   }
@@ -1644,16 +1652,20 @@ Save <- compiler::cmpfun(function(sim) {
   raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$reproductionMap) <- raster::projection(sim$ecoregionMap)
   writeRaster(sim$simulatedBiomassMap,
-              file.path(outputPath(sim), paste("simulatedBiomassMap_Year", round(time(sim)), ".tif", sep = "")),
+              file.path(outputPath(sim), "figures",
+                        paste0("simulatedBiomassMap_Year", round(time(sim)), ".tif")),
               datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$ANPPMap,
-              file.path(outputPath(sim), paste("ANPP_Year", round(time(sim)), ".tif", sep = "")),
+              file.path(outputPath(sim), "figures",
+                        paste0("ANPP_Year", round(time(sim)), ".tif")),
               datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$mortalityMap,
-              file.path(outputPath(sim), paste("mortalityMap_Year", round(time(sim)), ".tif", sep = "")),
+              file.path(outputPath(sim), "figures",
+                        paste0("mortalityMap_Year", round(time(sim)), ".tif")),
               datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$reproductionMap,
-              file.path(outputPath(sim), paste("reproductionMap_Year", round(time(sim)), ".tif", sep = "")),
+              file.path(outputPath(sim), "figures",
+                        paste0("reproductionMap_Year", round(time(sim)), ".tif")),
               datatype = 'INT4S', overwrite = TRUE)
   return(invisible(sim))
 })
