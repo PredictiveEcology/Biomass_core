@@ -876,7 +876,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     stop("The package you specified for P(sim)$growthAndMortalityDrivers must be installed.")
   }
   calculateClimateEffect <- getFromNamespace("calculateClimateEffect", P(sim)$growthAndMortalityDrivers)
-  assignClimateEffect <- getFromNamespace("assignClimateEffect", P(sim)$growthAndMortalityDrivers)
 
   cohortData <- sim$cohortData
   pgs <- unique(cohortData$pixelGroup)
