@@ -984,6 +984,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     subCohortData$climGrowth <- predObj$growthPred #to track climate change - remove this line once we are satisfied
     subCohortData$aNPPAct <- pmax(0, subCohortData$aNPPAct * predObj$growthPred)
 
+    subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
     set(subCohortData, NULL, "mBio", pmin(subCohortData$mBio, subCohortData$aNPPAct))
     set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
