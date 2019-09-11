@@ -331,3 +331,13 @@ checkAndChangeKey <- function(obj, key) {
   }
   returnKey
 }
+
+maxRowsDT <- function(maxLen, maxMem) {
+  maxMemAdj <- min(as.numeric(availableMemory()) / 1e9, maxMem) ## memory (GB) avail.
+  maxLenAdj <- try(as.integer(log(maxMemAdj + 2)^5 * 1e4), silent = TRUE)
+  if (is.numeric(maxLenAdj))
+    if (maxLenAdj > 1e5)
+      maxLen <- maxLenAdj
+
+  return(maxLen)
+}

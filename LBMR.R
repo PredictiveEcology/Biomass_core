@@ -115,6 +115,8 @@ defineModule(sim, list(
     # expectsInput("initialCommunitiesMap", "RasterLayer",
     #              desc = "initial community map that has mapcodes match initial community table",
     #              sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
+    expectsInput("lastReg", "numeric",
+                 desc = "an internal counter keeping track of when the last regeneration event occurred"),
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness"),
     expectsInput("pixelGroupMap", "RasterLayer",
@@ -870,7 +872,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     sim$cohortData <- sim$cohortData[, .(pixelGroup, ecoregionGroup,
                                          speciesCode, age, B, mortality, aNPPAct)]
 
-  #Install climate-sensitive functions (or not)
+  ## Install climate-sensitive functions (or not)
   a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers)) ## TODO: this is not working. requireNamespace overrides try
   if (class(a) == "try-error") {
     stop("The package you specified for P(sim)$growthAndMortalityDrivers must be installed.")
@@ -879,7 +881,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
   cohortData <- sim$cohortData
   pgs <- unique(cohortData$pixelGroup)
-  groupSize <- 1e7 ## This should be large because this function is not the current RAM limitation
+  groupSize <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory)
   numGroups <- ceiling(length(pgs) / groupSize)
   groupNames <- paste0("Group", seq(numGroups))
   if (length(pgs) > groupSize) {
@@ -888,9 +890,10 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                               temID = 1:length(unique(cohortData$pixelGroup)))
     cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
     #cutpoints <- c(1,max(pixelGroups$temID))
-    if (length(cutpoints) == 1) cutpoints <- c(cutpoints, cutpoints + 1)
-    pixelGroups[, groups := rep(groupNames,
-                                each = groupSize, length.out = NROW(pixelGroups))]
+    if (length(cutpoints) == 1)
+      cutpoints <- c(cutpoints, cutpoints + 1)
+
+    pixelGroups[, groups := rep(groupNames, each = groupSize, length.out = NROW(pixelGroups))]
   }
   for (subgroup in groupNames) {
     if (numGroups == 1) {
@@ -1020,9 +1023,9 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
     }
     rm(subCohortData)
-    gc() ## restored this gc call 2019-08-20 (AMC)
   }
   rm(cohortData)
+  gc() ## restored this gc call 2019-08-20 (AMC)
 
   if (isTRUE(getOption("LandR.assertions"))) {
     if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1)
@@ -1261,13 +1264,9 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
     if (length(pixelsFromCurYrBurn) > 0) {
       reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
     }
-    maxPotLength <- 1e5
-    # should be between
-    maxMem <- min(as.numeric(availableMemory()) / 1e9, P(sim)$.maxMemory) ## memory (GB) avail.
-    maxPotLengthAdj <- try(as.integer(log(maxMem + 2)^5 * 1e4), silent = TRUE)
-    if (is.numeric(maxPotLengthAdj) )
-      if (maxPotLengthAdj > 1e5)
-        maxPotLength <- maxPotLengthAdj
+
+    maxPotLength <- maxRowsDT(maxLen = 1e5, maxMem = P(sim)$.maxMemory)
+
     seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
                               dtSrc = seedSource, inSituReceived = inSituReceived,
                               species = sim$species,
@@ -1448,6 +1447,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot2, title = paste0("Total biomass by species\n", "across pixels"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
     }
 
@@ -1467,6 +1467,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
     }
 
@@ -1483,6 +1484,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                  "(averaged across pixels)"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
     }
 
@@ -1499,6 +1501,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                 "by species (across pixels)"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "oldest_cohorts.png"), plot5)
     }
 
@@ -1516,6 +1519,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                  "across pixels"), new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"), plot6)
     }
     ## end test
@@ -1640,6 +1644,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
       Plot(plot1, title = "Total landscape biomass and aNPP and max stand age", new = TRUE)
 
       if (current(sim)$eventTime == end(sim))
+        # if (!is.na(P(sim)$.saveInitialTime))
         ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
     }
   }
@@ -1652,16 +1657,20 @@ Save <- compiler::cmpfun(function(sim) {
   raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$reproductionMap) <- raster::projection(sim$ecoregionMap)
   writeRaster(sim$simulatedBiomassMap,
-              file.path(outputPath(sim), paste("simulatedBiomassMap_Year", round(time(sim)), ".tif", sep = "")),
+              file.path(outputPath(sim), "figures",
+                        paste0("simulatedBiomassMap_Year", round(time(sim)), ".tif")),
               datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$ANPPMap,
-              file.path(outputPath(sim), paste("ANPP_Year", round(time(sim)), ".tif", sep = "")),
+              file.path(outputPath(sim), "figures",
+                        paste0("ANPP_Year", round(time(sim)), ".tif")),
               datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$mortalityMap,
-              file.path(outputPath(sim), paste("mortalityMap_Year", round(time(sim)), ".tif", sep = "")),
+              file.path(outputPath(sim), "figures",
+                        paste0("mortalityMap_Year", round(time(sim)), ".tif")),
               datatype = 'INT4S', overwrite = TRUE)
   writeRaster(sim$reproductionMap,
-              file.path(outputPath(sim), paste("reproductionMap_Year", round(time(sim)), ".tif", sep = "")),
+              file.path(outputPath(sim), "figures",
+                        paste0("reproductionMap_Year", round(time(sim)), ".tif")),
               datatype = 'INT4S', overwrite = TRUE)
   return(invisible(sim))
 })
