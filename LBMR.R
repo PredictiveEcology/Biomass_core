@@ -36,10 +36,10 @@ defineModule(sim, list(
                                  "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
-    defineParameter('gmcsRatioLimits', 'numeric', c(1/1.5, 1.5/1), NA, NA, desc = "if using LandR.CS for climate-sensitive growth and mortality,
-                    a ratio is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate).
-                    Upper and lower limits are suggested to circumvent problems caused by very small denominators
-                    as well as predictions outside the data range used to generate the model"),
+    defineParameter('gmcsPctLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA, desc = "if using LandR.CS for climate-sensitive
+    growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality
+    (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small
+    denominators as well as predictions outside the data range used to generate the model"),
     defineParameter("growthAndMortalityDrivers", "character", "LandR", NA, NA,
                     desc = paste("package name where the following functions can be found:",
                                  "calculateClimateEffect, assignClimateEffect",
@@ -980,11 +980,11 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                       cohortData = subCohortData,
                                       pixelGroupMap = sim$pixelGroupMap,
                                       CMInormal = sim$CMInormal,
-                                      gmcsRatioLimits = P(sim)$gmcsRatioLimits)
+                                      gmcsPctLimits = P(sim)$gmcsPctLimits)
 
     #This line will return aNPPAct unchanged unless LandR_BiomassGMCS is also run
     subCohortData$climGrowth <- predObj$growthPred #to track climate change - remove this line once we are satisfied
-    subCohortData$aNPPAct <- pmax(0, subCohortData$aNPPAct * predObj$growthPred)
+    subCohortData$aNPPAct <- pmax(0, asInteger(subCohortData$aNPPAct * predObj$growthPred)/100) # changed from ratio to pct for memory
 
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
@@ -993,8 +993,8 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
     subCohortData$climMort <- predObj$mortPred # to track climate sensitivity, remove this line once we are satisfied
-    ## total mortality can't be negative
-    subCohortData$mortality <- pmax(0, subCohortData$mortality * predObj$mortPred)
+    subCohortData$mortality <- pmax(0, asInteger(subCohortData$mortality * predObj$mortPred/100))
+
     ## without climate-sensitivity, mortality never exceeds biomass (Ian added this 2019-04-04)
     subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
 
