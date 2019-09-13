@@ -968,11 +968,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "growthcurve", NULL)
     set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
-    ## generate climate-sensitivity predictions
-    ## - NULL w/o module biomassGMCS. age-related mortality is included in this model
-    ## - 20/03/2019 IE: after discussion we determined it is acceptable to include age
-    ##   because 1) the Landis age-related mortality fxn is very different from this model,
-    ##   and 2) because it would be difficult to separate the climate/age interaction
+    ## generate climate-sensitivity predictions - this will return 100 (%) if LandR.CS is not run
     predObj <- calculateClimateEffect(gcsModel = sim$gcsModel,
                                       mcsModel = sim$mcsModel,
                                       CMI = sim$CMI,
@@ -983,8 +979,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                       gmcsPctLimits = P(sim)$gmcsPctLimits)
 
     #This line will return aNPPAct unchanged unless LandR_BiomassGMCS is also run
-    subCohortData$climGrowth <- predObj$growthPred #to track climate change - remove this line once we are satisfied
-    subCohortData$aNPPAct <- pmax(0, asInteger(subCohortData$aNPPAct * predObj$growthPred)/100) # changed from ratio to pct for memory
+    subCohortData$aNPPAct <- pmax(0, asInteger(subCohortData$aNPPAct * predObj$growthPred)/100) #changed from ratio to pct for memory
 
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
@@ -992,7 +987,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
-    subCohortData$climMort <- predObj$mortPred # to track climate sensitivity, remove this line once we are satisfied
     subCohortData$mortality <- pmax(0, asInteger(subCohortData$mortality * predObj$mortPred/100))
 
     ## without climate-sensitivity, mortality never exceeds biomass (Ian added this 2019-04-04)
