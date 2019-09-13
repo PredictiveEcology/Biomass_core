@@ -41,7 +41,7 @@ defineModule(sim, list(
                     " is used to estimate the effect of climate on growth/mortality ",
                     "(currentClimate/referenceClimate). Upper and lower limits are ",
                     "suggested to circumvent problems caused by very small denominators as well as ",
-                    "predictions outside the data range used to generate the model"),
+                    "predictions outside the data range used to generate the model")),
     defineParameter("growthAndMortalityDrivers", "character", "LandR", NA, NA,
                     desc = paste("package name where the following functions can be found:",
                                  "calculateClimateEffect, assignClimateEffect",
