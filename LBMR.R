@@ -36,9 +36,16 @@ defineModule(sim, list(
                                  "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
+    defineParameter('gmcsPctLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
+                    paste("if using LandR.CS for climate-sensitive growth and mortality, a percentile",
+                    " is used to estimate the effect of climate on growth/mortality ",
+                    "(currentClimate/referenceClimate). Upper and lower limits are ",
+                    "suggested to circumvent problems caused by very small denominators as well as ",
+                    "predictions outside the data range used to generate the model"),
     defineParameter("growthAndMortalityDrivers", "character", "LandR", NA, NA,
                     desc = paste("package name where the following functions can be found:",
-                                 "calculateClimateEffect, assignClimateEffect")),
+                                 "calculateClimateEffect, assignClimateEffect",
+                                 '(see LandR.CS for climate sensitivity, leave default if none desired)')),
     defineParameter("growthInitialTime", "numeric", start(sim), NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
     defineParameter("initialBiomassSource", "character", "cohortData", NA, NA,
@@ -153,7 +160,9 @@ defineModule(sim, list(
                               "Default is based on LANDIS-II Biomass Succession v6.2 parameters"),
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     expectsInput("treedFirePixelTableSinceLastDisp", "data.table",
-                 desc = "3 columns: pixelIndex, pixelGroup, and burnTime. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding pixelGroup and time it occurred",
+                 desc = paste("3 columns: pixelIndex, pixelGroup, and burnTime. Each row represents a forested pixel ",
+                 "that was burned up to and including this year, since last dispersal event, with its corresponding ",
+                 "pixelGroup and time it occurred"),
                  sourceURL = "")
     # expectsInput("spinUpCache", "logical", ""),
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
@@ -873,7 +882,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     stop("The package you specified for P(sim)$growthAndMortalityDrivers must be installed.")
   }
   calculateClimateEffect <- getFromNamespace("calculateClimateEffect", P(sim)$growthAndMortalityDrivers)
-  assignClimateEffect <- getFromNamespace("assignClimateEffect", P(sim)$growthAndMortalityDrivers)
 
   cohortData <- sim$cohortData
   pgs <- unique(cohortData$pixelGroup)
@@ -964,22 +972,18 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "growthcurve", NULL)
     set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
-    ## generate climate-sensitivity predictions
-    ## - NULL w/o module biomassGMCS. age-related mortality is included in this model
-    ## - 20/03/2019 IE: after discussion we determined it is acceptable to include age
-    ##   because 1) the Landis age-related mortality fxn is very different from this model,
-    ##   and 2) because it would be difficult to separate the climate/age interaction
+    ## generate climate-sensitivity predictions - this will return 100 (%) if LandR.CS is not run
     predObj <- calculateClimateEffect(gcsModel = sim$gcsModel,
                                       mcsModel = sim$mcsModel,
                                       CMI = sim$CMI,
                                       ATA = sim$ATA,
                                       cohortData = subCohortData,
                                       pixelGroupMap = sim$pixelGroupMap,
-                                      centeringVec = sim$centeringVec)
+                                      CMInormal = sim$CMInormal,
+                                      gmcsPctLimits = P(sim)$gmcsPctLimits)
 
     #This line will return aNPPAct unchanged unless LandR_BiomassGMCS is also run
-    subCohortData$climGrowth <- assignClimateEffect(predObj, subCohortData = subCohortData, type = 'growthPred')
-    subCohortData$aNPPAct <- pmax(0, subCohortData$aNPPAct + subCohortData$climGrowth)
+    subCohortData$aNPPAct <- pmax(0, asInteger(subCohortData$aNPPAct * predObj$growthPred)/100) #changed from ratio to pct for memory
 
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
@@ -987,13 +991,12 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
-    subCohortData$climMort <- assignClimateEffect(predObj, subCohortData = subCohortData, type = "mortPred")
-    ## total mortality can't be negative
-    subCohortData$mortality <- pmax(0, subCohortData$mortality + subCohortData$climMort)
+    subCohortData$mortality <- pmax(0, asInteger(subCohortData$mortality * predObj$mortPred/100))
+
     ## without climate-sensitivity, mortality never exceeds biomass (Ian added this 2019-04-04)
     subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
 
-    set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM", "climGrowth", "climMort"), NULL)
+    set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
     if (P(sim)$calibrate) {
       set(subCohortData, NULL, "deltaB", asInteger(subCohortData$aNPPAct - subCohortData$mortality))
       set(subCohortData, NULL, "B", subCohortData$B + subCohortData$deltaB)
