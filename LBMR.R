@@ -36,10 +36,12 @@ defineModule(sim, list(
                                  "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
-    defineParameter('gmcsPctLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA, desc = "if using LandR.CS for climate-sensitive
-    growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality
-    (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small
-    denominators as well as predictions outside the data range used to generate the model"),
+    defineParameter('gmcsPctLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
+                    paste("if using LandR.CS for climate-sensitive growth and mortality, a percentile",
+                    " is used to estimate the effect of climate on growth/mortality ",
+                    "(currentClimate/referenceClimate). Upper and lower limits are ",
+                    "suggested to circumvent problems caused by very small denominators as well as ",
+                    "predictions outside the data range used to generate the model"),
     defineParameter("growthAndMortalityDrivers", "character", "LandR", NA, NA,
                     desc = paste("package name where the following functions can be found:",
                                  "calculateClimateEffect, assignClimateEffect",
@@ -158,7 +160,9 @@ defineModule(sim, list(
                               "Default is based on LANDIS-II Biomass Succession v6.2 parameters"),
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     expectsInput("treedFirePixelTableSinceLastDisp", "data.table",
-                 desc = "3 columns: pixelIndex, pixelGroup, and burnTime. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding pixelGroup and time it occurred",
+                 desc = paste("3 columns: pixelIndex, pixelGroup, and burnTime. Each row represents a forested pixel ",
+                 "that was burned up to and including this year, since last dispersal event, with its corresponding ",
+                 "pixelGroup and time it occurred"),
                  sourceURL = "")
     # expectsInput("spinUpCache", "logical", ""),
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
