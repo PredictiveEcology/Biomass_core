@@ -1950,16 +1950,10 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("speciesLayers", sim)) {
-    #opts <- options(reproducible.useCache = "overwrite")
-    if (!suppliedElsewhere("studyAreaLarge", sim)) {
-      message("'studyAreaLarge' was not provided by user. Using the same as 'studyArea'")
-      sim <- objectSynonyms(sim, list(c("studyAreaLarge", "studyArea")))
-    }
-
     sim$speciesLayers <- Cache(loadkNNSpeciesLayers,
                                dPath = dPath,
                                rasterToMatch = sim$rasterToMatch,
-                               studyArea = sim$studyAreaLarge,
+                               studyArea = sim$studyArea,
                                sppEquiv = sim$sppEquiv,
                                knnNamesCol = "KNN",
                                sppEquivCol = P(sim)$sppEquivCol,
