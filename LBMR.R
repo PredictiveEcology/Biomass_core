@@ -1717,68 +1717,76 @@ CohortAgeReclassification <- function(sim) {
     }
   }
 
-  if (needRTM) {
-    if (!suppliedElsewhere("rawBiomassMap", sim)) {
-      rawBiomassMapFilename <- file.path(dPath, "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.tif")
-      rawBiomassMapURL <- "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"
-      rawBiomassMap <- Cache(prepInputs,
-                             targetFile = asPath(basename(rawBiomassMapFilename)),
-                             archive = asPath(c("kNN-StructureBiomass.tar",
-                                                "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.zip")),
-                             url = rawBiomassMapURL,
-                             destinationPath = dPath,
-                             studyArea = sim$studyArea,
-                             rasterToMatch = NULL,
-                             maskWithRTM = FALSE,
-                             useSAcrs = TRUE,
-                             method = "bilinear",
-                             datatype = "INT2U",
-                             filename2 = TRUE, overwrite = TRUE,
-                             omitArgs = c("destinationPath", "targetFile", cacheTags, "stable"))
-    } else {
-      rawBiomassMap <- sim$rawBiomassMap
-    }
-
-    # if we need rasterToMatch, that means a) we don't have it, but b) we will have rawBiomassMap
-    sim$rasterToMatch <- rawBiomassMap
-    studyArea <- sim$studyArea # temporary copy because it will be overwritten if it is suppliedElsewhere
-    message("  Rasterizing the studyArea polygon map")
-    if (!is(studyArea, "SpatialPolygonsDataFrame")) {
-      dfData <- if (is.null(rownames(studyArea))) {
-        polyID <- sapply(slot(studyArea, "polygons"), function(x) slot(x, "ID"))
-        data.frame("field" = as.character(seq_along(length(studyArea))), row.names = polyID)
-      } else {
-        polyID <- sapply(slot(studyArea, "polygons"), function(x) slot(x, "ID"))
-        data.frame("field" = rownames(studyArea), row.names = polyID)
-      }
-      studyArea <- SpatialPolygonsDataFrame(studyArea, data = dfData)
-    }
-    if (!identical(crs(studyArea), crs(sim$rasterToMatch))) {
-      studyArea <- spTransform(studyArea, crs(sim$rasterToMatch))
-      studyArea <- fixErrors(studyArea)
-    }
-    ## TODO: review whether this is necessary (or will break LandWeb if removed) see Git Issue #22
-    ## layers provided by David Andison sometimes have LTHRC, sometimes LTHFC ... chose whichever
-    LTHxC <- grep("(LTH.+C)", names(studyArea), value = TRUE)
-    fieldName <- if (length(LTHxC)) {
-      LTHxC
-    } else {
-      if (length(names(studyArea)) > 1) {
-        ## study region may be a simple polygon
-        names(studyArea)[1]
-      } else NULL
-    }
-
-    sim$rasterToMatch <- crop(fasterizeFromSp(studyArea, sim$rasterToMatch, fieldName),
-                              studyArea)
-    sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
-                               filename = file.path(dataPath(sim), "rasterToMatch.tif"),
-                               datatype = "INT2U", overwrite = TRUE)
+  if (!suppliedElsewhere("rawBiomassMap", sim) || needRTM) {
+    sim$rawBiomassMap <- Cache(prepInputs,
+                               targetFile = asPath(basename(rawBiomassMapFilename)),
+                               archive = asPath(c("kNN-StructureBiomass.tar",
+                                                  "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.zip")),
+                               url = extractURL("rawBiomassMap"),
+                               destinationPath = dPath,
+                               studyArea = sim$studyArea,
+                               rasterToMatch = if (!needRTM) sim$rasterToMatch else NULL,
+                               # maskWithRTM = TRUE,    ## if RTM not supplied no masking happens (is this intended?)
+                               maskWithRTM = if (!needRTM) TRUE else FALSE,
+                               ## TODO: if RTM is not needed use SA CRS? -> this is not correct
+                               # useSAcrs = if (!needRTM) TRUE else FALSE,
+                               useSAcrs = FALSE,     ## never use SA CRS
+                               method = "bilinear",
+                               datatype = "INT2U",
+                               filename2 = TRUE, overwrite = TRUE,
+                               omitArgs = c("destinationPath", "targetFile", cacheTags, "stable"))
   }
+  if (needRTM) {
+    ## if we need rasterToMatch, that means a) we don't have it, but b) we will have rawBiomassMap
+    sim$rasterToMatch <- sim$rawBiomassMap
+    RTMvals <- getValues(sim$rasterToMatch)
+    sim$rasterToMatch[!is.na(RTMvals)] <- 1
 
-  # if (!suppliedElsewhere("rasterToMatchReporting")) {
-  #   sim$rasterToMatchReporting <- sim$rasterToMatch
-  # }
+    sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
+                                    filename = file.path(dataPath(sim), "rasterToMatch"),
+                                    datatype = "INT2U", overwrite = TRUE)
+
+    ## this is old, and potentially not needed anymore
+    if (FALSE) {
+      studyArea <- sim$studyArea # temporary copy because it will be overwritten if it is suppliedElsewhere
+      message("  Rasterizing the studyArea polygon map")
+      if (!is(studyArea, "SpatialPolygonsDataFrame")) {
+        dfData <- if (is.null(rownames(studyArea))) {
+          polyID <- sapply(slot(studyArea, "polygons"), function(x) slot(x, "ID"))
+          data.frame("field" = as.character(seq_along(length(studyArea))), row.names = polyID)
+        } else {
+          polyID <- sapply(slot(studyArea, "polygons"), function(x) slot(x, "ID"))
+          data.frame("field" = rownames(studyArea), row.names = polyID)
+        }
+        studyArea <- SpatialPolygonsDataFrame(studyArea, data = dfData)
+      }
+      if (!identical(crs(studyArea), crs(sim$rasterToMatch))) {
+        studyArea <- spTransform(studyArea, crs(sim$rasterToMatch))
+        studyArea <- fixErrors(studyArea)
+
+        ## TODO: OVERWRITE sim$studyArea here? what about SAlarge?
+      }
+
+
+      #TODO: review whether this is necessary (or will break LandWeb if removed) see Git Issue #22
+      # layers provided by David Andison sometimes have LTHRC, sometimes LTHFC ... chose whichever
+      LTHxC <- grep("(LTH.+C)", names(studyArea), value = TRUE)
+      fieldName <- if (length(LTHxC)) {
+        LTHxC
+      } else {
+        if (length(names(studyArea)) > 1) {
+          ## study region may be a simple polygon
+          names(studyArea)[1]
+        } else NULL
+      }
+
+      sim$rasterToMatch <- crop(fasterizeFromSp(studyArea, sim$rasterToMatch, fieldName),
+                                studyArea)
+      sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
+                                 filename = file.path(dataPath(sim), "rasterToMatch.tif"),
+                                 datatype = "INT2U", overwrite = TRUE)
+    }
+  }
 
   if (FALSE) { # not using this -- Eliot Jan 22, 2019 -- use pixelGroupMap and pixelGroups instead
     if (!suppliedElsewhere("initialCommunities", sim)) {
