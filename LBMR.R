@@ -127,10 +127,6 @@ defineModule(sim, list(
                  desc = paste("Raster layer of buffered study area used for cropping, masking and projecting.",
                               "Defaults to the kNN biomass map masked with `studyArea`"),
                  sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
-    # expectsInput("rasterToMatchReporting", "RasterLayer",
-    #              desc = paste("Raster layer of study area used for plotting and reporting only.",
-    #                           "Defaults to the kNN biomass map masked with `studyArea`"),
-    #              sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
     expectsInput("species", "data.table",
                  desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
                               "Default is partially based on Dominic Cir and Yan's project"),
@@ -1584,7 +1580,6 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
 
     # Mask out NAs based on rasterToMatch (for plotting only!)
     vegTypeMapForPlot <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
-    #vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA ## faster than raster::mask
 
     ## Plot
     dev(mod$mapWindow)
