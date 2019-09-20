@@ -1738,8 +1738,8 @@ CohortAgeReclassification <- function(sim) {
     sim$rasterToMatch[!is.na(RTMvals)] <- 1
 
     sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
-                                    filename = file.path(dataPath(sim), "rasterToMatch"),
-                                    datatype = "INT2U", overwrite = TRUE)
+                               filename = file.path(dPath, "rasterToMatch"),
+                               datatype = "INT2U", overwrite = TRUE)
 
     ## this is old, and potentially not needed anymore
     if (FALSE) {
@@ -1778,7 +1778,7 @@ CohortAgeReclassification <- function(sim) {
       sim$rasterToMatch <- crop(fasterizeFromSp(studyArea, sim$rasterToMatch, fieldName),
                                 studyArea)
       sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
-                                 filename = file.path(dataPath(sim), "rasterToMatch.tif"),
+                                 filename = file.path(dPath, "rasterToMatch.tif"),
                                  datatype = "INT2U", overwrite = TRUE)
     }
   }
