@@ -1728,8 +1728,8 @@ CohortAgeReclassification <- function(sim) {
                                useSAcrs = FALSE,     ## never use SA CRS
                                method = "bilinear",
                                datatype = "INT2U",
-                               filename2 = TRUE, overwrite = TRUE,
-                               omitArgs = c("destinationPath", "targetFile", cacheTags, "stable"))
+                               filename2 = TRUE, overwrite = TRUE, userTags = cacheTags,
+                               omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
   }
   if (needRTM) {
     ## if we need rasterToMatch, that means a) we don't have it, but b) we will have rawBiomassMap
