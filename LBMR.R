@@ -12,7 +12,7 @@ defineModule(sim, list(
   ),
   childModules = character(0),
   version = list(LBMR = numeric_version("1.3.1.9000"),
-                 LandR = "0.0.2.9007", SpaDES.core = "0.2.3.9009"),
+                 LandR = "0.0.2.9008", SpaDES.core = "0.2.3.9009"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
