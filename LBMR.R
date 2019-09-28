@@ -1738,8 +1738,8 @@ CohortAgeReclassification <- function(sim) {
     RTMvals <- getValues(sim$rasterToMatch)
     sim$rasterToMatch[!is.na(RTMvals)] <- 1
 
-    sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
-                               filename = file.path(dPath, "rasterToMatch"),
+    sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
+                               filename2 = file.path(cachePath(sim), "rasters", "rasterToMatch.tif"),
                                datatype = "INT2U", overwrite = TRUE)
 
     ## this is old, and potentially not needed anymore
