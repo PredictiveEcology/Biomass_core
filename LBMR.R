@@ -12,7 +12,8 @@ defineModule(sim, list(
   ),
   childModules = character(0),
   version = list(LBMR = numeric_version("1.3.1.9000"),
-                 LandR = "0.0.2.9008", SpaDES.core = "0.2.3.9009"),
+                 LandR = "0.0.2.9008", SpaDES.core = "0.2.3.9009",
+                 LandR.CS = "0.0.0.9000"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
@@ -24,7 +25,8 @@ defineModule(sim, list(
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
-                  "PredictiveEcology/SpaDES.tools@development"),
+                  "PredictiveEcology/SpaDES.tools@development",
+                  "ianmseddy/LandR.CS@master"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -980,7 +982,8 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                       gmcsPctLimits = P(sim)$gmcsPctLimits)
 
     #This line will return aNPPAct unchanged unless LandR_BiomassGMCS is also run
-    subCohortData$aNPPAct <- pmax(0, asInteger(subCohortData$aNPPAct * predObj$growthPred)/100) #changed from ratio to pct for memory
+    subCohortData <- subCohortData[ predObj, on = c('pixelGroup', 'age', 'speciesCode')]
+    subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred)/100)] #changed from ratio to pct for memory
 
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
@@ -988,7 +991,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
-    subCohortData$mortality <- pmax(0, asInteger(subCohortData$mortality * predObj$mortPred/100))
+    subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred)/100)]
 
     ## without climate-sensitivity, mortality never exceeds biomass (Ian added this 2019-04-04)
     subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
