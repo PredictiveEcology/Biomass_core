@@ -982,7 +982,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                       gmcsPctLimits = P(sim)$gmcsPctLimits)
 
     #This line will return aNPPAct unchanged unless LandR_BiomassGMCS is also run
-    subCohortData <- subCohortData[ predObj, on = c('pixelGroup', 'age', 'speciesCode')]
+    subCohortData <- subCohortData[predObj, on = c('pixelGroup', 'age', 'speciesCode')]
     subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred)/100)] #changed from ratio to pct for memory
 
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
