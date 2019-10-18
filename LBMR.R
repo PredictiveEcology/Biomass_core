@@ -413,6 +413,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ## A numeric scalar indicating how large each chunk of an internal data.table with processing by chunks
   mod$cutpoint <- 1e10
+  cacheTags <- c(currentModule(sim), "init")
 
   ##############################################
   ## Prepare individual objects
@@ -503,7 +504,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                              sppColumns = coverColNames,
                              pixelGroupBiomassClass = 100,
                              doSubset = FALSE,
-                             userTags = "stable")
+                             userTags = cacheTags,
+                             omitArgs = c("userTags"))
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
 
     ## When using dummy values ecoregion codes are not changed
@@ -534,7 +536,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                         modelFn = coverModel,
                         uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(cohortDataShort$ecoregionGroup)),
                         .specialData = cohortDataShort,
-                        omitArgs = c(".specialData"))
+                        userTags = cacheTags,
+                        omitArgs = c("userTags", ".specialData"))
 
     message(blue("  The rsquared is: "))
     print(modelCover$rsq)
@@ -548,7 +551,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                           modelFn = biomassModel,
                           uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(pixelCohortData$ecoregionGroup)),
                           .specialData = cohortDataNoBiomass,
-                          omitArgs = c(".specialData"))
+                          userTags = cacheTags,
+                          omitArgs = c("userTags", ".specialData"))
     message(blue("  The rsquared is: "))
     print(modelBiomass$rsq)
 
@@ -694,7 +698,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                          successionTimestep = P(sim)$successionTimestep,
                          spinupMortalityfraction = P(sim)$spinupMortalityfraction,
                          species = sim$species,
-                         userTags = c("LBMR", "spinUp"))
+                         userTags = c(cacheTags, "spinUp"),
+                         omitArgs = c("userTags"))
 
     cohortData <- spinupstage$cohortData
     if (P(sim)$calibrate) {
@@ -1743,7 +1748,9 @@ CohortAgeReclassification <- function(sim) {
 
     sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
                                filename2 = file.path(cachePath(sim), "rasters", "rasterToMatch.tif"),
-                               datatype = "INT2U", overwrite = TRUE)
+                               datatype = "INT2U", overwrite = TRUE,
+                               userTags = cacheTags,
+                               omitArgs = c("userTags"))
 
     ## this is old, and potentially not needed anymore
     if (FALSE) {
@@ -1783,7 +1790,9 @@ CohortAgeReclassification <- function(sim) {
                                 studyArea)
       sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
                                  filename = file.path(dPath, "rasterToMatch.tif"),
-                                 datatype = "INT2U", overwrite = TRUE)
+                                 datatype = "INT2U", overwrite = TRUE,
+                                 userTags = cacheTags,
+                                 omitArgs = c("userTags"))
     }
   }
 
@@ -1800,7 +1809,9 @@ CohortAgeReclassification <- function(sim) {
                                   blank.lines.skip = TRUE,
                                   col.names = c("species", paste("age", 1:(maxcol - 1), sep = "")),
                                   stringsAsFactors = FALSE,
-                                  overwrite = TRUE)
+                                  overwrite = TRUE,
+                                  userTags = cacheTags,
+                                  omitArgs = c("userTags"))
       # correct the typo in the original txt
       initialCommunities[14, 1:4] <- initialCommunities[14, 2:5]
 
@@ -1963,7 +1974,8 @@ CohortAgeReclassification <- function(sim) {
                                sppEquivCol = P(sim)$sppEquivCol,
                                thresh = 5,
                                url = "http://tree.pfc.forestry.ca/kNN-Species.tar",
-                               userTags = c(cacheTags, "speciesLayers"))
+                               userTags = c(cacheTags, "speciesLayers"),
+                               omitArgs = c("userTags"))
   }
 
   ## additional species traits
