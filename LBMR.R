@@ -62,6 +62,7 @@ defineModule(sim, list(
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
                                  "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
+    defineParameter("plotOverstory", 'logical', FALSE, NA, NA, desc = "swap max age plot with overstory biomass"),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
                     desc = paste("choose which seeding algorithm will be used among",
                                  "noDispersal, universalDispersal, and wardDispersal (default).",
@@ -99,8 +100,7 @@ defineModule(sim, list(
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to data.table::setDTthreads and should be <= 2;",
                                  "If TRUE, it will be passed to parallel:makeCluster;",
-                                 "and if a cluster object, it will be passed to parallel::parClusterApplyB.")),
-    defineParameter(".plotOverstory", 'logical', FALSE, NA, NA, desc = "swap max age plot with overstory biomass")
+                                 "and if a cluster object, it will be passed to parallel::parClusterApplyB."))
   ),
   inputObjects = bind_rows(
     expectsInput("biomassMap", "RasterLayer",
@@ -1509,7 +1509,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       dev(mod$statsWindow)
 
       #plot overstory biomass
-      if (P(sim)$.plotOverstory){
+      if (P(sim)$plotOverstory) {
         plot5 <- ggplot(data = df, aes(x = year, y = overstoryBiomass,
                                        fill = species, group = species)) +
           geom_area(position = "stack") +
