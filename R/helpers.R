@@ -150,7 +150,7 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, simuTime, succes
     sumBtmp <- cohortData2[wh, list(N = .N, sumB = sum(B, na.rm = TRUE)), by = "pixelGroup"]
     if ("sumB" %in% names(cohortData2)) set(cohortData2, NULL, "sumB", NULL)
     # create empty column as there are some cases with wh is length 0
-    if (length(wh))
+    if (length(wh) == 0)
       set(cohortData2, NULL, "sumB", NA_integer_)
     set(cohortData2, wh, "sumB", rep.int(sumBtmp[["sumB"]], sumBtmp[["N"]]))
     setorderv(cohortData2, c("sumB"), na.last = TRUE)
