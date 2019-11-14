@@ -1623,19 +1623,21 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
     vegTypeMapForPlot <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
 
     ## Plot
-    dev(mod$mapWindow)
-    if (!is.null(biomassMapForPlot))
-      Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
-    if (!is.null(ANPPMapForPlot))
-      Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
-    if (!is.null(mortalityMapForPlot))
-      Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
-    Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
-    grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
-    grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
-
-    #if (!is.null(reproductionMapForPlot))
-    #  Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
+    tryCatch({
+      dev(mod$mapWindow) # Protecting from error of headless/terminal run
+      if (!is.null(biomassMapForPlot))
+        Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
+      if (!is.null(ANPPMapForPlot))
+        Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
+      if (!is.null(mortalityMapForPlot))
+        Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
+      Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
+      grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
+      grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
+      #if (!is.null(reproductionMapForPlot))
+      #  Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
+      }, error = function(e)
+      message("Can't open the device for plotting. Plotting will be disabled to avoid errors"))
   }
 
   return(invisible(sim))
