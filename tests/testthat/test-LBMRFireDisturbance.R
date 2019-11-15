@@ -3,12 +3,12 @@ test_that("test regeneration after fire. ",{
   library(data.table)
   library(raster)
   # define the module and path
-  module <- list("LBMR")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_LBMR",
+  module <- list("Biomass_core")
+  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
-                     LBMR=list( .saveInitialTime=NA))
+                     Biomass_core=list( .saveInitialTime=NA))
   pixelGroupMap <- raster(xmn = 50,xmx = 50 + 50*100,
                           ymn = 50,ymx = 50 + 50*100,
                           res = c(100, 100),
@@ -83,10 +83,10 @@ test_that("test regeneration after fire. ",{
                    objects = objects,
                    paths = path)
   set.seed(1234)
-  if(exists("LBMRFireDisturbance")){
-    simOutput <- LBMRFireDisturbance(mySim)
+  if(exists("Biomass_coreFireDisturbance")){
+    simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$LBMRFireDisturbance(mySim)
+    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)
@@ -131,10 +131,10 @@ test_that("test regeneration after fire. ",{
                    objects = objects,
                    paths = path)
   set.seed(1234)
-  if(exists("LBMRFireDisturbance")){
-    simOutput <- LBMRFireDisturbance(mySim)
+  if(exists("Biomass_coreFireDisturbance")){
+    simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$LBMRFireDisturbance(mySim)
+    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)
@@ -178,10 +178,10 @@ test_that("test regeneration after fire. ",{
                    objects = objects,
                    paths = path)
   set.seed(1234)
-  if(exists("LBMRFireDisturbance")){
-    simOutput <- LBMRFireDisturbance(mySim)
+  if(exists("Biomass_coreFireDisturbance")){
+    simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$LBMRFireDisturbance(mySim)
+    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)
@@ -225,10 +225,10 @@ test_that("test regeneration after fire. ",{
                    objects = objects,
                    paths = path)
   set.seed(1234)
-  if(exists("LBMRFireDisturbance")){
-    simOutput <- LBMRFireDisturbance(mySim)
+  if(exists("Biomass_coreFireDisturbance")){
+    simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$LBMRFireDisturbance(mySim)
+    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)

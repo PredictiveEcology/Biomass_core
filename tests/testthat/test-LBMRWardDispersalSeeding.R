@@ -1,11 +1,11 @@
 test_that("test Ward dispersal seeding algorithm",{
   # define the module and path
-  module <- list("LBMR")
-  path <- list(modulePath = "~/GitHub/nrv-succession/code blitz succession/Module_LBMR",
+  module <- list("Biomass_core")
+  path <- list(modulePath = "~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
                outputPath = "~/output")
   parameters <- list(.progress = list(type = "graphical", interval = 1),
                      .globals = list(verbose = FALSE),
-                     LBMR = list(.saveInitialTime = NA))
+                     Biomass_core = list(.saveInitialTime = NA))
 
 # 1. testing how the species seeds spread into the neighbor empty cells
 # the cohort data is set to not allow on site regeneration
@@ -63,11 +63,11 @@ test_that("test Ward dispersal seeding algorithm",{
                    paths = path)
   set.seed(1)
 
-  source(file.path(modulePath(mySim), "LBMR", "R", "seedDispersalLANDIS.R"))
-  if (exists("LBMRWardDispersalSeeding")) {
-    output <- LBMRWardDispersalSeeding(mySim)
+  source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
+  if (exists("Biomass_coreWardDispersalSeeding")) {
+    output <- Biomass_coreWardDispersalSeeding(mySim)
   } else {
-    output <- mySim$LBMRWardDispersalSeeding(mySim)
+    output <- mySim$Biomass_coreWardDispersalSeeding(mySim)
   }
   output <- output$regenerationOutput$numberOfReg
   expect_equal(output,c(283,483,288,358))
@@ -110,11 +110,11 @@ test_that("test Ward dispersal seeding algorithm",{
                    paths = path)
   set.seed(1)
 
-  source(file.path(modulePath(mySim), "LBMR", "R", "seedDispersalLANDIS.R"))
-  if(exists("LBMRWardDispersalSeeding")){
-    output <- LBMRWardDispersalSeeding(mySim)
+  source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
+  if(exists("Biomass_coreWardDispersalSeeding")){
+    output <- Biomass_coreWardDispersalSeeding(mySim)
   } else {
-    output <- mySim$LBMRWardDispersalSeeding(mySim)
+    output <- mySim$Biomass_coreWardDispersalSeeding(mySim)
   }
   expect_equal(output$regenerationOutput$numberOfReg,
                c(239, 439, 254, 337))
@@ -153,10 +153,10 @@ test_that("test Ward dispersal seeding algorithm",{
                    objects = objects,
                    paths = path)
   set.seed(1)
-  if(exists("LBMRWardDispersalSeeding")){
-    output <- LBMRWardDispersalSeeding(mySim)
+  if(exists("Biomass_coreWardDispersalSeeding")){
+    output <- Biomass_coreWardDispersalSeeding(mySim)
   } else {
-    output <- mySim$LBMRWardDispersalSeeding(mySim)
+    output <- mySim$Biomass_coreWardDispersalSeeding(mySim)
   }
   output <- output$regenerationOutput$numberOfReg
   expect_equal(output,c(64,121,69,84))

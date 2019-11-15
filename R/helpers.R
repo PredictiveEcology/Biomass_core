@@ -171,8 +171,8 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, simuTime, succes
     mod$oldAlgoSumB <- mod$oldAlgoSumB + (old2 - old1)
     mod$newAlgoSumB <- mod$newAlgoSumB + (new2 - new1)
 
-    print(paste("LBMR:calculateSumB: new algo", mod$newAlgoSumB))
-    print(paste("LBMR:calculateSumB: old algo", mod$oldAlgoSumB))
+    print(paste("Biomass_core:calculateSumB: new algo", mod$newAlgoSumB))
+    print(paste("Biomass_core:calculateSumB: old algo", mod$oldAlgoSumB))
 
     setkeyv(cohortData, c("pixelGroup", "speciesCode", "age"))
     setkeyv(cohortData1, c("pixelGroup", "speciesCode", "age"))
