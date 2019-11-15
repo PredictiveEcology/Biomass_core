@@ -728,7 +728,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     }
 
     # In case there are non-identical biomasses in each pixelGroup -- this should be irrelevant with
-    #   improved Biomass_boreal_dataPrep.R (Jan 6, 2019 -- Eliot)
+    #   improved Biomass_borealDataPrep.R (Jan 6, 2019 -- Eliot)
     biomassTable <- biomassTable[, list(Bsum = mean(biomass, na.rm = TRUE)), by = pixelGroup]
     if (!is.integer(biomassTable[["Bsum"]]))
       set(biomassTable, NULL, "Bsum", asInteger(biomassTable[["Bsum"]]))
