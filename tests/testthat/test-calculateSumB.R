@@ -1,21 +1,21 @@
 test_that("test total site biomass (sumB) ",{
   library(SpaDES)
   # define the module and path
-  module <- list("LBMR")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_LBMR",
+  module <- list("Biomass_core")
+  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
-                     LBMR=list( .saveInitialTime=NA))
+                     Biomass_core=list( .saveInitialTime=NA))
   successionTimestep <- 10
   objects <- list()
   mySim <- simInit(times=list(start=0, end=1),
-                   params=parameters, 
+                   params=parameters,
                    modules=module,
                    objects=objects,
                    paths=path)
-  cohortData <- data.table(pixelGroup = c(rep(1,13),rep(2,10)), ecoregionGroup = 1, 
-                           speciesCode = 16, age = c(1:10,20,30,50,1:10), B = c(1:13,1:10), 
+  cohortData <- data.table(pixelGroup = c(rep(1,13),rep(2,10)), ecoregionGroup = 1,
+                           speciesCode = 16, age = c(1:10,20,30,50,1:10), B = c(1:13,1:10),
                            mortality = 150, aNPPAct = 999)
   # last seeding regeneration time is lastReg =10
   # simuTime is 18, therefore, the newcohorts that regenerated at 10 reach the age of 10
@@ -25,7 +25,7 @@ test_that("test total site biomass (sumB) ",{
     output <- mySim$calculateSumB(cohortData, lastReg=10, simuTime=18, successionTimestep)
   }
   cohortData_output <- setkey(output,pixelGroup,age)
-  cohortData_output_compared <- setkey(data.table(pixelGroup = c(rep(1,13),rep(2,10)), ecoregionGroup = 1, 
+  cohortData_output_compared <- setkey(data.table(pixelGroup = c(rep(1,13),rep(2,10)), ecoregionGroup = 1,
                                        speciesCode = 16, age = c(1:10,20,30,50,1:10), B = c(1:13,1:10),
                                        mortality = 150, aNPPAct = 999,
                                        sumB = c(rep(36,13),rep(0,10))),pixelGroup,age)

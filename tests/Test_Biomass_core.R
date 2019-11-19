@@ -3,11 +3,11 @@ library(magrittr)
 
 modulePath <- "~/Documents/GitHub/LandWeb/m/"
 
-inputDir <- file.path(dirname(tempdir()), "LBMR", "inputs") %>% checkPath(create = TRUE)
-outputDir <- file.path(dirname(tempdir()), "LBMR", "outputs") 
+inputDir <- file.path(dirname(tempdir()), "Biomass_core", "inputs") %>% checkPath(create = TRUE)
+outputDir <- file.path(dirname(tempdir()), "Biomass_core", "outputs")
 times <- list(start = 0, end = 10)
 parameters <- list()
-modules <- list("LBMR")
+modules <- list("Biomass_core")
 paths <- list(
   cachePath = file.path(outputDir, "cache"),
   modulePath = modulePath,

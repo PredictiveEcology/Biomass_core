@@ -1,7 +1,7 @@
 # Everything in this file gets sourced during simInit, and all functions and objects
 # are put into the simList. To use objects and functions, use sim$xxx.
 defineModule(sim, list(
-  name = "LBMR",
+  name = "Biomass_core",
   description = "A fast and large landscape biomass succession model modified from LANDIS-II Biomass Succession extension, v3.2.1",
   keywords = c("forest succession", "LANDIS II", "Biomass"),
   authors = c(
@@ -11,14 +11,14 @@ defineModule(sim, list(
     person(c("Alex", "M."), "Chubaty", email = "achubaty@friresearch.ca", role = "ctb")
   ),
   childModules = character(0),
-  version = list(LBMR = numeric_version("1.3.2"),
+  version = list(Biomass_core = numeric_version("1.3.2"),
                  LandR = "0.0.2.9008", SpaDES.core = "0.2.6.9004",
                  LandR.CS = "0.0.0.9000"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
-  documentation = list("README.txt", "LBMR.Rmd"),
+  documentation = list("README.txt", "Biomass_core.Rmd"),
   reqdPkgs = list("compiler", "data.table", "dplyr", "fpCompare", "ggplot2", "grid", "parallel",
                   "purrr", "quickPlot", "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
                   "PredictiveEcology/LandR@development",
@@ -220,11 +220,11 @@ defineModule(sim, list(
   )
 ))
 
-doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
+doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
   if (is.numeric(P(sim)$.useParallel)) {
     a <- data.table::setDTthreads(P(sim)$.useParallel)
     if (getOption("LandR.verbose", TRUE) > 0) {
-      message("LBMR should be using >100% CPU")
+      message("Biomass_core should be using >100% CPU")
       if (data.table::getDTthreads() == 1L) crayon::red(message("Only using 1 thread."))
     }
     on.exit(data.table::setDTthreads(a), add = TRUE)
@@ -244,7 +244,7 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
                           end = summRegenPriority + 0.25)
   ## add "end" to parameter vector if necessary
   if (!any(P(sim)$calcSummaryBGM == "end"))
-    params(sim)$LBMR$calcSummaryBGM <- c(P(sim)$calcSummaryBGM, "end")
+    params(sim)$Biomass_core$calcSummaryBGM <- c(P(sim)$calcSummaryBGM, "end")
   summBGMPriority <- summBGMPriority[P(sim)$calcSummaryBGM] ## filter necessary priorities
 
   plotPriority <- 9
@@ -256,10 +256,10 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
 
            ## Define .plotInterval/.saveInterval if need be
            if (is.na(P(sim)$.plotInterval))
-             params(sim)$LBMR$.plotInterval <- P(sim)$successionTimestep
+             params(sim)$Biomass_core$.plotInterval <- P(sim)$successionTimestep
 
            if (is.na(P(sim)$.saveInterval))
-             params(sim)$LBMR$.saveInterval <- P(sim)$successionTimestep
+             params(sim)$Biomass_core$.saveInterval <- P(sim)$successionTimestep
 
            ## make sure plotting window is big enough
            if (!is.na(P(sim)$.plotInitialTime) &&
@@ -283,126 +283,126 @@ doEvent.LBMR <- function(sim, eventTime, eventType, debug = FALSE) {
            ## schedule events
            if (!is.null(summBGMPriority$start))
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "summaryBGMstart", eventPriority = summBGMPriority$start)
+                                  "Biomass_core", "summaryBGMstart", eventPriority = summBGMPriority$start)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                "LBMR", "Dispersal", eventPriority = dispEvtPriority)
+                                "Biomass_core", "Dispersal", eventPriority = dispEvtPriority)
            sim <- scheduleEvent(sim, P(sim)$growthInitialTime,
-                                "LBMR", "mortalityAndGrowth", GMEvtPriority)
+                                "Biomass_core", "mortalityAndGrowth", GMEvtPriority)
            if (!is.null(summBGMPriority$postDisp))
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "summaryBGMpostDisp", eventPriority = summBGMPriority$postDisp)
+                                  "Biomass_core", "summaryBGMpostDisp", eventPriority = summBGMPriority$postDisp)
            if (!is.null(summBGMPriority$postRegen))
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "summaryBGMpostRegen", eventPriority = summBGMPriority$postRegen)
+                                  "Biomass_core", "summaryBGMpostRegen", eventPriority = summBGMPriority$postRegen)
            if (!is.null(summBGMPriority$postGM))
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "summaryBGMpostGM", eventPriority = summBGMPriority$postGM)
+                                  "Biomass_core", "summaryBGMpostGM", eventPriority = summBGMPriority$postGM)
            if (P(sim)$successionTimestep != 1) {
-             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "LBMR",
+             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "Biomass_core",
                                   "cohortAgeReclassification", eventPriority = agingEvtPriotity)
              if (!is.null(summBGMPriority$postAging))
                sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                    "LBMR", "summaryBGMpostAging", eventPriority = summBGMPriority$postAging)
+                                    "Biomass_core", "summaryBGMpostAging", eventPriority = summBGMPriority$postAging)
            }
 
            ## note that summaryBGM and summaryBySpecies, will occur during init too
            sim <- scheduleEvent(sim, start(sim),
-                                "LBMR", "summaryBGM", eventPriority = summBGMPriority$end)
+                                "Biomass_core", "summaryBGM", eventPriority = summBGMPriority$end)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryRegen", eventPriority = summRegenPriority)
+                                "Biomass_core", "summaryRegen", eventPriority = summRegenPriority)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "LBMR", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
+                                "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
            if (P(sim)$.plotMaps)
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                  "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
+                                  "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "LBMR", "plotAvgs", eventPriority = plotPriority + 0.5)
+                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
                message(crayon::blue(
                  paste(".saveInitialTime should be >=",  start(sim) + P(sim)$successionTimestep,
                        ". First save changed to", start(sim) + P(sim)$successionTimestep)))
-               params(sim)$LBMR$.saveInitialTime <- start(sim) + P(sim)$successionTimestep
+               params(sim)$Biomass_core$.saveInitialTime <- start(sim) + P(sim)$successionTimestep
              }
              sim <- scheduleEvent(sim, P(sim)$.saveInitialTime,
-                                  "LBMR", "save", eventPriority = savePriority)
+                                  "Biomass_core", "save", eventPriority = savePriority)
            }
          },
          summaryBGMstart = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGMstart", eventPriority = summBGMPriority$start)
+                                "Biomass_core", "summaryBGMstart", eventPriority = summBGMPriority$start)
          },
          Dispersal = {
            sim <- Dispersal(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "Dispersal", eventPriority = dispEvtPriority)
+                                "Biomass_core", "Dispersal", eventPriority = dispEvtPriority)
          },
          mortalityAndGrowth = {
            sim <- MortalityAndGrowth(sim)
            sim <- scheduleEvent(sim, time(sim) + 1,
-                                "LBMR", "mortalityAndGrowth", eventPriority = GMEvtPriority)
+                                "Biomass_core", "mortalityAndGrowth", eventPriority = GMEvtPriority)
          },
          summaryBGMpostDisp = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGMpostDisp", eventPriority = summBGMPriority$postDisp)
+                                "Biomass_core", "summaryBGMpostDisp", eventPriority = summBGMPriority$postDisp)
          },
          summaryBGMpostRegen = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGMpostRegen", eventPriority = summBGMPriority$postRegen)
+                                "Biomass_core", "summaryBGMpostRegen", eventPriority = summBGMPriority$postRegen)
          },
          summaryBGMpostGM = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGMpostGM", eventPriority = summBGMPriority$postGM)
+                                "Biomass_core", "summaryBGMpostGM", eventPriority = summBGMPriority$postGM)
          },
          cohortAgeReclassification = {
            sim <- CohortAgeReclassification(sim)
 
            if (P(sim)$successionTimestep != 1) {
              sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                  "LBMR", "cohortAgeReclassification",
+                                  "Biomass_core", "cohortAgeReclassification",
                                   eventPriority = agingEvtPriotity)
            }
          },
          summaryBGMpostAging = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGMpostAging", eventPriority = summBGMPriority$postAging)
+                                "Biomass_core", "summaryBGMpostAging", eventPriority = summBGMPriority$postAging)
          },
          summaryRegen = {
            sim <- summaryRegen(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryRegen", eventPriority = summRegenPriority)
+                                "Biomass_core", "summaryRegen", eventPriority = summRegenPriority)
          },
          summaryBGM = {
            sim <- SummaryBGM(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$successionTimestep,
-                                "LBMR", "summaryBGM", eventPriority = summBGMPriority$end)
+                                "Biomass_core", "summaryBGM", eventPriority = summBGMPriority$end)
          },
          plotSummaryBySpecies = {
            sim <- plotSummaryBySpecies(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                "LBMR", "plotSummaryBySpecies", eventPriority = plotPriority)
+                                "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
            if (P(sim)$.plotMaps)
              sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                  "LBMR", "plotMaps", eventPriority = plotPriority + 0.25)
+                                  "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
          },
          save = {
            sim <- Save(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval,
-                                "LBMR", "save", eventPriority = savePriority)
+                                "Biomass_core", "save", eventPriority = savePriority)
          },
          plotAvgs = {
            sim <- plotAvgVegAttributes(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                "LBMR", "plotAvgs", eventPriority = plotPriority + 0.5)
+                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
@@ -734,7 +734,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     }
 
     # In case there are non-identical biomasses in each pixelGroup -- this should be irrelevant with
-    #   improved Boreal_LBMRDataPrep.R (Jan 6, 2019 -- Eliot)
+    #   improved biomass_borealDataPrep.R (Jan 6, 2019 -- Eliot)
     biomassTable <- biomassTable[, list(Bsum = mean(biomass, na.rm = TRUE)), by = pixelGroup]
     if (!is.integer(biomassTable[["Bsum"]]))
       set(biomassTable, NULL, "Bsum", asInteger(biomassTable[["Bsum"]]))
@@ -1597,7 +1597,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
         levs[[levelsName]][is.na(levsLeading)] == "Mixed"
       #extraValues <- setdiff(levs[[levelsName]], levsLeading)
       if (!isTRUE(hasOnlyMixedAsOther)) {
-        stop("'plotVegAttributesMaps' in LBMR can only deal with 'Mixed' category or the ones in sim$sppEquiv")
+        stop("'plotVegAttributesMaps' in Biomass_core can only deal with 'Mixed' category or the ones in sim$sppEquiv")
       }
     }
 

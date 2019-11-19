@@ -1,11 +1,11 @@
 test_that("test no dispersal seeding algorithm",{
   # define the module and path
-  module <- list("LBMR")
-  path <- list(modulePath = "~/GitHub/nrv-succession/code blitz succession/Module_LBMR",
+  module <- list("Biomass_core")
+  path <- list(modulePath = "~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
                outputPath = "~/output")
   parameters <- list(.progress = list(type = "graphical", interval = 1),
                      .globals = list(verbose = FALSE),
-                     LBMR = list( .saveInitialTime = NA))
+                     Biomass_core = list( .saveInitialTime = NA))
 
   pixelGroupMap <- raster(xmn = 50, xmx = 50 + 100 * 100,
                         ymn = 50, ymx = 50 + 100 * 100,
@@ -53,10 +53,10 @@ test_that("test no dispersal seeding algorithm",{
                    objects = objects,
                    paths = path)
   set.seed(1)
-  if(exists("LBMRNoDispersalSeeding")){
-    output <- LBMRNoDispersalSeeding(mySim)
+  if(exists("Biomass_coreNoDispersalSeeding")){
+    output <- Biomass_coreNoDispersalSeeding(mySim)
   } else {
-    output <- mySim$LBMRNoDispersalSeeding(mySim)
+    output <- mySim$Biomass_coreNoDispersalSeeding(mySim)
   }
   output <- output$regenerationOutput$numberOfReg
   expect_equal(output,2196)
@@ -86,10 +86,10 @@ test_that("test no dispersal seeding algorithm",{
                    objects = objects,
                    paths = path)
   set.seed(1)
-  if (exists("LBMRNoDispersalSeeding")) {
-    output <- LBMRNoDispersalSeeding(mySim)
+  if (exists("Biomass_coreNoDispersalSeeding")) {
+    output <- Biomass_coreNoDispersalSeeding(mySim)
   } else {
-    output <- mySim$LBMRNoDispersalSeeding(mySim)
+    output <- mySim$Biomass_coreNoDispersalSeeding(mySim)
   }
   output <- output$regenerationOutput$numberOfReg
   expect_equal(output,1962)
@@ -120,10 +120,10 @@ test_that("test no dispersal seeding algorithm",{
                      modules = module,
                      objects = objects,
                      paths = path)
-    if(exists("LBMRNoDispersalSeeding")){
-      output <- LBMRNoDispersalSeeding(mySim)
+    if(exists("Biomass_coreNoDispersalSeeding")){
+      output <- Biomass_coreNoDispersalSeeding(mySim)
     } else {
-      output <- mySim$LBMRNoDispersalSeeding(mySim)
+      output <- mySim$Biomass_coreNoDispersalSeeding(mySim)
     }
     output <- output$regenerationOutput$numberOfReg
     expect_equal(output,numeric(0))

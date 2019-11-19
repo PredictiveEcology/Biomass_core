@@ -1,11 +1,11 @@
 test_that("test Ward dispersal seeding algorithm", {
   # define the module and path
-  module <- list("LBMR")
-  path <- list(modulePath="~/GitHub/LandWeb/m/LBMR",
+  module <- list("Biomass_core")
+  path <- list(modulePath="~/GitHub/LandWeb/m/Biomass_core",
                outputPath="~/GitHub/LandWeb/output")
   parameters <- list(.progress = list(type = "graphical", interval = 1),
                      .globals = list(verbose = FALSE),
-                     LBMR = list( .saveInitialTime = NA))
+                     Biomass_core = list( .saveInitialTime = NA))
 
   reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*100,
                                  ymn = 50, ymx = 50 + 99*100,
@@ -28,7 +28,7 @@ test_that("test Ward dispersal seeding algorithm", {
                    paths = path)
   inSituReceived <- data.table(fromInit = numeric(), species = character())
   set.seed(1)
-  source(file.path(modulePath(mySim), "LBMR", "R", "seedDispersalLANDIS.R"))
+  source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
   output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
                        dtSrc = seedSource,
                        inSituReceived = inSituReceived,

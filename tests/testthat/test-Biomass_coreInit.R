@@ -1,13 +1,13 @@
-test_that("test LBMRInit",{
+test_that("test Biomass_coreInit",{
   # define the module and path
   library(raster)
   library(data.table)
-  module <- list("LBMR")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_LBMR",
+  module <- list("Biomass_core")
+  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
-                     LBMR=list( .saveInitialTime=NA))
+                     Biomass_core=list( .saveInitialTime=NA))
   initialCommunitiesMap <- raster(xmn=50,xmx=50+3*100,
                                   ymn=50,ymx=50+3*100,
                                   res=c(100,100), val=c(1,2,NA,2,1,NA,NA,NA,NA))
@@ -21,17 +21,17 @@ test_that("test LBMRInit",{
   species <- data.table(species = c("abiebals", "pinubank"), longevity = c(200L, 100L),
                         sexualmature = c(25L, 15L), shadetolerance = c(5L, 1L),
                         firetolerance = c(1L, 3L), seeddistance_eff = c(30L, 20L),
-                        seeddistance_max = c(160L, 100L), resproutprob = c(0, 0), 
+                        seeddistance_max = c(160L, 100L), resproutprob = c(0, 0),
                         resproutage_min = c(0L, 0L), resproutage_max = c(0L, 0L),
                         postfireregen = c("none", "serotiny"), leaflongevity = c(3L,3L),
                         mortalityshape = c(10L, 10L), growthcurve = c(0.25, 0.25))
-  speciesEcoregion <- data.frame(expand.grid(year=0, ecoregion=c("eco1","eco2"), 
+  speciesEcoregion <- data.frame(expand.grid(year=0, ecoregion=c("eco1","eco2"),
                                              species=c("abiebals","pinubank")))
-  
+
   speciesEcoregion$establishprob <- c(0.9,0.5,1,0.8)
   speciesEcoregion$maxANPP <- c(886,801,1130,1015)
   speciesEcoregion$maxB <- c(26580,24030,33900,30450)
-  
+
   speciesEcoregion2 <- speciesEcoregion
   speciesEcoregion2$year <- 5
   speciesEcoregion2$establishprob=round(speciesEcoregion2$establishprob*0.9,2)
@@ -55,14 +55,14 @@ test_that("test LBMRInit",{
                   "useCache"=useCache,
                   "spinupMortalityfraction"=spinupMortalityfraction)
   mySim <- simInit(times=list(start=0, end=2),
-                   params=parameters, 
+                   params=parameters,
                    modules=module,
                    objects=objects,
                    paths=path)
-  if(exists("LBMRInit")){
-    simOutput <- LBMRInit(mySim)
+  if(exists("Biomass_coreInit")){
+    simOutput <- Biomass_coreInit(mySim)
   } else {
-    simOutput <- mySim$LBMRInit(mySim)
+    simOutput <- mySim$Biomass_coreInit(mySim)
   }
   # check the cohortData table
   cohortData <- simOutput$cohortData
@@ -82,7 +82,7 @@ test_that("test LBMRInit",{
   expect_is(simOutput$pixelGroupMap,"RasterLayer")
   expect_equal(getValues(simOutput$pixelGroupMap),
                c(11,12,13,22,21,23,-1,-1,-1))
-  
+
   # check the calibration mode
   expect_true(exists("spinupOutput",envir=envir(simOutput)))
   expect_is(simOutput$spinupOutput,"data.table")
@@ -98,11 +98,11 @@ test_that("test LBMRInit",{
   expect_is(simOutput$regenerationOutput,"data.table")
   expect_equal(names(simOutput$regenerationOutput),
                c("seedingAlgorithm", "species", "Year", "numberOfReg"))
-  
+
   # check the inactive pixels
   expect_true(exists("inactivePixelIndex",envir=envir(simOutput)))
   expect_equal(simOutput$inactivePixelIndex,7:9)
-  
+
   # check the revised species ecoregion table
   speciesEcoregion_revised <- simOutput$speciesEcoregion[,.(year,ecoregion,species,
                                                             establishprob,maxANPP,maxB)]
@@ -114,10 +114,10 @@ test_that("test LBMRInit",{
                                           maxANPP=c(974,1243,881,1116),
                                           maxB=c(39870,50850,36045,45675))
   expect_equal(speciesEcoregion_revised,speciesEcoregion_compared)
-  
-  
-  
-  
+
+
+
+
   objects <- list("initialCommunitiesMap"=initialCommunitiesMap,
                   "ecoregionMap"=ecoregionMap,
                   "successionTimestep"=successionTimestep,
@@ -129,22 +129,22 @@ test_that("test LBMRInit",{
                   "useCache"=useCache,
                   "spinupMortalityfraction"=spinupMortalityfraction)
   mySim <- simInit(times=list(start=0, end=2),
-                   params=parameters, 
+                   params=parameters,
                    modules=module,
                    objects=objects,
                    paths=path)
-  if(exists("LBMRInit")){
-    simOutput <- LBMRInit(mySim)
+  if(exists("Biomass_coreInit")){
+    simOutput <- Biomass_coreInit(mySim)
   } else {
-    simOutput <- mySim$LBMRInit(mySim)
+    simOutput <- mySim$Biomass_coreInit(mySim)
   }
-  
+
   # check the calibration mode
   expect_false(exists("spinupOutput",envir=envir(simOutput)))
   expect_false(exists("simulationTreeOutput",envir=envir(simOutput)))
   expect_false(exists("regenerationOutput",envir=envir(simOutput)))
-  
-  
 
-  
+
+
+
 })

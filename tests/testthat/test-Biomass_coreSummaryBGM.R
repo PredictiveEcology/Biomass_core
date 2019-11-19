@@ -1,12 +1,12 @@
 test_that("test summary aboveground biomass, growth, mortality. ",{
   library(raster)
   library(data.table)
-  module <- list("LBMR")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_LBMR",
+  module <- list("Biomass_core")
+  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
-                     LBMR=list( .saveInitialTime=NA))
+                     Biomass_core=list( .saveInitialTime=NA))
   cohortData <- data.table(expand.grid(speciesCode = 1:3,
                                        pixelGroup = 1:5))
   cohortData[,':='(B = seq(700, by = 50, length = 15),
@@ -56,10 +56,10 @@ test_that("test summary aboveground biomass, growth, mortality. ",{
                    modules=module,
                    objects=objects,
                    paths=path)
-  if(exists("LBMRSummaryBGM")){
-    simOutput <- LBMRSummaryBGM(mySim)
+  if(exists("Biomass_coreSummaryBGM")){
+    simOutput <- Biomass_coreSummaryBGM(mySim)
   } else {
-    simOutput <- mySim$LBMRSummaryBGM(mySim)
+    simOutput <- mySim$Biomass_coreSummaryBGM(mySim)
   }
   # check the maps
   expect_is(simOutput$simulatedBiomass, "RasterLayer")
