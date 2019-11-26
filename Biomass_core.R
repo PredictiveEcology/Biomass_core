@@ -2008,7 +2008,7 @@ CohortAgeReclassification <- function(sim) {
                                sppEquiv = sim$sppEquiv,
                                knnNamesCol = "KNN",
                                sppEquivCol = P(sim)$sppEquivCol,
-                               thresh = 5,
+                               thresh = 10,
                                url = "http://tree.pfc.forestry.ca/kNN-Species.tar",
                                userTags = c(cacheTags, "speciesLayers"),
                                omitArgs = c("userTags"))
