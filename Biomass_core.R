@@ -1758,6 +1758,7 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("rawBiomassMap", sim) || needRTM) {
+    rawBiomassMapFilename <- file.path(dPath, "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.tif")
     sim$rawBiomassMap <- Cache(prepInputs,
                                targetFile = asPath(basename(rawBiomassMapFilename)),
                                archive = asPath(c("kNN-StructureBiomass.tar",
