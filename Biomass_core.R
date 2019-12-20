@@ -1761,8 +1761,8 @@ CohortAgeReclassification <- function(sim) {
   if (!suppliedElsewhere("rawBiomassMap", sim) || needRTM) {
     fileURLs <- getURL(extractURL("rawBiomassMap"), dirlistonly = TRUE)
     fileNames <- getHTMLLinks(fileURLs)
-    rawBiomassMapFileName <- grep("Biomass_TotalLiveAboveGround.*.tif$", fileNames, value = TRUE)
-    rawBiomassMapURL <- paste0(extractURL("rawBiomassMap"), rawBiomassMapFileName)
+    rawBiomassMapFilename <- grep("Biomass_TotalLiveAboveGround.*.tif$", fileNames, value = TRUE)
+    rawBiomassMapURL <- paste0(extractURL("rawBiomassMap"), rawBiomassMapFilename)
 
     sim$rawBiomassMap <- Cache(prepInputs,
                                targetFile = asPath(rawBiomassMapFilename),
