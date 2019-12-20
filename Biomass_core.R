@@ -131,7 +131,8 @@ defineModule(sim, list(
     expectsInput("rasterToMatch", "RasterLayer",
                  desc = paste("Raster layer of buffered study area used for cropping, masking and projecting.",
                               "Defaults to the kNN biomass map masked with `studyArea`"),
-                 sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
+                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                                    "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")),
     expectsInput("species", "data.table",
                  desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
                               "Default is partially based on Dominic Cir and Yan's project"),
@@ -1758,15 +1759,18 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("rawBiomassMap", sim) || needRTM) {
-    rawBiomassMapFilename <- file.path(dPath, "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.tif")
+    fileURLs <- getURL(extractURL("rawBiomassMap"), dirlistonly = TRUE)
+    fileNames <- getHTMLLinks(fileURLs)
+    rawBiomassMapFileName <- grep("Biomass_TotalLiveAboveGround.*.tif$", fileNames, value = TRUE)
+    rawBiomassMapURL <- paste0(extractURL("rawBiomassMap"), rawBiomassMapFileName)
+
     sim$rawBiomassMap <- Cache(prepInputs,
-                               targetFile = asPath(basename(rawBiomassMapFilename)),
-                               archive = asPath(c("kNN-StructureBiomass.tar",
-                                                  "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.zip")),
-                               url = extractURL("rawBiomassMap"),
+                               targetFile = asPath(rawBiomassMapFilename),
+                               url = rawBiomassMapURL,
                                destinationPath = dPath,
-                               studyArea = sim$studyArea,
-                               rasterToMatch = if (!needRTM) sim$rasterToMatch else NULL,
+                               studyArea = sim$studyAreaLarge,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMap, LCC.. etc
+                               # studyArea = sim$studyArea,
+                               rasterToMatch = if (!needRTM) sim$rasterToMatchLarge else NULL,
                                # maskWithRTM = TRUE,    ## if RTM not supplied no masking happens (is this intended?)
                                maskWithRTM = if (!needRTM) TRUE else FALSE,
                                ## TODO: if RTM is not needed use SA CRS? -> this is not correct
@@ -1774,7 +1778,8 @@ CohortAgeReclassification <- function(sim) {
                                useSAcrs = FALSE,     ## never use SA CRS
                                method = "bilinear",
                                datatype = "INT2U",
-                               filename2 = TRUE, overwrite = TRUE, userTags = cacheTags,
+                               filename2 = TRUE, overwrite = TRUE,
+                               userTags = cacheTags,
                                omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
   }
   if (needRTM) {
@@ -2002,6 +2007,8 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("speciesLayers", sim)) {
+    url <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                  "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")
     sim$speciesLayers <- Cache(loadkNNSpeciesLayers,
                                dPath = dPath,
                                rasterToMatch = sim$rasterToMatch,
@@ -2010,7 +2017,7 @@ CohortAgeReclassification <- function(sim) {
                                knnNamesCol = "KNN",
                                sppEquivCol = P(sim)$sppEquivCol,
                                thresh = 10,
-                               url = "http://tree.pfc.forestry.ca/kNN-Species.tar",
+                               url = url,
                                userTags = c(cacheTags, "speciesLayers"),
                                omitArgs = c("userTags"))
   }
