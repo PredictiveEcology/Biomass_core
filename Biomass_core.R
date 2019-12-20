@@ -507,7 +507,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                              sppColumns = coverColNames,
                              pixelGroupBiomassClass = 100,
                              doSubset = FALSE,
-                             userTags = cacheTags,
+                             userTags = c(cacheTags, "pixelCohortData"),
                              omitArgs = c("userTags"))
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
 
@@ -539,7 +539,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                         modelFn = coverModel,
                         uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(cohortDataShort$ecoregionGroup)),
                         .specialData = cohortDataShort,
-                        userTags = cacheTags,
+                        userTags = c(cacheTags, "modelCover"),
                         omitArgs = c("userTags", ".specialData"))
 
     message(blue("  The rsquared is: "))
@@ -554,7 +554,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                           modelFn = biomassModel,
                           uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(pixelCohortData$ecoregionGroup)),
                           .specialData = cohortDataNoBiomass,
-                          userTags = cacheTags,
+                          userTags = c(cacheTags, "modelBiomass"),
                           omitArgs = c("userTags", ".specialData"))
     message(blue("  The rsquared is: "))
     print(modelBiomass$rsq)
@@ -1779,7 +1779,7 @@ CohortAgeReclassification <- function(sim) {
                                method = "bilinear",
                                datatype = "INT2U",
                                filename2 = TRUE, overwrite = TRUE,
-                               userTags = cacheTags,
+                               userTags = c(cacheTags, "rawBiomassMap"),
                                omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
   }
   if (needRTM) {
@@ -1791,7 +1791,7 @@ CohortAgeReclassification <- function(sim) {
     sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
                                filename2 = file.path(cachePath(sim), "rasters", "rasterToMatch.tif"),
                                datatype = "INT2U", overwrite = TRUE,
-                               userTags = cacheTags,
+                               userTags = c(cacheTags, "rasterToMatch"),
                                omitArgs = c("userTags"))
 
     ## this is old, and potentially not needed anymore
@@ -1833,7 +1833,7 @@ CohortAgeReclassification <- function(sim) {
       sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
                                  filename = file.path(dPath, "rasterToMatch.tif"),
                                  datatype = "INT2U", overwrite = TRUE,
-                                 userTags = cacheTags,
+                                 userTags = c(cacheTags, "rasterToMatch"),
                                  omitArgs = c("userTags"))
     }
   }
@@ -1852,7 +1852,7 @@ CohortAgeReclassification <- function(sim) {
                                   col.names = c("species", paste("age", 1:(maxcol - 1), sep = "")),
                                   stringsAsFactors = FALSE,
                                   overwrite = TRUE,
-                                  userTags = cacheTags,
+                                  userTags = c(cacheTags, "initialCommunities"),
                                   omitArgs = c("userTags"))
       # correct the typo in the original txt
       initialCommunities[14, 1:4] <- initialCommunities[14, 2:5]
@@ -1949,7 +1949,9 @@ CohortAgeReclassification <- function(sim) {
   ## make light requirements table
   if (!suppliedElsewhere("sufficientLight", sim)) {
     ## load the biomass_succession.txt to get shade tolerance parameters
-    mainInput <- prepInputsMainInput(url = extractURL("sufficientLight"), dPath, cacheTags) ## uses default URL
+    mainInput <- prepInputsMainInput(url = extractURL("sufficientLight"),
+                                     dPath,
+                                     cacheTags = c(cacheTags, "mainInput")) ## uses default URL
 
     sufficientLight <- data.frame(mainInput)
     startRow <- which(sufficientLight$col1 == "SufficientLight")
@@ -2024,7 +2026,8 @@ CohortAgeReclassification <- function(sim) {
 
   ## additional species traits
   if (!suppliedElsewhere("species", sim)) {
-    speciesTable <- getSpeciesTable(dPath = dPath, cacheTags = cacheTags)
+    speciesTable <- getSpeciesTable(dPath = dPath,
+                                    cacheTags = c(cacheTags, "speciesTable"))
     sim$species <- prepSpeciesTable(speciesTable = speciesTable,
                                     speciesLayers = sim$speciesLayers,
                                     sppEquiv = sim$sppEquiv[get(P(sim)$sppEquivCol) %in%
