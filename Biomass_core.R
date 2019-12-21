@@ -1765,7 +1765,7 @@ CohortAgeReclassification <- function(sim) {
     rawBiomassMapURL <- paste0(extractURL("rawBiomassMap"), rawBiomassMapFilename)
 
     sim$rawBiomassMap <- Cache(prepInputs,
-                               targetFile = asPath(rawBiomassMapFilename),
+                               targetFile = rawBiomassMapFilename,
                                url = rawBiomassMapURL,
                                destinationPath = dPath,
                                studyArea = sim$studyAreaLarge,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMap, LCC.. etc
