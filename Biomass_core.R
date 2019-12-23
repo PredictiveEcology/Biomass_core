@@ -311,7 +311,7 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "Biomass_core", "summaryBGM", eventPriority = summBGMPriority$end)
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "Biomass_core", "summaryRegen", eventPriority = summRegenPriority)
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
+           sim <- scheduleEvent(sim, start(sim),
                                 "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
            if (P(sim)$.plotMaps)
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
@@ -1451,113 +1451,113 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     cols2 <- df$cols
     names(cols2) <- df$species
 
+    plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies,
+                                   fill = species, group = species)) +
+      geom_area(position = "stack") +
+      scale_fill_manual(values = cols2) +
+      labs(x = "Year", y = "Biomass") +
+      theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+      scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
+
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-
-      plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies,
-                                     fill = species, group = species)) +
-        geom_area(position = "stack") +
-        scale_fill_manual(values = cols2) +
-        labs(x = "Year", y = "Biomass") +
-        theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
-        scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
-
       Plot(plot2, title = paste0("Total biomass by species\n", "across pixels"), new = TRUE)
-
-      if (current(sim)$eventTime == end(sim))
-        # if (!is.na(P(sim)$.saveInitialTime))
-        ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
     }
+
+    if (current(sim)$eventTime == end(sim))
+      ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
 
     maxNpixels <- length(sim$activePixelIndexReporting)
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
 
+    plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
+      scale_fill_manual(values = cols3) +
+      labs(x = "Year", y = "Count") +
+      geom_area() +
+      theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+      geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey", size = 1)
+
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-      plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
-        scale_fill_manual(values = cols3) +
-        labs(x = "Year", y = "Count") +
-        geom_area() +
-        theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
-        geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey", size = 1)
-
       Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
-
-      if (current(sim)$eventTime == end(sim))
-        # if (!is.na(P(sim)$.saveInitialTime))
-        ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
     }
 
+    if (current(sim)$eventTime == end(sim))
+      # if (!is.na(P(sim)$.saveInitialTime))
+      ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
+
+    plot4 <- ggplot(data = df, aes(x = year, y = AgeBySppWeighted,
+                                   colour = species, group = species)) +
+      geom_line(size = 1) +
+      scale_colour_manual(values = cols2) +
+      labs(x = "Year", y = "Age") +
+      theme(legend.text = element_text(size = 6), legend.title = element_blank())
+
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-      plot4 <- ggplot(data = df, aes(x = year, y = AgeBySppWeighted,
+      Plot(plot4, title = paste0("Biomass-weighted species age\n",
+                                 "(averaged across pixels)"), new = TRUE)
+    }
+
+    if (current(sim)$eventTime == end(sim))
+      # if (!is.na(P(sim)$.saveInitialTime))
+      ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
+
+
+    if (P(sim)$plotOverstory) {
+      plot5 <- ggplot(data = df, aes(x = year, y = overstoryBiomass,
+                                     fill = species, group = species)) +
+        geom_area(position = "stack") +
+        scale_fill_manual(values = cols2) +
+        labs(x = "Year", y = "Overstory Biomass") +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+        scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
+    } else {
+      plot5 <- ggplot(data = df, aes(x = year, y = OldestCohortBySpp,
                                      colour = species, group = species)) +
         geom_line(size = 1) +
         scale_colour_manual(values = cols2) +
-        labs(x = "Year", y = "Age") +
+        labs(x = "Year", y = "Age", ) +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
-
-      Plot(plot4, title = paste0("Biomass-weighted species age\n",
-                                 "(averaged across pixels)"), new = TRUE)
-
-      if (current(sim)$eventTime == end(sim))
-        # if (!is.na(P(sim)$.saveInitialTime))
-        ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
     }
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
 
-      #plot overstory biomass
-      if (P(sim)$plotOverstory) {
-        plot5 <- ggplot(data = df, aes(x = year, y = overstoryBiomass,
-                                       fill = species, group = species)) +
-          geom_area(position = "stack") +
-          scale_fill_manual(values = cols2) +
-          labs(x = "Year", y = "Overstory Biomass") +
-          theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
-          scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
-
-        Plot(plot5, title = paste("Overstory biomass by species"), new = TRUE)
-        if (current(sim)$eventTime == end(sim))
-          # if (!is.na(P(sim)$.saveInitialTime))
-          ggsave(file.path(outputPath(sim), "figures", "overstory_biomass.png"), plot5)
-
-      } else {
-        plot5 <- ggplot(data = df, aes(x = year, y = OldestCohortBySpp,
-                                       colour = species, group = species)) +
-          geom_line(size = 1) +
-          scale_colour_manual(values = cols2) +
-          labs(x = "Year", y = "Age") +
-          theme(legend.text = element_text(size = 6), legend.title = element_blank())
-
-        Plot(plot5, title = paste("Oldest cohort age\n",
-                                  "by species (across pixels)"), new = TRUE)
-      }
-      if (current(sim)$eventTime == end(sim))
-        # if (!is.na(P(sim)$.saveInitialTime))
-        ggsave(file.path(outputPath(sim), "figures", "oldest_cohorts.png"), plot5)
+       if (P(sim)$plotOverstory) {
+         titleLab <- "Overstory biomass by species"
+         fileName <- "overstory_biomass.png"
+       } else {
+         titleLab <- paste("Oldest cohort age\n",
+                           "by species (across pixels)")
+         fileName <- "oldest_cohorts.png"
+       }
+      Plot(plot5, title = titleLab, new = TRUE)
     }
+
+    if (current(sim)$eventTime == end(sim))
+      # if (!is.na(P(sim)$.saveInitialTime))
+      ggsave(file.path(outputPath(sim), "figures", fileName), plot5)
 
     ## test
+    plot6 <- ggplot(data = df, aes(x = year, y = aNPPBySpecies,
+                                   colour = species, group = species)) +
+      geom_line(size = 1) +
+      scale_color_manual(values = cols2) +
+      labs(x = "Year", y = "aNPP") +
+      theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+      scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
+
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-      plot6 <- ggplot(data = df, aes(x = year, y = aNPPBySpecies,
-                                     colour = species, group = species)) +
-        geom_line(size = 1) +
-        scale_color_manual(values = cols2) +
-        labs(x = "Year", y = "aNPP") +
-        theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
-        scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
-
       Plot(plot6, title = paste0("Total aNPP by species\n",
                                  "across pixels"), new = TRUE)
-
-      if (current(sim)$eventTime == end(sim))
-        # if (!is.na(P(sim)$.saveInitialTime))
-        ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"), plot6)
     }
+
+    if (current(sim)$eventTime == end(sim))
+      # if (!is.na(P(sim)$.saveInitialTime))
+      ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"), plot6)
     ## end test
   }
 
@@ -1663,27 +1663,27 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
 
   if (length(unique(sim$summaryLandscape$year)) > 1) {
     df2 <- melt(sim$summaryLandscape, id.vars = "year")
+
+    varLabels <- c(sumB = "Biomass", maxAge = "Age", sumANPP = "aNPP")
+
+    plot1 <- ggplot(data = df2, aes(x = year, y = value, colour = variable)) +
+      geom_line(size = 1) +
+      scale_colour_brewer(labels = varLabels, type = "qual", palette = "Dark2") +
+      theme_bw() +
+      theme(legend.text = element_text(size = 6), legend.title = element_blank(),
+            legend.position = "bottom") +
+      facet_wrap(~ variable, scales = "free_y",
+                 labeller = labeller(variable = varLabels)) +
+      labs(x = "Year", y = "Value")
+
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-
-      varLabels <- c(sumB = "Biomass", maxAge = "Age", sumANPP = "aNPP")
-
-      plot1 <- ggplot(data = df2, aes(x = year, y = value, colour = variable)) +
-        geom_line(size = 1) +
-        scale_colour_brewer(labels = varLabels, type = "qual", palette = "Dark2") +
-        theme_bw() +
-        theme(legend.text = element_text(size = 6), legend.title = element_blank(),
-              legend.position = "bottom") +
-        facet_wrap(~ variable, scales = "free_y",
-                   labeller = labeller(variable = varLabels)) +
-        labs(x = "Year", y = "Value")
-
       Plot(plot1, title = "Total landscape biomass and aNPP and max stand age", new = TRUE)
-
-      if (current(sim)$eventTime == end(sim))
-        # if (!is.na(P(sim)$.saveInitialTime))
-        ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
     }
+
+    if (current(sim)$eventTime == end(sim))
+      # if (!is.na(P(sim)$.saveInitialTime))
+      ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
   }
   return(invisible(sim))
 })
