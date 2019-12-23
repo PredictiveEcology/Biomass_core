@@ -18,11 +18,11 @@ test_that("test total site biomass (sumB) ",{
                            speciesCode = 16, age = c(1:10,20,30,50,1:10), B = c(1:13,1:10),
                            mortality = 150, aNPPAct = 999)
   # last seeding regeneration time is lastReg =10
-  # simuTime is 18, therefore, the newcohorts that regenerated at 10 reach the age of 10
+  # currentTime is 18, therefore, the newcohorts that regenerated at 10 reach the age of 10
   if(exists("calculateSumB")){
-    output <- calculateSumB(cohortData, lastReg=10, simuTime=18, successionTimestep)
+    output <- calculateSumB(cohortData, lastReg=10, currentTime=18, successionTimestep)
   } else {
-    output <- mySim$calculateSumB(cohortData, lastReg=10, simuTime=18, successionTimestep)
+    output <- mySim$calculateSumB(cohortData, lastReg=10, currentTime=18, successionTimestep)
   }
   cohortData_output <- setkey(output,pixelGroup,age)
   cohortData_output_compared <- setkey(data.table(pixelGroup = c(rep(1,13),rep(2,10)), ecoregionGroup = 1,
@@ -33,9 +33,9 @@ test_that("test total site biomass (sumB) ",{
   rm(cohortData_output,cohortData_output_compared,output)
   for(i in 19:27){
     if(exists("calculateSumB")){
-      output <- calculateSumB(cohortData, lastReg=10, simuTime=i, successionTimestep)
+      output <- calculateSumB(cohortData, lastReg=10, currentTime=i, successionTimestep)
     } else {
-      output <- mySim$calculateSumB(cohortData, lastReg=10, simuTime=i, successionTimestep)
+      output <- mySim$calculateSumB(cohortData, lastReg=10, currentTime=i, successionTimestep)
     }
     cohortData_output <- setkey(output,pixelGroup,age)
     cohortData_output_compared <- setkey(data.table(pixelGroup = c(rep(1,13),rep(2,10)), ecoregionGroup = 1,
