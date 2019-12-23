@@ -11,8 +11,9 @@ defineModule(sim, list(
     person(c("Alex", "M."), "Chubaty", email = "achubaty@friresearch.ca", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.3.1.9000"),
-                 LandR = "0.0.2.9008", SpaDES.core = "0.2.3.9009"),
+  version = list(Biomass_core = numeric_version("1.3.2"),
+                 LandR = "0.0.2.9008", SpaDES.core = "0.2.6.9004",
+                 LandR.CS = "0.0.0.9000"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
@@ -24,7 +25,8 @@ defineModule(sim, list(
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
-                  "PredictiveEcology/SpaDES.tools@development"),
+                  "PredictiveEcology/SpaDES.tools@development",
+                  "ianmseddy/LandR.CS@master"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -38,10 +40,10 @@ defineModule(sim, list(
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter('gmcsPctLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
                     paste("if using LandR.CS for climate-sensitive growth and mortality, a percentile",
-                    " is used to estimate the effect of climate on growth/mortality ",
-                    "(currentClimate/referenceClimate). Upper and lower limits are ",
-                    "suggested to circumvent problems caused by very small denominators as well as ",
-                    "predictions outside the data range used to generate the model")),
+                          " is used to estimate the effect of climate on growth/mortality ",
+                          "(currentClimate/referenceClimate). Upper and lower limits are ",
+                          "suggested to circumvent problems caused by very small denominators as well as ",
+                          "predictions outside the data range used to generate the model")),
     defineParameter("growthAndMortalityDrivers", "character", "LandR", NA, NA,
                     desc = paste("package name where the following functions can be found:",
                                  "calculateClimateEffect, assignClimateEffect",
@@ -60,9 +62,12 @@ defineModule(sim, list(
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
                                  "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
+    defineParameter("plotOverstory", 'logical', FALSE, NA, NA, desc = "swap max age plot with overstory biomass"),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
                     desc = paste("choose which seeding algorithm will be used among",
-                                 "noDispersal, universalDispersal, and wardDispersal (default).")),
+                                 "noDispersal, universalDispersal, and wardDispersal (default).",
+                                 "Species dispersal distances (in the 'species' table) are based",
+                                 "on LANDIS-II parameters.")),
     defineParameter("spinupMortalityfraction", "numeric", 0.001,
                     desc = "defines the mortality loss fraction in spin up-stage simulation"),
     defineParameter("sppEquivCol", "character", "Boreal", NA, NA,
@@ -127,10 +132,6 @@ defineModule(sim, list(
                  desc = paste("Raster layer of buffered study area used for cropping, masking and projecting.",
                               "Defaults to the kNN biomass map masked with `studyArea`"),
                  sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
-    # expectsInput("rasterToMatchReporting", "RasterLayer",
-    #              desc = paste("Raster layer of study area used for plotting and reporting only.",
-    #                           "Defaults to the kNN biomass map masked with `studyArea`"),
-    #              sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
     expectsInput("species", "data.table",
                  desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
                               "Default is partially based on Dominic Cir and Yan's project"),
@@ -147,9 +148,8 @@ defineModule(sim, list(
                  desc = "table of species equivalencies. See LandR::sppEquivalencies_CA.",
                  sourceURL = ""),
     expectsInput("studyArea", "SpatialPolygonsDataFrame",
-                 desc = paste("multipolygon to use as the study area,",
-                              "with attribute LTHFC describing the fire return interval.",
-                              "Defaults to a square shapefile in Southwestern Alberta, Canada."),
+                 desc = paste("Polygon to use as the study area.",
+                              "Defaults to  an area in Southwestern Alberta, Canada."),
                  sourceURL = ""),
     expectsInput("studyAreaReporting", "SpatialPolygonsDataFrame",
                  desc = paste("multipolygon (typically smaller/unbuffered than studyArea) to use for plotting/reporting.",
@@ -161,8 +161,8 @@ defineModule(sim, list(
                  sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
     expectsInput("treedFirePixelTableSinceLastDisp", "data.table",
                  desc = paste("3 columns: pixelIndex, pixelGroup, and burnTime. Each row represents a forested pixel ",
-                 "that was burned up to and including this year, since last dispersal event, with its corresponding ",
-                 "pixelGroup and time it occurred"),
+                              "that was burned up to and including this year, since last dispersal event, with its corresponding ",
+                              "pixelGroup and time it occurred"),
                  sourceURL = "")
     # expectsInput("spinUpCache", "logical", ""),
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
@@ -412,8 +412,10 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
 
 ### EVENT FUNCTIONS
 Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
+
   ## A numeric scalar indicating how large each chunk of an internal data.table with processing by chunks
   mod$cutpoint <- 1e10
+  cacheTags <- c(currentModule(sim), "init")
 
   ##############################################
   ## Prepare individual objects
@@ -504,7 +506,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                              sppColumns = coverColNames,
                              pixelGroupBiomassClass = 100,
                              doSubset = FALSE,
-                             userTags = "stable")
+                             userTags = cacheTags,
+                             omitArgs = c("userTags"))
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
 
     ## When using dummy values ecoregion codes are not changed
@@ -535,7 +538,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                         modelFn = coverModel,
                         uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(cohortDataShort$ecoregionGroup)),
                         .specialData = cohortDataShort,
-                        omitArgs = c(".specialData"))
+                        userTags = cacheTags,
+                        omitArgs = c("userTags", ".specialData"))
 
     message(blue("  The rsquared is: "))
     print(modelCover$rsq)
@@ -549,7 +553,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                           modelFn = biomassModel,
                           uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(pixelCohortData$ecoregionGroup)),
                           .specialData = cohortDataNoBiomass,
-                          omitArgs = c(".specialData"))
+                          userTags = cacheTags,
+                          omitArgs = c("userTags", ".specialData"))
     message(blue("  The rsquared is: "))
     print(modelBiomass$rsq)
 
@@ -695,7 +700,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                          successionTimestep = P(sim)$successionTimestep,
                          spinupMortalityfraction = P(sim)$spinupMortalityfraction,
                          species = sim$species,
-                         userTags = c("Biomass_core", "spinUp"))
+                         userTags = c(cacheTags, "spinUp"),
+                         omitArgs = c("userTags"))
 
     cohortData <- spinupstage$cohortData
     if (P(sim)$calibrate) {
@@ -728,7 +734,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     }
 
     # In case there are non-identical biomasses in each pixelGroup -- this should be irrelevant with
-    #   improved Biomass_borealDataPrep.R (Jan 6, 2019 -- Eliot)
+    #   improved biomass_borealDataPrep.R (Jan 6, 2019 -- Eliot)
     biomassTable <- biomassTable[, list(Bsum = mean(biomass, na.rm = TRUE)), by = pixelGroup]
     if (!is.integer(biomassTable[["Bsum"]]))
       set(biomassTable, NULL, "Bsum", asInteger(biomassTable[["Bsum"]]))
@@ -881,6 +887,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
   if (class(a) == "try-error") {
     stop("The package you specified for P(sim)$growthAndMortalityDrivers must be installed.")
   }
+
   calculateClimateEffect <- getFromNamespace("calculateClimateEffect", P(sim)$growthAndMortalityDrivers)
 
   cohortData <- sim$cohortData
@@ -983,7 +990,8 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                       gmcsPctLimits = P(sim)$gmcsPctLimits)
 
     #This line will return aNPPAct unchanged unless LandR_BiomassGMCS is also run
-    subCohortData$aNPPAct <- pmax(0, asInteger(subCohortData$aNPPAct * predObj$growthPred)/100) #changed from ratio to pct for memory
+    subCohortData <- subCohortData[predObj, on = c('pixelGroup', 'age', 'speciesCode')]
+    subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred)/100)] #changed from ratio to pct for memory
 
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
@@ -991,7 +999,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
-    subCohortData$mortality <- pmax(0, asInteger(subCohortData$mortality * predObj$mortPred/100))
+    subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred)/100)]
 
     ## without climate-sensitivity, mortality never exceeds biomass (Ian added this 2019-04-04)
     subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
@@ -1366,6 +1374,7 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 })
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
+
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
   checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
@@ -1387,6 +1396,13 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                   aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
                                   OldestCohortBySpp = max(age, na.rm = TRUE)),
                            by = .(speciesCode)]
+
+  #overstory
+  cohortData <-  addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+  cohortData[, bWeightedAge := floor(sum(age*B)/sum(B)/10)*10, .(pixelGroup)]
+  # B was set as numeric to avoid problems with big numbers being integers
+  overstory <- cohortData[age >= bWeightedAge, .(overstoryBiomass = sum(as.numeric(B) * noPixels)), .(speciesCode)]
+  thisPeriod <- thisPeriod[overstory, on = 'speciesCode']
 
   if (is.null(sim$summaryBySpecies)) {
     sim$summaryBySpecies <- thisPeriod
@@ -1417,6 +1433,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   colorIDs <- match(summaryBySpecies1$leadingType, colours)
   summaryBySpecies1$cols <- sim$sppColorVect[colorIDs]
 
+
   if (is.null(sim$summaryBySpecies1)) {
     sim$summaryBySpecies1 <- summaryBySpecies1
   } else {
@@ -1438,7 +1455,8 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       geom_area(position = "stack") +
       scale_fill_manual(values = cols2) +
       labs(x = "Year", y = "Biomass") +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank())
+      theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+      scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
@@ -1485,22 +1503,41 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
 
-    plot5 <- ggplot(data = df, aes(x = year, y = OldestCohortBySpp,
-                                   colour = species, group = species)) +
-      geom_line(size = 1) +
-      scale_colour_manual(values = cols2) +
-      labs(x = "Year", y = "Age") +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank())
+
+    if (P(sim)$plotOverstory) {
+      plot5 <- ggplot(data = df, aes(x = year, y = overstoryBiomass,
+                                     fill = species, group = species)) +
+        geom_area(position = "stack") +
+        scale_fill_manual(values = cols2) +
+        labs(x = "Year", y = "Overstory Biomass") +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+        scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
+    } else {
+      plot5 <- ggplot(data = df, aes(x = year, y = OldestCohortBySpp,
+                                     colour = species, group = species)) +
+        geom_line(size = 1) +
+        scale_colour_manual(values = cols2) +
+        labs(x = "Year", y = "Age", ) +
+        theme(legend.text = element_text(size = 6), legend.title = element_blank())
+    }
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-      Plot(plot5, title = paste("Oldest cohort age\n",
-                                "by species (across pixels)"), new = TRUE)
+
+       if (P(sim)$plotOverstory) {
+         titleLab <- "Overstory biomass by species"
+         fileName <- "overstory_biomass.png"
+       } else {
+         titleLab <- paste("Oldest cohort age\n",
+                           "by species (across pixels)")
+         fileName <- "oldest_cohorts.png"
+       }
+      Plot(plot5, title = titleLab, new = TRUE)
     }
 
     if (current(sim)$eventTime == end(sim))
       # if (!is.na(P(sim)$.saveInitialTime))
-      ggsave(file.path(outputPath(sim), "figures", "oldest_cohorts.png"), plot5)
+      ggsave(file.path(outputPath(sim), "figures", fileName), plot5)
 
     ## test
     plot6 <- ggplot(data = df, aes(x = year, y = aNPPBySpecies,
@@ -1508,7 +1545,8 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       geom_line(size = 1) +
       scale_color_manual(values = cols2) +
       labs(x = "Year", y = "aNPP") +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank())
+      theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+      scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
@@ -1583,22 +1621,23 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
 
     # Mask out NAs based on rasterToMatch (for plotting only!)
     vegTypeMapForPlot <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
-    #vegTypeMapForPlot[is.na(sim$rasterToMatchReporting[])] <- NA ## faster than raster::mask
 
     ## Plot
-    dev(mod$mapWindow)
-    if (!is.null(biomassMapForPlot))
-      Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
-    if (!is.null(ANPPMapForPlot))
-      Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
-    if (!is.null(mortalityMapForPlot))
-      Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
-    Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
-    grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
-    grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
-
-    #if (!is.null(reproductionMapForPlot))
-    #  Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
+    tryCatch({
+      dev(mod$mapWindow) # Protecting from error of headless/terminal run
+      if (!is.null(biomassMapForPlot))
+        Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
+      if (!is.null(ANPPMapForPlot))
+        Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
+      if (!is.null(mortalityMapForPlot))
+        Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
+      Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
+      grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
+      grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
+      #if (!is.null(reproductionMapForPlot))
+      #  Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
+      }, error = function(e)
+      message("Can't open the device for plotting. Plotting will be disabled to avoid errors"))
   }
 
   return(invisible(sim))
@@ -1649,6 +1688,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
 })
 
 Save <- compiler::cmpfun(function(sim) {
+
   raster::projection(sim$simulatedBiomassMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$ANPPMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
@@ -1669,6 +1709,7 @@ Save <- compiler::cmpfun(function(sim) {
               file.path(outputPath(sim), "figures",
                         paste0("reproductionMap_Year", round(time(sim)), ".tif")),
               datatype = 'INT4S', overwrite = TRUE)
+
   return(invisible(sim))
 })
 
@@ -1716,68 +1757,81 @@ CohortAgeReclassification <- function(sim) {
     }
   }
 
-  if (needRTM) {
-    if (!suppliedElsewhere("rawBiomassMap", sim)) {
-      rawBiomassMapFilename <- file.path(dPath, "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.tif")
-      rawBiomassMapURL <- "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"
-      rawBiomassMap <- Cache(prepInputs,
-                             targetFile = asPath(basename(rawBiomassMapFilename)),
-                             archive = asPath(c("kNN-StructureBiomass.tar",
-                                                "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.zip")),
-                             url = rawBiomassMapURL,
-                             destinationPath = dPath,
-                             studyArea = sim$studyArea,
-                             rasterToMatch = NULL,
-                             maskWithRTM = FALSE,
-                             useSAcrs = TRUE,
-                             method = "bilinear",
-                             datatype = "INT2U",
-                             filename2 = TRUE, overwrite = TRUE,
-                             omitArgs = c("destinationPath", "targetFile", cacheTags, "stable"))
-    } else {
-      rawBiomassMap <- sim$rawBiomassMap
-    }
-
-    # if we need rasterToMatch, that means a) we don't have it, but b) we will have rawBiomassMap
-    sim$rasterToMatch <- rawBiomassMap
-    studyArea <- sim$studyArea # temporary copy because it will be overwritten if it is suppliedElsewhere
-    message("  Rasterizing the studyArea polygon map")
-    if (!is(studyArea, "SpatialPolygonsDataFrame")) {
-      dfData <- if (is.null(rownames(studyArea))) {
-        polyID <- sapply(slot(studyArea, "polygons"), function(x) slot(x, "ID"))
-        data.frame("field" = as.character(seq_along(length(studyArea))), row.names = polyID)
-      } else {
-        polyID <- sapply(slot(studyArea, "polygons"), function(x) slot(x, "ID"))
-        data.frame("field" = rownames(studyArea), row.names = polyID)
-      }
-      studyArea <- SpatialPolygonsDataFrame(studyArea, data = dfData)
-    }
-    if (!identical(crs(studyArea), crs(sim$rasterToMatch))) {
-      studyArea <- spTransform(studyArea, crs(sim$rasterToMatch))
-      studyArea <- fixErrors(studyArea)
-    }
-    ## TODO: review whether this is necessary (or will break LandWeb if removed) see Git Issue #22
-    ## layers provided by David Andison sometimes have LTHRC, sometimes LTHFC ... chose whichever
-    LTHxC <- grep("(LTH.+C)", names(studyArea), value = TRUE)
-    fieldName <- if (length(LTHxC)) {
-      LTHxC
-    } else {
-      if (length(names(studyArea)) > 1) {
-        ## study region may be a simple polygon
-        names(studyArea)[1]
-      } else NULL
-    }
-
-    sim$rasterToMatch <- crop(fasterizeFromSp(studyArea, sim$rasterToMatch, fieldName),
-                              studyArea)
-    sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
-                               filename = file.path(dataPath(sim), "rasterToMatch.tif"),
-                               datatype = "INT2U", overwrite = TRUE)
+  if (!suppliedElsewhere("rawBiomassMap", sim) || needRTM) {
+    rawBiomassMapFilename <- file.path(dPath, "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.tif")
+    sim$rawBiomassMap <- Cache(prepInputs,
+                               targetFile = asPath(basename(rawBiomassMapFilename)),
+                               archive = asPath(c("kNN-StructureBiomass.tar",
+                                                  "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.zip")),
+                               url = extractURL("rawBiomassMap"),
+                               destinationPath = dPath,
+                               studyArea = sim$studyArea,
+                               rasterToMatch = if (!needRTM) sim$rasterToMatch else NULL,
+                               # maskWithRTM = TRUE,    ## if RTM not supplied no masking happens (is this intended?)
+                               maskWithRTM = if (!needRTM) TRUE else FALSE,
+                               ## TODO: if RTM is not needed use SA CRS? -> this is not correct
+                               # useSAcrs = if (!needRTM) TRUE else FALSE,
+                               useSAcrs = FALSE,     ## never use SA CRS
+                               method = "bilinear",
+                               datatype = "INT2U",
+                               filename2 = TRUE, overwrite = TRUE, userTags = cacheTags,
+                               omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
   }
+  if (needRTM) {
+    ## if we need rasterToMatch, that means a) we don't have it, but b) we will have rawBiomassMap
+    sim$rasterToMatch <- sim$rawBiomassMap
+    RTMvals <- getValues(sim$rasterToMatch)
+    sim$rasterToMatch[!is.na(RTMvals)] <- 1
 
-  # if (!suppliedElsewhere("rasterToMatchReporting")) {
-  #   sim$rasterToMatchReporting <- sim$rasterToMatch
-  # }
+    sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
+                               filename2 = file.path(cachePath(sim), "rasters", "rasterToMatch.tif"),
+                               datatype = "INT2U", overwrite = TRUE,
+                               userTags = cacheTags,
+                               omitArgs = c("userTags"))
+
+    ## this is old, and potentially not needed anymore
+    if (FALSE) {
+      studyArea <- sim$studyArea # temporary copy because it will be overwritten if it is suppliedElsewhere
+      message("  Rasterizing the studyArea polygon map")
+      if (!is(studyArea, "SpatialPolygonsDataFrame")) {
+        dfData <- if (is.null(rownames(studyArea))) {
+          polyID <- sapply(slot(studyArea, "polygons"), function(x) slot(x, "ID"))
+          data.frame("field" = as.character(seq_along(length(studyArea))), row.names = polyID)
+        } else {
+          polyID <- sapply(slot(studyArea, "polygons"), function(x) slot(x, "ID"))
+          data.frame("field" = rownames(studyArea), row.names = polyID)
+        }
+        studyArea <- SpatialPolygonsDataFrame(studyArea, data = dfData)
+      }
+      if (!identical(crs(studyArea), crs(sim$rasterToMatch))) {
+        studyArea <- spTransform(studyArea, crs(sim$rasterToMatch))
+        studyArea <- fixErrors(studyArea)
+
+        ## TODO: OVERWRITE sim$studyArea here? what about SAlarge?
+      }
+
+
+      #TODO: review whether this is necessary (or will break LandWeb if removed) see Git Issue #22
+      # layers provided by David Andison sometimes have LTHRC, sometimes LTHFC ... chose whichever
+      LTHxC <- grep("(LTH.+C)", names(studyArea), value = TRUE)
+      fieldName <- if (length(LTHxC)) {
+        LTHxC
+      } else {
+        if (length(names(studyArea)) > 1) {
+          ## study region may be a simple polygon
+          names(studyArea)[1]
+        } else NULL
+      }
+
+      sim$rasterToMatch <- crop(fasterizeFromSp(studyArea, sim$rasterToMatch, fieldName),
+                                studyArea)
+      sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
+                                 filename = file.path(dPath, "rasterToMatch.tif"),
+                                 datatype = "INT2U", overwrite = TRUE,
+                                 userTags = cacheTags,
+                                 omitArgs = c("userTags"))
+    }
+  }
 
   if (FALSE) { # not using this -- Eliot Jan 22, 2019 -- use pixelGroupMap and pixelGroups instead
     if (!suppliedElsewhere("initialCommunities", sim)) {
@@ -1792,7 +1846,9 @@ CohortAgeReclassification <- function(sim) {
                                   blank.lines.skip = TRUE,
                                   col.names = c("species", paste("age", 1:(maxcol - 1), sep = "")),
                                   stringsAsFactors = FALSE,
-                                  overwrite = TRUE)
+                                  overwrite = TRUE,
+                                  userTags = cacheTags,
+                                  omitArgs = c("userTags"))
       # correct the typo in the original txt
       initialCommunities[14, 1:4] <- initialCommunities[14, 2:5]
 
@@ -1946,22 +2002,17 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("speciesLayers", sim)) {
-    #opts <- options(reproducible.useCache = "overwrite")
-    if (!suppliedElsewhere("studyAreaLarge", sim)) {
-      message("'studyAreaLarge' was not provided by user. Using the same as 'studyArea'")
-      sim <- objectSynonyms(sim, list(c("studyAreaLarge", "studyArea")))
-    }
-
     sim$speciesLayers <- Cache(loadkNNSpeciesLayers,
                                dPath = dPath,
                                rasterToMatch = sim$rasterToMatch,
-                               studyArea = sim$studyAreaLarge,
+                               studyArea = sim$studyArea,
                                sppEquiv = sim$sppEquiv,
                                knnNamesCol = "KNN",
                                sppEquivCol = P(sim)$sppEquivCol,
-                               thresh = 5,
+                               thresh = 10,
                                url = "http://tree.pfc.forestry.ca/kNN-Species.tar",
-                               userTags = c(cacheTags, "speciesLayers"))
+                               userTags = c(cacheTags, "speciesLayers"),
+                               omitArgs = c("userTags"))
   }
 
   ## additional species traits
