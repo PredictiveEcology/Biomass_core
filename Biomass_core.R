@@ -1515,7 +1515,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
         labs(x = "Year", y = "Age") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
     }
-browser()
+
     if (P(sim)$plotOverstory) {
       titleLab <- "Overstory biomass by species"
       fileName <- "overstory_biomass.png"
