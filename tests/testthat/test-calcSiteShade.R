@@ -24,9 +24,9 @@ test_that("test site shade calculation",{
                            B = c(rep(300, 5), as.integer(seq(100, 32880,length = 15))),
                            mortality = 50, aNPPAct = 50)
   if(exists("calcSiteShade")){
-    output <- calcSiteShade(time = time(mySim), cohortData, speciesEcoregion, minRelativeB)
+    output <- calcSiteShade(currentTime = time(mySim), cohortData, speciesEcoregion, minRelativeB)
   } else {
-    output <- mySim$calcSiteShade(time = time(mySim), cohortData, speciesEcoregion, minRelativeB)
+    output <- mySim$calcSiteShade(currentTime = time(mySim), cohortData, speciesEcoregion, minRelativeB)
   }
   output_compared <- data.table(pixelGroup=1:20,siteShade=c(rep(0,7),1:5,rep(5,8)))
   expect_equal(output,output_compared)
@@ -37,9 +37,9 @@ test_that("test site shade calculation",{
                            B = c(rep(300,5),as.integer(seq(100,32880,length = 15))),
                            mortality = 50, aNPPAct  = 100)
   if(exists("calcSiteShade")){
-    output <- calcSiteShade(time = time(mySim), cohortData, speciesEcoregion, minRelativeB)
+    output <- calcSiteShade(currentTime = time(mySim), cohortData, speciesEcoregion, minRelativeB)
   } else {
-    output <- mySim$calcSiteShade(time = time(mySim), cohortData, speciesEcoregion, minRelativeB)
+    output <- mySim$calcSiteShade(currentTime = time(mySim), cohortData, speciesEcoregion, minRelativeB)
   }
   expect_equal(output,
                data.table(pixelGroup = 1:20, siteShade = 0))

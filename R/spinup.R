@@ -46,7 +46,7 @@ spinUp <- compiler::cmpfun(function(cohortData, calibrate, successionTimestep,
     # 1. assign the biomass for the first cohort
     if (nrow(cohortData[age == 2, ]) > 0) {
       lastReg <- k - 1
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
+      cohortData <- calculateSumB(cohortData, lastReg = lastReg, currentTime = k,
                                          successionTimestep = successionTimestep)
       cohortData[age == 2, B := asInteger(pmax(1, maxANPP * exp(-1.6 * sumB / maxB_eco)))]
       cohortData[age == 2, B := asInteger(pmin(maxANPP, B))]
@@ -57,7 +57,7 @@ spinUp <- compiler::cmpfun(function(cohortData, calibrate, successionTimestep,
                                                  spinupMortalityfraction = spinupMortalityfraction)
       # 3. calculate the actual ANPP
       # calculate biomass Potential, for each cohort
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k - 1,
+      cohortData <- calculateSumB(cohortData, lastReg = lastReg, currentTime = k - 1,
                                          successionTimestep = successionTimestep)
       cohortData <- calculateCompetition(cohortData, stage = "spinup")
       # calculate ANPP
@@ -100,7 +100,7 @@ spinUp <- compiler::cmpfun(function(cohortData, calibrate, successionTimestep,
     }
     lastnewcohorts <- which(cohortData$origAge == 1)
     if (presimuT == presimuT_end & length(lastnewcohorts) > 0 & maxAge != 1) {
-      cohortData <- calculateSumB(cohortData, lastReg = lastReg, simuTime = k,
+      cohortData <- calculateSumB(cohortData, lastReg = lastReg, currentTime = k,
                                          successionTimestep = successionTimestep)
       cohortData[origAge == 1, B := asInteger(pmax(1, maxANPP * exp(-1.6 * sumB / maxB_eco)))]
       cohortData[origAge == 1, B := asInteger(pmin(maxANPP, B))]
