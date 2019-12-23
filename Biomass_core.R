@@ -1374,7 +1374,6 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 })
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
-
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
   checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
@@ -1399,9 +1398,10 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
   #overstory
   cohortData <-  addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
-  cohortData[, bWeightedAge := floor(sum(age*B)/sum(B)/10)*10, .(pixelGroup)]
+  cohortData[, bWeightedAge := floor(sum(age * B) / sum(B) / 10) * 10, .(pixelGroup)]
   # B was set as numeric to avoid problems with big numbers being integers
-  overstory <- cohortData[age >= bWeightedAge, .(overstoryBiomass = sum(as.numeric(B) * noPixels)), .(speciesCode)]
+  overstory <- cohortData[age >= bWeightedAge, .(overstoryBiomass = sum(as.numeric(B) * noPixels)),
+                          .(speciesCode)]
   thisPeriod <- thisPeriod[overstory, on = 'speciesCode']
 
   if (is.null(sim$summaryBySpecies)) {
@@ -1421,8 +1421,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                   stringsAsFactors = FALSE)
 
   whMixedLeading <- which(summaryBySpecies1$leadingType == "Mixed")
-  summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType,
-                                                  sim$sppEquiv,
+  summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType, sim$sppEquiv,
                                                   "EN_generic_short")
   summaryBySpecies1$leadingType[whMixedLeading] <- "Mixed"
 
@@ -1432,7 +1431,6 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
   colorIDs <- match(summaryBySpecies1$leadingType, colours)
   summaryBySpecies1$cols <- sim$sppColorVect[colorIDs]
-
 
   if (is.null(sim$summaryBySpecies1)) {
     sim$summaryBySpecies1 <- summaryBySpecies1
@@ -1450,8 +1448,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     cols2 <- df$cols
     names(cols2) <- df$species
 
-    plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies,
-                                   fill = species, group = species)) +
+    plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species, group = species)) +
       geom_area(position = "stack") +
       scale_fill_manual(values = cols2) +
       labs(x = "Year", y = "Biomass") +
@@ -1483,7 +1480,6 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     }
 
     if (current(sim)$eventTime == end(sim))
-      # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
 
     plot4 <- ggplot(data = df, aes(x = year, y = AgeBySppWeighted,
@@ -1500,9 +1496,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     }
 
     if (current(sim)$eventTime == end(sim))
-      # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
-
 
     if (P(sim)$plotOverstory) {
       plot5 <- ggplot(data = df, aes(x = year, y = overstoryBiomass,
@@ -1517,21 +1511,21 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                      colour = species, group = species)) +
         geom_line(size = 1) +
         scale_colour_manual(values = cols2) +
-        labs(x = "Year", y = "Age", ) +
+        labs(x = "Year", y = "Age") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
+    }
+browser()
+    if (P(sim)$plotOverstory) {
+      titleLab <- "Overstory biomass by species"
+      fileName <- "overstory_biomass.png"
+    } else {
+      titleLab <- paste("Oldest cohort age\n",
+                        "by species (across pixels)")
+      fileName <- "oldest_cohorts.png"
     }
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-
-       if (P(sim)$plotOverstory) {
-         titleLab <- "Overstory biomass by species"
-         fileName <- "overstory_biomass.png"
-       } else {
-         titleLab <- paste("Oldest cohort age\n",
-                           "by species (across pixels)")
-         fileName <- "oldest_cohorts.png"
-       }
       Plot(plot5, title = titleLab, new = TRUE)
     }
 
@@ -1540,8 +1534,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       ggsave(file.path(outputPath(sim), "figures", fileName), plot5)
 
     ## test
-    plot6 <- ggplot(data = df, aes(x = year, y = aNPPBySpecies,
-                                   colour = species, group = species)) +
+    plot6 <- ggplot(data = df, aes(x = year, y = aNPPBySpecies, colour = species, group = species)) +
       geom_line(size = 1) +
       scale_color_manual(values = cols2) +
       labs(x = "Year", y = "aNPP") +
@@ -1550,8 +1543,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-      Plot(plot6, title = paste0("Total aNPP by species\n",
-                                 "across pixels"), new = TRUE)
+      Plot(plot6, title = paste0("Total aNPP by species\n", "across pixels"), new = TRUE)
     }
 
     if (current(sim)$eventTime == end(sim))
@@ -1688,7 +1680,6 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
 })
 
 Save <- compiler::cmpfun(function(sim) {
-
   raster::projection(sim$simulatedBiomassMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$ANPPMap) <- raster::projection(sim$ecoregionMap)
   raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
