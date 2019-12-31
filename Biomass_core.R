@@ -1119,7 +1119,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFrom
 
   if (nrow(seedingData) > 0) {
     outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
-                             time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
+                             currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
                              treedFirePixelTableSinceLastDisp = NULL,
                              successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
@@ -1141,7 +1141,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   species <- sim$species
   # all species can provide seed source, i.e. age>=sexualmature
   speciessource <- setkey(sim$species[, .(speciesCode, k = 1)], k)
-  siteShade <- data.table(calcSiteShade(time = round(time(sim)), sim$cohortData,
+  siteShade <- data.table(calcSiteShade(currentTime = round(time(sim)), sim$cohortData,
                                         sim$speciesEcoregion, sim$minRelativeB))
   activePixelGroup <- unique(data.table(pixelGroup = getValues(sim$pixelGroupMap)[tempActivePixel],
                                         ecoregionGroup = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap),
@@ -1206,7 +1206,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
   sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
                                   lastReg = sim$lastReg, simuTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
-  siteShade <- calcSiteShade(time = round(time(sim)), cohortData = sim$cohortData,
+  siteShade <- calcSiteShade(currentTime = round(time(sim)), cohortData = sim$cohortData,
                              sim$speciesEcoregion, sim$minRelativeB)
   activePixelGroup <- data.table(pixelGroup = unique(getValues(sim$pixelGroupMap)[tempActivePixel])) %>%
     na.omit()
@@ -1335,7 +1335,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
       if (nrow(seedingData) > 0) {
         outs <- updateCohortData(seedingData, cohortData = sim$cohortData,
                                  pixelGroupMap = sim$pixelGroupMap,
-                                 time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
+                                 currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
                                  treedFirePixelTableSinceLastDisp = NULL,
                                  successionTimestep = P(sim)$successionTimestep)
 

@@ -26,13 +26,15 @@ test_that("test add new cohort function",{
   newcohortdata <- rbindlist(list(newcohortdata1,newcohortdata2))[
     , ':='(age = NULL, B = NULL, sumB = NULL, aNPPAct = NULL, mortality = NULL)]
 
-  speciesEcoregion <- data.table(year = 0,
-                                 maxANPP = c(886L, 1175L, 1106L, 1202L, 1202L, 1202L, 969L, 1130L,
-                                             1017L, 1090L, 1078L, 1096L, 1017L, 1090L, 1078L, 1096L),
-                                 maxB = c(26580L, 32880L, 32880L, 32880L, 32880L, 32880L, 29070L, 32880L,
-                                          30510L, 32880L, 32340L, 32880L, 30510L, 32700L, 32340L, 32880L),
-                                 ecoregionGroup = 1L,
-                                 speciesCode = 1:16)
+  speciesEcoregion <- data.table(
+    year = 0,
+    maxANPP = c(886L, 1175L, 1106L, 1202L, 1202L, 1202L, 969L, 1130L,
+                1017L, 1090L, 1078L, 1096L, 1017L, 1090L, 1078L, 1096L),
+    maxB = c(26580L, 32880L, 32880L, 32880L, 32880L, 32880L, 29070L, 32880L,
+             30510L, 32880L, 32340L, 32880L, 30510L, 32700L, 32340L, 32880L),
+    ecoregionGroup = 1L,
+    speciesCode = 1:16
+  )
   objects <- list()
   mySim <- simInit(times = list(start = 0, end = 2),
                    params = parameters,
@@ -45,12 +47,14 @@ test_that("test add new cohort function",{
   mapOutput_compared <- c(-1, 2, 2, 4, 4, 6, 3, 5, 1)
   expect_equal(mapOutput,mapOutput_compared)
 
-  cohortdataOutput <- output$cohortData[,.(pixelGroup, speciesCode, age, B)]
+  cohortdataOutput <- output$cohortData[, .(pixelGroup, speciesCode, age, B)]
 
-  cohortdataOutput_compared <- data.table(pixelGroup = c(1, 3, 3, 4, 5, 5, 5, 6, 6),
-                                          speciesCode = c(rep(7, 4), 1, 7, 7, 1, 7),
-                                          age = c(31, 1, 31, 1, 1, 1, 31, 1, 1),
-                                          B = c(30000L, 225L, 30000L, 969L, 205L, 225L, 30000L, 886L, 969L))
+  cohortdataOutput_compared <- data.table(
+    pixelGroup = c(1, 3, 3, 4, 5, 5, 5, 6, 6),
+    speciesCode = c(rep(7, 4), 1, 7, 7, 1, 7),
+    age = c(31, 1, 31, 1, 1, 1, 31, 1, 1),
+    B = c(30000L, 225L, 30000L, 969L, 205L, 225L, 30000L, 886L, 969L)
+  )
 
   expect_equal(cohortdataOutput,cohortdataOutput_compared)
 })
