@@ -40,7 +40,7 @@ test_that("test add new cohort function",{
                    objects = objects,
                    paths = path)
   output <- addNewCohorts(newcohortdata, cohortData, pixelGroupMap,
-                          time = time(mySim), speciesEcoregion = speciesEcoregion)
+                          currentTime = time(mySim), speciesEcoregion = speciesEcoregion)
   mapOutput <- getValues(output$pixelGroupMap)
   mapOutput_compared <- c(-1, 2, 2, 4, 4, 6, 3, 5, 1)
   expect_equal(mapOutput,mapOutput_compared)
