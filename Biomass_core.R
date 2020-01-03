@@ -12,7 +12,7 @@ defineModule(sim, list(
   ),
   childModules = character(0),
   version = list(Biomass_core = numeric_version("1.3.2"),
-                 LandR = "0.0.2.9008", SpaDES.core = "0.2.6.9004",
+                 LandR = "0.0.3.9000", SpaDES.core = "0.2.7",
                  LandR.CS = "0.0.0.9000"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
