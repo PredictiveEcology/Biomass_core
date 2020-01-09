@@ -3,7 +3,7 @@
 #' TODO: description and title needed
 #'
 #' @param speciesEcoregion TODO: description needed
-#' @param time TODO: description needed
+#' @param currentTime TODO: description needed
 #' @param cohortData \code{data.table} TODO: description needed
 #'
 #' @return updated cohort \code{data.table}
@@ -11,12 +11,12 @@
 #' @export
 #' @importFrom data.table setkey
 #' @importFrom LandR speciesEcoregionLatestYear
-updateSpeciesEcoregionAttributes <- function(speciesEcoregion, time, cohortData) {
+updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, cohortData) {
   # the following codes were for updating cohortdata using speciesecoregion data at current simulation year
   # to assign maxB, maxANPP and maxB_eco to cohortData
-  specieseco_current <- speciesEcoregionLatestYear(speciesEcoregion, time)
+  specieseco_current <- speciesEcoregionLatestYear(speciesEcoregion, currentTime)
 
-  #specieseco_current <- speciesEcoregion[year <= time]
+  #specieseco_current <- speciesEcoregion[year <= currentTime]
   specieseco_current <- setkey(specieseco_current[, .(speciesCode, maxANPP, maxB, ecoregionGroup)],
                                speciesCode, ecoregionGroup)
   specieseco_current[, maxB_eco := max(maxB), by = ecoregionGroup]
@@ -52,7 +52,7 @@ updateSpeciesAttributes <- function(species, cohortData) {
 #'
 #' @param cohortData \code{data.table} TODO: description needed
 #' @param lastReg TODO: description needed
-#' @param simuTime TODO: description needed -- rename this to 'time' to match others
+#' @param currentTime TODO: description needed -- rename this to 'time' to match others
 #' @param successionTimestep TODO: description needed
 #' @param doAssertion TODO: description needed (see LandR for description)
 #'
@@ -60,7 +60,7 @@ updateSpeciesAttributes <- function(species, cohortData) {
 #'
 #' @export
 #' @importFrom data.table copy rbindlist setkey
-calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, simuTime, successionTimestep,
+calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, successionTimestep,
                                            doAssertion = getOption("LandR.assertions", TRUE)) {
   nrowCohortData <- NROW(cohortData)
 
@@ -97,7 +97,7 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, simuTime, succes
     for (subgroup in paste("Group",  1:(length(cutpoints) - 1), sep = "")) {
       subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
       set(subCohortData, NULL, "sumB", 0L)
-      sumBtable <- if (simuTime == lastReg + successionTimestep - 2) {
+      sumBtable <- if (currentTime == lastReg + successionTimestep - 2) {
         subCohortData[age > successionTimestep, .(tempsumB = sum(B, na.rm = TRUE)), by = pixelGroup]
       } else {
         subCohortData[age >= successionTimestep, .(tempsumB = sum(B, na.rm = TRUE)), by = pixelGroup]
@@ -240,7 +240,7 @@ calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
     cohortData[age > 0, aNPPAct := pmin(maxANPP * bPM, aNPPAct)]
   } else {
     aNPPAct <- cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
-          exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM
+      exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM
     set(cohortData, NULL, "aNPPAct",
         pmin(cohortData$maxANPP*cohortData$bPM, aNPPAct))
   }

@@ -12,7 +12,7 @@ defineModule(sim, list(
   ),
   childModules = character(0),
   version = list(Biomass_core = numeric_version("1.3.2"),
-                 LandR = "0.0.2.9008", SpaDES.core = "0.2.6.9004",
+                 LandR = "0.0.3.9000", SpaDES.core = "0.2.7",
                  LandR.CS = "0.0.0.9000"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
@@ -131,7 +131,8 @@ defineModule(sim, list(
     expectsInput("rasterToMatch", "RasterLayer",
                  desc = paste("Raster layer of buffered study area used for cropping, masking and projecting.",
                               "Defaults to the kNN biomass map masked with `studyArea`"),
-                 sourceURL = "http://tree.pfc.forestry.ca/kNN-StructureBiomass.tar"),
+                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                                    "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")),
     expectsInput("species", "data.table",
                  desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
                               "Default is partially based on Dominic Cir and Yan's project"),
@@ -506,7 +507,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                              sppColumns = coverColNames,
                              pixelGroupBiomassClass = 100,
                              doSubset = FALSE,
-                             userTags = cacheTags,
+                             userTags = c(cacheTags, "pixelCohortData"),
                              omitArgs = c("userTags"))
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
 
@@ -538,7 +539,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                         modelFn = coverModel,
                         uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(cohortDataShort$ecoregionGroup)),
                         .specialData = cohortDataShort,
-                        userTags = cacheTags,
+                        userTags = c(cacheTags, "modelCover"),
                         omitArgs = c("userTags", ".specialData"))
 
     message(blue("  The rsquared is: "))
@@ -553,7 +554,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                           modelFn = biomassModel,
                           uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(pixelCohortData$ecoregionGroup)),
                           .specialData = cohortDataNoBiomass,
-                          userTags = cacheTags,
+                          userTags = c(cacheTags, "modelBiomass"),
                           omitArgs = c("userTags", ".specialData"))
     message(blue("  The rsquared is: "))
     print(modelBiomass$rsq)
@@ -676,7 +677,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   cohortData <- sim$cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)[sim$activePixelIndex]), ]
   cohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = speciesEcoregion,
-                                                 time = round(time(sim)),
+                                                 currentTime = round(time(sim)),
                                                  cohortData = cohortData)
   cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
 
@@ -915,12 +916,12 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
     subCohortData[age > 1, age := age + 1L]
     subCohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
-                                                      time = round(time(sim)),
+                                                      currentTime = round(time(sim)),
                                                       cohortData = subCohortData)
     subCohortData <- updateSpeciesAttributes(species = sim$species, cohortData = subCohortData)
     subCohortData <- calculateSumB(cohortData = subCohortData,
                                    lastReg = sim$lastReg,
-                                   simuTime = time(sim),
+                                   currentTime = time(sim),
                                    successionTimestep = P(sim)$successionTimestep)
     startNumCohorts <- NROW(subCohortData)
 
@@ -1071,7 +1072,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFrom
   # } else {
   #   tempActivePixel <- sim$activePixelIndex
   # }
-  sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = time(sim),
+  sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, currentTime = time(sim),
                                   successionTimestep = P(sim)$successionTimestep)
   sim$cohortData <- setkey(sim$cohortData, speciesCode)[
     setkey(sim$species[, .(speciesCode, sexualmature)], speciesCode), nomatch = 0]
@@ -1079,7 +1080,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFrom
   seedingData <- sim$cohortData[age >= sexualmature]
   set(sim$cohortData, NULL, "sexualmature", NULL)
   set(seedingData, NULL, c("sexualmature", "age", "B", "mortality", "aNPPAct"), NULL)
-  siteShade <- setkey(data.table(calcSiteShade(time = round(time(sim)), sim$cohortData,
+  siteShade <- setkey(data.table(calcSiteShade(currentTime = round(time(sim)), sim$cohortData,
                                                sim$speciesEcoregion, sim$minRelativeB)), pixelGroup)
   seedingData <- setkey(seedingData, pixelGroup)[siteShade, nomatch = 0]
   seedingData <- setkey(seedingData, speciesCode)[setkey(sim$species[
@@ -1136,7 +1137,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   # } else {
   #   tempActivePixel <- sim$activePixelIndex
   # }
-  sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, simuTime = round(time(sim)),
+  sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, currentTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
   species <- sim$species
   # all species can provide seed source, i.e. age>=sexualmature
@@ -1191,7 +1192,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   }
   if (nrow(seedingData) > 0) {
     outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
-                             time = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
+                             currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
                              treedFirePixelTableSinceLastDisp = NULL,
                              successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
@@ -1204,7 +1205,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
 WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFromCurYrBurn,
                                                   verbose = getOption("LandR.verbose", TRUE)) {
   sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
-                                  lastReg = sim$lastReg, simuTime = round(time(sim)),
+                                  lastReg = sim$lastReg, currentTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
   siteShade <- calcSiteShade(currentTime = round(time(sim)), cohortData = sim$cohortData,
                              sim$speciesEcoregion, sim$minRelativeB)
@@ -1358,7 +1359,7 @@ summaryRegen <- compiler::cmpfun(function(sim) {
                                .(uniqueSumReproduction = sum(B, na.rm = TRUE)),
                                by = pixelGroup]
     if (!is.integer(pixelAll[["uniqueSumReproduction"]]))
-      set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll[["uniqueSumReproduction"]]))
+      set(pixelAll, NULL, 'uniqueSumReproduction', asInteger(pixelAll[["uniqueSumReproduction"]]))
 
     if (NROW(pixelAll) > 0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
@@ -1749,15 +1750,18 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("rawBiomassMap", sim) || needRTM) {
-    rawBiomassMapFilename <- file.path(dPath, "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.tif")
+    fileURLs <- getURL(extractURL("rawBiomassMap"), dirlistonly = TRUE)
+    fileNames <- getHTMLLinks(fileURLs)
+    rawBiomassMapFilename <- grep("Biomass_TotalLiveAboveGround.*.tif$", fileNames, value = TRUE)
+    rawBiomassMapURL <- paste0(extractURL("rawBiomassMap"), rawBiomassMapFilename)
+
     sim$rawBiomassMap <- Cache(prepInputs,
-                               targetFile = asPath(basename(rawBiomassMapFilename)),
-                               archive = asPath(c("kNN-StructureBiomass.tar",
-                                                  "NFI_MODIS250m_kNN_Structure_Biomass_TotalLiveAboveGround_v0.zip")),
-                               url = extractURL("rawBiomassMap"),
+                               targetFile = rawBiomassMapFilename,
+                               url = rawBiomassMapURL,
                                destinationPath = dPath,
-                               studyArea = sim$studyArea,
-                               rasterToMatch = if (!needRTM) sim$rasterToMatch else NULL,
+                               studyArea = sim$studyAreaLarge,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMap, LCC.. etc
+                               # studyArea = sim$studyArea,
+                               rasterToMatch = if (!needRTM) sim$rasterToMatchLarge else NULL,
                                # maskWithRTM = TRUE,    ## if RTM not supplied no masking happens (is this intended?)
                                maskWithRTM = if (!needRTM) TRUE else FALSE,
                                ## TODO: if RTM is not needed use SA CRS? -> this is not correct
@@ -1765,7 +1769,8 @@ CohortAgeReclassification <- function(sim) {
                                useSAcrs = FALSE,     ## never use SA CRS
                                method = "bilinear",
                                datatype = "INT2U",
-                               filename2 = TRUE, overwrite = TRUE, userTags = cacheTags,
+                               filename2 = TRUE, overwrite = TRUE,
+                               userTags = c(cacheTags, "rawBiomassMap"),
                                omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
   }
   if (needRTM) {
@@ -1777,7 +1782,7 @@ CohortAgeReclassification <- function(sim) {
     sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
                                filename2 = file.path(cachePath(sim), "rasters", "rasterToMatch.tif"),
                                datatype = "INT2U", overwrite = TRUE,
-                               userTags = cacheTags,
+                               userTags = c(cacheTags, "rasterToMatch"),
                                omitArgs = c("userTags"))
 
     ## this is old, and potentially not needed anymore
@@ -1819,7 +1824,7 @@ CohortAgeReclassification <- function(sim) {
       sim$rasterToMatch <- Cache(writeRaster, sim$rasterToMatch,
                                  filename = file.path(dPath, "rasterToMatch.tif"),
                                  datatype = "INT2U", overwrite = TRUE,
-                                 userTags = cacheTags,
+                                 userTags = c(cacheTags, "rasterToMatch"),
                                  omitArgs = c("userTags"))
     }
   }
@@ -1838,7 +1843,7 @@ CohortAgeReclassification <- function(sim) {
                                   col.names = c("species", paste("age", 1:(maxcol - 1), sep = "")),
                                   stringsAsFactors = FALSE,
                                   overwrite = TRUE,
-                                  userTags = cacheTags,
+                                  userTags = c(cacheTags, "initialCommunities"),
                                   omitArgs = c("userTags"))
       # correct the typo in the original txt
       initialCommunities[14, 1:4] <- initialCommunities[14, 2:5]
@@ -1935,7 +1940,9 @@ CohortAgeReclassification <- function(sim) {
   ## make light requirements table
   if (!suppliedElsewhere("sufficientLight", sim)) {
     ## load the biomass_succession.txt to get shade tolerance parameters
-    mainInput <- prepInputsMainInput(url = extractURL("sufficientLight"), dPath, cacheTags) ## uses default URL
+    mainInput <- prepInputsMainInput(url = extractURL("sufficientLight"),
+                                     dPath,
+                                     cacheTags = c(cacheTags, "mainInput")) ## uses default URL
 
     sufficientLight <- data.frame(mainInput)
     startRow <- which(sufficientLight$col1 == "SufficientLight")
@@ -1993,6 +2000,8 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("speciesLayers", sim)) {
+    url <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                  "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")
     sim$speciesLayers <- Cache(loadkNNSpeciesLayers,
                                dPath = dPath,
                                rasterToMatch = sim$rasterToMatch,
@@ -2001,14 +2010,15 @@ CohortAgeReclassification <- function(sim) {
                                knnNamesCol = "KNN",
                                sppEquivCol = P(sim)$sppEquivCol,
                                thresh = 10,
-                               url = "http://tree.pfc.forestry.ca/kNN-Species.tar",
+                               url = url,
                                userTags = c(cacheTags, "speciesLayers"),
                                omitArgs = c("userTags"))
   }
 
   ## additional species traits
   if (!suppliedElsewhere("species", sim)) {
-    speciesTable <- getSpeciesTable(dPath = dPath, cacheTags = cacheTags)
+    speciesTable <- getSpeciesTable(dPath = dPath,
+                                    cacheTags = c(cacheTags, "speciesTable"))
     sim$species <- prepSpeciesTable(speciesTable = speciesTable,
                                     speciesLayers = sim$speciesLayers,
                                     sppEquiv = sim$sppEquiv[get(P(sim)$sppEquivCol) %in%
