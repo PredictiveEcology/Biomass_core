@@ -1359,7 +1359,7 @@ summaryRegen <- compiler::cmpfun(function(sim) {
                                .(uniqueSumReproduction = sum(B, na.rm = TRUE)),
                                by = pixelGroup]
     if (!is.integer(pixelAll[["uniqueSumReproduction"]]))
-      set(pixelAll, NULL, uniqueSumReproduction, asInteger(pixelAll[["uniqueSumReproduction"]]))
+      set(pixelAll, NULL, 'uniqueSumReproduction', asInteger(pixelAll[["uniqueSumReproduction"]]))
 
     if (NROW(pixelAll) > 0) {
       reproductionMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumReproduction")
