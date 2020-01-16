@@ -216,8 +216,7 @@ calculateAgeMortality <- function(cohortData, stage = "nonSpinup", spinupMortali
     set(cohortData, NULL, "mAge",
         cohortData$B * (exp((cohortData$age) / cohortData$longevity * cohortData$mortalityshape) /
                           exp(cohortData$mortalityshape)))
-    set(cohortData, NULL, "mAge",
-        pmin(cohortData$B,cohortData$mAge))
+    set(cohortData, NULL, "mAge", pmin(cohortData$B, cohortData$mAge))
   }
   return(cohortData)
 }
@@ -316,7 +315,6 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
     set(cohortData, NULL, "bPM", cohortData$cMultiplier / cMultTotal)
     if (!is.null(oldKey))
       setkeyv(cohortData, oldKey)
-
 
     set(cohortData, NULL, c("cMultiplier"), NULL)
   }
