@@ -1629,7 +1629,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
       grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
       #if (!is.null(reproductionMapForPlot))
       #  Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
-      }, error = function(e)
+    }, error = function(e)
       message("Can't open the device for plotting. Plotting will be disabled to avoid errors"))
   }
 
