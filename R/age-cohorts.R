@@ -35,6 +35,8 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
                by = byGroups]
       td <- td[, ..cdColNames] # keep only the columns, in the correct order, as cohortData
       tdNonDups <- targetData[-tdDuplicates]
+      #age the non-duplicates, else unique 1 year-old unique cohorts stay age 1 for another successionTimestep
+      tdNonDups <- tdNonDups[, age := successionTimestepPlusOne]
       targetData <- rbindlist(list(td, tdNonDups))
     } else {
       message("  No age reclassification to do")
