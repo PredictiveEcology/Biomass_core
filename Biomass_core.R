@@ -1750,10 +1750,10 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("rawBiomassMap", sim) || needRTM) {
-    fileURLs <- getURL(extractURL("rawBiomassMap"), dirlistonly = TRUE)
-    fileNames <- getHTMLLinks(fileURLs)
-    rawBiomassMapFilename <- grep("Biomass_TotalLiveAboveGround.*.tif$", fileNames, value = TRUE)
-    rawBiomassMapURL <- paste0(extractURL("rawBiomassMap"), rawBiomassMapFilename)
+    rawBiomassMapURL <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                               "canada-forests-attributes_attributs-forests-canada/",
+                               "2001-attributes_attributs-2001/",
+                               "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
 
     sim$rawBiomassMap <- Cache(prepInputs,
                                targetFile = rawBiomassMapFilename,
