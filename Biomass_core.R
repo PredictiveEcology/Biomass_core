@@ -94,8 +94,8 @@ defineModule(sim, list(
     defineParameter(".saveInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the saving time step.",
                                  "If NA, the default, .saveInterval is set to successionTimestep.")),
-    defineParameter(".useCache", "logical", "init", NA, NA,
-                    desc = "Controls cache; caches the init event by default"),
+    defineParameter(".useCache", "character", c(".inputObjects", "init"), NA, NA,
+                    desc = "Internal. Can be names of events or the whole module name; these will be cached by SpaDES"),
     defineParameter(".useParallel", "ANY", 2, NA, NA,
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to data.table::setDTthreads and should be <= 2;",
@@ -129,10 +129,8 @@ defineModule(sim, list(
     expectsInput("pixelGroupMap", "RasterLayer",
                  desc = "initial community map that has mapcodes match initial community table"),
     expectsInput("rasterToMatch", "RasterLayer",
-                 desc = paste("Raster layer of buffered study area used for cropping, masking and projecting.",
-                              "Defaults to the kNN biomass map masked with `studyArea`"),
-                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
-                                    "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")),
+                 desc = "a raster of the studyArea in the same resolution and projection as rawBiomassMap",
+                 sourceURL = NA),
     expectsInput("species", "data.table",
                  desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
                               "Default is partially based on Dominic Cir and Yan's project"),
@@ -313,6 +311,8 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "Biomass_core", "summaryRegen", eventPriority = summRegenPriority)
            sim <- scheduleEvent(sim, start(sim),
                                 "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
+           sim <- scheduleEvent(sim, end(sim),
+                                "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)  ## schedule the last plotting events (so that it doesn't depend on plot interval)
            if (P(sim)$.plotMaps)
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
@@ -1629,7 +1629,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
       grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
       #if (!is.null(reproductionMapForPlot))
       #  Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
-      }, error = function(e)
+    }, error = function(e)
       message("Can't open the device for plotting. Plotting will be disabled to avoid errors"))
   }
 
@@ -1750,10 +1750,10 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("rawBiomassMap", sim) || needRTM) {
-    fileURLs <- getURL(extractURL("rawBiomassMap"), dirlistonly = TRUE)
-    fileNames <- getHTMLLinks(fileURLs)
-    rawBiomassMapFilename <- grep("Biomass_TotalLiveAboveGround.*.tif$", fileNames, value = TRUE)
-    rawBiomassMapURL <- paste0(extractURL("rawBiomassMap"), rawBiomassMapFilename)
+    rawBiomassMapURL <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                               "canada-forests-attributes_attributs-forests-canada/",
+                               "2001-attributes_attributs-2001/",
+                               "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
 
     sim$rawBiomassMap <- Cache(prepInputs,
                                targetFile = rawBiomassMapFilename,
