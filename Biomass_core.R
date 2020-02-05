@@ -386,8 +386,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
          },
          plotSummaryBySpecies = {
            sim <- plotSummaryBySpecies(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
+           if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                  "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
@@ -1461,9 +1462,6 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot2, title = paste0("Total biomass by species\n", "across pixels"), new = TRUE)
     }
 
-    if (current(sim)$eventTime == end(sim))
-      ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
-
     maxNpixels <- length(sim$activePixelIndexReporting)
     cols3 <- sim$summaryBySpecies1$cols
     names(cols3) <- sim$summaryBySpecies1$leadingType
@@ -1480,9 +1478,6 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
     }
 
-    if (current(sim)$eventTime == end(sim))
-      ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
-
     plot4 <- ggplot(data = df, aes(x = year, y = AgeBySppWeighted,
                                    colour = species, group = species)) +
       geom_line(size = 1) +
@@ -1496,9 +1491,6 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                  "(averaged across pixels)"), new = TRUE)
     }
 
-    if (current(sim)$eventTime == end(sim))
-      ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
-
     if (P(sim)$plotOverstory) {
       plot5 <- ggplot(data = df, aes(x = year, y = overstoryBiomass,
                                      fill = species, group = species)) +
@@ -1507,6 +1499,9 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
         labs(x = "Year", y = "Overstory Biomass") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
         scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
+
+      titleLab <- "Overstory biomass by species"
+      fileNamePlot5 <- "overstory_biomass.png"
     } else {
       plot5 <- ggplot(data = df, aes(x = year, y = OldestCohortBySpp,
                                      colour = species, group = species)) +
@@ -1514,15 +1509,9 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
         scale_colour_manual(values = cols2) +
         labs(x = "Year", y = "Age") +
         theme(legend.text = element_text(size = 6), legend.title = element_blank())
-    }
 
-    if (P(sim)$plotOverstory) {
-      titleLab <- "Overstory biomass by species"
-      fileName <- "overstory_biomass.png"
-    } else {
-      titleLab <- paste("Oldest cohort age\n",
-                        "by species (across pixels)")
-      fileName <- "oldest_cohorts.png"
+      titleLab <- paste("Oldest cohort age\n", "by species (across pixels)")
+      fileNamePlot5 <- "oldest_cohorts.png"
     }
 
     if (!is.na(P(sim)$.plotInitialTime)) {
@@ -1530,11 +1519,6 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot5, title = titleLab, new = TRUE)
     }
 
-    if (current(sim)$eventTime == end(sim))
-      # if (!is.na(P(sim)$.saveInitialTime))
-      ggsave(file.path(outputPath(sim), "figures", fileName), plot5)
-
-    ## test
     plot6 <- ggplot(data = df, aes(x = year, y = aNPPBySpecies, colour = species, group = species)) +
       geom_line(size = 1) +
       scale_color_manual(values = cols2) +
@@ -1547,10 +1531,14 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot6, title = paste0("Total aNPP by species\n", "across pixels"), new = TRUE)
     }
 
-    if (current(sim)$eventTime == end(sim))
+    if (current(sim)$eventTime == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
+      ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
+      ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
+      ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
+      ggsave(file.path(outputPath(sim), "figures", fileNamePlot5), plot5)
       ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"), plot6)
-    ## end test
+    }
   }
 
   return(invisible(sim))
