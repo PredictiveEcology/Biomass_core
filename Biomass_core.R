@@ -1537,7 +1537,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot6, title = paste0("Total aNPP by species\n", "across pixels"), new = TRUE)
     }
 
-    if (current(sim)$eventTime == end(sim)) {
+    if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
       ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
@@ -1667,7 +1667,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
       Plot(plot1, title = "Total landscape biomass and aNPP and max stand age", new = TRUE)
     }
 
-    if (current(sim)$eventTime == end(sim))
+    if (time(sim) == end(sim))
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
   }
