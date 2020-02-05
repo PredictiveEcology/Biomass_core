@@ -318,6 +318,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
+           if (!is.na(P(sim)$.plotInitialTime))
+             sim <- scheduleEvent(sim, end(sim),
+                                  "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
@@ -405,6 +408,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- plotAvgVegAttributes(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
                                 "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
+           if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                  "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
