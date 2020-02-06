@@ -1718,12 +1718,6 @@ CohortAgeReclassification <- function(sim) {
     sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)
   }
 
-  if (!suppliedElsewhere("studyAreaReporting", sim)) {
-    if (getOption("LandR.verbose", TRUE) > 0)
-      message("'studyAreaReporting' was not provided by user. Using the same as 'studyArea'.")
-    sim$studyAreaReporting <- sim$studyArea
-  }
-
   needRTM <- FALSE
   if (is.null(sim$rasterToMatch)) {
     if (!suppliedElsewhere("rasterToMatch", sim)) {
@@ -1768,6 +1762,12 @@ CohortAgeReclassification <- function(sim) {
                                datatype = "INT2U", overwrite = TRUE,
                                userTags = c(cacheTags, "rasterToMatch"),
                                omitArgs = c("userTags"))
+  }
+
+  if (!suppliedElsewhere("studyAreaReporting", sim)) {
+    if (getOption("LandR.verbose", TRUE) > 0)
+      message("'studyAreaReporting' was not provided by user. Using the same as 'studyArea'.")
+    sim$studyAreaReporting <- sim$studyArea
   }
 
   ## make light requirements table
