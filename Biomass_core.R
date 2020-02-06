@@ -318,6 +318,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
+           if (!is.na(P(sim)$.plotInitialTime))
+             sim <- scheduleEvent(sim, end(sim),
+                                  "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
@@ -405,6 +408,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- plotAvgVegAttributes(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
                                 "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
+           if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
+             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                  "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
@@ -1531,7 +1537,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       Plot(plot6, title = paste0("Total aNPP by species\n", "across pixels"), new = TRUE)
     }
 
-    if (current(sim)$eventTime == end(sim)) {
+    if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
       ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
@@ -1661,7 +1667,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
       Plot(plot1, title = "Total landscape biomass and aNPP and max stand age", new = TRUE)
     }
 
-    if (current(sim)$eventTime == end(sim))
+    if (time(sim) == end(sim))
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
   }
