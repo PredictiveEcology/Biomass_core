@@ -1764,6 +1764,13 @@ CohortAgeReclassification <- function(sim) {
                                omitArgs = c("userTags"))
   }
 
+  if (!identical(crs(sim$studyArea), crs(sim$rasterToMatch))) {
+    warning(paste0("studyArea and rasterToMatch projections differ.\n",
+                   "studyArea will be projected to match rasterToMatchLarge"))
+    sim$studyArea <- spTransform(sim$studyArea, crs(sim$rasterToMatch))
+    sim$studyArea <- fixErrors(sim$studyArea)
+  }
+
   if (!suppliedElsewhere("studyAreaReporting", sim)) {
     if (getOption("LandR.verbose", TRUE) > 0)
       message("'studyAreaReporting' was not provided by user. Using the same as 'studyArea'.")
