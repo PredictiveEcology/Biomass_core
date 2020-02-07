@@ -406,8 +406,6 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
          },
          plotAvgs = {
            sim <- plotAvgVegAttributes(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
            if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
              sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
                                   "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
@@ -1724,12 +1722,6 @@ CohortAgeReclassification <- function(sim) {
     sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)
   }
 
-  if (!suppliedElsewhere("studyAreaReporting", sim)) {
-    if (getOption("LandR.verbose", TRUE) > 0)
-      message("'studyAreaReporting' was not provided by user. Using the same as 'studyArea'.")
-    sim$studyAreaReporting <- sim$studyArea
-  }
-
   needRTM <- FALSE
   if (is.null(sim$rasterToMatch)) {
     if (!suppliedElsewhere("rasterToMatch", sim)) {
@@ -1774,6 +1766,19 @@ CohortAgeReclassification <- function(sim) {
                                datatype = "INT2U", overwrite = TRUE,
                                userTags = c(cacheTags, "rasterToMatch"),
                                omitArgs = c("userTags"))
+  }
+
+  if (!identical(crs(sim$studyArea), crs(sim$rasterToMatch))) {
+    warning(paste0("studyArea and rasterToMatch projections differ.\n",
+                   "studyArea will be projected to match rasterToMatchLarge"))
+    sim$studyArea <- spTransform(sim$studyArea, crs(sim$rasterToMatch))
+    sim$studyArea <- fixErrors(sim$studyArea)
+  }
+
+  if (!suppliedElsewhere("studyAreaReporting", sim)) {
+    if (getOption("LandR.verbose", TRUE) > 0)
+      message("'studyAreaReporting' was not provided by user. Using the same as 'studyArea'.")
+    sim$studyAreaReporting <- sim$studyArea
   }
 
   ## make light requirements table
