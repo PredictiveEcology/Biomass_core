@@ -406,8 +406,6 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
          },
          plotAvgs = {
            sim <- plotAvgVegAttributes(sim)
-           sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
            if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
              sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
                                   "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
