@@ -443,27 +443,27 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                          hardsoft = "factor", speciesCode = "factor"))
   sim$species <- setkey(species, speciesCode)
 
-  if (!suppliedElsewhere("cohortData", sim) |
-      !suppliedElsewhere("pixelGroupMap")) {
+  if (!suppliedElsewhere("cohortData", sim, where = "sim") |
+      !suppliedElsewhere("pixelGroupMap", sim, where = "sim")) {
 
-    if ((!suppliedElsewhere("cohortData", sim) &&
-         suppliedElsewhere("pixelGroupMap")) ||
-        (suppliedElsewhere("cohortData", sim) &&
-         !suppliedElsewhere("pixelGroupMap"))) {
+    if ((!suppliedElsewhere("cohortData", sim, where = "sim") &&
+         suppliedElsewhere("pixelGroupMap", where = "sim")) ||
+        (suppliedElsewhere("cohortData", sim, where = "sim") &&
+         !suppliedElsewhere("pixelGroupMap", where = "sim"))) {
       stop("Either 'cohortData' or 'pixelGroupMap' are being supplied without the other.",
            "These two objects must be supplied together and conform to each other.",
            "Either supply both of them manually, or use a module like Biomass_BorealDataPrep to do so.")
     }
 
 
-    if (suppliedElsewhere("ecoregionMap", sim))
+    if (suppliedElsewhere("ecoregionMap", sim, where = "sim"))
       message(blue("'ecoregionMap' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'ecoregionMap'"))
     ecoregionMap <- makeDummyEcoregionMap(sim$rasterToMatch)
 
-    if (suppliedElsewhere("biomassMap", sim))
+    if (suppliedElsewhere("biomassMap", sim, where = "sim"))
       message(blue("'biomassMap' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
@@ -471,14 +471,14 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ## note that to make the dummy sim$biomassMap, we need to first make a dummy rawBiomassMap
     rawBiomassMap <- makeDummyRawBiomassMap(sim$rasterToMatch)
 
-    if (suppliedElsewhere("standAgeMap", sim))
+    if (suppliedElsewhere("standAgeMap", sim, where = "sim"))
       message(blue("'standAgeMap' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'standAgeMap'"))
     standAgeMap <- makeDummyStandAgeMap(rawBiomassMap)
 
-    if (suppliedElsewhere("rstLCC", sim))
+    if (suppliedElsewhere("rstLCC", sim, where = "sim"))
       message(blue("'rstLCC' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
