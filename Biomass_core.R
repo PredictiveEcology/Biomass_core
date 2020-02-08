@@ -485,6 +485,19 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                    "'cohortData', 'pixelGroupMap' and 'rstLCC'"))
     rstLCC <- makeDummyRstLCC(sim$rasterToMatch)
 
+    ## make sure speciesLayers match RTM (they may not if they come from another module's init.)
+    if (!compareRaster(sim$speciesLayers, sim$rasterToMatch, stopiffalse = FALSE)) {
+      message(blue("'speciesLayers' and 'rasterToMatch' do not match. "),
+              red("'speciesLayers' will be cropped/masked/reprojected to 'rasterToMatch'. "),
+              blue("If this is wrong, provide matching 'speciesLayers' and 'rasterToMatch'"))
+
+      sim$speciesLayers <- postProcess(sim$speciesLayers,
+                                       rasterToMatch = sim$rasterToMatch,
+                                       maskWithRTM = TRUE,
+                                       filename1 = NULL, filename2 = NULL,
+                                       userTags = c(currentModule(sim), "speciesLayers"))
+    }
+
     ecoregionFiles <- makeDummyEcoregionFiles(ecoregionMap, rstLCC, sim$rasterToMatch)
 
     ################################################################
