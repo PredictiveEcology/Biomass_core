@@ -420,6 +420,8 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
 
 ### EVENT FUNCTIONS
 Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
+  ## stop early if raster inputs don't match
+  compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
 
   ## A numeric scalar indicating how large each chunk of an internal data.table with processing by chunks
   mod$cutpoint <- 1e10
