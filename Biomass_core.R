@@ -159,11 +159,13 @@ defineModule(sim, list(
     expectsInput("sufficientLight", "data.frame",
                  desc = paste("table defining how the species with different shade tolerance respond to stand shadeness.",
                               "Default is based on LANDIS-II Biomass Succession v6.2 parameters"),
-                 sourceURL = "https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"),
+                 sourceURL = paste0("https://raw.githubusercontent.com/LANDIS-II-Foundation/",
+                                    "Extensions-Succession/master/biomass-succession-archive/",
+                                    "trunk/tests/v6.0-2.0/biomass-succession_test.txt")),
     expectsInput("treedFirePixelTableSinceLastDisp", "data.table",
-                 desc = paste("3 columns: pixelIndex, pixelGroup, and burnTime. Each row represents a forested pixel ",
-                              "that was burned up to and including this year, since last dispersal event, with its corresponding ",
-                              "pixelGroup and time it occurred"),
+                 desc = paste("3 columns: pixelIndex, pixelGroup, and burnTime.",
+                              "Each row represents a forested pixel that was burned up to and including this year,",
+                              "since last dispersal event, with its corresponding pixelGroup and time it occurred"),
                  sourceURL = "")
     # expectsInput("spinUpCache", "logical", ""),
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
@@ -216,8 +218,10 @@ defineModule(sim, list(
                   desc = "No. pixels of each leading vegetation type (used for plotting and reporting)."),
     createsOutput("summaryLandscape", "data.table",
                   desc = "The averages of total biomass, age and aNPP across the landscape (used for plotting and reporting)."),
-    createsOutput("treedFirePixelTableSinceLastDisp", "",
-                  desc = "")
+    createsOutput("treedFirePixelTableSinceLastDisp", "data.table",
+                  desc = paste("3 columns: pixelIndex, pixelGroup, and burnTime.",
+                               "Each row represents a forested pixel that was burned up to and including this year,",
+                               "since last dispersal event, with its corresponding pixelGroup and time it occurred"))
   )
 ))
 
