@@ -625,6 +625,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     sim$minRelativeB <- makeMinRelativeB(pixelCohortData)
     sim$pixelGroupMap <- makePixelGroupMap(pixelCohortData, sim$rasterToMatch)
 
+    compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
+
     ## make ecoregionGroup a factor and export speciesEcoregion to sim
     speciesEcoregion[, ecoregionGroup := factor(as.character(ecoregionGroup))]
     sim$speciesEcoregion <- speciesEcoregion
