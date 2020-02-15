@@ -451,24 +451,21 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                          hardsoft = "factor", speciesCode = "factor"))
   sim$species <- setkey(species, speciesCode)
 
-  if (!suppliedElsewhere("cohortData", sim, where = "sim") |
-      !suppliedElsewhere("pixelGroupMap", sim, where = "sim")) {
+  if (!suppliedElsewhere("cohortData", sim) | !suppliedElsewhere("pixelGroupMap")) {
 
-    if ((!suppliedElsewhere("cohortData", sim, where = "sim") &&
-         suppliedElsewhere("pixelGroupMap", where = "sim")) ||
-        (suppliedElsewhere("cohortData", sim, where = "sim") &&
-         !suppliedElsewhere("pixelGroupMap", where = "sim"))) {
+    if ((!suppliedElsewhere("cohortData", sim) && suppliedElsewhere("pixelGroupMap")) ||
+        (suppliedElsewhere("cohortData", sim) && !suppliedElsewhere("pixelGroupMap"))) {
       stop("Either 'cohortData' or 'pixelGroupMap' are being supplied without the other.",
            "These two objects must be supplied together and conform to each other.",
-           "Either supply both of them manually, or use a module like Biomass_BorealDataPrep to do so.")
+           "Either supply both of them manually, or use a module like Biomass_borealDataPrep to do so.")
     }
 
-
-    if (suppliedElsewhere("ecoregionMap", sim, where = "sim"))
+    if (suppliedElsewhere("ecoregionMap", sim)) {
       message(blue("'ecoregionMap' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'ecoregionMap'"))
+    }
     ecoregionMap <- makeDummyEcoregionMap(sim$rasterToMatch)
 
     if (suppliedElsewhere("biomassMap", sim, where = "sim"))
@@ -1881,6 +1878,9 @@ CohortAgeReclassification <- function(sim) {
                                userTags = c(cacheTags, "speciesLayers"),
                                omitArgs = c("userTags"))
   }
+
+  ## important: layers coming in from Biomass_specieData may be using rasterToMatchLarge, so crop!
+  sim$speciesLayers <- crop(sim$speciesLayers, sim$rasterToMatch)
 
   ## additional species traits
   if (!suppliedElsewhere("species", sim)) {
