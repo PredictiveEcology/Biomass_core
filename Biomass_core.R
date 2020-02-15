@@ -452,16 +452,16 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                          hardsoft = "factor", speciesCode = "factor"))
   sim$species <- setkey(species, speciesCode)
 
-  if (!suppliedElsewhere("cohortData", sim) | !suppliedElsewhere("pixelGroupMap")) {
+  if (!suppliedElsewhere("cohortData", sim, where = "sim") | !suppliedElsewhere("pixelGroupMap", sim, where = "sim")) {
 
-    if ((!suppliedElsewhere("cohortData", sim) && suppliedElsewhere("pixelGroupMap")) ||
-        (suppliedElsewhere("cohortData", sim) && !suppliedElsewhere("pixelGroupMap"))) {
+    if ((!suppliedElsewhere("cohortData", sim, where = "sim") && suppliedElsewhere("pixelGroupMap", sim, where = "sim")) ||
+        (suppliedElsewhere("cohortData", sim, where = "sim") && !suppliedElsewhere("pixelGroupMap", sim, where = "sim"))) {
       stop("Either 'cohortData' or 'pixelGroupMap' are being supplied without the other.",
            "These two objects must be supplied together and conform to each other.",
            "Either supply both of them manually, or use a module like Biomass_borealDataPrep to do so.")
     }
 
-    if (suppliedElsewhere("ecoregionMap", sim)) {
+    if (suppliedElsewhere("ecoregionMap", sim, where = "sim")) {
       message(blue("'ecoregionMap' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
@@ -602,7 +602,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     # Create initial communities, i.e., pixelGroups
     ########################################################################
 
-    if (!suppliedElsewhere("columnsForPixelGroups", sim)) {
+    if (!suppliedElsewhere("columnsForPixelGroups", sim, where = "sim")) {
       columnsForPixelGroups <- LandR::columnsForPixelGroups
     } else {
       columnsForPixelGroups <- sim$columnsForPixelGroups
