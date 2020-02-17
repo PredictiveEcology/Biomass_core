@@ -14,7 +14,7 @@ defineModule(sim, list(
   childModules = character(0),
   version = list(Biomass_core = numeric_version("1.3.2"),
                  LandR = "0.0.3.9000", SpaDES.core = "0.2.7",
-                 LandR.CS = "0.0.0.9000"),
+                 LandR.CS = "0.0.1.9000"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
@@ -39,12 +39,22 @@ defineModule(sim, list(
                                  "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
-    defineParameter('gmcsPctLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
+    defineParameter('gmcsGrowthLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
                     paste("if using LandR.CS for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
                           "(currentClimate/referenceClimate). Upper and lower limits are ",
                           "suggested to circumvent problems caused by very small denominators as well as ",
                           "predictions outside the data range used to generate the model")),
+    defineParameter('gmcsMortLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
+                    paste("if using LandR.CS for climate-sensitive growth and mortality, a percentile",
+                          " is used to estimate the effect of climate on growth/mortality ",
+                          "(currentClimate/referenceClimate). Upper and lower limits are ",
+                          "suggested to circumvent problems caused by very small denominators as well as ",
+                          "predictions outside the data range used to generate the model")),
+    defineParameter('gmcsMinAge', 'numeric', 21, 0, NA,
+                    paste("if using LandR.CS for climate-sensitive growth and mortality, the minimum",
+                          "age for which to predict climate-sensitive growth and mortality.",
+                          "Young stands (< 30) are poorly represented by the PSP data used to parameterize the model.")),
     defineParameter("growthAndMortalityDrivers", "character", "LandR", NA, NA,
                     desc = paste("package name where the following functions can be found:",
                                  "calculateClimateEffect, assignClimateEffect",
@@ -1006,19 +1016,22 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "growthcurve", NULL)
     set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
-    ## generate climate-sensitivity predictions - this will return 100 (%) if LandR.CS is not run
-    predObj <- calculateClimateEffect(gcsModel = sim$gcsModel,
-                                      mcsModel = sim$mcsModel,
-                                      CMI = sim$CMI,
-                                      ATA = sim$ATA,
-                                      cohortData = subCohortData,
-                                      pixelGroupMap = sim$pixelGroupMap,
-                                      CMInormal = sim$CMInormal,
-                                      gmcsPctLimits = P(sim)$gmcsPctLimits)
+    ## generate climate-sensitivity predictions - this will no longer run if LandR pkg is the driver
+    if (P(sim)$growthAndMortalityDrivers != "LandR") {
+      predObj <- calculateClimateEffect(gcsModel = sim$gcsModel,
+                                        mcsModel = sim$mcsModel,
+                                        CMI = sim$CMI,
+                                        ATA = sim$ATA,
+                                        cohortData = subCohortData,
+                                        pixelGroupMap = sim$pixelGroupMap,
+                                        CMInormal = sim$CMInormal,
+                                        gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
+                                        gmcsMortLimits = P(sim)$gmcsMortLimits,
+                                        gmcsMinAge = P(sim)$gmcsMinAge)
 
-    #This line will return aNPPAct unchanged unless LandR_BiomassGMCS is also run
-    subCohortData <- subCohortData[predObj, on = c('pixelGroup', 'age', 'speciesCode')]
-    subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred)/100)] #changed from ratio to pct for memory
+      subCohortData <- subCohortData[predObj, on = c('pixelGroup', 'age', 'speciesCode')]
+      subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred)/100)] #changed from ratio to pct for memory
+    }
 
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
@@ -1026,8 +1039,9 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
-    subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred)/100)]
-
+    if (P(sim)$growthAndMortalityDrivers != "LandR") {
+      subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred)/100)]
+    }
     ## without climate-sensitivity, mortality never exceeds biomass (Ian added this 2019-04-04)
     subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
 
