@@ -14,7 +14,7 @@ defineModule(sim, list(
   childModules = character(0),
   version = list(Biomass_core = numeric_version("1.3.2"),
                  LandR = "0.0.3.9000", SpaDES.core = "0.2.7",
-                 LandR.CS = "0.0.1.9000"),
+                 LandR.CS = "0.0.1.0001"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
