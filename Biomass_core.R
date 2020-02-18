@@ -460,7 +460,6 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sim$species <- setkey(species, speciesCode)
 
   if (!suppliedElsewhere("cohortData", sim, where = "sim") | !suppliedElsewhere("pixelGroupMap", sim, where = "sim")) {
-
     if ((!suppliedElsewhere("cohortData", sim, where = "sim") && suppliedElsewhere("pixelGroupMap", sim, where = "sim")) ||
         (suppliedElsewhere("cohortData", sim, where = "sim") && !suppliedElsewhere("pixelGroupMap", sim, where = "sim"))) {
       stop("Either 'cohortData' or 'pixelGroupMap' are being supplied without the other.",
@@ -1886,9 +1885,6 @@ CohortAgeReclassification <- function(sim) {
                                userTags = c(cacheTags, "speciesLayers"),
                                omitArgs = c("userTags"))
   }
-
-  ## important: layers coming in from Biomass_specieData may be using rasterToMatchLarge, so crop!
-  sim$speciesLayers <- crop(sim$speciesLayers, sim$rasterToMatch)
 
   ## additional species traits
   if (!suppliedElsewhere("species", sim)) {
