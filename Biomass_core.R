@@ -141,13 +141,6 @@ defineModule(sim, list(
     expectsInput("speciesEcoregion", "data.table",
                  desc = paste("table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time.",
                               "Defaults to a dummy table based on dummy data os biomass, age, ecoregion and land cover class")),
-    expectsInput("speciesLayers", "RasterStack",
-                 desc = paste("cover percentage raster layers by species in Canada species map.",
-                              "Defaults to the Canadian Forestry Service, National Forest Inventory,",
-                              "kNN-derived species cover maps from 2001 using a cover threshold of 10 -",
-                              "see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata"),
-                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
-                                    "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")),
     expectsInput("sppColorVect", "character",
                  desc = paste("A named vector of colors to use for plotting.",
                               "The names must be in sim$speciesEquivalency[[sim$sppEquivCol]],",
@@ -1767,7 +1760,7 @@ CohortAgeReclassification <- function(sim) {
                                "canada-forests-attributes_attributs-forests-canada/",
                                "2001-attributes_attributs-2001/",
                                "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
-
+    rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
     sim$rawBiomassMap <- Cache(prepInputs,
                                targetFile = rawBiomassMapFilename,
                                url = rawBiomassMapURL,
