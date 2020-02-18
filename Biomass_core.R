@@ -218,6 +218,8 @@ defineModule(sim, list(
                                "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs")),
     createsOutput("speciesEcoregion", "data.table",
                   desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
+    createsOutput("speciesLayers", "RasterStack",
+                  desc = "biomass percentage raster layers by species in Canada species map"),
     # createsOutput("spinUpCache", "logical", desc = ""),
     createsOutput("spinupOutput", "data.table", desc = "Spin-up output"),
     createsOutput("summaryBySpecies", "data.table",
