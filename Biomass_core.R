@@ -8,7 +8,8 @@ defineModule(sim, list(
     person("Yong", "Luo", email = "yluo1@lakeheadu.ca", role = "aut"),
     person(c("Eliot", "J", "B"), "McIntire", email = "eliot.mcintire@canada.ca", role = c("aut", "cre")),
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb"),
-    person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = "ctb")
+    person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = "ctb"),
+    person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = "ctb")
   ),
   childModules = character(0),
   version = list(Biomass_core = numeric_version("1.3.2"),
@@ -140,6 +141,13 @@ defineModule(sim, list(
     expectsInput("speciesEcoregion", "data.table",
                  desc = paste("table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time.",
                               "Defaults to a dummy table based on dummy data os biomass, age, ecoregion and land cover class")),
+    expectsInput("speciesLayers", "RasterStack",
+                 desc = paste("cover percentage raster layers by species in Canada species map.",
+                              "Defaults to the Canadian Forestry Service, National Forest Inventory,",
+                              "kNN-derived species cover maps from 2001 using a cover threshold of 10 -",
+                              "see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata"),
+                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                                    "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")),
     expectsInput("sppColorVect", "character",
                  desc = paste("A named vector of colors to use for plotting.",
                               "The names must be in sim$speciesEquivalency[[sim$sppEquivCol]],",
@@ -451,16 +459,16 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                          hardsoft = "factor", speciesCode = "factor"))
   sim$species <- setkey(species, speciesCode)
 
-  if (!suppliedElsewhere("cohortData", sim) | !suppliedElsewhere("pixelGroupMap")) {
+  if (!suppliedElsewhere("cohortData", sim, where = "sim") | !suppliedElsewhere("pixelGroupMap", sim, where = "sim")) {
 
-    if ((!suppliedElsewhere("cohortData", sim) && suppliedElsewhere("pixelGroupMap")) ||
-        (suppliedElsewhere("cohortData", sim) && !suppliedElsewhere("pixelGroupMap"))) {
+    if ((!suppliedElsewhere("cohortData", sim, where = "sim") && suppliedElsewhere("pixelGroupMap", sim, where = "sim")) ||
+        (suppliedElsewhere("cohortData", sim, where = "sim") && !suppliedElsewhere("pixelGroupMap", sim, where = "sim"))) {
       stop("Either 'cohortData' or 'pixelGroupMap' are being supplied without the other.",
            "These two objects must be supplied together and conform to each other.",
            "Either supply both of them manually, or use a module like Biomass_borealDataPrep to do so.")
     }
 
-    if (suppliedElsewhere("ecoregionMap", sim)) {
+    if (suppliedElsewhere("ecoregionMap", sim, where = "sim")) {
       message(blue("'ecoregionMap' was supplied, but "),
               red("will be replaced by a dummy version to make "),
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
@@ -601,7 +609,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     # Create initial communities, i.e., pixelGroups
     ########################################################################
 
-    if (!suppliedElsewhere("columnsForPixelGroups", sim)) {
+    if (!suppliedElsewhere("columnsForPixelGroups", sim, where = "sim")) {
       columnsForPixelGroups <- LandR::columnsForPixelGroups
     } else {
       columnsForPixelGroups <- sim$columnsForPixelGroups
