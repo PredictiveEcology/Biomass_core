@@ -228,6 +228,8 @@ defineModule(sim, list(
                                "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs")),
     createsOutput("speciesEcoregion", "data.table",
                   desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
+    createsOutput("speciesLayers", "RasterStack",
+                  desc = "biomass percentage raster layers by species in Canada species map"),
     # createsOutput("spinUpCache", "logical", desc = ""),
     createsOutput("spinupOutput", "data.table", desc = "Spin-up output"),
     createsOutput("summaryBySpecies", "data.table",
@@ -470,7 +472,6 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sim$species <- setkey(species, speciesCode)
 
   if (!suppliedElsewhere("cohortData", sim, where = "sim") | !suppliedElsewhere("pixelGroupMap", sim, where = "sim")) {
-
     if ((!suppliedElsewhere("cohortData", sim, where = "sim") && suppliedElsewhere("pixelGroupMap", sim, where = "sim")) ||
         (suppliedElsewhere("cohortData", sim, where = "sim") && !suppliedElsewhere("pixelGroupMap", sim, where = "sim"))) {
       stop("Either 'cohortData' or 'pixelGroupMap' are being supplied without the other.",
@@ -1782,7 +1783,7 @@ CohortAgeReclassification <- function(sim) {
                                "canada-forests-attributes_attributs-forests-canada/",
                                "2001-attributes_attributs-2001/",
                                "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
-
+    rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
     sim$rawBiomassMap <- Cache(prepInputs,
                                targetFile = rawBiomassMapFilename,
                                url = rawBiomassMapURL,
@@ -1900,9 +1901,6 @@ CohortAgeReclassification <- function(sim) {
                                userTags = c(cacheTags, "speciesLayers"),
                                omitArgs = c("userTags"))
   }
-
-  ## important: layers coming in from Biomass_specieData may be using rasterToMatchLarge, so crop!
-  sim$speciesLayers <- crop(sim$speciesLayers, sim$rasterToMatch)
 
   ## additional species traits
   if (!suppliedElsewhere("species", sim)) {
