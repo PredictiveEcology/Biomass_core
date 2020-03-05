@@ -972,10 +972,11 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     startNumCohorts <- NROW(subCohortData)
 
     #########################################################
-    # Die from old age -- rm from cohortData
+    # Die from old age or low biomass -- rm from cohortData
     #########################################################
-    subCohortPostLongevity <- subCohortData[age <= longevity | B >= P(sim)$minCohortBiomass, ]
-    diedCohortData <- subCohortData[age > longevity | B < P(sim)$minCohortBiomass,]
+    keep <- (subCohortData$age <= subCohortData$longevity) & (subCohortData$B >=  P(sim)$minCohortBiomass)
+    subCohortPostLongevity <- subCohortData[keep,]
+    diedCohortData <- subCohortData[!keep]
     numCohortsDied <- NROW(diedCohortData)
 
     if (numCohortsDied > 0) {
