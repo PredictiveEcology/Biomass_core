@@ -70,6 +70,8 @@ defineModule(sim, list(
                           "`spinUp` uses `sim$ageMap` as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
                           "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied.")),
+    defineParameter("minCohortBiomass", 'numeric', 0, NA, NA, 
+                    desc = "cohorts with biomass below this threshold are removed. Not a LANDIS-II BSM param"),
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
                                  "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
@@ -973,10 +975,10 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     # Die from old age -- rm from cohortData
     #########################################################
     subCohortPostLongevity <- subCohortData[age <= longevity, ]
-    diedCohortData <- subCohortData[age > longevity, ]
-    numCohortsDiedOldAge <- NROW(diedCohortData)
+    diedCohortData <- subCohortData[age > longevity | B <= P(sim)$minCohortBiomass,]
+    numCohortsDied <- NROW(diedCohortData)
 
-    if (numCohortsDiedOldAge > 0) {
+    if (numCohortsDied > 0) {
       # Identify the PGs that are totally gone, not just an individual cohort that died
       pgsToRm <- diedCohortData[!pixelGroup %in% subCohortPostLongevity$pixelGroup]
 
@@ -995,7 +997,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         sim$pixelGroupMap[pixelsToRm] <- 0L
         if (getOption("LandR.verbose", TRUE) > 1) {
           message(blue("Death due to old age:",
-                       "\n  ", numCohortsDiedOldAge, "cohorts died of old age (i.e., due to passing longevity); ",
+                       "\n  ", numCohortsDied, "cohorts died of old age (i.e., due to passing longevity) or biomass <= 1; ",
                        sum(is.na(diedCohortData$age)), " of those because age == NA; ",
                        "\n  ", NROW(unique(pgsToRm$pixelGroup)), "pixelGroups to be removed (i.e., ",
                        "\n  ", length(pixelsToRm), "pixels; "))
@@ -1050,8 +1052,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     if (P(sim)$growthAndMortalityDrivers != "LandR") {
       subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred)/100)]
     }
-    ## without climate-sensitivity, mortality never exceeds biomass (Ian added this 2019-04-04)
-    subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
 
     set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
     if (P(sim)$calibrate) {
