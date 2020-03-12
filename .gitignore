@@ -9,3 +9,5 @@
 *.tif
 *.R.save
 *.swp
+
+cache/
