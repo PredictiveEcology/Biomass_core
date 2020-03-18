@@ -930,7 +930,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
   ## Install climate-sensitive functions (or not)
   #a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers, quietly = TRUE)) ## Fixed (Eliot) TODO: this is not working. requireNamespace overrides try
   #if (class(a) == "try-error") {
-  if (requireNamespace(P(sim)$growthAndMortalityDrivers, quietly = TRUE)) {
+  if (!requireNamespace(P(sim)$growthAndMortalityDrivers, quietly = TRUE)) {
     stop("The package you specified for P(sim)$growthAndMortalityDrivers must be installed.")
   }
 
