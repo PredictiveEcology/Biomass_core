@@ -1022,7 +1022,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       set(subCohortData, NULL, "sumB", NULL)
     }
 
-    subCohortData <- calculateANPP(cohortData = subCohortData)  ## competion effect on aNPP via bPM
+    subCohortData <- calculateANPP(cohortData = subCohortData)  ## competition effect on aNPP via bPM
     set(subCohortData, NULL, "growthcurve", NULL)
     set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
