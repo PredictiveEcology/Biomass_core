@@ -197,6 +197,8 @@ defineModule(sim, list(
                   desc = "ANPP map at each succession time step"),
     createsOutput("cohortData", "data.table",
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step"),
+    createsOutput("cutpoint", "numeric",
+                  desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
     createsOutput("inactivePixelIndexReporting", "integer",
