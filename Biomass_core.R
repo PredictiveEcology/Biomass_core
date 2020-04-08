@@ -39,6 +39,8 @@ defineModule(sim, list(
                                  "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
+    defineParameter("cutpoint", "numeric", 1e10, NA, NA,
+                 desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
     defineParameter('gmcsGrowthLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
                     paste("if using LandR.CS for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
@@ -197,8 +199,6 @@ defineModule(sim, list(
                   desc = "ANPP map at each succession time step"),
     createsOutput("cohortData", "data.table",
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step"),
-    createsOutput("cutpoint", "numeric",
-                  desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
     createsOutput("inactivePixelIndexReporting", "integer",
@@ -449,8 +449,6 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ## stop early if raster inputs don't match
   compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
 
-  ## A numeric scalar indicating how large each chunk of an internal data.table with processing by chunks
-  mod$cutpoint <- 1e10
   cacheTags <- c(currentModule(sim), "init")
 
   ##############################################
@@ -836,7 +834,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 SummaryBGM <- compiler::cmpfun(function(sim) {
   pixelGroups <- data.table(pixelGroupIndex = unique(sim$cohortData$pixelGroup),
                             temID = 1:length(unique(sim$cohortData$pixelGroup)))
-  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = mod$cutpoint),
+  cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = P(sim)$cutpoint),
                              max(pixelGroups$temID))))
   if (length(cutpoints) == 1)
     cutpoints <- c(cutpoints, cutpoints + 1)
