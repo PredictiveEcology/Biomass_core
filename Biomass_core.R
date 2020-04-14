@@ -69,7 +69,7 @@ defineModule(sim, list(
                           "If 'cohortData', it will be taken from the 'cohortData' object, i.e., it is already correct, by cohort.",
                           "If 'biomassMap', it will be taken from sim$biomassMap,",
                           "divided across species using sim$speciesLayers percent cover values",
-                          "`spinUp` uses `sim$ageMap` as the driver, so biomass",
+                          "`spinUp` uses `sim$standAgeMap` as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
                           "about biomass, unless this is set to TRUE, and a `sim$biomassMap` is supplied.")),
     defineParameter("mixedType", "numeric", 2,
