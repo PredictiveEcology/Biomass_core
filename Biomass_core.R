@@ -40,7 +40,7 @@ defineModule(sim, list(
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
-                 desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
+                    desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
     defineParameter('gmcsGrowthLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
                     paste("if using LandR.CS for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
@@ -71,7 +71,7 @@ defineModule(sim, list(
                           "divided across species using sim$speciesLayers percent cover values",
                           "`spinUp` uses `sim$ageMap` as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
-                          "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied.")),
+                          "about biomass, unless this is set to TRUE, and a `sim$biomassMap` is supplied.")),
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
                                  "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
@@ -119,8 +119,7 @@ defineModule(sim, list(
     expectsInput("biomassMap", "RasterLayer",
                  desc = paste("total biomass raster layer in study area (in g/m2),",
                               "filtered for pixels covered by cohortData.",
-                              "Only used if P(sim)$initialBiomassSource == 'biomassMap'"),
-                 sourceURL = ""),
+                              "Only used if P(sim)$initialBiomassSource == 'biomassMap'")),
     expectsInput("cohortData", "data.table",
                  desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
     expectsInput("ecoregion", "data.table",
@@ -144,8 +143,7 @@ defineModule(sim, list(
     expectsInput("pixelGroupMap", "RasterLayer",
                  desc = "initial community map that has mapcodes match initial community table"),
     expectsInput("rasterToMatch", "RasterLayer",
-                 desc = "a raster of the studyArea in the same resolution and projection as rawBiomassMap",
-                 sourceURL = NA),
+                 desc = "a raster of the studyArea in the same resolution and projection as biomassMap"),
     expectsInput("species", "data.table",
                  desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
                               "Default is partially based on Dominic Cir and Yan's project"),
@@ -163,19 +161,15 @@ defineModule(sim, list(
     expectsInput("sppColorVect", "character",
                  desc = paste("A named vector of colors to use for plotting.",
                               "The names must be in sim$speciesEquivalency[[sim$sppEquivCol]],",
-                              "and should also contain a color for 'Mixed'"),
-                 sourceURL = NA),
+                              "and should also contain a color for 'Mixed'")),
     expectsInput("sppEquiv", "data.table",
-                 desc = "table of species equivalencies. See LandR::sppEquivalencies_CA.",
-                 sourceURL = ""),
+                 desc = "table of species equivalencies. See LandR::sppEquivalencies_CA."),
     expectsInput("studyArea", "SpatialPolygonsDataFrame",
                  desc = paste("Polygon to use as the study area.",
-                              "Defaults to  an area in Southwestern Alberta, Canada."),
-                 sourceURL = NA),
+                              "Defaults to  an area in Southwestern Alberta, Canada.")),
     expectsInput("studyAreaReporting", "SpatialPolygonsDataFrame",
                  desc = paste("multipolygon (typically smaller/unbuffered than studyArea) to use for plotting/reporting.",
-                              "Defaults to an area in Southwestern Alberta, Canada."),
-                 sourceURL = NA),
+                              "Defaults to an area in Southwestern Alberta, Canada.")),
     expectsInput("sufficientLight", "data.frame",
                  desc = paste("table defining how the species with different shade tolerance respond to stand shadeness.",
                               "Default is based on LANDIS-II Biomass Succession v6.2 parameters"),
@@ -185,8 +179,7 @@ defineModule(sim, list(
     expectsInput("treedFirePixelTableSinceLastDisp", "data.table",
                  desc = paste("3 columns: pixelIndex, pixelGroup, and burnTime.",
                               "Each row represents a forested pixel that was burned up to and including this year,",
-                              "since last dispersal event, with its corresponding pixelGroup and time it occurred"),
-                 sourceURL = "")
+                              "since last dispersal event, with its corresponding pixelGroup and time it occurred"))
     # expectsInput("spinUpCache", "logical", ""),
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
   ),
@@ -1790,12 +1783,12 @@ CohortAgeReclassification <- function(sim) {
                                targetFile = rawBiomassMapFilename,
                                url = rawBiomassMapURL,
                                destinationPath = dPath,
-                               studyArea = sim$studyAreaLarge,   ## Ceres: makePixel table needs same no. pixels for this, RTM rawBiomassMap, LCC.. etc
-                               rasterToMatch = if (!needRTM) sim$rasterToMatchLarge else NULL,
-                               maskWithRTM = if (!needRTM) TRUE else FALSE,
-                               useSAcrs = FALSE,     ## never use SA CRS
-                               method = "bilinear",
-                               datatype = "INT2U",
+                             studyArea = sim$studyArea,
+                             rasterToMatch = NULL,
+                             maskWithRTM = FALSE,
+                             useSAcrs = FALSE,     ## never use SA CRS
+                             method = "bilinear",
+                             datatype = "INT2U",
                                filename2 = TRUE, overwrite = TRUE,
                                userTags = c(cacheTags, "rawBiomassMap"),
                                omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
@@ -1805,7 +1798,6 @@ CohortAgeReclassification <- function(sim) {
     sim$rasterToMatch <- sim$rawBiomassMap
     RTMvals <- getValues(sim$rasterToMatch)
     sim$rasterToMatch[!is.na(RTMvals)] <- 1
-
     sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
                                filename2 = file.path(cachePath(sim), "rasters", "rasterToMatch.tif"),
                                datatype = "INT2U", overwrite = TRUE,
@@ -1815,7 +1807,7 @@ CohortAgeReclassification <- function(sim) {
 
   if (!identical(crs(sim$studyArea), crs(sim$rasterToMatch))) {
     warning(paste0("studyArea and rasterToMatch projections differ.\n",
-                   "studyArea will be projected to match rasterToMatchLarge"))
+                   "studyArea will be projected to match rasterToMatch"))
     sim$studyArea <- spTransform(sim$studyArea, crs(sim$rasterToMatch))
     sim$studyArea <- fixErrors(sim$studyArea)
   }
