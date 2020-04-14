@@ -117,7 +117,7 @@ defineModule(sim, list(
   ),
   inputObjects = bind_rows(
     expectsInput("biomassMap", "RasterLayer",
-                 desc = paste("total biomass raster layer in study area,",
+                 desc = paste("total biomass raster layer in study area (in g/m2),",
                               "filtered for pixels covered by cohortData.",
                               "Only used if P(sim)$initialBiomassSource == 'biomassMap'"),
                  sourceURL = ""),
