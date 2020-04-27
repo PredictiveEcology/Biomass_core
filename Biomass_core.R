@@ -1255,7 +1255,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
   activePixelGroup <- data.table(pixelGroup = unique(getValues(sim$pixelGroupMap)[tempActivePixel])) %>%
     na.omit()
   siteShade <- siteShade[activePixelGroup, on = "pixelGroup"]
-  siteShade[is.na(siteShade),siteShade := 0]
+  siteShade[is.na(siteShade), siteShade := 0]
 
   ## Seed source cells:
   ## 1. Select only sexually mature cohorts, then
