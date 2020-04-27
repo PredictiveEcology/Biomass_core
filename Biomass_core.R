@@ -454,7 +454,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   species <- setDT(sim$species)[, speciesCode := as.factor(species)]
   LandR::assertColumns(species,
                        c(species = "character", Area = "factor", longevity = "integer",
-                         sexualmature = "integer", shadetolerance = "integer",
+                         sexualmature = "integer", shadetolerance = "numeric",
                          firetolerance = "integer", seeddistance_eff = "integer",
                          seeddistance_max = "integer", resproutprob = "numeric",
                          resproutage_min = "integer", resproutage_max = "integer",
@@ -1255,7 +1255,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
   activePixelGroup <- data.table(pixelGroup = unique(getValues(sim$pixelGroupMap)[tempActivePixel])) %>%
     na.omit()
   siteShade <- siteShade[activePixelGroup, on = "pixelGroup"]
-  siteShade[is.na(siteShade),siteShade := 0]
+  siteShade[is.na(siteShade), siteShade := 0]
 
   ## Seed source cells:
   ## 1. Select only sexually mature cohorts, then
