@@ -27,15 +27,12 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
                                  on = byGroups, which = TRUE]
 
       td <- targetData[tdDuplicates]
-      ## TODO: Ceres: growth/mortPred will could be ignored in the future outside of
-      ## mortalityAndGrowth event(s), and so will need to be removed from the code below.
+
       td <- td[, .(ecoregionGroup = unique(ecoregionGroup),
                    age = successionTimestepPlusOne,
                    B = sum(B, na.rm = TRUE),
                    mortality = sum(mortality, na.rm = TRUE),
-                   aNPPAct = sum(aNPPAct, na.rm = TRUE),
-                   mortPred = mean(mortPred, na.rm = TRUE),
-                   growthPred = mean(growthPred, na.rm = TRUE)),
+                   aNPPAct = sum(aNPPAct, na.rm = TRUE)),
                by = byGroups]
       td <- td[, ..cdColNames] # keep only the columns, in the correct order, as cohortData
       tdNonDups <- targetData[-tdDuplicates]

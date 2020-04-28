@@ -103,8 +103,8 @@ library(LandR)
 
 ## April 1st, 2019:
 ##  growth/mortality processes still in separate module, but will be ported back to Biomass_core soon.
-moduleName <- c("Biomass_core", "LandR_BiomassGMOrig")  
-spadesModulesDirectory <- "~/Biomass_core_test/modules" # where the module will be downloaded
+moduleName <- c("Biomass_core")  
+spadesModulesDirectory <- ".." # In general, a module code will be controlled at one level above the source code
 ```
 
 ## Get the module
@@ -114,7 +114,7 @@ You can either get the module using `downloadModule`, which will download the co
 
 ```{r download module}
 # Simple way to download modules
-downloadModule(moduleName, path = spadesModulesDirectory)
+# downloadModule(moduleName, path = spadesModulesDirectory)
 
 # OR Advanced for developers is to use GitHub
 ```
@@ -122,12 +122,12 @@ downloadModule(moduleName, path = spadesModulesDirectory)
 ## Setup simulation
 
 ```{r module usage example}
-setPaths(inputPath = "~/Biomass_core_test/inputs", 
-         cachePath = "~/Biomass_core_test/cache", 
+setPaths(inputPath = "inputs", 
+         cachePath = "cache", 
          modulePath = spadesModulesDirectory, 
-         outputPath = "~/Biomass_core_test/outputs")
+         outputPath = "outputs")
 
-times <- list(start = 0, end = 50)
+times <- list(start = 0, end = 1)
 
 ## Usage example
 modules <- as.list(moduleName)
@@ -146,11 +146,6 @@ parameters <- list(
     , ".saveInitialTime" = 1
     , ".useCache" = FALSE 
     , ".useParallel" = FALSE
-  )
-  , LandR_BiomassGMOrig = list(
-    "growthInitialTime" = successionTimestep
-    , "sppEquivCol" = "Boreal"
-    ,".useParallel" = FALSE
   )
 )
 
