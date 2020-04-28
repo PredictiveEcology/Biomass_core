@@ -1077,6 +1077,9 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
   rm(cohortData)
   gc() ## restored this gc call 2019-08-20 (AMC)
 
+  ## now age this year's recruits
+  sim$cohortData[age == 1, age := age + 1L]
+
   if (isTRUE(getOption("LandR.assertions"))) {
     if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1)
       stop()
