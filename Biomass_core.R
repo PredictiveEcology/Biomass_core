@@ -14,7 +14,7 @@ defineModule(sim, list(
   childModules = character(0),
   version = list(Biomass_core = numeric_version("1.3.2"),
                  LandR = "0.0.3.9000", SpaDES.core = "0.2.7",
-                 LandR.CS = "0.0.1.0001"),
+                 LandR.CS = "0.0.2.0002"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
@@ -71,7 +71,9 @@ defineModule(sim, list(
                           "divided across species using sim$speciesLayers percent cover values",
                           "`spinUp` uses `sim$standAgeMap` as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
-                          "about biomass, unless this is set to TRUE, and a `sim$biomassMap` is supplied.")),
+                          "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied.")),
+    defineParameter("minCohortBiomass", 'numeric', 0, NA, NA, 
+                    desc = "cohorts with biomass below this threshold are removed. Not a LANDIS-II BSM param"),
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
                                  "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
@@ -119,7 +121,10 @@ defineModule(sim, list(
     expectsInput("biomassMap", "RasterLayer",
                  desc = paste("total biomass raster layer in study area (in g/m2),",
                               "filtered for pixels covered by cohortData.",
-                              "Only used if P(sim)$initialBiomassSource == 'biomassMap'")),
+                              "Only used if P(sim)$initialBiomassSource == 'biomassMap'"),
+                 sourceURL = ""),
+    expectsInput("cceArgs", "list",
+                 desc = paste('a list of quoted objects used by the growthAndMortalityDriver calculateClimateEffect function')),
     expectsInput("cohortData", "data.table",
                  desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
     expectsInput("ecoregion", "data.table",
@@ -965,13 +970,14 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     startNumCohorts <- NROW(subCohortData)
 
     #########################################################
-    # Die from old age -- rm from cohortData
+    # Die from old age or low biomass -- rm from cohortData
     #########################################################
-    subCohortPostLongevity <- subCohortData[age <= longevity, ]
-    diedCohortData <- subCohortData[age > longevity, ]
-    numCohortsDiedOldAge <- NROW(diedCohortData)
+    keep <- (subCohortData$age <= subCohortData$longevity) & (subCohortData$B >=  P(sim)$minCohortBiomass)
+    subCohortPostLongevity <- subCohortData[keep,]
+    diedCohortData <- subCohortData[!keep]
+    numCohortsDied <- NROW(diedCohortData)
 
-    if (numCohortsDiedOldAge > 0) {
+    if (numCohortsDied > 0) {
       # Identify the PGs that are totally gone, not just an individual cohort that died
       pgsToRm <- diedCohortData[!pixelGroup %in% subCohortPostLongevity$pixelGroup]
 
@@ -990,7 +996,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         sim$pixelGroupMap[pixelsToRm] <- 0L
         if (getOption("LandR.verbose", TRUE) > 1) {
           message(blue("Death due to old age:",
-                       "\n  ", numCohortsDiedOldAge, "cohorts died of old age (i.e., due to passing longevity); ",
+                       "\n  ", numCohortsDied, "cohorts died of old age (i.e., due to passing longevity) or biomass <= 1; ",
                        sum(is.na(diedCohortData$age)), " of those because age == NA; ",
                        "\n  ", NROW(unique(pgsToRm$pixelGroup)), "pixelGroups to be removed (i.e., ",
                        "\n  ", length(pixelsToRm), "pixels; "))
@@ -1021,13 +1027,18 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
     ## generate climate-sensitivity predictions - this will no longer run if LandR pkg is the driver
     if (P(sim)$growthAndMortalityDrivers != "LandR") {
-      predObj <- calculateClimateEffect(gcsModel = sim$gcsModel,
-                                        mcsModel = sim$mcsModel,
-                                        CMI = sim$CMI,
-                                        ATA = sim$ATA,
+
+      #get arguments from sim environment - this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
+      #as long as the function is called 'calculateClimateEffect', represents a multiplier, and uses growth, mortality and age limits
+      cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
+
+        arg <-  eval(x, envir = sim)
+      })
+      names(cceArgs) <- paste(sim$cceArgs)
+
+      predObj <- calculateClimateEffect(cceArgs = cceArgs,
                                         cohortData = subCohortData,
                                         pixelGroupMap = sim$pixelGroupMap,
-                                        CMInormal = sim$CMInormal,
                                         gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
                                         gmcsMortLimits = P(sim)$gmcsMortLimits,
                                         gmcsMinAge = P(sim)$gmcsMinAge)
@@ -1045,8 +1056,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     if (P(sim)$growthAndMortalityDrivers != "LandR") {
       subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred)/100)]
     }
-    ## without climate-sensitivity, mortality never exceeds biomass (Ian added this 2019-04-04)
-    subCohortData$mortality <- pmin(subCohortData$mortality, subCohortData$B)
 
     set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
     if (P(sim)$calibrate) {
@@ -1821,7 +1830,8 @@ CohortAgeReclassification <- function(sim) {
     RTMvals <- getValues(sim$rasterToMatch)
     sim$rasterToMatch[!is.na(RTMvals)] <- 1
     sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
-                               filename2 = file.path(cachePath(sim), "rasters", "rasterToMatch.tif"),
+                               filename2 = .suffix(file.path(dPath, "rasterToMatch.tif"),
+                                                   paste0("_", P(sim)$.studyAreaName)),
                                datatype = "INT2U", overwrite = TRUE,
                                userTags = c(cacheTags, "rasterToMatch"),
                                omitArgs = c("userTags"))
@@ -1928,6 +1938,23 @@ CohortAgeReclassification <- function(sim) {
                                                               names(sim$speciesLayers)],
                                     sppEquivCol = P(sim)$sppEquivCol)
   }
+
+  if (P(sim)$growthAndMortalityDrivers != 'LandR') {
+    if (!suppliedElsewhere("cceArgs", sim)) {
+      sim$cceArgs <- list(quote(CMI),
+                          quote(ATA),
+                          quote(CMInormal),
+                          quote(mcsModel),
+                          quote(gcsModel))
+      names(sim$cceArgs) <- paste(sim$cceArgs)
+    }
+
+    #check for climate args
+    # if (!all(unlist(lapply(names(sim$cceArgs), suppliedElsewhere, sim = sim)))) {
+    #   stop("Some or all of sim$cceArgs are not supplied")
+    # }
+  }
+
 
   gc() ## AMC added this 2019-08-20
 
