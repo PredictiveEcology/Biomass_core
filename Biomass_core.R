@@ -1057,6 +1057,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
     if (P(sim)$growthAndMortalityDrivers != "LandR") {
       subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred)/100)]
+      subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
     }
 
     set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
