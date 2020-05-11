@@ -417,9 +417,11 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
          },
          plotSummaryBySpecies = {
            sim <- plotSummaryBySpecies(sim)
-           if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
+           if (!is.na(P(sim)$.plotInterval)) {
+             if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
              sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
                                   "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
+           }
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
