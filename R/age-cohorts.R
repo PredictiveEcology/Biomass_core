@@ -38,7 +38,7 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
       tdNonDups <- targetData[-tdDuplicates]
       #age the non-duplicates, else unique 1 year-old unique cohorts stay age 1 for another successionTimestep
       tdNonDups <- tdNonDups[, age := successionTimestepPlusOne]
-      targetData <- rbindlist(list(td, tdNonDups))
+      targetData <- rbindlist(list(td, tdNonDups), fill = TRUE)
     } else {
       message("  No age reclassification to do")
       targetData[, age := successionTimestepPlusOne]
@@ -47,7 +47,7 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
     targetData <- targetData[, ..cdColNames]
 
     cohortData <- cohortData[age > successionTimestepPlusOne]
-    cohortData <- rbindlist(list(cohortData, targetData))
+    cohortData <- rbindlist(list(cohortData, targetData), fill = TRUE)
   }
   if (isTRUE(getOption("LandR.assertions"))) {
     if (!identical(NROW(cohortData), NROW(unique(cohortData, by = c("pixelGroup", "speciesCode", "age", "B"))))) {

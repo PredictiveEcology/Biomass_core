@@ -72,6 +72,7 @@ defineModule(sim, list(
                           "`spinUp` uses `sim$standAgeMap` as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
                           "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied.")),
+    defineParameter("keepClimateCols", 'logical', TRUE, NA, NA, 'include growth and mortality predictions in cohortData?'),
     defineParameter("minCohortBiomass", 'numeric', 0, NA, NA,
                     desc = "cohorts with biomass below this threshold are removed. Not a LANDIS-II BSM param"),
     defineParameter("mixedType", "numeric", 2,
@@ -1060,6 +1061,9 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     if (P(sim)$growthAndMortalityDrivers != "LandR") {
       subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred)/100)]
       subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
+      if (!P(sim)$keepClimateCols) {
+        set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
+      }
     }
 
     set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
