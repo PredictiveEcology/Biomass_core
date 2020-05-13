@@ -1695,7 +1695,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   ## don't expand table, multiply by no. pixels - faster
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
   thisPeriod <- pixelCohortData[, list(year = time(sim),
-                                       sumB = asInteger(sum(B*noPixels, na.rm = TRUE)),
+                                       sumB = sum(B*noPixels, na.rm = TRUE),
                                        maxAge = asInteger(max(age, na.rm = TRUE)),
                                        sumANPP = asInteger(sum(aNPPAct*noPixels, na.rm = TRUE)))]
   if (is.null(sim$summaryLandscape)) {
