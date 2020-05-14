@@ -1698,6 +1698,10 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
                                        sumB = sum(B*noPixels, na.rm = TRUE),
                                        maxAge = asInteger(max(age, na.rm = TRUE)),
                                        sumANPP = asInteger(sum(aNPPAct*noPixels, na.rm = TRUE)))]
+  denominator <- length(sim$pixelGroupMap[!is.na(sim$pixelGroupMap)]) * 100 #to get tonnes/ha
+  thisPeriod[, sumB := asInteger(sumB/denominator)]
+  thisPeriod[, sumANPP := asInteger(sumANPP/denominator)]
+
   if (is.null(sim$summaryLandscape)) {
     sim$summaryLandscape <- thisPeriod
   } else {
@@ -1721,7 +1725,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
-      Plot(plot1, title = "Total landscape biomass and aNPP and max stand age", new = TRUE)
+      Plot(plot1, title = "mean landscape biomass and aNPP (Mg/ha) and max stand age", new = TRUE)
     }
 
     if (time(sim) == end(sim))
