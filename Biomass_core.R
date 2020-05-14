@@ -921,14 +921,11 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
 })
 
 MortalityAndGrowth <- compiler::cmpfun(function(sim) {
+
   if (is.numeric(P(sim)$.useParallel)) {
     data.table::setDTthreads(P(sim)$.useParallel)
     message("Mortality and Growth should be using >100% CPU")
   }
-  if (!all(colnames(sim$cohortData) %in% c("pixelGroup", "ecoregionGroup",
-                                           "speciesCode", "age", "B", "mortality", "aNPPAct")))
-    sim$cohortData <- sim$cohortData[, .(pixelGroup, ecoregionGroup,
-                                         speciesCode, age, B, mortality, aNPPAct)]
 
   ## Install climate-sensitive functions (or not)
   #a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers, quietly = TRUE)) ## Fixed (Eliot) TODO: this is not working. requireNamespace overrides try
