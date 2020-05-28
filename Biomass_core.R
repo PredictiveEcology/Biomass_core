@@ -1444,7 +1444,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                            by = .(speciesCode)]
 
   #overstory
-  cohortData <-  addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+  cohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
   cohortData[, bWeightedAge := floor(sum(age * B) / sum(B) / 10) * 10, .(pixelGroup)]
   # B was set as numeric to avoid problems with big numbers being integers
   overstory <- cohortData[age >= bWeightedAge, .(overstoryBiomass = sum(as.numeric(B) * noPixels)),
