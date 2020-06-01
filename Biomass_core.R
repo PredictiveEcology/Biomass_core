@@ -39,6 +39,9 @@ defineModule(sim, list(
                                  "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
+    defineParameter('cdColsForAgeBins', 'character', c('pixelGroup', 'speciesCode'), NA, NA,
+                    desc = paste("cohortData columns by which to assess duplicates cohorts when binning ages.",
+                                 "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
                     desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
     defineParameter('gmcsGrowthLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
@@ -1765,10 +1768,11 @@ Save <- compiler::cmpfun(function(sim) {
 })
 
 CohortAgeReclassification <- function(sim) {
-  if (time(sim) != 0) {
+  if (time(sim) != start(sim)) {
     sim$cohortData <- ageReclassification(cohortData = sim$cohortData,
                                           successionTimestep = P(sim)$successionTimestep,
-                                          stage = "mainSimulation")
+                                          stage = "mainSimulation",
+                                          byGroups = P(sim)$cdColsForAgeBins)
     return(invisible(sim))
   } else {
     return(invisible(sim))

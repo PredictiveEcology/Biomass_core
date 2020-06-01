@@ -1,4 +1,4 @@
-ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep, stage) {
+ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep, stage, byGroups = c('pixelGroup', 'speciesCode')) {
 
   # Slight faster to check only, if not needed, than always convert
   if (!is.integer(successionTimestep))
@@ -17,7 +17,6 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
     #   into a single cohort
     # NOTE: We do not need to squash if there is nothing to squash, i.e., cases with 1 species in a pixelGroup that is <successionTimestep old,
     #       don't need to be squashed.
-    byGroups <- c("pixelGroup", "speciesCode")
     anyDuplicates <- duplicated(targetData, by = byGroups)
     cdColNames <- colnames(cohortData)
     message("  Setting all ages <= ", successionTimestep, " to ", successionTimestepPlusOne)
