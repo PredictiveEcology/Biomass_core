@@ -342,9 +342,11 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
            sim <- scheduleEvent(sim, end(sim),
                                 "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)  ## schedule the last plotting events (so that it doesn't depend on plot interval)
-           if (P(sim)$.plotMaps)
+
+           if (P(sim)$.plotMaps){
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
+         }
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
            if (!is.na(P(sim)$.plotInitialTime))
@@ -1030,6 +1032,10 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     ## generate climate-sensitivity predictions - this will no longer run if LandR pkg is the driver
     if (P(sim)$growthAndMortalityDrivers != "LandR") {
 
+      #necessary due to column joining
+      if (!is.null(subCohortData$growthPred)) {
+        set(subCohortData, NULL, c('growthPred', 'mortPred'), NULL)
+      }
       #get arguments from sim environment - this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
       #as long as the function is called 'calculateClimateEffect', represents a multiplier, and uses growth, mortality and age limits
       cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
@@ -1044,9 +1050,10 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                         gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
                                         gmcsMortLimits = P(sim)$gmcsMortLimits,
                                         gmcsMinAge = P(sim)$gmcsMinAge)
-
-      subCohortData <- subCohortData[predObj, on = c('pixelGroup', 'age', 'speciesCode')]
-      subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred)/100)] #changed from ratio to pct for memory
+      #Join must be done this way
+      commonNames <- names(predObj)[names(predObj) %in% names(subCohortData)]
+      subCohortData <- subCohortData[predObj, on = commonNames]
+      subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred/100))] #changed from ratio to pct for memory
     }
 
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
@@ -1056,7 +1063,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
     if (P(sim)$growthAndMortalityDrivers != "LandR") {
-      subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred)/100)]
+      subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred/100))]
       subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
       if (!P(sim)$keepClimateCols) {
         set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
