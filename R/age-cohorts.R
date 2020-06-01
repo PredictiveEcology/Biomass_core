@@ -33,6 +33,7 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
                    mortality = sum(mortality, na.rm = TRUE),
                    aNPPAct = sum(aNPPAct, na.rm = TRUE)),
                by = byGroups]
+      cdColNames <- intersect(colnames(cohortData), colnames(td))
       td <- td[, ..cdColNames] # keep only the columns, in the correct order, as cohortData
       tdNonDups <- targetData[-tdDuplicates]
       #age the non-duplicates, else unique 1 year-old unique cohorts stay age 1 for another successionTimestep
@@ -42,8 +43,6 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
       message("  No age reclassification to do")
       targetData[, age := successionTimestepPlusOne]
     }
-    # maybe next line unnecessary
-    targetData <- targetData[, ..cdColNames]
 
     cohortData <- cohortData[age > successionTimestepPlusOne]
     cohortData <- rbindlist(list(cohortData, targetData), fill = TRUE)
