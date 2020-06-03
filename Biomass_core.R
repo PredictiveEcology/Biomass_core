@@ -1862,7 +1862,7 @@ CohortAgeReclassification <- function(sim) {
                                      dPath,
                                      cacheTags = c(cacheTags, "mainInput")) ## uses default URL
 
-    sufficientLight <- data.frame(mainInput)
+    sufficientLight <- data.frame(mainInput, stringsAsFactors = FALSE)
     startRow <- which(sufficientLight$col1 == "SufficientLight")
     sufficientLight <- sufficientLight[(startRow + 1):(startRow + 5), 1:7]
     sufficientLight <- data.table(sufficientLight)
@@ -1870,7 +1870,7 @@ CohortAgeReclassification <- function(sim) {
 
     names(sufficientLight) <- c("speciesshadetolerance",
                                 "X0", "X1", "X2", "X3", "X4", "X5")
-    sim$sufficientLight <- data.frame(sufficientLight)
+    sim$sufficientLight <- data.frame(sufficientLight, stringsAsFactors = FALSE)
   }
 
   if (!suppliedElsewhere("sppEquiv", sim)) {
