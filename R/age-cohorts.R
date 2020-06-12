@@ -21,6 +21,7 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
     cdColNames <- colnames(cohortData)
     message("  Setting all ages <= ", successionTimestep, " to ", successionTimestepPlusOne)
     if (any(anyDuplicates)) {
+
       # pull out only duplicated types -- note "which = TRUE" gives only the indices of the joined rows -- will use the inverse below
       tdDuplicates <- targetData[targetData[anyDuplicates], nomatch = NULL,
                                  on = byGroups, which = TRUE]

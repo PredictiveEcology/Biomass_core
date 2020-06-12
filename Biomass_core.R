@@ -926,7 +926,6 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
 })
 
 MortalityAndGrowth <- compiler::cmpfun(function(sim) {
-
   if (is.numeric(P(sim)$.useParallel)) {
     data.table::setDTthreads(P(sim)$.useParallel)
     message("Mortality and Growth should be using >100% CPU")
@@ -1034,7 +1033,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
     ## generate climate-sensitivity predictions - this will no longer run if LandR pkg is the driver
     if (P(sim)$growthAndMortalityDrivers != "LandR") {
-
       #necessary due to column joining
       if (!is.null(subCohortData$growthPred)) {
         set(subCohortData, NULL, c('growthPred', 'mortPred'), NULL)
@@ -1055,10 +1053,25 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                         gmcsMinAge = P(sim)$gmcsMinAge)
       #Join must be done this way
       commonNames <- names(predObj)[names(predObj) %in% names(subCohortData)]
-      subCohortData <- subCohortData[predObj, on = commonNames]
+      if (!is.null(subCohortData$Provenance) & any(is.na(subCohortData$Provenance))){
+        #This occurs when new cohorts are initiated from dispersal or regeneration
+        #they are asigned provenance in function, and must be joined separately
+        newCohorts <- subCohortData[is.na(Provenance)]
+        newCohorts[, Provenance := NULL]
+        notProv = commonNames[!commonNames %in% 'Provenance']
+        newCohorts <- predObj[newCohorts, on = notProv]
+
+        oldCohorts <- subCohortData[!is.na(Provenance),]
+        oldCohorts <- predObj[oldCohorts, on = commonNames]
+        setcolorder(newCohorts, colnames(oldCohorts))
+
+        subCohortData <- rbind(newCohorts, oldCohorts)
+
+      } else {
+        subCohortData <- subCohortData[predObj, on = commonNames]
+      }
       subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred/100))] #changed from ratio to pct for memory
     }
-
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
     set(subCohortData, NULL, "mBio", pmin(subCohortData$mBio, subCohortData$aNPPAct))
@@ -1066,6 +1079,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
     if (P(sim)$growthAndMortalityDrivers != "LandR") {
+
       subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred/100))]
       subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
       if (!P(sim)$keepClimateCols) {
@@ -1106,8 +1120,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
   sim$cohortData[age == 1, age := age + 1L]
 
   if (isTRUE(getOption("LandR.assertions"))) {
-    if (NROW(unique(sim$cohortData[pixelGroup == 67724]$ecoregionGroup)) > 1)
-      stop()
 
     if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = c("pixelGroup", "speciesCode", "age", "B"))))) {
       stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
@@ -1118,6 +1130,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 })
 
 Dispersal <- function(sim) {
+
   treedFirePixelTableCurYr <- sim$treedFirePixelTableSinceLastDisp[burnTime == time(sim)]
   pixelsFromCurYrBurn <- treedFirePixelTableCurYr$pixelIndex
   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% pixelsFromCurYrBurn)]
@@ -1275,6 +1288,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
 
 WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFromCurYrBurn,
                                                   verbose = getOption("LandR.verbose", TRUE)) {
+
   sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
                                   lastReg = sim$lastReg, currentTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
