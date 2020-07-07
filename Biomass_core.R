@@ -22,7 +22,7 @@ defineModule(sim, list(
   documentation = list("README.txt", "Biomass_core.Rmd"),
   reqdPkgs = list("compiler", "data.table", "dplyr", "fpCompare", "ggplot2", "grid", "parallel",
                   "purrr", "quickPlot", "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>=0.0.4)",
+                  "PredictiveEcology/LandR@development (>=0.0.7)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
@@ -39,8 +39,8 @@ defineModule(sim, list(
                                  "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
-    defineParameter('cdColsForAgeBins', 'character', c('pixelGroup', 'speciesCode'), NA, NA,
-                    desc = paste("cohortData columns by which to assess duplicates cohorts when binning ages.",
+    defineParameter('cohortDefinitionCols', 'character', c('pixelGroup', 'speciesCode', 'age'), NA, NA,
+                    desc = paste("cohortData columns that determine what constitutes a cohort",
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
                     desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
@@ -663,7 +663,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                       speciesEcoregion = speciesEcoregion,
                       minRelativeB = sim$minRelativeB)
 
-    LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap)
+    LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
 
     LandR::assertUniqueCohortData(sim$cohortData, c("pixelGroup", "ecoregionGroup", "speciesCode"))
   }
@@ -926,6 +926,7 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
 })
 
 MortalityAndGrowth <- compiler::cmpfun(function(sim) {
+
   if (is.numeric(P(sim)$.useParallel)) {
     data.table::setDTthreads(P(sim)$.useParallel)
     message("Mortality and Growth should be using >100% CPU")
@@ -1032,7 +1033,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
     ## generate climate-sensitivity predictions - this will no longer run if LandR pkg is the driver
-    if (P(sim)$growthAndMortalityDrivers != "LandR") {
+    if (P(sim)$growthAndMortalityDrivers == "LandR.CS") {
       #necessary due to column joining
       if (!is.null(subCohortData$growthPred)) {
         set(subCohortData, NULL, c('growthPred', 'mortPred'), NULL)
@@ -1040,7 +1041,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       #get arguments from sim environment - this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
       #as long as the function is called 'calculateClimateEffect', represents a multiplier, and uses growth, mortality and age limits
       cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
-
         arg <-  eval(x, envir = sim)
       })
       names(cceArgs) <- paste(sim$cceArgs)
@@ -1050,26 +1050,11 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                         pixelGroupMap = sim$pixelGroupMap,
                                         gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
                                         gmcsMortLimits = P(sim)$gmcsMortLimits,
-                                        gmcsMinAge = P(sim)$gmcsMinAge)
+                                        gmcsMinAge = P(sim)$gmcsMinAge,
+                                        cohortDefinitionCols = P(sim)$cohortDefinitionCols)
       #Join must be done this way
       commonNames <- names(predObj)[names(predObj) %in% names(subCohortData)]
-      if (!is.null(subCohortData$Provenance) & any(is.na(subCohortData$Provenance))){
-        #This occurs when new cohorts are initiated from dispersal or regeneration
-        #they are asigned provenance in function, and must be joined separately
-        newCohorts <- subCohortData[is.na(Provenance)]
-        newCohorts[, Provenance := NULL]
-        notProv = commonNames[!commonNames %in% 'Provenance']
-        newCohorts <- predObj[newCohorts, on = notProv]
-
-        oldCohorts <- subCohortData[!is.na(Provenance),]
-        oldCohorts <- predObj[oldCohorts, on = commonNames]
-        setcolorder(newCohorts, colnames(oldCohorts))
-
-        subCohortData <- rbind(newCohorts, oldCohorts)
-
-      } else {
-        subCohortData <- subCohortData[predObj, on = commonNames]
-      }
+      subCohortData <- subCohortData[predObj, on = commonNames]
       subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred/100))] #changed from ratio to pct for memory
     }
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
@@ -1078,7 +1063,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
-    if (P(sim)$growthAndMortalityDrivers != "LandR") {
+    if (P(sim)$growthAndMortalityDrivers == "LandR.CS") {
 
       subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred/100))]
       subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
@@ -1121,11 +1106,11 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
   if (isTRUE(getOption("LandR.assertions"))) {
 
-    if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = c("pixelGroup", "speciesCode", "age", "B"))))) {
+    if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = P(sim)$cohortDefinitionCols)))) {
       stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
     }
   }
-  LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap)
+  LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   return(invisible(sim))
 })
 
@@ -1205,6 +1190,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFrom
   if (nrow(seedingData) > 0) {
     outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
                              currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
+                             cohortDefinitionCols = P(sim)$cohortDefinitionCols,
                              treedFirePixelTableSinceLastDisp = NULL,
                              successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
@@ -1396,7 +1382,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
       ##############################################
       # Run probability of establishment
       ##############################################
-      LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap)
+      LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
 
       seedingData <- seedingData[runif(nrow(seedingData)) <= establishprob, ]
       if (getOption("LandR.verbose", TRUE) > 0) {
@@ -1460,6 +1446,7 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 })
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
+
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
   checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
@@ -1469,7 +1456,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
   ## Averages are calculated across pixels
   ## don't expand table, multiply by no. pixels - faster
-  thisPeriod <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+  thisPeriod <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
 
   for (column in names(thisPeriod)) if (is.integer(thisPeriod[[column]]))
     set(thisPeriod, NULL, column, as.numeric(thisPeriod[[column]]))
@@ -1483,7 +1470,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                            by = .(speciesCode)]
 
   #overstory
-  cohortData <-  addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+  cohortData <-  addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   cohortData[, bWeightedAge := floor(sum(age * B) / sum(B) / 10) * 10, .(pixelGroup)]
   # B was set as numeric to avoid problems with big numbers being integers
   overstory <- cohortData[age >= bWeightedAge, .(overstoryBiomass = sum(as.numeric(B) * noPixels)),
@@ -1714,7 +1701,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   ## AVERAGE STAND BIOMASS/AGE/ANPP
   ## calculate acrosS pixels
   ## don't expand table, multiply by no. pixels - faster
-  pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap)
+  pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   thisPeriod <- pixelCohortData[, list(year = time(sim),
                                        sumB = sum(B*noPixels, na.rm = TRUE),
                                        maxAge = asInteger(max(age, na.rm = TRUE)),
@@ -1786,7 +1773,7 @@ CohortAgeReclassification <- function(sim) {
     sim$cohortData <- ageReclassification(cohortData = sim$cohortData,
                                           successionTimestep = P(sim)$successionTimestep,
                                           stage = "mainSimulation",
-                                          byGroups = P(sim)$cdColsForAgeBins)
+                                          byGroups = P(sim)$cohortDefinitionCols)
     return(invisible(sim))
   } else {
     return(invisible(sim))
