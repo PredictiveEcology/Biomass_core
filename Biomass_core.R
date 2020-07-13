@@ -20,7 +20,7 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_core.Rmd"),
-  reqdPkgs = list("compiler", "data.table", "dplyr", "fpCompare", "ggplot2", "grid", "parallel",
+  reqdPkgs = list("compiler", "crayon", "data.table", "dplyr", "fpCompare", "ggplot2", "grid", "parallel",
                   "purrr", "quickPlot", "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
                   "PredictiveEcology/LandR@development (>=0.0.7)",
                   "PredictiveEcology/pemisc@development",
@@ -455,8 +455,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
 ### EVENT FUNCTIONS
 Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ## stop early if raster inputs don't match
-  compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
-
+  if (!is.null(sim$ecoregionMap) & !is.null(sim$pixelGroupMap) & !is.null(sim$biomassMap)) {
+    compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
+  }
   cacheTags <- c(currentModule(sim), "init")
 
   ##############################################
@@ -545,7 +546,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     pixelTable <- makePixelTable(speciesLayers = sim$speciesLayers, species = sim$species,
                                  standAgeMap = standAgeMap, ecoregionFiles = ecoregionFiles,
                                  biomassMap = rawBiomassMap, rasterToMatch = sim$rasterToMatch,
-                                 rstLCC = rstLCC, pixelGroupAgeClass = 10)
+                                 rstLCC = rstLCC)
 
     #######################################################
     # Make the initial pixelCohortData table
@@ -555,7 +556,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     coverColNames <- paste0("cover.", sim$species$species)
     pixelCohortData <- Cache(makeAndCleanInitialCohortData, pixelTable,
                              sppColumns = coverColNames,
-                             pixelGroupBiomassClass = 100,
+                             minCoverThreshold = 1,
                              doSubset = FALSE,
                              userTags = c(cacheTags, "pixelCohortData"),
                              omitArgs = c("userTags"))
@@ -563,6 +564,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
     ## When using dummy values ecoregion codes are not changed
     rmZeroBiomassQuote <- quote(B > 0)
+    #This will fail, because LandR::makeAndCleanInitialCohortData no longer returns a B column July 2020 IE
     cohortDataNoBiomass <- pixelCohortData[eval(rmZeroBiomassQuote),
                                            .(B, logAge, speciesCode, ecoregionGroup, lcc, cover)]
 
@@ -1815,19 +1817,22 @@ CohortAgeReclassification <- function(sim) {
                                  "2001-attributes_attributs-2001/",
                                  "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
       rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-      rawBiomassMap <- Cache(prepInputs,
-                             targetFile = rawBiomassMapFilename,
-                             url = rawBiomassMapURL,
-                             destinationPath = dPath,
-                             studyArea = sim$studyArea,
-                             rasterToMatch = NULL,
-                             maskWithRTM = FALSE,
-                             useSAcrs = FALSE,     ## never use SA CRS
-                             method = "bilinear",
-                             datatype = "INT2U",
-                             filename2 = NULL,
-                             userTags = c(cacheTags, "rawBiomassMap"),
-                             omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
+      httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+        #necessary for KNN
+        rawBiomassMap <- Cache(prepInputs,
+                               targetFile = rawBiomassMapFilename,
+                               url = rawBiomassMapURL,
+                               destinationPath = dPath,
+                               studyArea = sim$studyArea,
+                               rasterToMatch = NULL,
+                               maskWithRTM = FALSE,
+                               useSAcrs = FALSE,     ## never use SA CRS
+                               method = "bilinear",
+                               datatype = "INT2U",
+                               filename2 = NULL,
+                               userTags = c(cacheTags, "rawBiomassMap"),
+                               omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
+      })
     } else {
       rawBiomassMap <- Cache(postProcess,
                              x = sim$rawBiomassMap,
