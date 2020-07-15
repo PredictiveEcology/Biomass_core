@@ -70,7 +70,7 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
   ## use new vs old algorithm based on size of cohortData. new one (2) is faster in most cases.
   ## enable assertions to view timings for each algorithm before deciding which to use.
   algo <- 2 #ifelse(nrowCohortData > 3.5e6, 1, 2) ## TODO: fix error in algo1
-  doAssertion <- FALSE #this assertion is not working for Ian
+
   if (isTRUE(doAssertion)) {
     cohortDataCopy <- data.table::copy(cohortData)
 
