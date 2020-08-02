@@ -891,9 +891,9 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
   }
 
   # need as.numeric below because of integer overflow -- returned to integer in 2 lines
-  tempOutput_All <- tempOutput_All[, .(Biomass = sum(as.numeric(uniqueSumB * NofPixelGroup)),
-                                       ANPP = sum(uniqueSumANPP * NofPixelGroup),
-                                       Mortality = sum(uniqueSumMortality * NofPixelGroup),
+  tempOutput_All <- tempOutput_All[, .(Biomass = sum(as.numeric(uniqueSumB) * as.numeric(NofPixelGroup)),
+                                       ANPP = sum(as.numeric(uniqueSumANPP) * as.numeric(NofPixelGroup)),
+                                       Mortality = sum(as.numeric(uniqueSumMortality) * as.numeric(NofPixelGroup)),
                                        Regeneration = sum(uniqueSumRege * NofPixelGroup)),
                                    by = ecoregionGroup]
   tempOutput_All <- setkey(tempOutput_All, ecoregionGroup)[setkey(mod$activeEcoregionLength,
