@@ -894,7 +894,7 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
   tempOutput_All <- tempOutput_All[, .(Biomass = sum(as.numeric(uniqueSumB) * as.numeric(NofPixelGroup)),
                                        ANPP = sum(as.numeric(uniqueSumANPP) * as.numeric(NofPixelGroup)),
                                        Mortality = sum(as.numeric(uniqueSumMortality) * as.numeric(NofPixelGroup)),
-                                       Regeneration = sum(uniqueSumRege * NofPixelGroup)),
+                                       Regeneration = sum(as.numeric(uniqueSumRege) * as.numeric(NofPixelGroup))),
                                    by = ecoregionGroup]
   tempOutput_All <- setkey(tempOutput_All, ecoregionGroup)[setkey(mod$activeEcoregionLength,
                                                                   ecoregionGroup), nomatch = 0]
