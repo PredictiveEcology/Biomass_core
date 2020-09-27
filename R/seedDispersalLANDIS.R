@@ -140,6 +140,7 @@ WardFast <- expression(ifelse(cellSize <= effDist, {
 #' setColors(seedSrc, 1) <- c("white", "black")
 #'
 #' seedRcv <- hab > 5
+#' pixelGroupMap <- raster(seedRcv)
 #' system.time(seeds <- LANDISDisp(seedSrc, seedRcv = seedRcv, maxDist = 250, plot.it = TRUE))
 #' seedRcvRaster <- raster(seedSrc)
 #' if (length(seeds) > 0) {
@@ -152,6 +153,7 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
                                         maxPotentialsLength = 1e5, successionTimestep,
                                         verbose = getOption("LandR.verbose", TRUE),
                                         useParallel, ...) {
+  browser()
     cellSize <- res(pixelGroupMap) %>% unique()
     if (length(cellSize) > 1) {
       ## check for equal cell sizes that "aren't" due to floating point error
@@ -552,7 +554,8 @@ WardEqn <- compiler::cmpfun(function(dis, cellSize, effDist, maxDist, k, b) {
 # Plot(h)
 
 #' @inheritParams LANDISDisp
-seedDispInnerFn <- compiler::cmpfun(function(activeCell, potentials, n, speciesRcvPool, sc,
+seedDispInnerFn <- #compiler::cmpfun(
+  function(activeCell, potentials, n, speciesRcvPool, sc,
                                              pixelGroupMap, ultimateMaxDist, cellSize, xysAll,
                                              dtSrc, dispersalFn, k, b, lociReturn, speciesComm,
                                              pointDistance, successionTimestep,
@@ -560,6 +563,7 @@ seedDispInnerFn <- compiler::cmpfun(function(activeCell, potentials, n, speciesR
     if (verbose > 0)
       message("  Dispersal for pixels ", min(activeCell), " to ", max(activeCell))
 
+    browser()
     seedsArrived <- data.table(
       fromInit = integer(),
       speciesCode = integer(),
@@ -587,6 +591,15 @@ seedDispInnerFn <- compiler::cmpfun(function(activeCell, potentials, n, speciesR
       sort = FALSE
     ) %>%
       data.table(key = c("from"))
+    adjCellsNotSelf <- adj(
+      pixelGroupMap,
+      unique(activeCell),
+      directions = 8,
+      pairs = TRUE,
+      include = FALSE,
+      sort = FALSE
+    ) %>%
+      data.table(key = c("from"))
     set(adjCells, NULL, "from", as.integer(adjCells$from))
     set(adjCells, NULL, "to", as.integer(adjCells$to))
     #adjCells[, ':='(from = as.integer(from), to = as.integer(to))]
@@ -594,38 +607,74 @@ seedDispInnerFn <- compiler::cmpfun(function(activeCell, potentials, n, speciesR
     ## while there are active cells and less than maxDistance:
     while (NROW(potentials) &&
            ((n - cellSize) %<=% ultimateMaxDist)) {
+      browser()
       if (n > cellSize) {
         potentials[, ':='(from = NULL)][, from := to][, ':='(to = NULL, dis = NULL)]
         setkey(potentials, "from")
+        adjCells <- adjCellsNotSelf
       }
       ################ original
       # join these to the potentials object
-      potentials <-
-        potentials[adjCells, allow.cartesian = TRUE, nomatch = 0] %>%
-        unique(by = c("fromInit", "to", "speciesCode"))
+      #adjCells <- adjCells[!potentials, on = c("to" = "from")]
+      #setkeyv(potentials1, c("fromInit", "to", "speciesCode"))
+      #potentials1[, .SD[1], by = c("fromInit", "to", "speciesCode")]
+      potentials1 <- potentials[adjCells, allow.cartesian = TRUE, nomatch = 0]
+      #potentials2 <- potentials1[potentials1[, .I[1], by = c("fromInit", "to", "speciesCode")][[4]],]
+      potentials2 <- potentials1[!duplicated(potentials1, by = c("fromInit", "to", "speciesCode"))]
+      #potentials1 <- potentials[adjCells, allow.cartesian = TRUE, nomatch = 0]
+      #potentials2 <- unique(potentials1, by = c("fromInit", "to", "speciesCode"))
+      potentials <- potentials2
+
       # if (anyNA(potentials$fromInit)) {
       #   potentials <- potentials[!is.na(fromInit),]
       # }
 
       # because there will be duplicate "from - to" pairs, say from 2 different species, only calculate
       #   distance once, then re-join the shorter version back to longer version by species
-      shortPotentials <- setkey(potentials, fromInit, to) %>%
-        unique(., by = c("fromInit", "to")) %>%
-        .[, list(fromInit, to)]
+      shortPotentials <- setkey(potentials, fromInit, to)
+      shortPotentials <- unique(shortPotentials, by = c("fromInit", "to"))
+      shortPotentials <- shortPotentials[, list(fromInit, to)]
       set(shortPotentials, NULL, "dis", as.integer(pointDistance(xysAll[shortPotentials$fromInit,],
                                                                  xysAll[shortPotentials$to,],
                                                                  lonlat = FALSE)))
 
       # merge shorter object with no duplicate from-to pairs back with potentials,
       # which does have duplicate from-to pairs due to multiple species having same from-to pair
+      # if (identical(NROW(shortPotentials), NROW(potentials))) {
+      #   for (col in intersect(colnames(potentials), c("speciesCode", "effDist", "maxDist", "pixelGroup", "from")))
+      #     set(shortPotentials, NULL, col, potentials[[col]])
+      #   potentials <- shortPotentials[((n - cellSize) %<=% shortPotentials$dis) & (shortPotentials$dis %<=% n),]
+      #   if (any(n >= (potentials$maxDist - 1.5*cellSize))) potentials <- potentials[(dis %<=% maxDist),]
+      #
+      # } else {
+      #   if (n - cellSize == 0) {
+      #     # the first loop incudes on site regeneration
+      #     potentials <-
+      #       shortPotentials[((n - cellSize) %<=% dis) & (dis %<=% n),][potentials, nomatch = 0][(dis %<=% maxDist),]
+      #   } else {
+      #     potentials <-
+      #       shortPotentials[((n - cellSize) %<<% dis) & (dis %<=% n),][potentials, nomatch = 0][(dis %<=% maxDist),]
+      #   }
+      # }
+
+      skipRejoin <- identical(NROW(shortPotentials), NROW(potentials))
+      if (skipRejoin) {
+        for (col in intersect(colnames(potentials), c("speciesCode", "effDist", "maxDist", "pixelGroup", "from")))
+          set(shortPotentials, NULL, col, potentials[[col]])
+      }
+
+      browser()
       if (n - cellSize == 0) {
         # the first loop incudes on site regeneration
-        potentials <-
-          shortPotentials[((n - cellSize) %<=% dis) & (dis %<=% n),][potentials, nomatch = 0][(dis %<=% maxDist),]
+        shortPotentials <-
+          shortPotentials[((n - cellSize) %<=% shortPotentials$dis) & (shortPotentials$dis %<=% n),]
       } else {
-        potentials <-
-          shortPotentials[((n - cellSize) %<<% dis) & (dis %<=% n),][potentials, nomatch = 0][(dis %<=% maxDist),]
+        shortPotentials <-
+          shortPotentials[((n - cellSize) %<<% shortPotentials$dis) & (shortPotentials$dis %<=% n),]
       }
+      potentials <- if (!skipRejoin) shortPotentials[potentials, nomatch = 0] else shortPotentials
+
+      if (any(n >= (potentials$maxDist - 1.5*cellSize))) potentials <- potentials[(dis %<=% maxDist),]
 
       if (NROW(potentials) > 0) {
         dtSrcShort <- dtSrc[, list(pixelGroup, speciesCode)]
@@ -682,4 +731,5 @@ seedDispInnerFn <- compiler::cmpfun(function(activeCell, potentials, n, speciesR
       activeCell <- potentials[, to]
     }
     return(seedsArrived)
-})
+}
+#)

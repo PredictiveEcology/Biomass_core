@@ -467,17 +467,33 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ##############################################
   ## species
   ##############################################
-  species <- setDT(sim$species)[, speciesCode := as.factor(species)]
-  LandR::assertColumns(species,
-                       c(species = "character", Area = "factor", longevity = "integer",
-                         sexualmature = "integer", shadetolerance = "numeric",
-                         firetolerance = "integer", seeddistance_eff = "integer",
-                         seeddistance_max = "integer", resproutprob = "numeric",
-                         resproutage_min = "integer", resproutage_max = "integer",
-                         postfireregen = "factor", leaflongevity = "integer",
-                         wooddecayrate = "numeric", mortalityshape = "integer",
-                         growthcurve = "numeric", leafLignin = "numeric",
-                         hardsoft = "factor", speciesCode = "factor"))
+  expectedClasses <- c(species = "character", Area = "factor", longevity = "integer",
+                       sexualmature = "integer", shadetolerance = "numeric",
+                       firetolerance = "integer", seeddistance_eff = "integer",
+                       seeddistance_max = "integer", resproutprob = "numeric",
+                       resproutage_min = "integer", resproutage_max = "integer",
+                       postfireregen = "factor", leaflongevity = "integer",
+                       wooddecayrate = "numeric", mortalityshape = "integer",
+                       growthcurve = "numeric", leafLignin = "numeric",
+                       hardsoft = "factor", speciesCode = "factor")
+  colsToFactor <- names(expectedClasses)[expectedClasses == "factor"]#c("speciesCode", "Area", "postfireregen", "hardsoft")
+  species <- setDT(sim$species)
+  set(species, NULL, "speciesCode", as.factor(species$species))
+  for (ctf in colsToFactor) {
+    set(species, NULL, ctf, as.factor(species[[ctf]]))
+  }
+  expectedColumns <- names(expectedClasses)
+  names(expectedColumns) <- names(expectedClasses)
+
+  allCorrect <- sapply(expectedColumns, function(n) {
+    is(species[[n]], expectedClasses[[n]])
+  })
+  if (sum(!allCorrect)) {
+    messageDF(data.frame(col = names(allCorrect), expectedClass = expectedClasses, correctClass = allCorrect )[!allCorrect])
+    stop("In sim$species object, some columns not correct type: see above" )
+  }
+  # LandR::assertColumns(species)
+
   sim$species <- setkey(species, speciesCode)
 
   if (!suppliedElsewhere("cohortData", sim, where = "sim") | !suppliedElsewhere("pixelGroupMap", sim, where = "sim")) {

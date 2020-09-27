@@ -1,41 +1,60 @@
 test_that("test Ward dispersal seeding algorithm", {
   # define the module and path
+  library(data.table)
+  library(raster)
+  library(SpaDES)
+  library(fpCompare)
+  library(magrittr)
+  library(LandR)
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/LandWeb/m/Biomass_core",
-               outputPath="~/GitHub/LandWeb/output")
+  path <- list(modulePath="..",
+               outputPath="../tmp")
   parameters <- list(.progress = list(type = "graphical", interval = 1),
                      .globals = list(verbose = FALSE),
                      Biomass_core = list( .saveInitialTime = NA))
 
-  reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*100,
-                                 ymn = 50, ymx = 50 + 99*100,
+  reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*21,
+                                 ymn = 50, ymx = 50 + 99*21,
                                  res = c(100, 100), val = 2)
-  c <- expand.grid(data.frame(a = seq(5, 99, by = 9), b = seq(5, 99, by = 9)))
-  pixelindex <- (c$a-1)*99+c$b #121
+  cc <- expand.grid(data.frame(a = seq(5, 99, by = 9), b = seq(5, 99, by = 9)))
+  pixelindex <- (cc$a-1)*99+cc$b #121
   reducedPixelGroupMap[pixelindex] <- 1
-  seedReceive <- data.table(pixelGroup = 2, speciesCode = 7, seeddistance_eff = 30,
-                            seeddistance_max = 200, key = "speciesCode")
-  seedSource <- data.table(speciesCode = 7, seeddistance_eff = 30,
-                           seeddistance_max = 200, pixelGroup = 1, key = "speciesCode")
-  species <- read.csv("~/GitHub/LandWeb/inputs/species.csv",
-                      header = TRUE, stringsAsFactor = FALSE)
-  species <- data.table(species)[, speciesCode := 1:16]
-  objects <- list("species" = species)
+  seedReceive <- data.table(pixelGroup = 2, speciesCode = 8:9, seeddistance_eff = 1:2*100,
+                            seeddistance_max = 2:3*100, key = "speciesCode")
+  seedSource <- data.table(speciesCode = 8:9, seeddistance_eff = 1:2*100,
+                           seeddistance_max = 2:3*100, pixelGroup = 1, key = "speciesCode")
+  #species <- read.csv("~/GitHub/LandWeb/inputs/species.csv",
+  #                    header = TRUE, stringsAsFactor = FALSE)
+  #species <- data.table(species)[, speciesCode := 1:16]
+  #objects <- list("species" = species)
   mySim <- simInit(times = list(start = 0, end = 2),
                    params = parameters,
-                   modules = module,
-                   objects = objects,
+                   # modules = module,
+                   #objects = objects,
                    paths = path)
   inSituReceived <- data.table(fromInit = numeric(), species = character())
-  set.seed(1)
+  #set.seed(1)
+  speciesTable <- getSpeciesTable(dPath = ".")
+  speciesTable[, speciesCode := as.factor(LandisCode)]
+  speciesTable[, seeddistance_eff := SeedEffDist]
+  speciesTable[, seeddistance_max := SeedMaxDist]
+
+  # sim$species <- prepSpeciesTable(speciesTable = speciesTable,
+  #                                 speciesLayers = sim$speciesLayers,
+  #                                 sppEquiv = sim$sppEquiv[get(P(sim)$sppEquivCol) %in%
+  #                                                           names(sim$speciesLayers)],
+  #                                 sppEquivCol = P(sim)$sppEquivCol)
+
   source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
-  output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
+  profvis::profvis(output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
                        dtSrc = seedSource,
                        inSituReceived = inSituReceived,
-                       species = species,
+                       species = speciesTable,
                        reducedPixelGroupMap,
                        maxPotentialsLength = 3e5,
-                       verbose = globals(mySim)$verbose)
+                       verbose = globals(mySim)$verbose,
+                       useParallel =  FALSE,
+                       successionTimestep = 10))
   output_compared <- data.table(
     pixelIndex = c(230, 302, 311, 320, 329, 338, 347, 356, 365, 374, 375, 383,
                    392, 400, 402, 409, 411, 418, 420, 429, 436, 438, 445, 447, 454,
