@@ -16,13 +16,14 @@ test_that("test Ward dispersal seeding algorithm", {
   reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*21,
                                  ymn = 50, ymx = 50 + 99*21,
                                  res = c(100, 100), val = 2)
+  reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*300,
+                                 ymn = 50, ymx = 50 + 99*300,
+                                 res = c(100, 100), val = 2)
   cc <- expand.grid(data.frame(a = seq(5, 99, by = 9), b = seq(5, 99, by = 9)))
   pixelindex <- (cc$a-1)*99+cc$b #121
   reducedPixelGroupMap[pixelindex] <- 1
-  seedReceive <- data.table(pixelGroup = 2, speciesCode = 8:9, seeddistance_eff = 1:2*100,
-                            seeddistance_max = 2:3*100, key = "speciesCode")
-  seedSource <- data.table(speciesCode = 8:9, seeddistance_eff = 1:2*100,
-                           seeddistance_max = 2:3*100, pixelGroup = 1, key = "speciesCode")
+  seedReceive <- data.table(pixelGroup = 2, speciesCode = 3:4, key = "speciesCode")
+  seedSource <- data.table(speciesCode = 3:4, pixelGroup = 1, key = "speciesCode")
   #species <- read.csv("~/GitHub/LandWeb/inputs/species.csv",
   #                    header = TRUE, stringsAsFactor = FALSE)
   #species <- data.table(species)[, speciesCode := 1:16]
@@ -35,6 +36,7 @@ test_that("test Ward dispersal seeding algorithm", {
   inSituReceived <- data.table(fromInit = numeric(), species = character())
   #set.seed(1)
   speciesTable <- getSpeciesTable(dPath = ".")
+  speciesTable <- speciesTable[Area == "BSW"]
   speciesTable[, speciesCode := as.factor(LandisCode)]
   speciesTable[, seeddistance_eff := SeedEffDist]
   speciesTable[, seeddistance_max := SeedMaxDist]
@@ -46,7 +48,8 @@ test_that("test Ward dispersal seeding algorithm", {
   #                                 sppEquivCol = P(sim)$sppEquivCol)
 
   source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
-  profvis::profvis(output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
+  source(file.path(modulePath(mySim), "Biomass_core", "R", "disp.R"))
+  output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
                        dtSrc = seedSource,
                        inSituReceived = inSituReceived,
                        species = speciesTable,
@@ -54,7 +57,7 @@ test_that("test Ward dispersal seeding algorithm", {
                        maxPotentialsLength = 3e5,
                        verbose = globals(mySim)$verbose,
                        useParallel =  FALSE,
-                       successionTimestep = 10))
+                       successionTimestep = 10)
   output_compared <- data.table(
     pixelIndex = c(230, 302, 311, 320, 329, 338, 347, 356, 365, 374, 375, 383,
                    392, 400, 402, 409, 411, 418, 420, 429, 436, 438, 445, 447, 454,

@@ -153,7 +153,6 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
                                         maxPotentialsLength = 1e5, successionTimestep,
                                         verbose = getOption("LandR.verbose", TRUE),
                                         useParallel, ...) {
-  browser()
     cellSize <- res(pixelGroupMap) %>% unique()
     if (length(cellSize) > 1) {
       ## check for equal cell sizes that "aren't" due to floating point error
@@ -563,7 +562,6 @@ seedDispInnerFn <- #compiler::cmpfun(
     if (verbose > 0)
       message("  Dispersal for pixels ", min(activeCell), " to ", max(activeCell))
 
-    browser()
     seedsArrived <- data.table(
       fromInit = integer(),
       speciesCode = integer(),
@@ -577,6 +575,35 @@ seedDispInnerFn <- #compiler::cmpfun(
     setkey(potentials, RcvCommunity)
 
     # Make potentials have all Rcv pixels, with each species as unique line
+
+    if (TRUE) {
+      numCells <- ncell(pixelGroupMap)
+      numCols <- ncol(pixelGroupMap)
+      #dtSrcShort <- dtSrc[, list(pixelGroup, speciesCode)]
+      dtSrcShort <- dtSrc$pixelGroup
+      speciesRasterVecsList <- unlist(by(dtSrc, INDICES = dtSrc$speciesCode, function(x) rasterizeReduced(x, pixelGroupMap, "speciesCode", "pixelGroup")[1]))
+      # names(speciesRasterVecsList) <- dtSrc$speciesCode
+      spRcvCommCodesList <- by(spRcvCommCodes, INDICES = spRcvCommCodes$speciesCode, function(x) x[, c("effDist", "maxDist")])
+      # names(spRcvCommCodesList) <- paste0("X", spRcvCommCodes$speciesCode)
+      # make sure order is same
+      spRcvCommCodesList <- spRcvCommCodesList[names(speciesRasterVecsList)]
+      p <- potentials[fromInit == 5]
+      ac <- adj2(cells = p$fromInit, pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols, dists = as.matrix(spRcvCommCodes),
+                 cellSize = cellSize, dispersalFn = dispersalFn, k = k, b = b,
+                 successionTimestep = successionTimestep, pixelGroupMapVec = pixelGroupMap[],
+                 dtSrcShort = dtSrcShort, speciesRasterVecsList = speciesRasterVecsList, spRcvCommCodesList = spRcvCommCodesList)
+      browser()
+
+      pixelGroupMapVec <- pixelGroupMap[]
+      out <- potentials[, {
+        #browser(expr = .GRP == 1)
+        adj2(cells = .BY[[1]], pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols, dists = as.matrix(spRcvCommCodes),
+                   cellSize = cellSize, dispersalFn = dispersalFn, k = k, b = b,
+                   successionTimestep = successionTimestep, pixelGroupMapVec = pixelGroupMap[],
+                   dtSrcShort = dtSrcShort, speciesRasterVecsList = speciesRasterVecsList, spRcvCommCodesList = spRcvCommCodesList)
+      }, by = fromInit]
+
+    }
     potentials = spRcvCommCodes[potentials, allow.cartesian = TRUE][, ':='(RcvCommunity = NULL)]
     setkey(potentials, "from")
 
