@@ -1,6 +1,7 @@
 test_that("test Ward dispersal seeding algorithm", {
   # define the module and path
   library(data.table)
+  library(tmpBiomassCore)
   library(raster)
   library(SpaDES)
   library(fpCompare)
@@ -47,9 +48,9 @@ test_that("test Ward dispersal seeding algorithm", {
   #                                                           names(sim$speciesLayers)],
   #                                 sppEquivCol = P(sim)$sppEquivCol)
 
-  source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
-  source(file.path(modulePath(mySim), "Biomass_core", "R", "disp.R"))
-  output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
+  #source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
+  #source(file.path(modulePath(mySim), "Biomass_core", "R", "disp.R"))
+  profvis::profvis(output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
                        dtSrc = seedSource,
                        inSituReceived = inSituReceived,
                        species = speciesTable,
@@ -57,7 +58,7 @@ test_that("test Ward dispersal seeding algorithm", {
                        maxPotentialsLength = 3e5,
                        verbose = globals(mySim)$verbose,
                        useParallel =  FALSE,
-                       successionTimestep = 10)
+                       successionTimestep = 10))
   output_compared <- data.table(
     pixelIndex = c(230, 302, 311, 320, 329, 338, 347, 356, 365, 374, 375, 383,
                    392, 400, 402, 409, 411, 418, 420, 429, 436, 438, 445, 447, 454,

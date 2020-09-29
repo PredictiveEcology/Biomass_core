@@ -48,7 +48,7 @@ WardFast <- expression(ifelse(cellSize <= effDist, {
   )
 } , {
   ifelse(
-    dis <= cellSize,
+    dis < cellSize,
     exp((dis - cellSize) * log(1 - k) / effDist) - (1 - k) *
       exp((dis - effDist) * log(b) / maxDist),
     (1 - k) * exp((dis - cellSize - effDist) * log(b) / maxDist) -
@@ -148,7 +148,7 @@ WardFast <- expression(ifelse(cellSize <= effDist, {
 #'   Plot(seedRcvRaster, cols = "black")
 #' }
 #'
-LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, species,
+LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species,
                                         dispersalFn = WardFast, b = 0.01, k = 0.95, plot.it = FALSE,
                                         maxPotentialsLength = 1e5, successionTimestep,
                                         verbose = getOption("LandR.verbose", TRUE),
@@ -343,13 +343,17 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
             }
             on.exit(data.table::setDTthreads(a), add = TRUE)
           }
-          allSeedsArrived[[y]] <- seedDispInnerFn(
-            activeCell = subSampList[[y]][[1]],
-            potentials = subSampList[[y]][[2]],
+          aa <- subSampList[[y]][[1]]
+          bb <- subSampList[[y]][[2]]
+          allSeedsArrived <- seedDispInnerFn(
+            activeCell = aa,
+            potentials = bb,
             n = cellSize,
             speciesRcvPool,
             sc,
-            pixelGroupMap,
+            cellsXY = xyFromCell(pixelGroupMap, subSampList[[y]][[2]]$fromInit),
+            xmin = xmin(pixelGroupMap), ymin = ymin(pixelGroupMap),
+            pixelGroupMap = pixelGroupMap,
             ultimateMaxDist,
             cellSize,
             xysAll,
@@ -363,6 +367,7 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
             successionTimestep = successionTimestep
           )
         }
+        return(allSeedsArrived)
         if (verbose > 0)
           message("    End of using more than 100% CPU because of data.table openMP use")
         seedsArrived <- rbindlist(allSeedsArrived)
@@ -432,7 +437,7 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
     seedsArrived[, speciesCode := species$speciesCode[speciesCode]]
     setnames(seedsArrived, "fromInit", "pixelIndex")
     return(seedsArrived)
-  })
+  }
 
 speciesComm <- function(num, sc) {
   indices <- lapply(strsplit(R.utils::intToBin(num), split = ""), function(x) {
@@ -554,8 +559,10 @@ WardEqn <- compiler::cmpfun(function(dis, cellSize, effDist, maxDist, k, b) {
 
 #' @inheritParams LANDISDisp
 seedDispInnerFn <- #compiler::cmpfun(
-  function(activeCell, potentials, n, speciesRcvPool, sc,
-                                             pixelGroupMap, ultimateMaxDist, cellSize, xysAll,
+  function(activeCell, potentials, n, speciesRcvPool, sc, cellsXY,
+                                             pixelGroupMap,
+           xmin, ymin,
+           ultimateMaxDist, cellSize, xysAll,
                                              dtSrc, dispersalFn, k, b, lociReturn, speciesComm,
                                              pointDistance, successionTimestep,
                                              verbose = getOption("LandR.verbose", TRUE)) {
@@ -581,19 +588,22 @@ seedDispInnerFn <- #compiler::cmpfun(
       numCols <- ncol(pixelGroupMap)
       #dtSrcShort <- dtSrc[, list(pixelGroup, speciesCode)]
       dtSrcShort <- dtSrc$pixelGroup
-      speciesRasterVecsList <- unlist(by(dtSrc, INDICES = dtSrc$speciesCode, function(x) rasterizeReduced(x, pixelGroupMap, "speciesCode", "pixelGroup")[1]))
+      speciesRasterVecsList <- by(dtSrc, INDICES = dtSrc$speciesCode, function(x) rasterizeReduced(x, pixelGroupMap, "speciesCode", "pixelGroup")[])
       # names(speciesRasterVecsList) <- dtSrc$speciesCode
       spRcvCommCodesList <- by(spRcvCommCodes, INDICES = spRcvCommCodes$speciesCode, function(x) x[, c("effDist", "maxDist")])
       # names(spRcvCommCodesList) <- paste0("X", spRcvCommCodes$speciesCode)
       # make sure order is same
       spRcvCommCodesList <- spRcvCommCodesList[names(speciesRasterVecsList)]
       p <- potentials[fromInit == 5]
-      ac <- adj2(cells = p$fromInit, pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols, dists = as.matrix(spRcvCommCodes),
+      ac <- adj2(cells = potentials$fromInit,  cellsXY = xyFromCell(pixelGroupMap, potentials$fromInit), # pixelGroupMap = pixelGroupMap,
+                 numCells = numCells, numCols = numCols,
+                 dists = as.matrix(spRcvCommCodes),
+                 xmin = xmin(pixelGroupMap), ymin = ymin(pixelGroupMap),
                  cellSize = cellSize, dispersalFn = dispersalFn, k = k, b = b,
                  successionTimestep = successionTimestep, pixelGroupMapVec = pixelGroupMap[],
                  dtSrcShort = dtSrcShort, speciesRasterVecsList = speciesRasterVecsList, spRcvCommCodesList = spRcvCommCodesList)
-      browser()
 
+      return(ac)
       pixelGroupMapVec <- pixelGroupMap[]
       out <- potentials[, {
         #browser(expr = .GRP == 1)
