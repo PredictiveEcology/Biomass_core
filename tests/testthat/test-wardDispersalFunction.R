@@ -47,6 +47,7 @@ test_that("test Ward dispersal seeding algorithm", {
   #                                                           names(sim$speciesLayers)],
   #                                 sppEquivCol = P(sim)$sppEquivCol)
 
+  devtools::load_all("~/GitHub/dispersal")
   source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
   source(file.path(modulePath(mySim), "Biomass_core", "R", "disp.R"))
   output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,

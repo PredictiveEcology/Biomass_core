@@ -12,23 +12,32 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, cells, numCols, numCells, effD
     ord <- if (whDir == 1) ((whType - 1):(whType - 4) - 1)  %% 4 + 1 else ((whType + 1):(whType + 4) - 1)  %% 4 + 1
     cell <- matrix(vector(mode = "integer", 10), ncol = 2)
     cellsXY <- xyFromCell(pixelGroupMap, cells)
-    cell[1, ] <- cellsXY
-    cell[2, ] <- cellsXY[, 1:2] + types1[whType, 1:2]
+    cell[1, ] <- cellsXY[1, ]
+    cell[2, ] <- cellsXY[1, 1:2] + types1[whType, 1:2]
 
     # keepers <- !((((toCells - 1)%%numCell + 1) != toCells) | ((fromCells%%numCol + toCells%%numCol) == 1))
 
-    lenStraight <- 0
+    # lenStraight <- 0
     iter <- 2
     i <- 1
     seedsArrived <- rep(FALSE, length(speciesRasterVecsList))
     names(seedsArrived) <- names(spRcvCommCodesList)
     overAllMaxDist <- max(dists[, "maxDist"])
     underMaxDist <- TRUE
-    spCodes <- names(speciesRasterVecsList)
+    spCodes <- colnames(speciesRasterVecsList)
     names(spCodes) <- spCodes
     sqrt2 <- sqrt(2)
     ymin <- pixelGroupMap@extent@ymin
     xmin <- pixelGroupMap@extent@xmin
+    rs <- rowSums(speciesRasterVecsList)
+    doRow <- which(!is.na(rs))[1] - 1
+    out <- Spiral(cellCoords = cellsXY[doRow,, drop = FALSE],
+                  overallMaxDist = overAllMaxDist,
+                  speciesTable = dists,
+                  speciesMatrix = speciesRasterVecsList,
+                  cellSize = cellSize, numCells = numCells, xmin = xmin, ymin = ymin, numCols = numCols,
+                  b = b, k = k, successionTimestep = successionTimestep)
+    browser()
 
     while (any(!seedsArrived) && underMaxDist) {
       for (Ord in ord) {
@@ -37,7 +46,7 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, cells, numCols, numCells, effD
         j <- trunc(i)
         for (reps in rep(Ord, j)) {
           if (!underMaxDist) break
-          lenStraight <- lenStraight + 1
+          # lenStraight <- lenStraight + 1
           if (cell[iter, 1] < 0 || cell[iter, 1] > numColsUnits || cell[iter, 2] > numRowUnits || cell[iter, 2] < 0) {
             # spiral -- overwrite old cell coords as they were off map
             cell[iter, ] <- cell[iter, , drop = FALSE] + types1[Ord,, drop = FALSE]

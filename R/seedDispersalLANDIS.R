@@ -581,14 +581,18 @@ seedDispInnerFn <- #compiler::cmpfun(
       numCols <- ncol(pixelGroupMap)
       #dtSrcShort <- dtSrc[, list(pixelGroup, speciesCode)]
       dtSrcShort <- dtSrc$pixelGroup
-      speciesRasterVecsList <- unlist(by(dtSrc, INDICES = dtSrc$speciesCode, function(x) rasterizeReduced(x, pixelGroupMap, "speciesCode", "pixelGroup")[1]))
+      speciesRasterVecsList <- do.call(cbind, by(dtSrc, INDICES = dtSrc$speciesCode, function(x)
+        rasterizeReduced(x, pixelGroupMap, "speciesCode", "pixelGroup")[]))
+      names(speciesRasterVecsList) <- as.character(dtSrc$speciesCode)
       # names(speciesRasterVecsList) <- dtSrc$speciesCode
       spRcvCommCodesList <- by(spRcvCommCodes, INDICES = spRcvCommCodes$speciesCode, function(x) x[, c("effDist", "maxDist")])
       # names(spRcvCommCodesList) <- paste0("X", spRcvCommCodes$speciesCode)
       # make sure order is same
-      spRcvCommCodesList <- spRcvCommCodesList[names(speciesRasterVecsList)]
+      spRcvCommCodesList <- spRcvCommCodesList[colnames(speciesRasterVecsList)]
       p <- potentials[fromInit == 5]
-      ac <- adj2(cells = p$fromInit, pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols, dists = as.matrix(spRcvCommCodes),
+      # 401 410 419 428 437 446
+      ac <- adj2(cells = potentials$fromInit, pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols,
+                 dists = as.matrix(spRcvCommCodes),
                  cellSize = cellSize, dispersalFn = dispersalFn, k = k, b = b,
                  successionTimestep = successionTimestep, pixelGroupMapVec = pixelGroupMap[],
                  dtSrcShort = dtSrcShort, speciesRasterVecsList = speciesRasterVecsList, spRcvCommCodesList = spRcvCommCodesList)
