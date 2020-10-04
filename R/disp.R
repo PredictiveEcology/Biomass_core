@@ -1,7 +1,9 @@
-adj2 <- function(pixelGroupMapVec, pixelGroupMap, cells, numCols, numCells, effDist, maxDist, cellSize,
+adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, numCells, effDist, maxDist, cellSize,
                  dispersalFn, k, b, successionTimestep, dtSrcShort,
-                 speciesRasterVecsList, dists, spRcvCommCodesList) {
+                 speciesSrcRasterVecList, dists, spRcvCommCodesList) {
   numColsUnits <- numCols * cellSize
+  setorderv(potentialReceivers, c("fromInit", "RcvCommunity"))
+  cells <- potentialReceivers$fromInit
   numRowUnits <- numCells / numCols * cellSize
   if (TRUE) {
     types1 <- cbind(x = c(-1, 0, 1, 0), y = c(0, -1, 0, 1)) * cellSize#, spiralDir = rep(c(-1, 1), each = 4))
@@ -20,25 +22,38 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, cells, numCols, numCells, effD
     # lenStraight <- 0
     iter <- 2
     i <- 1
-    seedsArrived <- rep(FALSE, length(speciesRasterVecsList))
+    seedsArrived <- rep(FALSE, length(speciesSrcRasterVecList))
     names(seedsArrived) <- names(spRcvCommCodesList)
     overAllMaxDist <- max(dists[, "maxDist"])
     underMaxDist <- TRUE
-    spCodes <- colnames(speciesRasterVecsList)
+    spCodes <- colnames(speciesSrcRasterVecList)
     names(spCodes) <- spCodes
     sqrt2 <- sqrt(2)
     ymin <- pixelGroupMap@extent@ymin
     xmin <- pixelGroupMap@extent@xmin
-    rs <- rowSums(speciesRasterVecsList)
-    doRow <- which(!is.na(rs))[1] - 1
-    out <- Spiral(cellCoords = cellsXY[doRow,, drop = FALSE],
+    rs <- rowSums(speciesSrcRasterVecList)
+    doRow <- which(!is.na(rs)) - 1
+    aa <- speciesCodeFromCommunity(potentialReceivers$RcvCommunity)
+    # names(aa) <- paste0(as.character(seq(length(aa))), "_")
+    # bb <- unlist(aa)
+    # cc <- data.table(speciesCode = as.character(bb), index = as.integer(gsub("_.*", "", names(bb))))
+    # set(cc, NULL, "pixel", potentialReceivers$fromInit[cc$index])
+    # set(cc, NULL, "x", cellsXY[cc$index, "x"])
+    # set(cc, NULL, "y", cellsXY[cc$index, "y"])
+    # setkeyv(cc, "pixel")
+    # dd <- split(cc[, c("pixel", "x", "y")], cc$speciesCode)
+
+    browser()
+    out <- Spiral2(cellCoords = cellsXY, speciesByIndex = aa, #pixel = potentialReceivers$fromInit,
                   overallMaxDist = overAllMaxDist,
                   speciesTable = dists,
-                  speciesMatrix = speciesRasterVecsList,
-                  cellSize = cellSize, numCells = numCells, xmin = xmin, ymin = ymin, numCols = numCols,
+                  speciesNamesNumeric = as.numeric(colnames(speciesSrcRasterVecList)),
+                  speciesMatrix = speciesSrcRasterVecList,
+                  cellSize = cellSize, numCells = numCells, xmin = xmin,
+                  ymin = ymin, numCols = numCols,
                   b = b, k = k, successionTimestep = successionTimestep)
-    browser()
 
+    browser()
     while (any(!seedsArrived) && underMaxDist) {
       for (Ord in ord) {
         if (!underMaxDist) break
@@ -67,10 +82,10 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, cells, numCols, numCells, effD
                 (cell[iter, 1] - xmin + cellSize/2)/cellSize
 
               # seems faster than lapply
-              #spVal <- integer(length(speciesRasterVecsList));
-              #for (spCode in spCodes) spVal[spCode] <- speciesRasterVecsList[[spCode]][pixel]
+              #spVal <- integer(length(speciesSrcRasterVecList));
+              #for (spCode in spCodes) spVal[spCode] <- speciesSrcRasterVecList[[spCode]][pixel]
 
-              spVal <- unlist(lapply(speciesRasterVecsList, function(spCode) {
+              spVal <- unlist(lapply(speciesSrcRasterVecList, function(spCode) {
                 spCode[pixel]
               }))
               nas <- is.na(spVal)
