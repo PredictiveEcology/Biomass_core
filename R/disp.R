@@ -2,6 +2,7 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
                  dispersalFn, k, b, successionTimestep, dtSrcShort,
                  speciesSrcRasterVecList, dists, spRcvCommCodesList) {
   numColsUnits <- numCols * cellSize
+  setorderv(potentialReceivers, c("fromInit", "RcvCommunity"))
   cells <- potentialReceivers$fromInit
   numRowUnits <- numCells / numCols * cellSize
   if (TRUE) {
@@ -32,7 +33,6 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
     xmin <- pixelGroupMap@extent@xmin
     rs <- rowSums(speciesSrcRasterVecList)
     doRow <- which(!is.na(rs)) - 1
-    browser()
     aa <- speciesCodeFromCommunity(potentialReceivers$RcvCommunity)
     # names(aa) <- paste0(as.character(seq(length(aa))), "_")
     # bb <- unlist(aa)
@@ -43,13 +43,17 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
     # setkeyv(cc, "pixel")
     # dd <- split(cc[, c("pixel", "x", "y")], cc$speciesCode)
 
-    out <- Spiral(cellCoords = cellsXY, speciesByIndex = aa, #pixel = potentialReceivers$fromInit,
+    browser()
+    out <- Spiral2(cellCoords = cellsXY, speciesByIndex = aa, #pixel = potentialReceivers$fromInit,
                   overallMaxDist = overAllMaxDist,
                   speciesTable = dists,
+                  speciesNamesNumeric = as.numeric(colnames(speciesSrcRasterVecList)),
                   speciesMatrix = speciesSrcRasterVecList,
-                  cellSize = cellSize, numCells = numCells, xmin = xmin, ymin = ymin, numCols = numCols,
+                  cellSize = cellSize, numCells = numCells, xmin = xmin,
+                  ymin = ymin, numCols = numCols,
                   b = b, k = k, successionTimestep = successionTimestep)
 
+    browser()
     while (any(!seedsArrived) && underMaxDist) {
       for (Ord in ord) {
         if (!underMaxDist) break

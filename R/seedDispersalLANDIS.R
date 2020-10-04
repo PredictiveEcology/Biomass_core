@@ -602,6 +602,7 @@ seedDispInnerFn <- #compiler::cmpfun(
       p <- potentials[fromInit == 5]
       # 401 410 419 428 437 446
       # aa <- speciesCodeFromCommunity(potentials$RcvCommunity)
+      # speciesSrcRasterVecList <- speciesSrcRasterVecList[sort(potentials$fromInit),]
       ac <- adj2(potentialReceivers = potentials[, c("fromInit", "RcvCommunity")],
                  pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols,
                  dists = as.matrix(spRcvCommCodes),
