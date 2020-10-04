@@ -434,13 +434,23 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
     return(seedsArrived)
   })
 
-speciesComm <- function(num, sc) {
+speciesCodeFromCommunity <- function(num) {
   indices <- lapply(strsplit(R.utils::intToBin(num), split = ""), function(x) {
     rev(as.logical(as.numeric(x)))
   })
 
   speciesCode <- lapply(indices, function(x) (seq_len(length(x)) - 1)[x])
+}
 
+
+
+speciesComm <- function(num, sc) {
+  # indices <- lapply(strsplit(R.utils::intToBin(num), split = ""), function(x) {
+  #   rev(as.logical(as.numeric(x)))
+  # })
+  #
+  # speciesCode <- lapply(indices, function(x) (seq_len(length(x)) - 1)[x])
+  speciesCode <- speciesCodeFromCommunity(num)
   data.table(RcvCommunity = as.integer(rep(num, sapply(speciesCode, length))),
              speciesCode = unlist(speciesCode),
              key = "speciesCode")[!is.na(speciesCode)] %>%
@@ -581,21 +591,23 @@ seedDispInnerFn <- #compiler::cmpfun(
       numCols <- ncol(pixelGroupMap)
       #dtSrcShort <- dtSrc[, list(pixelGroup, speciesCode)]
       dtSrcShort <- dtSrc$pixelGroup
-      speciesRasterVecsList <- do.call(cbind, by(dtSrc, INDICES = dtSrc$speciesCode, function(x)
+      speciesSrcRasterVecList <- do.call(cbind, by(dtSrc, INDICES = dtSrc$speciesCode, function(x)
         rasterizeReduced(x, pixelGroupMap, "speciesCode", "pixelGroup")[]))
-      names(speciesRasterVecsList) <- as.character(dtSrc$speciesCode)
-      # names(speciesRasterVecsList) <- dtSrc$speciesCode
+      names(speciesSrcRasterVecList) <- as.character(dtSrc$speciesCode)
+      # names(speciesSrcRasterVecList) <- dtSrc$speciesCode
       spRcvCommCodesList <- by(spRcvCommCodes, INDICES = spRcvCommCodes$speciesCode, function(x) x[, c("effDist", "maxDist")])
       # names(spRcvCommCodesList) <- paste0("X", spRcvCommCodes$speciesCode)
       # make sure order is same
-      spRcvCommCodesList <- spRcvCommCodesList[colnames(speciesRasterVecsList)]
+      spRcvCommCodesList <- spRcvCommCodesList[colnames(speciesSrcRasterVecList)]
       p <- potentials[fromInit == 5]
       # 401 410 419 428 437 446
-      ac <- adj2(cells = potentials$fromInit, pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols,
+      # aa <- speciesCodeFromCommunity(potentials$RcvCommunity)
+      ac <- adj2(potentialReceivers = potentials[, c("fromInit", "RcvCommunity")],
+                 pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols,
                  dists = as.matrix(spRcvCommCodes),
                  cellSize = cellSize, dispersalFn = dispersalFn, k = k, b = b,
                  successionTimestep = successionTimestep, pixelGroupMapVec = pixelGroupMap[],
-                 dtSrcShort = dtSrcShort, speciesRasterVecsList = speciesRasterVecsList, spRcvCommCodesList = spRcvCommCodesList)
+                 dtSrcShort = dtSrcShort, speciesSrcRasterVecList = speciesSrcRasterVecList, spRcvCommCodesList = spRcvCommCodesList)
       browser()
 
       pixelGroupMapVec <- pixelGroupMap[]
@@ -604,7 +616,7 @@ seedDispInnerFn <- #compiler::cmpfun(
         adj2(cells = .BY[[1]], pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols, dists = as.matrix(spRcvCommCodes),
                    cellSize = cellSize, dispersalFn = dispersalFn, k = k, b = b,
                    successionTimestep = successionTimestep, pixelGroupMapVec = pixelGroupMap[],
-                   dtSrcShort = dtSrcShort, speciesRasterVecsList = speciesRasterVecsList, spRcvCommCodesList = spRcvCommCodesList)
+                   dtSrcShort = dtSrcShort, speciesSrcRasterVecList = speciesSrcRasterVecList, spRcvCommCodesList = spRcvCommCodesList)
       }, by = fromInit]
 
     }

@@ -13,17 +13,19 @@ test_that("test Ward dispersal seeding algorithm", {
                      .globals = list(verbose = FALSE),
                      Biomass_core = list( .saveInitialTime = NA))
 
-  reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*21,
-                                 ymn = 50, ymx = 50 + 99*21,
+  reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*25,
+                                 ymn = 50, ymx = 50 + 99*25,
                                  res = c(100, 100), val = 2)
-  reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*300,
-                                 ymn = 50, ymx = 50 + 99*300,
-                                 res = c(100, 100), val = 2)
+  # reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*300,
+  #                                ymn = 50, ymx = 50 + 99*300,
+  #                                res = c(100, 100), val = 2)
   cc <- expand.grid(data.frame(a = seq(5, 99, by = 9), b = seq(5, 99, by = 9)))
   pixelindex <- (cc$a-1)*99+cc$b #121
   reducedPixelGroupMap[pixelindex] <- 1
-  seedReceive <- data.table(pixelGroup = 2, speciesCode = 3:4, key = "speciesCode")
-  seedSource <- data.table(speciesCode = 3:4, pixelGroup = 1, key = "speciesCode")
+  ncel <- ncell(reducedPixelGroupMap)
+  reducedPixelGroupMap[seq(ncel/10)+ncel*9/10] <- 3
+  seedReceive <- data.table(pixelGroup = c(2, 1, 1), speciesCode = c(3, 3:4), key = c("speciesCode", "pixelGroup"))
+  seedSource <- data.table(speciesCode = c(3:4, 4), pixelGroup = c(1, 1, 3), key = "speciesCode")
   #species <- read.csv("~/GitHub/LandWeb/inputs/species.csv",
   #                    header = TRUE, stringsAsFactor = FALSE)
   #species <- data.table(species)[, speciesCode := 1:16]
