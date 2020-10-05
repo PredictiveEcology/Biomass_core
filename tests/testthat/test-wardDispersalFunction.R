@@ -13,11 +13,11 @@ test_that("test Ward dispersal seeding algorithm", {
                      .globals = list(verbose = FALSE),
                      Biomass_core = list( .saveInitialTime = NA))
 
-  reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*25,
-                                 ymn = 50, ymx = 50 + 99*25,
-                                 res = c(100, 100), val = 2)
   reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*300,
                                  ymn = 50, ymx = 50 + 99*300,
+                                 res = c(100, 100), val = 2)
+  reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*25,
+                                 ymn = 50, ymx = 50 + 99*25,
                                  res = c(100, 100), val = 2)
   cc <- expand.grid(data.frame(a = seq(5, 99, by = 9), b = seq(5, 99, by = 9)))
   pixelindex <- (cc$a-1)*99+cc$b #121

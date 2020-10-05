@@ -33,7 +33,7 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
     xmin <- pixelGroupMap@extent@xmin
     rs <- rowSums(speciesSrcRasterVecList)
     doRow <- which(!is.na(rs)) - 1
-    aa <- speciesCodeFromCommunity(potentialReceivers$RcvCommunity)
+    speciesRcvByIndex <- speciesCodeFromCommunity(potentialReceivers$RcvCommunity)
     # names(aa) <- paste0(as.character(seq(length(aa))), "_")
     # bb <- unlist(aa)
     # cc <- data.table(speciesCode = as.character(bb), index = as.integer(gsub("_.*", "", names(bb))))
@@ -43,16 +43,20 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
     # setkeyv(cc, "pixel")
     # dd <- split(cc[, c("pixel", "x", "y")], cc$speciesCode)
 
+    inds <- 400:401
     browser()
-    out <- Spiral2(cellCoords = cellsXY, speciesByIndex = aa, #pixel = potentialReceivers$fromInit,
-                  overallMaxDist = overAllMaxDist,
-                  speciesTable = dists,
-                  speciesNamesNumeric = as.numeric(colnames(speciesSrcRasterVecList)),
-                  speciesMatrix = speciesSrcRasterVecList,
-                  cellSize = cellSize, numCells = numCells, xmin = xmin,
-                  ymin = ymin, numCols = numCols,
-                  b = b, k = k, successionTimestep = successionTimestep)
-
+#    mb <- microbenchmark::microbenchmark(
+    out <- Spiral2(cellCoords = cellsXY[inds,],
+                   speciesRcvByIndex = speciesRcvByIndex[inds], #pixel = potentialReceivers$fromInit,
+                   overallMaxDist = overAllMaxDist,
+                   speciesTable = dists,
+                   speciesNamesNumeric = as.numeric(colnames(speciesSrcRasterVecList)),
+                   speciesMatrix = speciesSrcRasterVecList,
+                   cellSize = cellSize, numCells = numCells, xmin = xmin,
+                   ymin = ymin, numCols = numCols,
+                   b = b, k = k, successionTimestep = successionTimestep)
+    #     , times = 5)
+    print(mb)
     browser()
     while (any(!seedsArrived) && underMaxDist) {
       for (Ord in ord) {
