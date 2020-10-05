@@ -589,20 +589,26 @@ seedDispInnerFn <- #compiler::cmpfun(
     if (TRUE) {
       numCells <- ncell(pixelGroupMap)
       numCols <- ncol(pixelGroupMap)
+      browser()
       #dtSrcShort <- dtSrc[, list(pixelGroup, speciesCode)]
       dtSrcShort <- dtSrc$pixelGroup
-      speciesSrcRasterVecList <- do.call(cbind, by(dtSrc, INDICES = dtSrc$speciesCode, function(x)
-        rasterizeReduced(x, pixelGroupMap, "speciesCode", "pixelGroup")[]))
-      names(speciesSrcRasterVecList) <- as.character(dtSrc$speciesCode)
+      dtSrcNoDups <- unique(dtSrc, by = c("speciesCode"))
+      speciesSrcRasterVecList <- by(dtSrcNoDups, INDICES = dtSrcNoDups$speciesCode, function(x)
+        rasterizeReduced(x, pixelGroupMap, "speciesCode", "pixelGroup")[])
+      speciesCodes <- as.character(dtSrcNoDups$speciesCode)
+      names(speciesSrcRasterVecList) <- speciesCodes
+      maxSpCode <- max(as.integer(names(speciesSrcRasterVecList)))
+      speciesSrcRasterVecList <- lapply(seq_len(maxSpCode), function(ind) {
+        if (as.character(ind) %in% names(speciesSrcRasterVecList))
+          speciesSrcRasterVecList[[as.character(ind)]]
+      })
+      #lapply(names(speciesSrcRasterVecList), function())
       # names(speciesSrcRasterVecList) <- dtSrc$speciesCode
+      spRcvCommCodes <- unique(spRcvCommCodes, by = "speciesCode")
       spRcvCommCodesList <- by(spRcvCommCodes, INDICES = spRcvCommCodes$speciesCode, function(x) x[, c("effDist", "maxDist")])
       # names(spRcvCommCodesList) <- paste0("X", spRcvCommCodes$speciesCode)
       # make sure order is same
-      spRcvCommCodesList <- spRcvCommCodesList[colnames(speciesSrcRasterVecList)]
-      p <- potentials[fromInit == 5]
-      # 401 410 419 428 437 446
-      # aa <- speciesCodeFromCommunity(potentials$RcvCommunity)
-      # speciesSrcRasterVecList <- speciesSrcRasterVecList[sort(potentials$fromInit),]
+      spRcvCommCodesList <- spRcvCommCodesList[speciesCodes]
       ac <- adj2(potentialReceivers = potentials[, c("fromInit", "RcvCommunity")],
                  pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols,
                  dists = as.matrix(spRcvCommCodes),

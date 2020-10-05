@@ -31,8 +31,6 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
     sqrt2 <- sqrt(2)
     ymin <- pixelGroupMap@extent@ymin
     xmin <- pixelGroupMap@extent@xmin
-    rs <- rowSums(speciesSrcRasterVecList)
-    doRow <- which(!is.na(rs)) - 1
     speciesRcvByIndex <- speciesCodeFromCommunity(potentialReceivers$RcvCommunity)
     # names(aa) <- paste0(as.character(seq(length(aa))), "_")
     # bb <- unlist(aa)
@@ -44,18 +42,34 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
     # dd <- split(cc[, c("pixel", "x", "y")], cc$speciesCode)
 
     inds <- 400:401
+    speciesTableInner <- dists
+    speciesTableInner <- unique(speciesTableInner[, c("speciesCode", "effDist", "maxDist")], )
+    maxSpCode <- max(speciesTableInner[, "speciesCode"])
+
+    speciesTableInner2 <- lapply(seq_len(maxSpCode), function(ind) {
+      hasRow <- (speciesTableInner[, "speciesCode"] %in% ind )
+      if (any(hasRow)) {
+        speciesTableInner[hasRow,]
+      } else {
+        as.matrix(t(rep(NA, NCOL(speciesTableInner))))
+      }
+
+    })
+    speciesTableInner <- do.call(rbind, speciesTableInner2)
+
+
+#mb <- microbenchmark::microbenchmark(
     browser()
-#    mb <- microbenchmark::microbenchmark(
     out <- Spiral2(cellCoords = cellsXY[inds,],
                    speciesRcvByIndex = speciesRcvByIndex[inds], #pixel = potentialReceivers$fromInit,
                    overallMaxDist = overAllMaxDist,
-                   speciesTable = dists,
+                   speciesTable = speciesTableInner,
                    speciesNamesNumeric = as.numeric(colnames(speciesSrcRasterVecList)),
                    speciesMatrix = speciesSrcRasterVecList,
                    cellSize = cellSize, numCells = numCells, xmin = xmin,
                    ymin = ymin, numCols = numCols,
                    b = b, k = k, successionTimestep = successionTimestep)
-    #     , times = 5)
+ #       , times = 5)
     print(mb)
     browser()
     while (any(!seedsArrived) && underMaxDist) {
