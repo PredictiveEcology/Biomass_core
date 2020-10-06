@@ -17,9 +17,9 @@ test_that("test Ward dispersal seeding algorithm", {
   reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*300,
                                  ymn = 50, ymx = 50 + 99*300,
                                  res = c(100, 100), val = 2)
-  # reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*25,
-  #                                ymn = 50, ymx = 50 + 99*25,
-  #                                res = c(100, 100), val = 2)
+  reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*25,
+                                 ymn = 50, ymx = 50 + 99*25,
+                                 res = c(100, 100), val = 2)
   cc <- expand.grid(data.frame(a = seq(5, 99, by = 9), b = seq(5, 99, by = 9)))
   pixelindex <- (cc$a-1)*99+cc$b #121
   reducedPixelGroupMap[pixelindex] <- 1
@@ -75,9 +75,12 @@ test_that("test Ward dispersal seeding algorithm", {
   output[, .N, by = speciesCode]
   print(mb)
   ras <- raster(reducedPixelGroupMap)
+  pixelName <- grep("pixel", names(output), value = TRUE)
+  output <- output[, speciesCode := sum(speciesCode), by = pixelName]
   ras[output$pixel] <- output$speciesCode
   dev()
-  Plot(ras, new= TRUE, col = c("red", "blue"))
+  clearPlot()
+  Plot(reducedPixelGroupMap, ras, new= TRUE, col = c("red", "blue"))
   # output_compared <- data.table(
   #   pixelIndex = c(230, 302, 311, 320, 329, 338, 347, 356, 365, 374, 375, 383,
   #                  392, 400, 402, 409, 411, 418, 420, 429, 436, 438, 445, 447, 454,
