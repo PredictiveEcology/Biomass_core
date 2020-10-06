@@ -72,11 +72,12 @@ test_that("test Ward dispersal seeding algorithm", {
                                                             verbose = globals(mySim)$verbose, useParallel = FALSE,
                                                             successionTimestep = 10)
   )
+  output[, .N, by = speciesCode]
   print(mb)
   ras <- raster(reducedPixelGroupMap)
-  ras[output$pixelIndex] <- output$speciesCode
+  ras[output$pixel] <- output$speciesCode
   dev()
-  Plot(ras, new= TRUE, col = "red")
+  Plot(ras, new= TRUE, col = c("red", "blue"))
   # output_compared <- data.table(
   #   pixelIndex = c(230, 302, 311, 320, 329, 338, 347, 356, 365, 374, 375, 383,
   #                  392, 400, 402, 409, 411, 418, 420, 429, 436, 438, 445, 447, 454,
