@@ -64,8 +64,8 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
                    speciesRcvByIndex = speciesRcvByIndex[inds], #pixel = potentialReceivers$fromInit,
                    overallMaxDist = overAllMaxDist,
                    speciesTable = speciesTableInner,
-                   speciesNamesNumeric = as.numeric(colnames(speciesSrcRasterVecList)),
-                   speciesMatrix = speciesSrcRasterVecList,
+                   speciesNamesNumeric = na.omit(speciesTableInner[, "speciesCode"]),
+                   speciesVectorsList = speciesSrcRasterVecList,
                    cellSize = cellSize, numCells = numCells, xmin = xmin,
                    ymin = ymin, numCols = numCols,
                    b = b, k = k, successionTimestep = successionTimestep)

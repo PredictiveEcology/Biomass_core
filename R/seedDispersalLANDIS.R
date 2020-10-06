@@ -589,7 +589,6 @@ seedDispInnerFn <- #compiler::cmpfun(
     if (TRUE) {
       numCells <- ncell(pixelGroupMap)
       numCols <- ncol(pixelGroupMap)
-      browser()
       #dtSrcShort <- dtSrc[, list(pixelGroup, speciesCode)]
       dtSrcShort <- dtSrc$pixelGroup
       dtSrcNoDups <- unique(dtSrc, by = c("speciesCode"))
