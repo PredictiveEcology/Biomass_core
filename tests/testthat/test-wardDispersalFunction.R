@@ -1,4 +1,4 @@
-test_that("test Ward dispersal seeding algorithm", {
+#test_that("test Ward dispersal seeding algorithm", {
   # define the module and path
   library(data.table)
   library(raster)
@@ -61,7 +61,7 @@ test_that("test Ward dispersal seeding algorithm", {
   set.seed(1)
   devtools::load_all("~/GitHub/dispersal")
   source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
-  source(file.path(modulePath(mySim), "Biomass_core", "R", "disp.R"))
+  try(source(file.path(modulePath(mySim), "Biomass_core", "R", "disp.R")))
   mb <- microbenchmark::microbenchmark(times = 5,
                                        output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
                                                             dtSrc = seedSource,
@@ -132,7 +132,7 @@ test_that("test Ward dispersal seeding algorithm", {
   #   key = c("pixelIndex", "speciesCode")
   # )
   # expect_equal(output,output_compared)
-})
+#})
 
 test_that("test Ward dispersal seeding algorithm", {
   skip("Don't do this")
