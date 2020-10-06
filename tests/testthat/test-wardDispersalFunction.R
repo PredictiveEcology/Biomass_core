@@ -1,4 +1,4 @@
-test_that("test Ward dispersal seeding algorithm", {
+#test_that("test Ward dispersal seeding algorithm", {
   # define the module and path
   library(data.table)
   library(raster)
@@ -132,7 +132,7 @@ test_that("test Ward dispersal seeding algorithm", {
   #   key = c("pixelIndex", "speciesCode")
   # )
   # expect_equal(output,output_compared)
-})
+#})
 
 test_that("test Ward dispersal seeding algorithm", {
   skip("Don't do this")
