@@ -323,7 +323,7 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
                                                 pointDistance,
                                                 successionTimestep = successionTimestep
                                               )) %>%
-          rbindlist()
+            rbindlist()
         parallel::stopCluster(cl)
       } else {
         allSeedsArrived <- list()
@@ -343,7 +343,7 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
             }
             on.exit(data.table::setDTthreads(a), add = TRUE)
           }
-          allSeedsArrived[[y]] <- seedDispInnerFn(
+          allSeedsArrived <- seedDispInnerFn(
             activeCell = subSampList[[y]][[1]],
             potentials = subSampList[[y]][[2]],
             n = cellSize,
@@ -362,6 +362,8 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
             pointDistance,
             successionTimestep = successionTimestep
           )
+          return(allSeedsArrived)
+
         }
         if (verbose > 0)
           message("    End of using more than 100% CPU because of data.table openMP use")
@@ -614,6 +616,7 @@ seedDispInnerFn <- #compiler::cmpfun(
                  cellSize = cellSize, dispersalFn = dispersalFn, k = k, b = b,
                  successionTimestep = successionTimestep, pixelGroupMapVec = pixelGroupMap[],
                  dtSrcShort = dtSrcShort, speciesSrcRasterVecList = speciesSrcRasterVecList, spRcvCommCodesList = spRcvCommCodesList)
+      return(ac)
       browser()
 
       pixelGroupMapVec <- pixelGroupMap[]
