@@ -58,10 +58,10 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
     speciesTableInner <- do.call(rbind, speciesTableInner2)
 
 
-#mb <- microbenchmark::microbenchmark(
-    browser()
-    out <- Spiral2(cellCoords = cellsXY[inds,],
-                   speciesRcvByIndex = speciesRcvByIndex[inds], #pixel = potentialReceivers$fromInit,
+mb <- microbenchmark::microbenchmark(
+#    browser()
+    out <- Spiral2(cellCoords = cellsXY,#cellsXY[inds,],
+                   speciesRcvByIndex = speciesRcvByIndex, #speciesRcvByIndex[inds], #pixel = potentialReceivers$fromInit,
                    overallMaxDist = overAllMaxDist,
                    speciesTable = speciesTableInner,
                    speciesNamesNumeric = na.omit(speciesTableInner[, "speciesCode"]),
@@ -69,7 +69,7 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
                    cellSize = cellSize, numCells = numCells, xmin = xmin,
                    ymin = ymin, numCols = numCols,
                    b = b, k = k, successionTimestep = successionTimestep)
- #       , times = 5)
+        , times = 5)
     print(mb)
     browser()
     while (any(!seedsArrived) && underMaxDist) {
