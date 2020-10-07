@@ -27,6 +27,11 @@
   reducedPixelGroupMap[seq(ncel/10)+ncel*9/10] <- 3
   seedReceive <- data.table(pixelGroup = c(2, 2, 1), speciesCode = c(2, 3, 1), key = c("speciesCode", "pixelGroup"))
   seedSource <- data.table(speciesCode = c(3:2, 4), pixelGroup = c(1, 1, 3), key = "speciesCode")
+
+  # Combo to test with Rcpp -- it is fast
+  seedReceive <- data.table(pixelGroup = c(2, 1, 1), speciesCode = c(3, 2:3), key = c("speciesCode", "pixelGroup"))
+  seedSource <- data.table(speciesCode = c(2:3, 4), pixelGroup = c(1, 1, 3), key = "speciesCode")
+
   #species <- read.csv("~/GitHub/LandWeb/inputs/species.csv",
   #                    header = TRUE, stringsAsFactor = FALSE)
   #species <- data.table(species)[, speciesCode := 1:16]
