@@ -17,9 +17,9 @@
   reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*300,
                                  ymn = 50, ymx = 50 + 99*300,
                                  res = c(100, 100), val = 2)
-   reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*25,
-                                  ymn = 50, ymx = 50 + 99*25,
-                                  res = c(100, 100), val = 2)
+   # reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*25,
+   #                                ymn = 50, ymx = 50 + 99*25,
+   #                                res = c(100, 100), val = 2)
   cc <- expand.grid(data.frame(a = seq(5, 99, by = 9), b = seq(5, 99, by = 9)))
   pixelindex <- (cc$a-1)*99+cc$b #121
   reducedPixelGroupMap[pixelindex] <- 1
@@ -29,8 +29,8 @@
   seedSource <- data.table(speciesCode = c(3:2, 4), pixelGroup = c(1, 1, 3), key = "speciesCode")
 
   # Combo to test with Rcpp -- it is fast
-  seedReceive <- data.table(pixelGroup = c(2, 1, 1), speciesCode = c(3, 2:3), key = c("speciesCode", "pixelGroup"))
-  seedSource <- data.table(speciesCode = c(2:3, 4), pixelGroup = c(1, 1, 3), key = "speciesCode")
+  # seedReceive <- data.table(pixelGroup = c(2, 1, 1), speciesCode = c(3, 2:3), key = c("speciesCode", "pixelGroup"))
+  # seedSource <- data.table(speciesCode = c(2:3, 4), pixelGroup = c(1, 1, 3), key = "speciesCode")
 
   #species <- read.csv("~/GitHub/LandWeb/inputs/species.csv",
   #                    header = TRUE, stringsAsFactor = FALSE)
@@ -77,7 +77,7 @@
                                                             verbose = globals(mySim)$verbose, useParallel = FALSE,
                                                             successionTimestep = 10)
   )
-  output[, .N, by = speciesCode]
+  print(output[, .N, by = speciesCode])
   print(mb)
   ras <- raster(reducedPixelGroupMap)
   pixelName <- grep("pixel", names(output), value = TRUE)

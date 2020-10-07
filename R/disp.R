@@ -68,7 +68,6 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
 
 
 #mb <- microbenchmark::microbenchmark(
-    browser()
     out <- Spiral2(cellCoords = cellsXY, #cellsXY[inds,],
                    rcvSpeciesByIndex = rcvSpeciesByIndex, #rcvSpeciesByIndex[inds], #pixel = potentialReceivers$fromInit,
                    overallMaxDist = overAllMaxDist,
