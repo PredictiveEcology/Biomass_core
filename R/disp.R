@@ -77,6 +77,15 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
                    cellSize = cellSize, numCells = numCells, xmin = xmin,
                    ymin = ymin, numCols = numCols,
                    b = b, k = k, successionTimestep = successionTimestep)
+    if (FALSE) {
+      dev()
+      clearPlot()
+      ras <- raster(pixelGroupMap)
+      pixels <- raster::cellFromXY(ras, cbind(out$x, out$y) * 100 + rep(cbind(ncol(ras), nrow(ras)) / 2 * 100, each = NROW(out$x) ))
+      ras[pixels] <- out$dispersalProbKeep ^ 2
+      Plot(ras, new=T)
+    }
+    browser()
         #, times = 5)
  #   print(mb)
     # browser()
