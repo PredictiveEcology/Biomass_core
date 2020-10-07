@@ -26,12 +26,20 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
     names(seedsArrived) <- names(spRcvCommCodesList)
     overAllMaxDist <- max(dists[, "maxDist"])
     underMaxDist <- TRUE
-    spCodes <- colnames(speciesSrcRasterVecList)
-    names(spCodes) <- spCodes
+    srcSpeciesCodes <- seq_along(speciesSrcRasterVecList)
+    srcSpeciesCodes <- srcSpeciesCodes[!unlist(lapply(speciesSrcRasterVecList, is.null))]
     sqrt2 <- sqrt(2)
     ymin <- pixelGroupMap@extent@ymin
     xmin <- pixelGroupMap@extent@xmin
-    speciesRcvByIndex <- speciesCodeFromCommunity(potentialReceivers$RcvCommunity)
+    rcvSpeciesByIndex <- speciesCodeFromCommunity(potentialReceivers$RcvCommunity)
+    rcvSpeciesCodes <- sort(unique(unlist(rcvSpeciesByIndex)))
+    if (!all(rcvSpeciesCodes %in% srcSpeciesCodes)) {
+      keep <- unlist(lapply(rcvSpeciesByIndex, function(rsbi) {
+        all(rsbi %in% srcSpeciesCodes)
+      }))
+      rcvSpeciesByIndex <- rcvSpeciesByIndex[keep]
+      cellsXY <- cellsXY[keep, , drop = FALSE]
+    }
     # names(aa) <- paste0(as.character(seq(length(aa))), "_")
     # bb <- unlist(aa)
     # cc <- data.table(speciesCode = as.character(bb), index = as.integer(gsub("_.*", "", names(bb))))
@@ -58,13 +66,13 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
     speciesTableInner <- do.call(rbind, speciesTableInner2)
 
 
+
 #mb <- microbenchmark::microbenchmark(
-#    browser()
-    out <- Spiral2(cellCoords = cellsXY,#cellsXY[inds,],
-                   speciesRcvByIndex = speciesRcvByIndex, #speciesRcvByIndex[inds], #pixel = potentialReceivers$fromInit,
+    out <- Spiral2(cellCoords = cellsXY, #cellsXY[inds,],
+                   rcvSpeciesByIndex = rcvSpeciesByIndex, #rcvSpeciesByIndex[inds], #pixel = potentialReceivers$fromInit,
                    overallMaxDist = overAllMaxDist,
                    speciesTable = speciesTableInner,
-                   speciesNamesNumeric = na.omit(speciesTableInner[, "speciesCode"]),
+                   # speciesNamesNumeric = na.omit(speciesTableInner[, "speciesCode"]),
                    speciesVectorsList = speciesSrcRasterVecList,
                    cellSize = cellSize, numCells = numCells, xmin = xmin,
                    ymin = ymin, numCols = numCols,
