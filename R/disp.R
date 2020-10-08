@@ -67,7 +67,7 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
 
 
 
-#mb <- microbenchmark::microbenchmark(
+    #mb <- microbenchmark::microbenchmark(
     out <- Spiral2(cellCoords = cellsXY, #cellsXY[inds,],
                    rcvSpeciesByIndex = rcvSpeciesByIndex, #rcvSpeciesByIndex[inds], #pixel = potentialReceivers$fromInit,
                    overallMaxDist = overAllMaxDist,
@@ -77,23 +77,39 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
                    cellSize = cellSize, numCells = numCells, xmin = xmin,
                    ymin = ymin, numCols = numCols,
                    b = b, k = k, successionTimestep = successionTimestep)
+    colNum <- seq(ncol(out$seedsArrived))
+    names(colNum) <- paste0("spCode", seq(colNum))
     if (FALSE) {
       dev()
       clearPlot()
       ras <- raster(pixelGroupMap)
       pixels <- raster::cellFromXY(ras, cbind(out$x, out$y) * 100 + rep(cbind(ncol(ras), nrow(ras)) / 2 * 100, each = NROW(out$x) ))
-      ras[pixels] <- out$dispersalProbKeep ^ 2
-      Plot(ras, new=T)
+      ras[pixels] <- out$dispersalProbKeep ^ 0.5
+      rasDist <- raster(pixelGroupMap)
+      rasDist[pixels] <- out$dis
+      Plot(ras, rasDist, new=T)
+
+      outs <- lapply(colNum, function(col) {
+        a <- out$seedsArrived[, col]
+        rasInner <- raster(pixelGroupMap)
+        rasInner[cells[keep][a]] <- col
+        rasInner
+      })
+      Plot(outs, new  = TRUE)
     }
-    browser()
-        #, times = 5)
- #   print(mb)
+    #, times = 5)
+    #   print(mb)
     # browser()
-    seedsArrived <- apply(out, 2, which)
-seedsArrived <- data.table(pixel = do.call(c, seedsArrived),
-                  speciesCode = unlist(lapply(seq(seedsArrived),
-                                              function(x) rep(x, length(seedsArrived[[x]])))))
-return(seedsArrived)
+    seedsArrivedList <- lapply(colNum, function(col) {
+      a <- out$seedsArrived[, col]
+      cells1 <- cells[keep][a]
+    })
+
+
+    seedsArrived <- data.table(pixel = do.call(c, seedsArrivedList),
+                               speciesCode = unlist(lapply(seq(seedsArrivedList),
+                                                           function(x) rep(x, length(seedsArrivedList[[x]])))))
+    return(seedsArrived)
     while (any(!seedsArrived) && underMaxDist) {
       for (Ord in ord) {
         if (!underMaxDist) break
@@ -158,7 +174,7 @@ return(seedsArrived)
           }
 
         }
-       #print(cell)
+        #print(cell)
       }
     }
     #while ()
