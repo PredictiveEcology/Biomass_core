@@ -6,6 +6,7 @@
   library(fpCompare)
   library(magrittr)
   library(LandR)
+  library(dispersal)
   set.seed(1)
   module <- list("Biomass_core")
   path <- list(modulePath="..",
@@ -64,7 +65,7 @@
                    paths = path)
   inSituReceived <- data.table(fromInit = numeric(), species = character())
   set.seed(1)
-  devtools::load_all("~/GitHub/dispersal")
+  # devtools::load_all("~/GitHub/dispersal")
   source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
   try(source(file.path(modulePath(mySim), "Biomass_core", "R", "disp.R")))
   mb <- microbenchmark::microbenchmark(times = 2,
