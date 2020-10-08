@@ -68,7 +68,7 @@
   # devtools::load_all("~/GitHub/dispersal")
   source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
   try(source(file.path(modulePath(mySim), "Biomass_core", "R", "disp.R")))
-  mb <- microbenchmark::microbenchmark(times = 2,
+  mb <- microbenchmark::microbenchmark(times = 1,
                                        output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
                                                             dtSrc = seedSource,
                                                             inSituReceived = inSituReceived,
