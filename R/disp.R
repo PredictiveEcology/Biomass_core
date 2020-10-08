@@ -77,13 +77,15 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
                    cellSize = cellSize, numCells = numCells, xmin = xmin,
                    ymin = ymin, numCols = numCols,
                    b = b, k = k, successionTimestep = successionTimestep)
-    colNum <- seq(ncol(out$seedsArrived))
+    colNum <- seq(ncol(out))
     names(colNum) <- paste0("spCode", seq(colNum))
     if (FALSE) {
       dev()
       clearPlot()
       ras <- raster(pixelGroupMap)
-      pixels <- raster::cellFromXY(ras, cbind(out$x, out$y) * 100 + rep(cbind(ncol(ras), nrow(ras)) / 2 * 100, each = NROW(out$x) ))
+      pixels <- raster::cellFromXY(ras, cbind(out$x, out$y) * 100 +
+                                     rep(cbind(ncol(ras), nrow(ras)) / 2
+                                         * 100, each = NROW(out$x) ))
       ras[pixels] <- out$dispersalProbKeep ^ 0.5
       rasDist <- raster(pixelGroupMap)
       rasDist[pixels] <- out$dis
@@ -97,11 +99,9 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
       })
       Plot(outs, new  = TRUE)
     }
-    #, times = 5)
-    #   print(mb)
-    # browser()
+
     seedsArrivedList <- lapply(colNum, function(col) {
-      a <- out$seedsArrived[, col]
+      a <- out[, col]
       cells1 <- cells[keep][a]
     })
 
