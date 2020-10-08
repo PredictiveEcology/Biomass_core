@@ -6,7 +6,7 @@
   library(fpCompare)
   library(magrittr)
   library(LandR)
-  library(dispersal)
+  # library(dispersal)
   set.seed(1)
   module <- list("Biomass_core")
   path <- list(modulePath="..",
@@ -18,16 +18,16 @@
   reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*300,
                                  ymn = 50, ymx = 50 + 99*300,
                                  res = c(100, 100), val = 2)
-    # reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*65,
-    #                                ymn = 50, ymx = 50 + 99*65,
-    #                                res = c(100, 100), val = 2)
+  # reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*25,
+  #                                ymn = 50, ymx = 50 + 99*25,
+  #                               res = c(100, 100), val = 2)
   cc <- expand.grid(data.frame(a = seq(5, 99, by = 9), b = seq(5, 99, by = 9)))
   pixelindex <- (cc$a-1)*99+cc$b #121
   reducedPixelGroupMap[pixelindex] <- 1
   ncel <- ncell(reducedPixelGroupMap)
   reducedPixelGroupMap[seq(ncel/10)+ncel*9/10] <- 3
-  seedReceive <- data.table(pixelGroup = c(2, 2, 1), speciesCode = c(2, 3, 1), key = c("speciesCode", "pixelGroup"))
-  seedSource <- data.table(speciesCode = c(3:2, 4), pixelGroup = c(1, 1, 3), key = "speciesCode")
+  seedReceive <- data.table(speciesCode = c(2, 3, 1) , pixelGroup = c(2, 2, 1), key = c("speciesCode", "pixelGroup"))
+  seedSource <- data.table(speciesCode = c(3:2, 4) , pixelGroup = c(1, 1, 3), key = "speciesCode")
 
   # Combo to test with Rcpp -- it is fast
   # seedReceive <- data.table(pixelGroup = c(2, 1, 1), speciesCode = c(3, 2:3), key = c("speciesCode", "pixelGroup"))
@@ -65,10 +65,10 @@
                    paths = path)
   inSituReceived <- data.table(fromInit = numeric(), species = character())
   set.seed(1)
-  # devtools::load_all("~/GitHub/dispersal")
+  devtools::load_all("~/GitHub/dispersal")
   source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
   try(source(file.path(modulePath(mySim), "Biomass_core", "R", "disp.R")))
-  mb <- microbenchmark::microbenchmark(times = 1,
+  mb <- profvis::profvis(
                                        output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
                                                             dtSrc = seedSource,
                                                             inSituReceived = inSituReceived,
@@ -83,7 +83,7 @@
   ras <- raster(reducedPixelGroupMap)
   pixelName <- grep("pixel", names(output), value = TRUE)
   output <- output[, list(speciesCode = sum(speciesCode)), by = pixelName]
-  ras[output$pixel] <- output$speciesCode
+  ras[output[[pixelName]]] <- output$speciesCode
   dev()
   clearPlot()
   Plot(reducedPixelGroupMap, ras, new= TRUE, col = c("red", "blue"))
@@ -278,3 +278,21 @@ test_that("test Ward dispersal seeding algorithm", {
                        useParallel =  FALSE,
                        successionTimestep = 10)
 })
+
+if (FALSE) {
+  dd <- runif(100, 0, 100)
+  curModVal <- 10
+  curMessage <- 0
+  for (i in dd) {
+    modulo <- 10
+    possCurModVal <- i %% modulo
+    possCurMessage <- round(i / modulo, 0) * modulo
+    if (possCurModVal < curModVal && possCurMessage > curMessage)  {
+      curMessage <- possCurMessage
+      print(curMessage)
+    }
+
+    curModVal <- possCurModVal
+
+  }
+}
