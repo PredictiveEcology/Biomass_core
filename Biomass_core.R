@@ -22,7 +22,7 @@ defineModule(sim, list(
   documentation = list("README.txt", "Biomass_core.Rmd"),
   reqdPkgs = list("compiler", "crayon", "data.table", "dplyr", "fpCompare", "ggplot2", "grid", "parallel",
                   "purrr", "quickPlot", "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>=0.0.7)",
+                  "PredictiveEcology/LandR@dispersalRcpp (>=0.0.9)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
