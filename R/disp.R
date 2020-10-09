@@ -1,6 +1,6 @@
 adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, numCells, effDist, maxDist, cellSize,
                  dispersalFn, k, b, successionTimestep, dtSrcShort,
-                 speciesSrcRasterVecList, dists, spRcvCommCodesList) {
+                 speciesSrcRasterVecList, dists, spRcvCommCodesList, verbose) {
   # numColsUnits <- numCols * cellSize
   setorderv(potentialReceivers, c("fromInit", "RcvCommunity"))
   cells <- potentialReceivers$fromInit
@@ -62,7 +62,8 @@ adj2 <- function(pixelGroupMapVec, pixelGroupMap, potentialReceivers, numCols, n
                              speciesVectorsList = speciesSrcRasterVecList,
                              cellSize = cellSize, numCells = numCells, xmin = xmin,
                              ymin = ymin, numCols = numCols,
-                             b = b, k = k, successionTimestep = successionTimestep)
+                             b = b, k = k, successionTimestep = successionTimestep,
+                             verbose = verbose)
   colNum <- seq(ncol(out))
   names(colNum) <- paste0("spCode", seq(colNum))
   # if (FALSE) {

@@ -264,7 +264,8 @@ LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, specie
         lociReturn,
         speciesComm,
         pointDistance,
-        successionTimestep = successionTimestep
+        successionTimestep = successionTimestep,
+        verbose = verbose
       )
 
     # COnvert speciesCode back to factor using original species object from top of this fn
@@ -449,7 +450,8 @@ seedDispInnerFn <- #compiler::cmpfun(
                dists = as.matrix(spRcvCommCodes),
                cellSize = cellSize, dispersalFn = dispersalFn, k = k, b = b,
                successionTimestep = successionTimestep, pixelGroupMapVec = pixelGroupMap[],
-               dtSrcShort = dtSrcShort, speciesSrcRasterVecList = speciesSrcRasterVecList, spRcvCommCodesList = spRcvCommCodesList)
+               dtSrcShort = dtSrcShort, speciesSrcRasterVecList = speciesSrcRasterVecList, spRcvCommCodesList = spRcvCommCodesList,
+               verbose = verbose)
     return(ac)
 
   }
