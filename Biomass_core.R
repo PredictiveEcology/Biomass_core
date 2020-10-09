@@ -1343,9 +1343,6 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
     # this is should be a inner join, needs to specify the nomatch=0, nomatch = NA is default that sugest the full joint.
     seedSource <- seedSource[speciesCode %in% unique(seedReceive$speciesCode),]
 
-    # Add inSituReceived data.table from the inSitu seeding function or event
-    inSituReceived <- data.table(fromInit = integer(), species = character())
-
     # it could be more efficient if sim$pixelGroupMap is reduced map by removing the pixels that have
     # successful postdisturbance regeneration and the inactive pixels
     # how to subset the reducedmap
@@ -1361,16 +1358,12 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
       reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
     }
 
-    maxPotLength <- maxRowsDT(maxLen = 1e5, maxMem = P(sim)$.maxMemory)
-
-    seedingData <- LANDISDisp(sim, dtRcv = seedReceive, plot.it = FALSE,
-                              dtSrc = seedSource, inSituReceived = inSituReceived,
-                              species = sim$species,
-                              reducedPixelGroupMap,
-                              maxPotentialsLength = maxPotLength,
+    seedingData <- LANDISDisp(dtRcv = seedReceive, plot.it = FALSE,
+                              dtSrc = seedSource,
+                              speciesTable = sim$species,
+                              pixelGroupMap = reducedPixelGroupMap,
                               successionTimestep = P(sim)$successionTimestep,
-                              verbose = FALSE,
-                              useParallel = P(sim)$.useParallel)
+                              verbose = getOption("LandR.verbose", TRUE) > 0)
 
     if (getOption("LandR.verbose", TRUE) > 0) {
       emptyForestPixels <- sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]
