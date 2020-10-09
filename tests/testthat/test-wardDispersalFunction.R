@@ -18,9 +18,9 @@
   reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*300,
                                  ymn = 50, ymx = 50 + 99*300,
                                  res = c(100, 100), val = 2)
-  # reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*25,
-  #                                ymn = 50, ymx = 50 + 99*25,
-  #                               res = c(100, 100), val = 2)
+  reducedPixelGroupMap <- raster(xmn = 50, xmx = 50 + 99*25,
+                                 ymn = 50, ymx = 50 + 99*25,
+                                res = c(100, 100), val = 2)
   cc <- expand.grid(data.frame(a = seq(5, 99, by = 9), b = seq(5, 99, by = 9)))
   pixelindex <- (cc$a-1)*99+cc$b #121
   reducedPixelGroupMap[pixelindex] <- 1
@@ -68,7 +68,7 @@
   # devtools::load_all("~/GitHub/dispersal")
   source(file.path(modulePath(mySim), "Biomass_core", "R", "seedDispersalLANDIS.R"))
   try(source(file.path(modulePath(mySim), "Biomass_core", "R", "disp.R")))
-  mb <- profvis::profvis(
+  mb <- profvis::profvis(interval = 0.2,
                                        output <- LANDISDisp(mySim, dtRcv = seedReceive, plot.it = FALSE,
                                                             dtSrc = seedSource,
                                                             inSituReceived = inSituReceived,

@@ -409,7 +409,7 @@ seedDispInnerFn <- #compiler::cmpfun(
            pointDistance, successionTimestep,
            verbose = getOption("LandR.verbose", TRUE)) {
     if (verbose > 0)
-      message("  Dispersal for pixels ", min(activeCell), " to ", max(activeCell))
+      message("  Seed dispersall")
 
     seedsArrived <- data.table(
       fromInit = integer(),
@@ -419,41 +419,38 @@ seedDispInnerFn <- #compiler::cmpfun(
     # Go to species level
     spRcvCommCodes <-
       speciesComm(unique(speciesRcvPool$speciesRcvPool), sc = sc)
-    #spRcvCommCodes <- speciesComm(unique(potentials$RcvCommunity))
     setkey(spRcvCommCodes, RcvCommunity)
     setkey(potentials, RcvCommunity)
 
     # Make potentials have all Rcv pixels, with each species as unique line
 
-    if (TRUE) {
-      numCells <- ncell(pixelGroupMap)
-      numCols <- ncol(pixelGroupMap)
-      #dtSrcShort <- dtSrc[, list(pixelGroup, speciesCode)]
-      dtSrcShort <- dtSrc$pixelGroup
-      dtSrcNoDups <- unique(dtSrc, by = c("speciesCode"))
-      speciesSrcRasterVecList <- by(dtSrcNoDups, INDICES = dtSrcNoDups$speciesCode, function(x)
-        rasterizeReduced(x, pixelGroupMap, "speciesCode", "pixelGroup")[])
-      speciesCodes <- as.character(dtSrcNoDups$speciesCode)
-      names(speciesSrcRasterVecList) <- speciesCodes
-      maxSpCode <- max(as.integer(names(speciesSrcRasterVecList)))
-      speciesSrcRasterVecList <- lapply(seq_len(maxSpCode), function(ind) {
-        if (as.character(ind) %in% names(speciesSrcRasterVecList))
-          speciesSrcRasterVecList[[as.character(ind)]]
-      })
-      #lapply(names(speciesSrcRasterVecList), function())
-      # names(speciesSrcRasterVecList) <- dtSrc$speciesCode
-      spRcvCommCodes <- unique(spRcvCommCodes, by = "speciesCode")
-      spRcvCommCodesList <- by(spRcvCommCodes, INDICES = spRcvCommCodes$speciesCode, function(x) x[, c("effDist", "maxDist")])
-      # names(spRcvCommCodesList) <- paste0("X", spRcvCommCodes$speciesCode)
-      # make sure order is same
-      spRcvCommCodesList <- spRcvCommCodesList[speciesCodes]
-      ac <- adj2(potentialReceivers = potentials[, c("fromInit", "RcvCommunity")],
-                 pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols,
-                 dists = as.matrix(spRcvCommCodes),
-                 cellSize = cellSize, dispersalFn = dispersalFn, k = k, b = b,
-                 successionTimestep = successionTimestep, pixelGroupMapVec = pixelGroupMap[],
-                 dtSrcShort = dtSrcShort, speciesSrcRasterVecList = speciesSrcRasterVecList, spRcvCommCodesList = spRcvCommCodesList)
-      return(ac)
-    }
+    numCells <- ncell(pixelGroupMap)
+    numCols <- ncol(pixelGroupMap)
+    dtSrcShort <- dtSrc$pixelGroup
+    dtSrcNoDups <- unique(dtSrc, by = c("speciesCode"))
+    speciesSrcRasterVecList <- by(dtSrcNoDups, INDICES = dtSrcNoDups$speciesCode, function(x)
+      rasterizeReduced(x, pixelGroupMap, "speciesCode", "pixelGroup")[])
+    speciesCodes <- as.character(dtSrcNoDups$speciesCode)
+    names(speciesSrcRasterVecList) <- speciesCodes
+    maxSpCode <- max(as.integer(names(speciesSrcRasterVecList)))
+    speciesSrcRasterVecList <- lapply(seq_len(maxSpCode), function(ind) {
+      if (as.character(ind) %in% names(speciesSrcRasterVecList))
+        speciesSrcRasterVecList[[as.character(ind)]]
+    })
+    #lapply(names(speciesSrcRasterVecList), function())
+    # names(speciesSrcRasterVecList) <- dtSrc$speciesCode
+    spRcvCommCodes <- unique(spRcvCommCodes, by = "speciesCode")
+    spRcvCommCodesList <- by(spRcvCommCodes, INDICES = spRcvCommCodes$speciesCode, function(x) x[, c("effDist", "maxDist")])
+    # names(spRcvCommCodesList) <- paste0("X", spRcvCommCodes$speciesCode)
+    # make sure order is same
+    spRcvCommCodesList <- spRcvCommCodesList[speciesCodes]
+    ac <- adj2(potentialReceivers = potentials[, c("fromInit", "RcvCommunity")],
+               pixelGroupMap = pixelGroupMap, numCells = numCells, numCols = numCols,
+               dists = as.matrix(spRcvCommCodes),
+               cellSize = cellSize, dispersalFn = dispersalFn, k = k, b = b,
+               successionTimestep = successionTimestep, pixelGroupMapVec = pixelGroupMap[],
+               dtSrcShort = dtSrcShort, speciesSrcRasterVecList = speciesSrcRasterVecList, spRcvCommCodesList = spRcvCommCodesList)
+    return(ac)
+
   }
 #)
