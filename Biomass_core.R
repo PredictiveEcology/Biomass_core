@@ -124,7 +124,7 @@ defineModule(sim, list(
                                  "If TRUE, it will be passed to parallel:makeCluster;",
                                  "and if a cluster object, it will be passed to parallel::parClusterApplyB."))
   ),
-  inputObjects = bind_rows(
+  inputObjects = bindrows(
     expectsInput("biomassMap", "RasterLayer",
                  desc = paste("total biomass raster layer in study area (in g/m2),",
                               "filtered for pixels covered by cohortData.",
@@ -195,7 +195,7 @@ defineModule(sim, list(
     # expectsInput("spinUpCache", "logical", ""),
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
   ),
-  outputObjects = bind_rows(
+  outputObjects = bindrows(
     createsOutput("activePixelIndex", "integer",
                   desc = "internal use. Keeps track of which pixels are active"),
     createsOutput("activePixelIndexReporting", "integer",
