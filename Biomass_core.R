@@ -247,8 +247,7 @@ defineModule(sim, list(
     createsOutput("treedFirePixelTableSinceLastDisp", "data.table",
                   desc = paste("3 columns: pixelIndex, pixelGroup, and burnTime.",
                                "Each row represents a forested pixel that was burned up to and including this year,",
-                               "since last dispersal event, with its corresponding pixelGroup and time it occurred")),
-    createsOutput("summarySubCohortData", 'data.table', desc = "diagnostic data.table created specifically for RIA - never merge")
+                               "since last dispersal event, with its corresponding pixelGroup and time it occurred"))
   )
 ))
 
@@ -1063,28 +1062,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       subCohortData <- subCohortData[predObj, on = commonNames]
       subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred/100))] #changed from ratio to pct for memory
 
-      if (is.null(sim$summarySubCohortData)) {
-        sim$summarySubCohortData <- data.table(year = time(sim), meanGrowth = mean(predObj$growthPred),
-                                               meanMort = mean(predObj$mortPred),
-                                               meanPlantedGrowth = mean(predObj[planted == TRUE]$growthPred),
-                                               meanPlantedMort = mean(predObj[planted == TRUE]$mortPred),
-                                               meanGrowthYoungNoPlant = mean(predObj[planted == FALSE & age <= time(sim) - start(sim) + 1]$growthPred),
-                                               meanMortYoungNoPlant = mean(predObj[planted == FALSE & age < time(sim) - start(sim) + 1]$mortPred),
-                                               meanHTpPlant = mean(predObj[planted == TRUE,]$HTp_pred, na.rm = TRUE),
-                                               meanHTpNoPlant = mean(predObj[planted == FALSE,]$HTp_pred, na.rm = TRUE)
-                                               )
-      } else {
-        thisYear <- data.table(year = time(sim), meanGrowth = mean(predObj$growthPred),
-                               meanMort = mean(predObj$mortPred),
-                               meanPlantedGrowth = mean(predObj[planted == TRUE]$growthPred),
-                               meanPlantedMort = mean(predObj[planted == TRUE]$mortPred),
-                               meanGrowthYoungNoPlant = mean(predObj[planted == FALSE & age < time(sim) - start(sim) + 1]$growthPred),
-                               meanMortYoungNoPlant = mean(predObj[planted == FALSE & age < time(sim) - start(sim) + 1]$mortPred),
-                               meanHTpPlant = mean(predObj[planted == TRUE,]$HTp_pred, na.rm = TRUE),
-                               meanHTpNoPlant = mean(predObj[planted == FALSE,]$HTp_pred, na.rm = TRUE)
-        )
-        sim$summarySubCohortData <- rbind(sim$summarySubCohortData, thisYear)
-      }
     }
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
