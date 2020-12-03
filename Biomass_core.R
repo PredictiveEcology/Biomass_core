@@ -20,8 +20,10 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_core.Rmd"),
-  reqdPkgs = list("compiler", "crayon", "data.table", "dplyr", "fpCompare", "ggplot2", "grid", "parallel",
-                  "purrr", "quickPlot", "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
+  reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare",
+                  "ggplot2", "grid", "parallel", "purrr", "quickPlot",
+                  "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
+                  "PredictiveEcology/LandR@development (>=0.0.7)",
                   "PredictiveEcology/LandR@dispersalRcpp (>=0.0.9)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
@@ -123,7 +125,7 @@ defineModule(sim, list(
                                  "If TRUE, it will be passed to parallel:makeCluster;",
                                  "and if a cluster object, it will be passed to parallel::parClusterApplyB."))
   ),
-  inputObjects = bind_rows(
+  inputObjects = bindrows(
     expectsInput("biomassMap", "RasterLayer",
                  desc = paste("total biomass raster layer in study area (in g/m2),",
                               "filtered for pixels covered by cohortData.",
@@ -194,7 +196,7 @@ defineModule(sim, list(
     # expectsInput("spinUpCache", "logical", ""),
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
   ),
-  outputObjects = bind_rows(
+  outputObjects = bindrows(
     createsOutput("activePixelIndex", "integer",
                   desc = "internal use. Keeps track of which pixels are active"),
     createsOutput("activePixelIndexReporting", "integer",
@@ -346,7 +348,7 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, end(sim),
                                 "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)  ## schedule the last plotting events (so that it doesn't depend on plot interval)
 
-           if (P(sim)$.plotMaps){
+           if (P(sim)$.plotMaps) {
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
          }
