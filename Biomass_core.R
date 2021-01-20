@@ -684,6 +684,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ##############################################
   # ecoregion
   ##############################################
+  if (is.null(sim$ecoregion))
+    stop("Need to supply sim$ecoregion")
   setDT(sim$ecoregion)
   LandR::assertColumns(sim$ecoregion, c(active = "character", ecoregionGroup = "factor"))
 
@@ -1956,6 +1958,7 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("speciesLayers", sim)) {
+    message("No RasterStack map of biomass X species is provided; using KNN")
     url <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
                   "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")
     sim$speciesLayers <- Cache(loadkNNSpeciesLayers,
