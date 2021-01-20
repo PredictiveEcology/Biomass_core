@@ -840,9 +840,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   speciesEcoregion[, identifier := year > P(sim)$successionTimestep]
   speciesEcoregion_True <- speciesEcoregion[identifier == TRUE, ]
   speciesEcoregion_False <- speciesEcoregion[identifier == FALSE, ]
-  speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(year), ]
-  sim$speciesEcoregion <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))[
-    , ':='(year = year - min(year), identifier = NULL)]
+  if (NROW(speciesEcoregion_False)) {
+    speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(year), ]
+    speciesEcoregion_True <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))
+  }
+  sim$speciesEcoregion <- speciesEcoregion_True[, ':='(year = year - min(year), identifier = NULL)]
+
   sim$lastFireYear <- "noFire"
 
   sim$pixelGroupMap <- pixelGroupMap
