@@ -1938,7 +1938,11 @@ CohortAgeReclassification <- function(sim) {
                                   newVals = "Mixed", palette = "Accent")
   } else {
     if (is.null(sim$sppColorVect))
-      stop("If you provide 'sppEquiv' you MUST also provide 'sppColorVect'")
+      message("'sppEquiv' is provided without a 'sppColorVect'. Running:
+              LandR::sppColors with coloumn 'Boreal'")
+    sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
+                                  newVals = "Mixed", palette = "Accent")
+
   }
 
   if (!suppliedElsewhere("treedFirePixelTableSinceLastDisp", sim)) {
