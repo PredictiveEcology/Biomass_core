@@ -456,9 +456,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
 ### EVENT FUNCTIONS
 Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ## stop early if raster inputs don't match
-  if (!is.null(sim$ecoregionMap) & !is.null(sim$pixelGroupMap) & !is.null(sim$biomassMap)) {
-    compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
-  }
+  # Must have sim$rasterToMatch
+  #if (!identical(sort(as.character(unique(sim$cohortData$speciesCode))), sort(unique(sim$species$species))))
+  #  stop("the species in sim$cohortData are not the same as the species in sim$species; these must match")
   cacheTags <- c(currentModule(sim), "init")
 
   ##############################################
@@ -669,6 +669,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
 
     LandR::assertUniqueCohortData(sim$cohortData, c("pixelGroup", "ecoregionGroup", "speciesCode"))
+  }
+
+  if (!is.null(sim$ecoregionMap) && !is.null(sim$pixelGroupMap) && !is.null(sim$biomassMap)) {
+    compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
+  } else {
+    stop("Expecting 3 rasters at this point: sim$biomassMap, sim$ecoregionMap, ",
+         "sim$pixelGroupMap and they must match sim$rasterToMatch")
   }
 
   ## check objects
