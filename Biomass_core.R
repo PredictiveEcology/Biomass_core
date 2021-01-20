@@ -561,6 +561,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                              doSubset = FALSE,
                              userTags = c(cacheTags, "pixelCohortData"),
                              omitArgs = c("userTags"))
+    pixelCohortData <- partitionBiomass(x = P(sim)$deciduousCoverDiscount, pixelCohortData)
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
 
     ## When using dummy values ecoregion codes are not changed
