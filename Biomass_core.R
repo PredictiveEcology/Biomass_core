@@ -742,6 +742,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                                  currentTime = round(time(sim)),
                                                  cohortData = cohortData)
   cohortData <- updateSpeciesAttributes(species = sim$species, cohortData = cohortData)
+  LandR::assertCohortData(cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
 
   #############################################
   initialBiomassSourcePoss <- c('spinUp', 'cohortData', 'biomassMap')
