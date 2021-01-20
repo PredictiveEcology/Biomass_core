@@ -579,6 +579,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     pixelCohortData <- partitionBiomass(x = P(sim)$deciduousCoverDiscount, pixelCohortData)
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
 
+
     ## When using dummy values ecoregion codes are not changed
     rmZeroBiomassQuote <- quote(B > 0)
     #This will fail, because LandR::makeAndCleanInitialCohortData no longer returns a B column July 2020 IE
@@ -1997,10 +1998,10 @@ CohortAgeReclassification <- function(sim) {
 
   ## additional species traits
   if (!suppliedElsewhere("species", sim)) {
-    speciesTable <- getSpeciesTable(dPath = dPath,
+    speciesTable <- getSpeciesTable(dPath = dPath, url = extractURL("species"),
                                     cacheTags = c(cacheTags, "speciesTable"))
     sim$species <- prepSpeciesTable(speciesTable = speciesTable,
-                                    speciesLayers = sim$speciesLayers,
+                                    # speciesLayers = sim$speciesLayers,
                                     sppEquiv = sim$sppEquiv[get(P(sim)$sppEquivCol) %in%
                                                               names(sim$speciesLayers)],
                                     sppEquivCol = P(sim)$sppEquivCol)
