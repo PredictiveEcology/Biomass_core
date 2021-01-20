@@ -584,7 +584,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     # Statistical estimation of establishprob, maxB and maxANPP
     ##############################################################
     ## only use pixels where cover > 0
-    cohortDataShort <- pixelCohortData[, list(coverNum = .N,
+    cohortDataShort <- pixelCohortData[, list(coverNum = pmax(1, .N - 1),
                                               coverPres = sum(cover > 0)),
                                        by = c("ecoregionGroup", "speciesCode")]
     cohortDataShortNoCover <- cohortDataShort[coverPres == 0]
