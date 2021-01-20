@@ -617,7 +617,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     #   doesn't include combinations with B = 0 because those places can't have the species/ecoregion combo
     ########################################################################
     message(blue("Create speciesEcoregion from "), red("DUMMY values"))
-    speciesEcoregion <- makeSpeciesEcoregion(cohortDataNoBiomass = cohortDataNoBiomass,
+    speciesEcoregion <- makeSpeciesEcoregion(cohortDataBiomass = cohortDataNoBiomass,
                                              cohortDataShort = cohortDataShort,
                                              cohortDataShortNoCover = cohortDataShortNoCover,
                                              species = sim$species,
@@ -638,7 +638,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     }
     ## make cohortDataFiles: pixelCohortData (rm unnecessary cols, subset pixels with B>0,
     ## generate pixelGroups, add ecoregionGroup and totalBiomass) and cohortData
-    cohortDataFiles <- makeCohortDataFiles(pixelCohortData, columnsForPixelGroups, speciesEcoregion)
+    cohortDataFiles <- makeCohortDataFiles(pixelCohortData, columnsForPixelGroups, speciesEcoregion,
+                                           pixelGroupBiomassClass = 10,
+                                           pixelGroupAgeClass = 10,
+                                           minAgeForGrouping = -1)#,
+                                           #pixelFateDT = pixelFateDT)
+
     sim$cohortData <- cohortDataFiles$cohortData
     pixelCohortData <- cohortDataFiles$pixelCohortData
     rm(cohortDataFiles)
