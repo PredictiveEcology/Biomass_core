@@ -468,6 +468,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ##############################################
   ## species
   ##############################################
+  if (is.null(sim$species))
+    stop("'species' object must be provided")
   species <- setDT(sim$species)[, speciesCode := as.factor(species)]
   LandR::assertColumns(species,
                        c(species = "character", Area = "factor", longevity = "integer",
@@ -481,7 +483,15 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                          hardsoft = "factor", speciesCode = "factor"))
   sim$species <- setkey(species, speciesCode)
 
+  ##############################################
+  # Dummy versions if don't have real ones
+  # This next chunk is to supply defaults for the case where `cohortData`  or `pixelGroupMap` is not supplied
+  #   e.g., via a module like `Biomass_borealDataPrep`
+  #######################
   if (!suppliedElsewhere("cohortData", sim, where = "sim") | !suppliedElsewhere("pixelGroupMap", sim, where = "sim")) {
+    if (is.null(sim$rasterToMatch))
+      stop("Must supply sim$rasterToMatch, since sim$cohortData or sim$pixelGroupMap are not supplied")
+
     if ((!suppliedElsewhere("cohortData", sim, where = "sim") && suppliedElsewhere("pixelGroupMap", sim, where = "sim")) ||
         (suppliedElsewhere("cohortData", sim, where = "sim") && !suppliedElsewhere("pixelGroupMap", sim, where = "sim"))) {
       stop("Either 'cohortData' or 'pixelGroupMap' are being supplied without the other.",
