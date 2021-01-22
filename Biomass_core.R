@@ -1960,7 +1960,7 @@ CohortAgeReclassification <- function(sim) {
   } else {
     if (is.null(sim$sppColorVect))
       message("'sppEquiv' is provided without a 'sppColorVect'. Running:
-              LandR::sppColors with coloumn 'Boreal'")
+              LandR::sppColors with column ", P(sim)$sppEquivCol)
     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
                                   newVals = "Mixed", palette = "Accent")
 
