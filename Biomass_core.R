@@ -348,7 +348,7 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            if (P(sim)$.plotMaps) {
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
-         }
+           }
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
            if (!is.na(P(sim)$.plotInitialTime))
@@ -424,8 +424,8 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- plotSummaryBySpecies(sim)
            if (!is.na(P(sim)$.plotInterval)) {
              if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
-             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                  "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
+               sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                    "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
            }
          },
          plotMaps = {
