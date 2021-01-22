@@ -43,12 +43,6 @@ defineModule(sim, list(
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
                     desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
-    defineParameter("deciduousCoverDiscount", "numeric", 0.8418911, NA, NA,
-                    paste("Deciduous cover:biomass is likely not the same as conifer cover:biomass.",
-                          "This is a number that reduces the translation for deciduous cover,",
-                          "i.e., 1 unit of deciduous cover --> 0.841 units of deciduous biomass;",
-                          "1 unit conifer cover --> 1 unit conifer biomass.",
-                          "This was estimated with data from NWT on March 18, 2020 and may or may not be universal.")),
     defineParameter("gmcsGrowthLimits", "numeric", c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
                     paste("if using LandR.CS for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
@@ -354,7 +348,7 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            if (P(sim)$.plotMaps) {
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
-         }
+           }
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
            if (!is.na(P(sim)$.plotInitialTime))
@@ -430,8 +424,8 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- plotSummaryBySpecies(sim)
            if (!is.na(P(sim)$.plotInterval)) {
              if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
-             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                  "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
+               sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                    "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
            }
          },
          plotMaps = {
@@ -575,7 +569,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                              doSubset = FALSE,
                              userTags = c(cacheTags, "pixelCohortData"),
                              omitArgs = c("userTags"))
-    pixelCohortData <- partitionBiomass(x = P(sim)$deciduousCoverDiscount, pixelCohortData)
+    pixelCohortData <- partitionBiomass(x = 1, pixelCohortData)
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
 
 
@@ -1966,7 +1960,7 @@ CohortAgeReclassification <- function(sim) {
   } else {
     if (is.null(sim$sppColorVect))
       message("'sppEquiv' is provided without a 'sppColorVect'. Running:
-              LandR::sppColors with coloumn 'Boreal'")
+              LandR::sppColors with column ", P(sim)$sppEquivCol)
     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
                                   newVals = "Mixed", palette = "Accent")
 
