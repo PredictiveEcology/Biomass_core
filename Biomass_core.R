@@ -12,9 +12,7 @@ defineModule(sim, list(
     person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.3.2"),
-                 LandR = "0.0.3.9000", SpaDES.core = "0.2.7",
-                 LandR.CS = "0.0.2.0002"),
+  version = list(Biomass_core = numeric_version("1.3.2")),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
@@ -23,12 +21,12 @@ defineModule(sim, list(
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare",
                   "ggplot2", "grid", "parallel", "purrr", "quickPlot",
                   "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>=0.0.11.9004)",
+                  "PredictiveEcology/LandR@development (>=0.0.11.9005)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
                   "PredictiveEcology/SpaDES.tools@development",
-                  "ianmseddy/LandR.CS@master"),
+                  "ianmseddy/LandR.CS@master (>=0.0.2.0002)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -40,36 +38,31 @@ defineModule(sim, list(
                                  "The 'end' option is always active, being also the default option.")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
-    defineParameter('cohortDefinitionCols', 'character', c('pixelGroup', 'speciesCode', 'age'), NA, NA,
+    defineParameter("cohortDefinitionCols", "character", c("pixelGroup", "speciesCode", "age"), NA, NA,
                     desc = paste("cohortData columns that determine what constitutes a cohort",
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
                     desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
-    defineParameter("deciduousCoverDiscount", "numeric", 0.8418911, NA, NA,
-                    paste("Deciduous cover:biomass is likely not the same as conifer cover:biomass. ",
-                          "This is a number that reduces the translation for deciduous cover, ",
-                          "i.e., 1 unit of deciduous cover --> 0.841 units of deciduous biomass; 1 unit conifer cover --> 1 unit conifer biomass.",
-                          "This was estimated with data from NWT on March 18, 2020 and may or may not be universal. ")),
-    defineParameter('gmcsGrowthLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
+    defineParameter("gmcsGrowthLimits", "numeric", c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
                     paste("if using LandR.CS for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
                           "(currentClimate/referenceClimate). Upper and lower limits are ",
                           "suggested to circumvent problems caused by very small denominators as well as ",
                           "predictions outside the data range used to generate the model")),
-    defineParameter('gmcsMortLimits', 'numeric', c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
+    defineParameter("gmcsMortLimits", "numeric", c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
                     paste("if using LandR.CS for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
                           "(currentClimate/referenceClimate). Upper and lower limits are ",
                           "suggested to circumvent problems caused by very small denominators as well as ",
                           "predictions outside the data range used to generate the model")),
-    defineParameter('gmcsMinAge', 'numeric', 21, 0, NA,
+    defineParameter("gmcsMinAge", "numeric", 21, 0, NA,
                     paste("if using LandR.CS for climate-sensitive growth and mortality, the minimum",
                           "age for which to predict climate-sensitive growth and mortality.",
                           "Young stands (< 30) are poorly represented by the PSP data used to parameterize the model.")),
     defineParameter("growthAndMortalityDrivers", "character", "LandR", NA, NA,
                     desc = paste("package name where the following functions can be found:",
                                  "calculateClimateEffect, assignClimateEffect",
-                                 '(see LandR.CS for climate sensitivity, leave default if none desired)')),
+                                 "(see LandR.CS for climate sensitivity, leave default if none desired)")),
     defineParameter("growthInitialTime", "numeric", start(sim), NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
     defineParameter("initialBiomassSource", "character", "cohortData", NA, NA,
@@ -81,13 +74,13 @@ defineModule(sim, list(
                           "`spinUp` uses `sim$standAgeMap` as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
                           "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied.")),
-    defineParameter("keepClimateCols", 'logical', TRUE, NA, NA, 'include growth and mortality predictions in cohortData?'),
-    defineParameter("minCohortBiomass", 'numeric', 0, NA, NA,
+    defineParameter("keepClimateCols", "logical", TRUE, NA, NA, "include growth and mortality predictions in cohortData?"),
+    defineParameter("minCohortBiomass", "numeric", 0, NA, NA,
                     desc = "cohorts with biomass below this threshold are removed. Not a LANDIS-II BSM param"),
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
                                  "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
-    defineParameter("plotOverstory", 'logical', FALSE, NA, NA, desc = "swap max age plot with overstory biomass"),
+    defineParameter("plotOverstory", "logical", FALSE, NA, NA, desc = "swap max age plot with overstory biomass"),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
                     desc = paste("choose which seeding algorithm will be used among",
                                  "noDispersal, universalDispersal, and wardDispersal (default).",
@@ -136,7 +129,7 @@ defineModule(sim, list(
                               "Only used if P(sim)$initialBiomassSource == 'biomassMap'"),
                  sourceURL = ""),
     expectsInput("cceArgs", "list",
-                 desc = paste('a list of quoted objects used by the growthAndMortalityDriver calculateClimateEffect function')),
+                 desc = paste("a list of quoted objects used by the growthAndMortalityDriver calculateClimateEffect function")),
     expectsInput("cohortData", "data.table",
                  desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
     expectsInput("ecoregion", "data.table",
@@ -355,7 +348,7 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            if (P(sim)$.plotMaps) {
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
-         }
+           }
            sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                 "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
            if (!is.na(P(sim)$.plotInitialTime))
@@ -431,8 +424,8 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- plotSummaryBySpecies(sim)
            if (!is.na(P(sim)$.plotInterval)) {
              if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
-             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                  "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
+               sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                    "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
            }
          },
          plotMaps = {
@@ -576,7 +569,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                              doSubset = FALSE,
                              userTags = c(cacheTags, "pixelCohortData"),
                              omitArgs = c("userTags"))
-    pixelCohortData <- partitionBiomass(x = P(sim)$deciduousCoverDiscount, pixelCohortData)
+    pixelCohortData <- partitionBiomass(x = 1, pixelCohortData)
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
 
 
@@ -1967,7 +1960,7 @@ CohortAgeReclassification <- function(sim) {
   } else {
     if (is.null(sim$sppColorVect))
       message("'sppEquiv' is provided without a 'sppColorVect'. Running:
-              LandR::sppColors with coloumn 'Boreal'")
+              LandR::sppColors with column ", P(sim)$sppEquivCol)
     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
                                   newVals = "Mixed", palette = "Accent")
 
