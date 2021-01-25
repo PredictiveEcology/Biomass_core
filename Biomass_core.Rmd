@@ -22,7 +22,7 @@ A biomass succession model derived and modified from LANDIS-II Biomass Successio
 Biomass_core simulates forest succession in a spatially explicit manner (per pixel) by reproducing the population dynamics (growth and mortality), dispersal and competition for light resources of tree species. 
 Like in LANDIS-II, dynamics are simulated in terms of their biomass per cohort (a combination of species and age), following a `biomass ~ age` curve  that is influenced by species-specific parameters such as growth, mortality, maximum biomass, and species traits such as longevity and tolerance to shade (see [LANDIS-II Biomass Succession v3.2 User Guide](https://github.com/LANDIS-II-Foundation/Extension-Biomass-Succession/blob/master/docs/LANDIS-II%20Biomass%20Succession%20v3.2%20User%20Guide.docx) and [Scheller and Mladenoff (2004)](https://pdfs.semanticscholar.org/4d38/d0be6b292eccd444af399775d37a757d1967.pdf).
 One of three dispersal algorithms are available: 'no dispersal', 'universal dispersal'(every species can disperse across the entire landscape) and 'ward dispersal' (species disperse according to a dispersal kernel, with mean and maximum distances taken from LANDIS-II trait tables), the latter being used by default.
-The biggest differences between Biomass_core and LANDIS-II lie on how the model is parametrised and initialized and how different processes have been compartmentalised in order for higher flexibility.
+The biggest differences between Biomass_core and LANDIS-II lie on how the model is parameterized and initialized and how different processes have been compartmentalized in order for higher flexibility.
 
 ## Inputs and parametrisation
 
