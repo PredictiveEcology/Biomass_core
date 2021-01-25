@@ -1,16 +1,20 @@
 ---
 title: "Biomass_core"
-author: "Jean Marchal (<jean.d.marchal@gmail.com>) & Ceres Barros (<cbarros@mail.ubc.ca>)"
+author: Jean Marchal (<jean.d.marchal@gmail.com>), Ceres Barros (<cbarros@mail.ubc.ca>),
+  Eliot McIntire, Yong Luo
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
-  pdf_document: default
-editor_options: 
+  html_document:
+    df_print: paged
+editor_options:
   chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, warning = FALSE)
 ```
+
+**This documentation is not complete. If there are discrepancies, omissions, or it is unclear, this is expected**
 
 # Overview
 
@@ -88,7 +92,7 @@ Note that should a post-disturbance regeneration module be used, regeneration wi
 
 1. Preparation of necessary objects for the simulation - either by accessory prep. data modules, or Biomass_core itself (using LANDIS-II test parameters and dummy data.)
 2. Disturbances - simulated by a disturbance module
-3. Post-disturbance regeneration - simulated by a regeneration module
+3. Post-disturbance regeneration - simulated by a regeneration module (`Biomass_regeneration` is an optional download)
 4. Seed dispersal - see Section 4.5.1 Seeding of the LANDIS-II Model v7.0 Description(https://drive.google.com/file/d/15gSueug-Rj9I2RZqdroDbad-k53Jq7j3/view) for details
 5. Growth, ageing and mortality - based on [Scheller and Mladenoff (2004)](https://pdfs.semanticscholar.org/4d38/d0be6b292eccd444af399775d37a757d1967.pdf)
 6. Preparation of visual/saved outputs
@@ -97,7 +101,7 @@ Note that should a post-disturbance regeneration module be used, regeneration wi
 # Usage example
 ## Load SpaDES
 
-```{r load-SpaDES}
+```{r load-SpaDES, eval=FALSE}
 library(SpaDES)
 library(LandR)
 
@@ -109,19 +113,11 @@ spadesModulesDirectory <- ".." # In general, a module code will be controlled at
 
 ## Get the module
 
-You can either get the module using `downloadModule`, which will download the code, but will disconnect that code from the original GitHub sources, or you can fork, clone and load the repository. Forking will keep the source code connected with the original.  The most powerful way is to make a new, empty project of your own name in github, make a subfolder called "modules" (same as the above name), then add this module as a submodule inside "modules". This module then becomes one of many inside your project.
-
-
-```{r download module}
-# Simple way to download modules
-# downloadModule(moduleName, path = spadesModulesDirectory)
-
-# OR Advanced for developers is to use GitHub
-```
+See [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other SpaDES modules. Alternatively, it can be forked or cloned from github.com directly.
 
 ## Setup simulation
 
-```{r module usage example}
+```{r module usage example, eval=FALSE}
 setPaths(inputPath = "inputs", 
          cachePath = "cache", 
          modulePath = spadesModulesDirectory, 
