@@ -1877,10 +1877,10 @@ CohortAgeReclassification <- function(sim) {
     }
 
     ## if we need rasterToMatchLarge, that means a) we don't have it, but b) we will have rawBiomassMap
-    if (is.null(sim$rasterToMatch))
-      warning(paste0("rasterToMatchLarge is missing and will be created \n",
-                     "from rawBiomassMap and studyAreaLarge.\n
-              If this is wrong, provide raster"))
+
+    warning("rasterToMatch is missing and will be created",
+            " from rawBiomassMap and studyAreaLarge.",
+            " If this is wrong, provide raster.")
 
     sim$rasterToMatch <- rawBiomassMap
     RTMvals <- getValues(sim$rasterToMatch)
@@ -1958,13 +1958,19 @@ CohortAgeReclassification <- function(sim) {
     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
                                   newVals = "Mixed", palette = "Accent")
   } else {
-    if (is.null(sim$sppColorVect))
+    if (is.null(sim$sppColorVect)) {
       message("'sppEquiv' is provided without a 'sppColorVect'. Running:
               LandR::sppColors with column ", P(sim)$sppEquivCol)
     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
                                   newVals = "Mixed", palette = "Accent")
-
+    }
   }
+
+  if (P(sim)$vegLeadingProportion > 0 & is.na(sim$sppColorVect['Mixed'])) {
+    stop("vegLeadingProportion  is > 0 but there is no 'Mixed' color in sim$sppColorVect. ",
+         "Please supply sim$sppColorVect with a 'Mixed' color or set vegLeadingProportion to zero.")
+  }
+
 
   if (!suppliedElsewhere("treedFirePixelTableSinceLastDisp", sim)) {
     sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(),
