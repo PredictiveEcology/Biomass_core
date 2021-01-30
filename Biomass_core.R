@@ -246,7 +246,9 @@ defineModule(sim, list(
     createsOutput("treedFirePixelTableSinceLastDisp", "data.table",
                   desc = paste("3 columns: pixelIndex, pixelGroup, and burnTime.",
                                "Each row represents a forested pixel that was burned up to and including this year,",
-                               "since last dispersal event, with its corresponding pixelGroup and time it occurred"))
+                               "since last dispersal event, with its corresponding pixelGroup and time it occurred")),
+    createsOutput("vegTypeMap", "RasterLayer",
+                  desc = "Map of leading species in each pixel, colored according to sim$sppColorVect")
   )
 ))
 
