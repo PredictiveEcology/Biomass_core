@@ -849,7 +849,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                    by = c("ecoregionGroup", "pixelGroup")]
 
   simulationOutput <- setkey(simulationOutput, pixelGroup)[setkey(pixelAll, pixelGroup), nomatch = 0][
-    , .(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = ecoregionGroup] ## NOTE:
+    , .(Biomass = sum(as.numeric(uniqueSumB) * as.numeric(NofPixel))), by = ecoregionGroup] ## NOTE:
   ## above needs to be numeric because of integer overflow -- returned to integer in 2 lines
   simulationOutput <- setkey(simulationOutput, ecoregionGroup)[
     setkey(mod$activeEcoregionLength, ecoregionGroup), nomatch = 0]
