@@ -21,7 +21,7 @@ defineModule(sim, list(
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare",
                   "ggplot2", "grid", "parallel", "purrr", "quickPlot",
                   "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>=0.0.11.9005)",
+                  "PredictiveEcology/LandR@development (>=0.0.11.9008)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
@@ -74,7 +74,7 @@ defineModule(sim, list(
                           "`spinUp` uses `sim$standAgeMap` as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
                           "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied.")),
-    defineParameter("keepClimateCols", "logical", TRUE, NA, NA, "include growth and mortality predictions in cohortData?"),
+    defineParameter("keepClimateCols", "logical", FALSE, NA, NA, "include growth and mortality predictions in cohortData?"),
     defineParameter("minCohortBiomass", "numeric", 0, NA, NA,
                     desc = "cohorts with biomass below this threshold are removed. Not a LANDIS-II BSM param"),
     defineParameter("mixedType", "numeric", 2,
@@ -97,7 +97,7 @@ defineModule(sim, list(
                     desc = "a number that define whether a species is leading for a given pixel"),
     defineParameter(".maxMemory", "numeric", 5, NA, NA,
                     desc = "maximum amount of memory (in GB) to use for dispersal calculations."),
-    defineParameter(".plotInitialTime", "numeric", 0, NA, NA,
+    defineParameter(".plotInitialTime", "numeric", start(sim), NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first plot event should occur.",
                                  "Set to NA to turn plotting off.")),
     defineParameter(".plotInterval", "numeric", NA, NA, NA,
@@ -246,7 +246,9 @@ defineModule(sim, list(
     createsOutput("treedFirePixelTableSinceLastDisp", "data.table",
                   desc = paste("3 columns: pixelIndex, pixelGroup, and burnTime.",
                                "Each row represents a forested pixel that was burned up to and including this year,",
-                               "since last dispersal event, with its corresponding pixelGroup and time it occurred"))
+                               "since last dispersal event, with its corresponding pixelGroup and time it occurred")),
+    createsOutput("vegTypeMap", "RasterLayer",
+                  desc = "Map of leading species in each pixel, colored according to sim$sppColorVect")
   )
 ))
 
@@ -847,7 +849,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                    by = c("ecoregionGroup", "pixelGroup")]
 
   simulationOutput <- setkey(simulationOutput, pixelGroup)[setkey(pixelAll, pixelGroup), nomatch = 0][
-    , .(Biomass = sum(as.numeric(uniqueSumB*NofPixel))), by = ecoregionGroup] ## NOTE:
+    , .(Biomass = sum(as.numeric(uniqueSumB) * as.numeric(NofPixel))), by = ecoregionGroup] ## NOTE:
   ## above needs to be numeric because of integer overflow -- returned to integer in 2 lines
   simulationOutput <- setkey(simulationOutput, ecoregionGroup)[
     setkey(mod$activeEcoregionLength, ecoregionGroup), nomatch = 0]
@@ -923,7 +925,7 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
   tempOutput_All <- tempOutput_All[, .(Biomass = sum(as.numeric(uniqueSumB) * as.numeric(NofPixelGroup)),
                                        ANPP = sum(as.numeric(uniqueSumANPP) * as.numeric(NofPixelGroup)),
                                        Mortality = sum(as.numeric(uniqueSumMortality) * as.numeric(NofPixelGroup)),
-                                       Regeneration = sum(uniqueSumRege * NofPixelGroup)),
+                                       Regeneration = sum(as.numeric(uniqueSumRege) * as.numeric(NofPixelGroup))),
                                    by = ecoregionGroup]
   tempOutput_All <- setkey(tempOutput_All, ecoregionGroup)[setkey(mod$activeEcoregionLength,
                                                                   ecoregionGroup), nomatch = 0]
@@ -1064,7 +1066,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
     ## generate climate-sensitivity predictions - this will no longer run if LandR pkg is the driver
-    if (P(sim)$growthAndMortalityDrivers == "LandR.CS") {
+    if (!P(sim)$growthAndMortalityDrivers == "LandR") {
       #necessary due to column joining
       if (!is.null(subCohortData$growthPred)) {
         set(subCohortData, NULL, c('growthPred', 'mortPred'), NULL)
@@ -1094,7 +1096,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
-    if (P(sim)$growthAndMortalityDrivers == "LandR.CS") {
+    if (!P(sim)$growthAndMortalityDrivers == "LandR") {
 
       subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred/100))]
       subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
@@ -1820,9 +1822,9 @@ CohortAgeReclassification <- function(sim) {
   #######################################################
 
   if (!suppliedElsewhere("studyArea", sim)) {
-    if (getOption("LandR.verbose", TRUE) > 0)
-      message("'studyArea' was not provided by user. Using a polygon (6250000 m^2) in southwestern Alberta, Canada")
-    sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)
+    stop("Please provide a 'studyArea' polygon")
+    # message("'studyArea' was not provided by user. Using a polygon (6250000 m^2) in southwestern Alberta, Canada")
+    # sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)  # Jan 2021 we agreed to force user to provide a SA/SAL
   }
 
   needRTM <- FALSE
@@ -1877,10 +1879,10 @@ CohortAgeReclassification <- function(sim) {
     }
 
     ## if we need rasterToMatchLarge, that means a) we don't have it, but b) we will have rawBiomassMap
-    if (is.null(sim$rasterToMatch))
-      warning(paste0("rasterToMatchLarge is missing and will be created \n",
-                     "from rawBiomassMap and studyAreaLarge.\n
-              If this is wrong, provide raster"))
+
+    warning("rasterToMatch is missing and will be created",
+            " from rawBiomassMap and studyAreaLarge.",
+            " If this is wrong, provide raster.")
 
     sim$rasterToMatch <- rawBiomassMap
     RTMvals <- getValues(sim$rasterToMatch)
@@ -1958,13 +1960,19 @@ CohortAgeReclassification <- function(sim) {
     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
                                   newVals = "Mixed", palette = "Accent")
   } else {
-    if (is.null(sim$sppColorVect))
+    if (is.null(sim$sppColorVect)) {
       message("'sppEquiv' is provided without a 'sppColorVect'. Running:
               LandR::sppColors with column ", P(sim)$sppEquivCol)
     sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
                                   newVals = "Mixed", palette = "Accent")
-
+    }
   }
+
+  if (P(sim)$vegLeadingProportion > 0 & is.na(sim$sppColorVect['Mixed'])) {
+    stop("vegLeadingProportion  is > 0 but there is no 'Mixed' color in sim$sppColorVect. ",
+         "Please supply sim$sppColorVect with a 'Mixed' color or set vegLeadingProportion to zero.")
+  }
+
 
   if (!suppliedElsewhere("treedFirePixelTableSinceLastDisp", sim)) {
     sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(),
