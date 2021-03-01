@@ -21,7 +21,7 @@ defineModule(sim, list(
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare",
                   "ggplot2", "grid", "parallel", "purrr", "quickPlot",
                   "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>=0.0.11.9008)",
+                  "PredictiveEcology/LandR@development (>=0.0.12.9006)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
@@ -554,7 +554,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     sim$sppColorVect <- tempObjs$sppColorVect
     rm(tempObjs)
 
-    pixelTable <- makePixelTable(speciesLayers = sim$speciesLayers, species = sim$species,
+    pixelTable <- makePixelTable(speciesLayers = sim$speciesLayers, #species = sim$species,
                                  standAgeMap = standAgeMap, ecoregionFiles = ecoregionFiles,
                                  biomassMap = rawBiomassMap, rasterToMatch = sim$rasterToMatch,
                                  rstLCC = rstLCC)
@@ -1822,9 +1822,9 @@ CohortAgeReclassification <- function(sim) {
   #######################################################
 
   if (!suppliedElsewhere("studyArea", sim)) {
-    if (getOption("LandR.verbose", TRUE) > 0)
-      message("'studyArea' was not provided by user. Using a polygon (6250000 m^2) in southwestern Alberta, Canada")
-    sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)
+    stop("Please provide a 'studyArea' polygon")
+    # message("'studyArea' was not provided by user. Using a polygon (6250000 m^2) in southwestern Alberta, Canada")
+    # sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)  # Jan 2021 we agreed to force user to provide a SA/SAL
   }
 
   needRTM <- FALSE
