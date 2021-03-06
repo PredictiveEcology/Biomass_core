@@ -164,3 +164,4 @@
 "NFI_MODIS250m_kNN_Species_Popu_Tri_v0.tif" "1700f1f8f92de714" "8062062" "xxhash64"
 "NFI_MODIS250m_kNN_Species_Tsug_Can_v0.tif" "188690797081bce8" "22860660" "xxhash64"
 "NFI_MODIS250m_kNN_Species_Tsug_Spp_v0.tif" "c0a7f6c4fad511dd" "17326652" "xxhash64"
+"NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif" "295106f5686a923b" "309928216" "xxhash64"

@@ -1,0 +1,84 @@
+---
+title: "Running Biomass_core with a sample study area in Alberta, Canada"
+author: "Eliot McIntire <eliotmcintire@gmail.com>"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+editor_options:
+  chunk_output_type: console
+---
+
+## Get the module
+
+See [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other SpaDES modules.
+
+# Usage example
+
+```{r setup}
+workshopPath = "~/SpaDESWorkshop"
+modulePath = file.path(workshopPath, "modules")
+modulePath = "~/GitHub"
+options(spades.modulePath = modulePath,
+        reproducible.inputPaths = file.path(workshopPath, "cachedData"))
+if (!require("Require")) {install.packages("Require"); library(Require)}
+Require("SpaDES.core")
+setPaths(modulePath = modulePath)
+
+# Pick a study area
+
+
+
+# Pick 5 species of tree
+sppEquiv <- LandR::sppEquivalencies_CA
+sppEquiv <- sppEquiv[Boreal %in% c("Pice_Gla", "Pice_Mar", "Pinu_Ban", "Pinu_Con", "Popu_Tre")]
+
+```
+
+## Using Landis txt files
+
+This module is a port of the Landis II Biomass Extension to R.
+It can use the Landis txt files as inputs. 
+```{r LandisFiles}
+
+out <- prepInputsMainInput()
+LandisDefaultsURL <-
+"https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt"
+LandisFile <- "LandisParams.txt"
+download.file(LandisDefaultsURL, destfile = LandisFile)
+vals <- readLines(LandisFile)
+file.edit(LandisFile)
+
+parameters <- list(
+  successionTimestep = as.integer(strsplit(grep("Timestep", vals, value = TRUE), "  ")[[1]][2])
+)
+
+```
+
+## Setup simulation
+
+```{r module usage example}
+
+times <- list(start = 0, end = 1)
+
+## Usage example
+modules <- as.list(moduleName)
+objects <- list()
+paths <- getPaths()
+
+successionTimestep <- 1L
+
+## keep default values for most parameters
+## (ommitted from this list)
+parameters <- list(
+  Biomass_core = list(
+    ".plotInitialTime" = times$start
+    , "sppEquivCol" = "Boreal"
+    , "successionTimestep" = successionTimestep*10
+    , ".saveInitialTime" = 1
+    , ".useCache" = FALSE
+    , ".useParallel" = FALSE
+    , ".studyAreaName" = "RandomAB"
+  )
+)
+
+mySim <- simInit(times = times, params = parameters, modules = modules, objects = objects, paths = paths)
+mySimOut <- spades(mySim, debug = TRUE)
+```

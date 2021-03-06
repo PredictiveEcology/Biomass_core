@@ -11,3 +11,5 @@
 *.swp
 
 cache/
+
+CHECKSUMS.txt
