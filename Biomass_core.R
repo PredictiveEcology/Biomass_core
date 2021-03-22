@@ -1821,8 +1821,8 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (is.na(P(sim)$.studyAreaName)) {
-    params(sim)[[currentModule(sim)]][[".studyAreaName"]] <- reproducible::studyAreaName(sim$studyAreaLarge)
-    message("The .studyAreaName is not supplied; derived name from sim$studyAreaLarge: ",
+    params(sim)[[currentModule(sim)]][[".studyAreaName"]] <- reproducible::studyAreaName(sim$studyArea)
+    message("The .studyAreaName is not supplied; derived name from sim$studyArea: ",
             params(sim)[[currentModule(sim)]][[".studyAreaName"]])
   }
 
