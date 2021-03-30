@@ -21,12 +21,12 @@ defineModule(sim, list(
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare",
                   "ggplot2", "grid", "parallel", "purrr", "quickPlot",
                   "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>=0.0.12.9006)",
+                  "PredictiveEcology/LandR@development (>= 1.0.0.9001)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development",
                   "PredictiveEcology/SpaDES.tools@development",
-                  "ianmseddy/LandR.CS@master (>=0.0.2.0002)"),
+                  "ianmseddy/LandR.CS@master (>= 0.0.2.0002)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -1818,6 +1818,12 @@ CohortAgeReclassification <- function(sim) {
     stop("Please provide a 'studyArea' polygon")
     # message("'studyArea' was not provided by user. Using a polygon (6250000 m^2) in southwestern Alberta, Canada")
     # sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)  # Jan 2021 we agreed to force user to provide a SA/SAL
+  }
+
+  if (is.na(P(sim)$.studyAreaName)) {
+    params(sim)[[currentModule(sim)]][[".studyAreaName"]] <- reproducible::studyAreaName(sim$studyArea)
+    message("The .studyAreaName is not supplied; derived name from sim$studyArea: ",
+            params(sim)[[currentModule(sim)]][[".studyAreaName"]])
   }
 
   needRTM <- FALSE
