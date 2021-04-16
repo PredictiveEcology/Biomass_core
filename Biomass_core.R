@@ -1069,9 +1069,10 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     if (!P(sim)$growthAndMortalityDrivers == "LandR") {
       #necessary due to column joining
       if (!is.null(subCohortData$growthPred)) {
-        set(subCohortData, NULL, c('growthPred', 'mortPred', 'HTp_pred'), NULL)
+        set(subCohortData, NULL, c('growthPred', 'mortPred'), NULL)
       }
-      if (!is.null(subCohortData$HTp_pred)) {
+
+      if (!is.null(subCohortData$HTp_pred)) { #added this to which is why this is RIA branch
         set(subCohortData, NULL, c('HTp_pred'), NULL)
       }
       #get arguments from sim environment - this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
@@ -1080,7 +1081,9 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         arg <-  eval(x, envir = sim)
       })
       names(cceArgs) <- paste(sim$cceArgs)
-
+      if (time(sim) == 2031) {
+        browser()
+      }
       predObj <- calculateClimateEffect(cceArgs = cceArgs,
                                         cohortData = subCohortData,
                                         pixelGroupMap = sim$pixelGroupMap,
@@ -1097,17 +1100,18 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
     set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
     set(subCohortData, NULL, "mBio", pmin(subCohortData$mBio, subCohortData$aNPPAct))
-    set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
-    ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
+    ## this line will return age-mortality unchanged unless LandR_BiomassGMCS is also run
     if (!P(sim)$growthAndMortalityDrivers == "LandR") {
 
-      subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred/100))]
-      subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
+      subCohortData[, mAge := pmax(0, asInteger(mAge * mortPred/100))]
+      subCohortData[, mAge := pmin(mAge, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
       if (!P(sim)$keepClimateCols) {
         set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
       }
     }
+
+    set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
     set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
     if (P(sim)$calibrate) {
