@@ -856,6 +856,15 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sim$simulationOutput <- simulationOutput[, .(ecoregionGroup, NofCell, Year = asInteger(time(sim)),
                                                Biomass = asInteger(Biomass / NofCell),
                                                ANPP = 0L, Mortality = 0L, Regeneration = 0L)]
+
+  ## make initial vegTypeMap - this is important when saving outputs at year = 1, with eventPriority = 1
+  ## this vegTypeMap will be overwritten later in the same year.
+  sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
+                                        P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
+                                        sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+                                        colors = sim$sppColorVect,
+                                        doAssertion = getOption("LandR.assertions", TRUE))
+
   sim$lastReg <- 0
   speciesEcoregion[, identifier := year > P(sim)$successionTimestep]
   speciesEcoregion_True <- speciesEcoregion[identifier == TRUE, ]
