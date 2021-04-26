@@ -1081,9 +1081,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         arg <-  eval(x, envir = sim)
       })
       names(cceArgs) <- paste(sim$cceArgs)
-      if (time(sim) == 2031) {
-        browser()
-      }
+
       predObj <- calculateClimateEffect(cceArgs = cceArgs,
                                         cohortData = subCohortData,
                                         pixelGroupMap = sim$pixelGroupMap,
