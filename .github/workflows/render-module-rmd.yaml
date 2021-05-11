@@ -58,7 +58,7 @@ jobs:
       - name: Install module package dependencies
         run: |
           pkgs <- SpaDES.core::packages(modules = "Biomass_core", paths = "..")
-          Require::Require(pkgs)
+          Require::Require(pkgs[[1]])
         shell: Rscript {0}
 
       - name: Render module Rmd
