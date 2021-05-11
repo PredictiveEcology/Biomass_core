@@ -8,6 +8,7 @@ on:
       - master
       - development
     paths:
+      - .github/workflows/render-module-rmd.yaml
       - Biomass_core.Rmd
       - Biomass_core.R
 
