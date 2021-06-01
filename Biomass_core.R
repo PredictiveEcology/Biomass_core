@@ -346,16 +346,15 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
            sim <- scheduleEvent(sim, end(sim),
                                 "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)  ## schedule the last plotting events (so that it doesn't depend on plot interval)
+           sim <- scheduleEvent(sim, start(sim),
+                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
+           sim <- scheduleEvent(sim, end(sim),
+                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
 
            if (P(sim)$.plotMaps) {
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
            }
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
-           if (!is.na(P(sim)$.plotInitialTime))
-             sim <- scheduleEvent(sim, end(sim),
-                                  "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
@@ -430,6 +429,14 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                                     "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
            }
          },
+         plotAvgs = {
+           sim <- plotAvgVegAttributes(sim)
+           if (!is.na(P(sim)$.plotInterval)) {
+             if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
+               sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                    "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
+           }
+         },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
            if (P(sim)$.plotMaps)
@@ -440,12 +447,6 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- Save(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval,
                                 "Biomass_core", "save", eventPriority = savePriority)
-         },
-         plotAvgs = {
-           sim <- plotAvgVegAttributes(sim)
-           if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
-             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                  "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
@@ -654,7 +655,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                            pixelGroupBiomassClass = 10,
                                            pixelGroupAgeClass = 10,
                                            minAgeForGrouping = -1)#,
-                                           #pixelFateDT = pixelFateDT)
+    #pixelFateDT = pixelFateDT)
 
     sim$cohortData <- cohortDataFiles$cohortData
     pixelCohortData <- cohortDataFiles$pixelCohortData
@@ -1771,9 +1772,10 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
       Plot(plot1, title = "mean landscape biomass and aNPP (Mg/ha) and max stand age", new = TRUE)
     }
 
-    if (time(sim) == end(sim))
+    if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
-      ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
+      ggsave(file.path(outputPath(sim), "figures", "landscape_biomass_aNPP_max_age.png"), plot1)
+    }
   }
   return(invisible(sim))
 })
@@ -1971,8 +1973,8 @@ CohortAgeReclassification <- function(sim) {
     if (is.null(sim$sppColorVect)) {
       message("'sppEquiv' is provided without a 'sppColorVect'. Running:
               LandR::sppColors with column ", P(sim)$sppEquivCol)
-    sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
-                                  newVals = "Mixed", palette = "Accent")
+      sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
+                                    newVals = "Mixed", palette = "Accent")
     }
   }
 
