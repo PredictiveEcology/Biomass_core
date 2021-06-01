@@ -1640,11 +1640,16 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
     if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
-      ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
-      ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
-      ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
-      ggsave(file.path(outputPath(sim), "figures", fileNamePlot5), plot5)
-      ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"), plot6)
+      ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"),
+             plot2 + theme_bw(base_size = 14))
+      ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"),
+             plot3 + theme_bw(base_size = 14))
+      ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"),
+             plot4 + theme_bw(base_size = 14))
+      ggsave(file.path(outputPath(sim), "figures", fileNamePlot5),
+             plot5 + theme_bw(base_size = 14))
+      ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"),
+             plot6 + theme_bw(base_size = 14))
     }
   }
 
@@ -1734,6 +1739,8 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
 plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
+  checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
+
   ## AVERAGE STAND BIOMASS/AGE/ANPP
   ## calculate acrosS pixels
   ## don't expand table, multiply by no. pixels - faster
@@ -1774,7 +1781,8 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
 
     if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
-      ggsave(file.path(outputPath(sim), "figures", "landscape_biomass_aNPP_max_age.png"), plot1)
+      ggsave(file.path(outputPath(sim), "figures", "landscape_biomass_aNPP_max_age.png"),
+             plot1 + theme_bw(base_size = 14) + theme(legend.position = "bottom"))
     }
   }
   return(invisible(sim))
