@@ -346,15 +346,16 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
            sim <- scheduleEvent(sim, end(sim),
                                 "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)  ## schedule the last plotting events (so that it doesn't depend on plot interval)
-           sim <- scheduleEvent(sim, start(sim),
-                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
-           sim <- scheduleEvent(sim, end(sim),
-                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
 
            if (P(sim)$.plotMaps) {
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
            }
+
+           sim <- scheduleEvent(sim, start(sim),
+                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
+           sim <- scheduleEvent(sim, end(sim),
+                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
