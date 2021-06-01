@@ -294,19 +294,24 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
              params(sim)$Biomass_core$.saveInterval <- P(sim)$successionTimestep
 
            ## make sure plotting window is big enough
-           if (!is.na(P(sim)$.plotInitialTime) &&
-               tryCatch(dev.size()[2] < 14, error = function(e) FALSE)) {
-             dev.off()
-             dev(height = 10, width = 14)
-             clearPlot()
-
-             ## current window will be used for maps
-             ## a new one for summary stats
+           if (!is.na(P(sim)$.plotInitialTime)) {
+             ## if current plot dev is too small, open a new one
+             if (is.null(dev.list())) {
+               dev(x = dev.cur() + 1, height = 10, width = 14)
+               clearPlot()
+             } else {
+               if (dev.size()[2] < 14) {
+                 dev(x = dev.cur() + 1, height = 10, width = 14)
+                 clearPlot()
+               }
+             }
+             ## current window will be used for  summary stats
+             ## a new one for maps
+             mod$statsWindow <- dev.cur()
              if (P(sim)$.plotMaps) {
-               mod$mapWindow <- dev.cur()
-               mod$statsWindow <- mod$mapWindow + 1
-             } else
-               mod$statsWindow <- dev.cur()
+               mod$mapWindow <- mod$statsWindow + 1
+               dev(x = mod$mapWindow, height = 8, width = 10)
+             }
            }
 
            ## Run Init event
@@ -1642,15 +1647,15 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"),
-             plot2 + theme_bw(base_size = 14))
+             plot2 + theme_bw(base_size = 16))
       ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"),
-             plot3 + theme_bw(base_size = 14))
+             plot3 + theme_bw(base_size = 16))
       ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"),
-             plot4 + theme_bw(base_size = 14))
+             plot4 + theme_bw(base_size = 16))
       ggsave(file.path(outputPath(sim), "figures", fileNamePlot5),
-             plot5 + theme_bw(base_size = 14))
+             plot5 + theme_bw(base_size = 16))
       ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"),
-             plot6 + theme_bw(base_size = 14))
+             plot6 + theme_bw(base_size = 16))
     }
   }
 
@@ -1773,7 +1778,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
             legend.position = "bottom") +
       facet_wrap(~ variable, scales = "free_y",
                  labeller = labeller(variable = varLabels)) +
-      labs(x = "Year", y = "Value")
+      labs(x = "Year", y = "Value", colour = "")
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
@@ -1783,7 +1788,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
     if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "landscape_biomass_aNPP_max_age.png"),
-             plot1 + theme_bw(base_size = 14) + theme(legend.position = "bottom"))
+             plot1 + theme_bw(base_size = 16) + theme(legend.position = "bottom"))
     }
   }
   return(invisible(sim))
