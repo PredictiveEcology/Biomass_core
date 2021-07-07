@@ -12,7 +12,7 @@ defineModule(sim, list(
     person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.3.2")),
+  version = list(Biomass_core = numeric_version("1.3.2.9000")),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
@@ -69,17 +69,17 @@ defineModule(sim, list(
                     paste("Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. ",
                           "If 'spinUp', it will derive biomass by running spinup derived from Landis-II.",
                           "If 'cohortData', it will be taken from the 'cohortData' object, i.e., it is already correct, by cohort.",
-                          "If 'biomassMap', it will be taken from sim$biomassMap,",
-                          "divided across species using sim$speciesLayers percent cover values",
+                          "If 'biomassMap', it will be taken from `sim$biomassMap`,",
+                          "divided across species using `sim$speciesLayers` percent cover values",
                           "`spinUp` uses `sim$standAgeMap` as the driver, so biomass",
                           "is an output. That means it will be unlikely to match any input information",
                           "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied.")),
-    defineParameter("keepClimateCols", "logical", FALSE, NA, NA, "include growth and mortality predictions in cohortData?"),
+    defineParameter("keepClimateCols", "logical", FALSE, NA, NA, "include growth and mortality predictions in `cohortData`?"),
     defineParameter("minCohortBiomass", "numeric", 0, NA, NA,
-                    desc = "cohorts with biomass below this threshold are removed. Not a LANDIS-II BSM param"),
+                    desc = "cohorts with biomass below this threshold are removed. Not a LANDIS-II BSM param."),
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
-                                 "2 for deciduous > conifer. See ?vegTypeMapGenerator.")),
+                                 "2 for deciduous > conifer. See `?vegTypeMapGenerator`.")),
     defineParameter("plotOverstory", "logical", FALSE, NA, NA, desc = "swap max age plot with overstory biomass"),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
                     desc = paste("choose which seeding algorithm will be used among",
@@ -119,17 +119,17 @@ defineModule(sim, list(
     defineParameter(".useParallel", "ANY", 2, NA, NA,
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to data.table::setDTthreads and should be <= 2;",
-                                 "If TRUE, it will be passed to parallel:makeCluster;",
-                                 "and if a cluster object, it will be passed to parallel::parClusterApplyB."))
+                                 "If TRUE, it will be passed to `parallel:makeCluster`;",
+                                 "and if a cluster object, it will be passed to `parallel::parClusterApplyB`."))
   ),
   inputObjects = bindrows(
     expectsInput("biomassMap", "RasterLayer",
                  desc = paste("total biomass raster layer in study area (in g/m2),",
                               "filtered for pixels covered by cohortData.",
-                              "Only used if P(sim)$initialBiomassSource == 'biomassMap'"),
+                              "Only used if `P(sim)$initialBiomassSource == 'biomassMap'`"),
                  sourceURL = ""),
     expectsInput("cceArgs", "list",
-                 desc = paste("a list of quoted objects used by the growthAndMortalityDriver calculateClimateEffect function")),
+                 desc = paste("a list of quoted objects used by the `growthAndMortalityDriver` `calculateClimateEffect` function")),
     expectsInput("cohortData", "data.table",
                  desc = "Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand"),
     expectsInput("ecoregion", "data.table",
@@ -294,19 +294,24 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
              params(sim)$Biomass_core$.saveInterval <- P(sim)$successionTimestep
 
            ## make sure plotting window is big enough
-           if (!is.na(P(sim)$.plotInitialTime) &&
-               tryCatch(dev.size()[2] < 14, error = function(e) FALSE)) {
-             dev.off()
-             dev(height = 10, width = 14)
-             clearPlot()
-
-             ## current window will be used for maps
-             ## a new one for summary stats
+           if (!is.na(P(sim)$.plotInitialTime)) {
+             ## if current plot dev is too small, open a new one
+             if (is.null(dev.list())) {
+               dev(x = dev.cur() + 1, height = 10, width = 14)
+               clearPlot()
+             } else {
+               if (dev.size()[2] < 14) {
+                 dev(x = dev.cur() + 1, height = 10, width = 14)
+                 clearPlot()
+               }
+             }
+             ## current window will be used for  summary stats
+             ## a new one for maps
+             mod$statsWindow <- dev.cur()
              if (P(sim)$.plotMaps) {
-               mod$mapWindow <- dev.cur()
-               mod$statsWindow <- mod$mapWindow + 1
-             } else
-               mod$statsWindow <- dev.cur()
+               mod$mapWindow <- mod$statsWindow + 1
+               dev(x = mod$mapWindow, height = 8, width = 10)
+             }
            }
 
            ## Run Init event
@@ -351,11 +356,11 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
              sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
                                   "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
            }
-           sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
+
+           sim <- scheduleEvent(sim, start(sim),
                                 "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
-           if (!is.na(P(sim)$.plotInitialTime))
-             sim <- scheduleEvent(sim, end(sim),
-                                  "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
+           sim <- scheduleEvent(sim, end(sim),
+                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
@@ -430,6 +435,14 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                                     "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)
            }
          },
+         plotAvgs = {
+           sim <- plotAvgVegAttributes(sim)
+           if (!is.na(P(sim)$.plotInterval)) {
+             if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
+               sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                    "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
+           }
+         },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
            if (P(sim)$.plotMaps)
@@ -440,12 +453,6 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- Save(sim)
            sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval,
                                 "Biomass_core", "save", eventPriority = savePriority)
-         },
-         plotAvgs = {
-           sim <- plotAvgVegAttributes(sim)
-           if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
-             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                  "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
          },
          warning(paste("Undefined event type: '", current(sim)[1, "eventType", with = FALSE],
                        "' in module '", current(sim)[1, "moduleName", with = FALSE], "'", sep = ""))
@@ -654,7 +661,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                            pixelGroupBiomassClass = 10,
                                            pixelGroupAgeClass = 10,
                                            minAgeForGrouping = -1)#,
-                                           #pixelFateDT = pixelFateDT)
+    #pixelFateDT = pixelFateDT)
 
     sim$cohortData <- cohortDataFiles$cohortData
     pixelCohortData <- cohortDataFiles$pixelCohortData
@@ -856,6 +863,15 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sim$simulationOutput <- simulationOutput[, .(ecoregionGroup, NofCell, Year = asInteger(time(sim)),
                                                Biomass = asInteger(Biomass / NofCell),
                                                ANPP = 0L, Mortality = 0L, Regeneration = 0L)]
+
+  ## make initial vegTypeMap - this is important when saving outputs at year = 1, with eventPriority = 1
+  ## this vegTypeMap will be overwritten later in the same year.
+  sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
+                                        P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
+                                        sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+                                        colors = sim$sppColorVect,
+                                        doAssertion = getOption("LandR.assertions", TRUE))
+
   sim$lastReg <- 0
   speciesEcoregion[, identifier := year > P(sim)$successionTimestep]
   speciesEcoregion_True <- speciesEcoregion[identifier == TRUE, ]
@@ -1630,11 +1646,16 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
     if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
-      ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"), plot2)
-      ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"), plot3)
-      ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"), plot4)
-      ggsave(file.path(outputPath(sim), "figures", fileNamePlot5), plot5)
-      ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"), plot6)
+      ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"),
+             plot2 + theme_bw(base_size = 16))
+      ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"),
+             plot3 + theme_bw(base_size = 16))
+      ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"),
+             plot4 + theme_bw(base_size = 16))
+      ggsave(file.path(outputPath(sim), "figures", fileNamePlot5),
+             plot5 + theme_bw(base_size = 16))
+      ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"),
+             plot6 + theme_bw(base_size = 16))
     }
   }
 
@@ -1724,6 +1745,8 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
 plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
+  checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
+
   ## AVERAGE STAND BIOMASS/AGE/ANPP
   ## calculate acrosS pixels
   ## don't expand table, multiply by no. pixels - faster
@@ -1755,16 +1778,18 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
             legend.position = "bottom") +
       facet_wrap(~ variable, scales = "free_y",
                  labeller = labeller(variable = varLabels)) +
-      labs(x = "Year", y = "Value")
+      labs(x = "Year", y = "Value", colour = "")
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
       Plot(plot1, title = "mean landscape biomass and aNPP (Mg/ha) and max stand age", new = TRUE)
     }
 
-    if (time(sim) == end(sim))
+    if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
-      ggsave(file.path(outputPath(sim), "figures", "total_biomass_anPP_max_age.png"), plot1)
+      ggsave(file.path(outputPath(sim), "figures", "landscape_biomass_aNPP_max_age.png"),
+             plot1 + theme_bw(base_size = 16) + theme(legend.position = "bottom"))
+    }
   }
   return(invisible(sim))
 })
@@ -1962,8 +1987,8 @@ CohortAgeReclassification <- function(sim) {
     if (is.null(sim$sppColorVect)) {
       message("'sppEquiv' is provided without a 'sppColorVect'. Running:
               LandR::sppColors with column ", P(sim)$sppEquivCol)
-    sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
-                                  newVals = "Mixed", palette = "Accent")
+      sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
+                                    newVals = "Mixed", palette = "Accent")
     }
   }
 

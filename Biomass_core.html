@@ -9,9 +9,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Jean Marchal (jean.d.marchal@gmail.com), Ceres Barros (cbarros@mail.ubc.ca), Eliot McIntire, Yong Luo" />
+<meta name="author" content="Jean Marchal (jean.d.marchal@gmail.com)" />
+<meta name="author" content="Ceres Barros (cbarros@mail.ubc.ca)" />
+<meta name="author" content="Eliot McIntire (eliot.mcintire@canada.ca)" />
+<meta name="author" content="Yong Luo" />
+<meta name="author" content="Alex M. Chubaty (achubaty@for-cast.ca)" />
 
-<meta name="date" content="2021-01-25" />
+<meta name="date" content="2021-05-11" />
 
 <title>Biomass_core</title>
 
@@ -48,6 +52,15 @@ if (!!window.navigator.userAgent.match("MSIE 8")) {
 !function(a){"use strict";a.matchMedia=a.matchMedia||function(a){var b,c=a.documentElement,d=c.firstElementChild||c.firstChild,e=a.createElement("body"),f=a.createElement("div");return f.id="mq-test-1",f.style.cssText="position:absolute;top:-100em",e.style.background="none",e.appendChild(f),function(a){return f.innerHTML='&shy;<style media="'+a+'"> #mq-test-1 { width: 42px; }</style>',c.insertBefore(e,d),b=42===f.offsetWidth,c.removeChild(e),{matches:b,media:a}}}(a.document)}(this),function(a){"use strict";function b(){u(!0)}var c={};a.respond=c,c.update=function(){};var d=[],e=function(){var b=!1;try{b=new a.XMLHttpRequest}catch(c){b=new a.ActiveXObject("Microsoft.XMLHTTP")}return function(){return b}}(),f=function(a,b){var c=e();c&&(c.open("GET",a,!0),c.onreadystatechange=function(){4!==c.readyState||200!==c.status&&304!==c.status||b(c.responseText)},4!==c.readyState&&c.send(null))};if(c.ajax=f,c.queue=d,c.regex={media:/@media[^\{]+\{([^\{\}]*\{[^\}\{]*\})+/gi,keyframes:/@(?:\-(?:o|moz|webkit)\-)?keyframes[^\{]+\{(?:[^\{\}]*\{[^\}\{]*\})+[^\}]*\}/gi,urls:/(url\()['"]?([^\/\)'"][^:\)'"]+)['"]?(\))/g,findStyles:/@media *([^\{]+)\{([\S\s]+?)$/,only:/(only\s+)?([a-zA-Z]+)\s?/,minw:/\([\s]*min\-width\s*:[\s]*([\s]*[0-9\.]+)(px|em)[\s]*\)/,maxw:/\([\s]*max\-width\s*:[\s]*([\s]*[0-9\.]+)(px|em)[\s]*\)/},c.mediaQueriesSupported=a.matchMedia&&null!==a.matchMedia("only all")&&a.matchMedia("only all").matches,!c.mediaQueriesSupported){var g,h,i,j=a.document,k=j.documentElement,l=[],m=[],n=[],o={},p=30,q=j.getElementsByTagName("head")[0]||k,r=j.getElementsByTagName("base")[0],s=q.getElementsByTagName("link"),t=function(){var a,b=j.createElement("div"),c=j.body,d=k.style.fontSize,e=c&&c.style.fontSize,f=!1;return b.style.cssText="position:absolute;font-size:1em;width:1em",c||(c=f=j.createElement("body"),c.style.background="none"),k.style.fontSize="100%",c.style.fontSize="100%",c.appendChild(b),f&&k.insertBefore(c,k.firstChild),a=b.offsetWidth,f?k.removeChild(c):c.removeChild(b),k.style.fontSize=d,e&&(c.style.fontSize=e),a=i=parseFloat(a)},u=function(b){var c="clientWidth",d=k[c],e="CSS1Compat"===j.compatMode&&d||j.body[c]||d,f={},o=s[s.length-1],r=(new Date).getTime();if(b&&g&&p>r-g)return a.clearTimeout(h),h=a.setTimeout(u,p),void 0;g=r;for(var v in l)if(l.hasOwnProperty(v)){var w=l[v],x=w.minw,y=w.maxw,z=null===x,A=null===y,B="em";x&&(x=parseFloat(x)*(x.indexOf(B)>-1?i||t():1)),y&&(y=parseFloat(y)*(y.indexOf(B)>-1?i||t():1)),w.hasquery&&(z&&A||!(z||e>=x)||!(A||y>=e))||(f[w.media]||(f[w.media]=[]),f[w.media].push(m[w.rules]))}for(var C in n)n.hasOwnProperty(C)&&n[C]&&n[C].parentNode===q&&q.removeChild(n[C]);n.length=0;for(var D in f)if(f.hasOwnProperty(D)){var E=j.createElement("style"),F=f[D].join("\n");E.type="text/css",E.media=D,q.insertBefore(E,o.nextSibling),E.styleSheet?E.styleSheet.cssText=F:E.appendChild(j.createTextNode(F)),n.push(E)}},v=function(a,b,d){var e=a.replace(c.regex.keyframes,"").match(c.regex.media),f=e&&e.length||0;b=b.substring(0,b.lastIndexOf("/"));var g=function(a){return a.replace(c.regex.urls,"$1"+b+"$2$3")},h=!f&&d;b.length&&(b+="/"),h&&(f=1);for(var i=0;f>i;i++){var j,k,n,o;h?(j=d,m.push(g(a))):(j=e[i].match(c.regex.findStyles)&&RegExp.$1,m.push(RegExp.$2&&g(RegExp.$2))),n=j.split(","),o=n.length;for(var p=0;o>p;p++)k=n[p],l.push({media:k.split("(")[0].match(c.regex.only)&&RegExp.$2||"all",rules:m.length-1,hasquery:k.indexOf("(")>-1,minw:k.match(c.regex.minw)&&parseFloat(RegExp.$1)+(RegExp.$2||""),maxw:k.match(c.regex.maxw)&&parseFloat(RegExp.$1)+(RegExp.$2||"")})}u()},w=function(){if(d.length){var b=d.shift();f(b.href,function(c){v(c,b.href,b.media),o[b.href]=!0,a.setTimeout(function(){w()},0)})}},x=function(){for(var b=0;b<s.length;b++){var c=s[b],e=c.href,f=c.media,g=c.rel&&"stylesheet"===c.rel.toLowerCase();e&&g&&!o[e]&&(c.styleSheet&&c.styleSheet.rawCssText?(v(c.styleSheet.rawCssText,e,f),o[e]=!0):(!/^([a-zA-Z:]*\/\/)/.test(e)&&!r||e.replace(RegExp.$1,"").split("/")[0]===a.location.host)&&("//"===e.substring(0,2)&&(e=a.location.protocol+e),d.push({href:e,media:f})))}w()};x(),c.update=x,c.getEmValue=t,a.addEventListener?a.addEventListener("resize",b,!1):a.attachEvent&&a.attachEvent("onresize",b)}}(this);
 };
 </script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
 <script>
 
 /**
@@ -1491,11 +1504,6 @@ window.onload = function() {
     </style>
 
 <style type="text/css">code{white-space: pre;}</style>
-<style type="text/css">
-  pre:not([class]) {
-    background-color: white;
-  }
-</style>
 <script type="text/javascript">
 if (window.hljs) {
   hljs.configure({languages: []});
@@ -1508,32 +1516,6 @@ if (window.hljs) {
 
 
 
-<style type="text/css">
-h1 {
-  font-size: 34px;
-}
-h1.title {
-  font-size: 38px;
-}
-h2 {
-  font-size: 30px;
-}
-h3 {
-  font-size: 24px;
-}
-h4 {
-  font-size: 18px;
-}
-h5 {
-  font-size: 16px;
-}
-h6 {
-  font-size: 12px;
-}
-.table th:not([align]) {
-  text-align: left;
-}
-</style>
 
 
 
@@ -1544,10 +1526,6 @@ h6 {
   max-width: 940px;
   margin-left: auto;
   margin-right: auto;
-}
-code {
-  color: inherit;
-  background-color: rgba(0, 0, 0, 0.04);
 }
 img {
   max-width:100%;
@@ -1564,6 +1542,9 @@ button.code-folding-btn:focus {
 summary {
   display: list-item;
 }
+pre code {
+  padding: 0;
+}
 </style>
 
 
@@ -1576,7 +1557,6 @@ summary {
   max-height: 500px;
   min-height: 44px;
   overflow-y: auto;
-  background: white;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
@@ -1640,24 +1620,159 @@ summary {
 
 
 
-<div class="fluid-row" id="header">
+<div id="header">
 
 
 
 <h1 class="title toc-ignore">Biomass_core</h1>
-<h4 class="author">Jean Marchal (<a href="mailto:jean.d.marchal@gmail.com" class="email">jean.d.marchal@gmail.com</a>), Ceres Barros (<a href="mailto:cbarros@mail.ubc.ca" class="email">cbarros@mail.ubc.ca</a>), Eliot McIntire, Yong Luo</h4>
-<h4 class="date">25 January 2021</h4>
+<h4 class="author">Jean Marchal (<a href="mailto:jean.d.marchal@gmail.com" class="email">jean.d.marchal@gmail.com</a>)</h4>
+<h4 class="author">Ceres Barros (<a href="mailto:cbarros@mail.ubc.ca" class="email">cbarros@mail.ubc.ca</a>)</h4>
+<h4 class="author">Eliot McIntire (<a href="mailto:eliot.mcintire@canada.ca" class="email">eliot.mcintire@canada.ca</a>)</h4>
+<h4 class="author">Yong Luo</h4>
+<h4 class="author">Alex M. Chubaty (<a href="mailto:achubaty@for-cast.ca" class="email">achubaty@for-cast.ca</a>)</h4>
+<h4 class="date">11 May 2021</h4>
 
 </div>
 
 
+<p><a href="https://gitter.im/PredictiveEcology/LandR_Biomass?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MiIgaGVpZ2h0PSIyMCI+PGxpbmVhckdyYWRpZW50IGlkPSJiIiB4Mj0iMCIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2JiYiIgc3RvcC1vcGFjaXR5PSIuMSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1vcGFjaXR5PSIuMSIvPjwvbGluZWFyR3JhZGllbnQ+PG1hc2sgaWQ9ImEiPjxyZWN0IHdpZHRoPSI5MiIgaGVpZ2h0PSIyMCIgcng9IjMiIGZpbGw9IiNmZmYiLz48L21hc2s+PGcgbWFzaz0idXJsKCNhKSI+PHBhdGggZmlsbD0iIzU1NSIgZD0iTTAgMGgzNHYyMEgweiIvPjxwYXRoIGZpbGw9IiM0NkJDOTkiIGQ9Ik0zNCAwaDU4djIwSDM0eiIvPjxwYXRoIGZpbGw9InVybCgjYikiIGQ9Ik0wIDBoOTJ2MjBIMHoiLz48L2c+PGcgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkRlamFWdSBTYW5zLFZlcmRhbmEsR2VuZXZhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiPjx0ZXh0IHg9IjE3IiB5PSIxNSIgZmlsbD0iIzAxMDEwMSIgZmlsbC1vcGFjaXR5PSIuMyI+Y2hhdDwvdGV4dD48dGV4dCB4PSIxNyIgeT0iMTQiPmNoYXQ8L3RleHQ+PHRleHQgeD0iNjIiIHk9IjE1IiBmaWxsPSIjMDEwMTAxIiBmaWxsLW9wYWNpdHk9Ii4zIj5vbiBnaXR0ZXI8L3RleHQ+PHRleHQgeD0iNjIiIHk9IjE0Ij5vbiBnaXR0ZXI8L3RleHQ+PC9nPjwvc3ZnPg==" alt="Gitter" /></a></p>
 <p><strong>This documentation is not complete. If there are discrepancies, omissions, or it is unclear, this is expected</strong></p>
 <div id="overview" class="section level1">
 <h1>Overview</h1>
 <p>A biomass succession model derived and modified from LANDIS-II Biomass Succession v3.2.1. Biomass_core simulates forest succession in a spatially explicit manner (per pixel) by reproducing the population dynamics (growth and mortality), dispersal and competition for light resources of tree species. Like in LANDIS-II, dynamics are simulated in terms of their biomass per cohort (a combination of species and age), following a <code>biomass ~ age</code> curve that is influenced by species-specific parameters such as growth, mortality, maximum biomass, and species traits such as longevity and tolerance to shade (see <a href="https://github.com/LANDIS-II-Foundation/Extension-Biomass-Succession/blob/master/docs/LANDIS-II%20Biomass%20Succession%20v3.2%20User%20Guide.docx">LANDIS-II Biomass Succession v3.2 User Guide</a> and <a href="https://pdfs.semanticscholar.org/4d38/d0be6b292eccd444af399775d37a757d1967.pdf">Scheller and Mladenoff (2004)</a>. One of three dispersal algorithms are available: ‘no dispersal’, ‘universal dispersal’(every species can disperse across the entire landscape) and ‘ward dispersal’ (species disperse according to a dispersal kernel, with mean and maximum distances taken from LANDIS-II trait tables), the latter being used by default. The biggest differences between Biomass_core and LANDIS-II lie on how the model is parameterized and initialized and how different processes have been compartmentalized in order for higher flexibility.</p>
 <div id="inputs-and-parametrisation" class="section level2">
 <h2>Inputs and parametrisation</h2>
-<p><code>Biomass_core</code> is capable of running on dummy datasets from which it estimates parameters linked to vegetation growth and seed germination (such as the maximum biomass per species, per pixel, and the probability of seed germination - <em>i.e.</em>, species establishment probability not due to resprouting), but also builds and initialises forest communities (based on biomass, age, species composition, land cover and ecological zones like ecodistricts. Ideally, however, the user should supply realistic versions of these data and the essential initialisation objects that <code>Biomass_core</code> requires to run. Below are two lists of input objects that the user should supply to <code>Biomass_core</code> in order for it to run on a realistic setting (this is not, however, an exhaustive list of inputs)</p>
+<p><code>Biomass_core</code> is capable of running on dummy datasets from which it estimates parameters linked to vegetation growth and seed germination (such as the maximum biomass per species, per pixel, and the probability of seed germination - <em>i.e.</em>, species establishment probability not due to resprouting), but also builds and initializes forest communities (based on biomass, age, species composition, land cover and ecological zones like ecodistricts.</p>
+<p>Ideally, however, the user should supply realistic versions of these data and the essential initialization objects that <code>Biomass_core</code> requires to run.</p>
+<pre><code>## defineParameter: &#39;growthInitialTime&#39; is not of specified type &#39;numeric&#39;.</code></pre>
+<pre><code>## defineParameter: &#39;.plotInitialTime&#39; is not of specified type &#39;numeric&#39;.</code></pre>
+<table>
+<colgroup>
+<col width="6%"></col>
+<col width="4%"></col>
+<col width="57%"></col>
+<col width="30%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">objectName</th>
+<th align="left">objectClass</th>
+<th align="left">desc</th>
+<th align="left">sourceURL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">biomassMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">total biomass raster layer in study area (in g/m2), filtered for pixels covered by cohortData. Only used if <code>P(sim)$initialBiomassSource == &#39;biomassMap&#39;</code></td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">cceArgs</td>
+<td align="left">list</td>
+<td align="left">a list of quoted objects used by the <code>growthAndMortalityDriver</code> <code>calculateClimateEffect</code> function</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">cohortData</td>
+<td align="left">data.table</td>
+<td align="left">Columns: B, pixelGroup, speciesCode, Indicating several features about ages and current vegetation of stand</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">ecoregion</td>
+<td align="left">data.table</td>
+<td align="left">ecoregion look up table</td>
+<td align="left"><a href="https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt" class="uri">https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt</a></td>
+</tr>
+<tr class="odd">
+<td align="left">ecoregionMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table. Defaults to a dummy map matching rasterToMatch with two regions</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">lastReg</td>
+<td align="left">numeric</td>
+<td align="left">an internal counter keeping track of when the last regeneration event occurred</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">minRelativeB</td>
+<td align="left">data.frame</td>
+<td align="left">table defining the cut points to classify stand shadeness</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">pixelGroupMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">initial community map that has mapcodes match initial community table</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">rasterToMatch</td>
+<td align="left">RasterLayer</td>
+<td align="left">a raster of the studyArea in the same resolution and projection as biomassMap</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">species</td>
+<td align="left">data.table</td>
+<td align="left">a table that has species traits such as longevity, shade tolerance, etc. Default is partially based on Dominic Cir and Yan’s project</td>
+<td align="left"><a href="https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv" class="uri">https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv</a></td>
+</tr>
+<tr class="odd">
+<td align="left">speciesEcoregion</td>
+<td align="left">data.table</td>
+<td align="left">table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time. Defaults to a dummy table based on dummy data os biomass, age, ecoregion and land cover class</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">speciesLayers</td>
+<td align="left">RasterStack</td>
+<td align="left">cover percentage raster layers by species in Canada species map. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived species cover maps from 2001 using a cover threshold of 10 - see <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a> for metadata</td>
+<td align="left"><a href="http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/" class="uri">http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/</a></td>
+</tr>
+<tr class="odd">
+<td align="left">sppColorVect</td>
+<td align="left">character</td>
+<td align="left">A named vector of colors to use for plotting. The names must be in sim<span class="math inline">\(speciesEquivalency[[sim\)</span>sppEquivCol]], and should also contain a color for ‘Mixed’</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">sppEquiv</td>
+<td align="left">data.table</td>
+<td align="left">table of species equivalencies. See LandR::sppEquivalencies_CA.</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">studyArea</td>
+<td align="left">SpatialPolygonsDataFrame</td>
+<td align="left">Polygon to use as the study area. Defaults to an area in Southwestern Alberta, Canada.</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">studyAreaReporting</td>
+<td align="left">SpatialPolygonsDataFrame</td>
+<td align="left">multipolygon (typically smaller/unbuffered than studyArea) to use for plotting/reporting. Defaults to an area in Southwestern Alberta, Canada.</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">sufficientLight</td>
+<td align="left">data.frame</td>
+<td align="left">table defining how the species with different shade tolerance respond to stand shadeness. Default is based on LANDIS-II Biomass Succession v6.2 parameters</td>
+<td align="left"><a href="https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt" class="uri">https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt</a></td>
+</tr>
+<tr class="even">
+<td align="left">treedFirePixelTableSinceLastDisp</td>
+<td align="left">data.table</td>
+<td align="left">3 columns: pixelIndex, pixelGroup, and burnTime. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding pixelGroup and time it occurred</td>
+<td align="left">NA</td>
+</tr>
+</tbody>
+</table>
+<p>Below are two lists of input objects that the user should supply to <code>Biomass_core</code> in order for it to run on a realistic setting (this is not, however, an exhaustive list of inputs) .</p>
 <table>
 <colgroup>
 <col width="18%"></col>
@@ -1676,7 +1791,7 @@ summary {
 </tr>
 <tr class="even">
 <td><code>ecoregion</code></td>
-<td>a table listing values in ecoregionMap and their state (active or not)</td>
+<td>a table listing values in <code>ecoregionMap</code> and their state (active or not)</td>
 </tr>
 <tr class="odd">
 <td><code>minRelativeB</code></td>
@@ -1728,72 +1843,258 @@ summary {
 </table>
 <p>For the beginner user, we suggest running <code>Biomass_core</code> without supplying any inputs and inspecting the above mentioned objects to understand their structure and format. The user can later either feed these objects via <code>simInit</code>, or make a module that makes them and provides necessary inputs to <code>Biomass_core</code> (see e.g. <a href="https://github.com/eliotmcintire/Boreal_Biomass_coreDataPrep">Boreal_Biomass_coreDataPrep</a>)</p>
 <p>Besides the above mentioned inputs, <code>Biomass_core</code> uses the following parameters, which can be changed by the user if need be:</p>
+<pre><code>## defineParameter: &#39;growthInitialTime&#39; is not of specified type &#39;numeric&#39;.</code></pre>
+<pre><code>## defineParameter: &#39;.plotInitialTime&#39; is not of specified type &#39;numeric&#39;.</code></pre>
 <table>
 <colgroup>
-<col width="24%"></col>
-<col width="75%"></col>
+<col width="3%"></col>
+<col width="1%"></col>
+<col width="1%"></col>
+<col width="0%"></col>
+<col width="0%"></col>
+<col width="91%"></col>
 </colgroup>
 <thead>
 <tr class="header">
-<th>Parameter</th>
-<th>Description</th>
+<th align="left">paramName</th>
+<th align="left">paramClass</th>
+<th align="left">default</th>
+<th align="left">min</th>
+<th align="left">max</th>
+<th align="left">paramDesc</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>calcSummaryBGM</code></td>
-<td>determines when biomass, growth and mortality will be summarized and plotted</td>
+<td align="left">calcSummaryBGM</td>
+<td align="left">character</td>
+<td align="left">end</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: ‘start’- as before vegetation succession events, i.e. before dispersal, ‘postDisp’ - after dispersal, ‘postRegen’ - after post-disturbance regeneration (currently the same as ‘start’), ‘postGM’ - after growth and mortality, ‘postAging’ - after aging, ‘end’ - at the end of vegetation succesion events, before plotting and saving. The ‘end’ option is always active, being also the default option.</td>
 </tr>
 <tr class="even">
-<td><code>calibrate</code></td>
-<td>activates calibration if LANDIS-II-type spin-up is active (not implemented)</td>
+<td align="left">calibrate</td>
+<td align="left">logical</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">Do calibration? Defaults to FALSE</td>
 </tr>
 <tr class="odd">
-<td><code>initialBiomassSource</code></td>
-<td>determines how biomass will be initialised (only based on observed data at this point)</td>
+<td align="left">cohortDefinitionCols</td>
+<td align="left">character</td>
+<td align="left">pixelGro….</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">cohortData columns that determine what constitutes a cohort This parameter should only be modified if additional modules are adding columns to cohortData</td>
 </tr>
 <tr class="even">
-<td><code>seedingAlgorithm</code></td>
-<td>type of seeding algorithm (see above)</td>
+<td align="left">cutpoint</td>
+<td align="left">numeric</td>
+<td align="left">1e+10</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks</td>
 </tr>
 <tr class="odd">
-<td><code>spinupMortalityfraction</code></td>
-<td>if using LANDIS-II spin-up, this parameter increases mortality for all cohorts (not implemented)</td>
+<td align="left">gmcsGrowthLimits</td>
+<td align="left">numeric</td>
+<td align="left">66.66666….</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">if using LandR.CS for climate-sensitive growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small denominators as well as predictions outside the data range used to generate the model</td>
 </tr>
 <tr class="even">
-<td><code>sppEquivCol</code></td>
-<td>column of species equivalency table (<code>sppEquiv</code>) to use to extract species names</td>
+<td align="left">gmcsMortLimits</td>
+<td align="left">numeric</td>
+<td align="left">66.66666….</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">if using LandR.CS for climate-sensitive growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small denominators as well as predictions outside the data range used to generate the model</td>
 </tr>
 <tr class="odd">
-<td><code>successionTimestep</code></td>
-<td>time step of succession dynamics (ideally 10, but growth/mortality will still happen every year)</td>
+<td align="left">gmcsMinAge</td>
+<td align="left">numeric</td>
+<td align="left">21</td>
+<td align="left">0</td>
+<td align="left">NA</td>
+<td align="left">if using LandR.CS for climate-sensitive growth and mortality, the minimum age for which to predict climate-sensitive growth and mortality. Young stands (&lt; 30) are poorly represented by the PSP data used to parameterize the model.</td>
 </tr>
 <tr class="even">
-<td><code>vegLeadingProportion</code></td>
-<td>relative proportion determining species dominance in a pixel (used to plot leading vegetation maps)</td>
+<td align="left">growthAndMortalityDrivers</td>
+<td align="left">character</td>
+<td align="left">LandR</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">package name where the following functions can be found: calculateClimateEffect, assignClimateEffect (see LandR.CS for climate sensitivity, leave default if none desired)</td>
 </tr>
 <tr class="odd">
-<td><code>.plotInitialTime</code></td>
-<td>controls first year of plotting</td>
+<td align="left">growthInitialTime</td>
+<td align="left">numeric</td>
+<td align="left">start(sim)</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">Initial time for the growth event to occur</td>
 </tr>
 <tr class="even">
-<td><code>.saveInitialTime</code></td>
-<td>controls first year of saving</td>
+<td align="left">initialBiomassSource</td>
+<td align="left">character</td>
+<td align="left">cohortData</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">Currently, there are three options: ‘spinUp’, ‘cohortData’, ‘biomassMap’. If ‘spinUp’, it will derive biomass by running spinup derived from Landis-II. If ‘cohortData’, it will be taken from the ‘cohortData’ object, i.e., it is already correct, by cohort. If ‘biomassMap’, it will be taken from <code>sim$biomassMap</code>, divided across species using <code>sim$speciesLayers</code> percent cover values <code>spinUp</code> uses <code>sim$standAgeMap</code> as the driver, so biomass is an output. That means it will be unlikely to match any input information about biomass, unless this is set to TRUE, and a <code>sim$rawBiomassMap</code> is supplied.</td>
 </tr>
 <tr class="odd">
-<td><code>.useCache</code></td>
-<td>controls caching</td>
+<td align="left">keepClimateCols</td>
+<td align="left">logical</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">include growth and mortality predictions in <code>cohortData</code>?</td>
 </tr>
 <tr class="even">
-<td><code>.useParallel</code></td>
-<td>controls parallelisation</td>
+<td align="left">minCohortBiomass</td>
+<td align="left">numeric</td>
+<td align="left">0</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">cohorts with biomass below this threshold are removed. Not a LANDIS-II BSM param.</td>
+</tr>
+<tr class="odd">
+<td align="left">mixedType</td>
+<td align="left">numeric</td>
+<td align="left">2</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">How to define mixed stands: 1 for any species admixture; 2 for deciduous &gt; conifer. See <code>?vegTypeMapGenerator</code>.</td>
+</tr>
+<tr class="even">
+<td align="left">plotOverstory</td>
+<td align="left">logical</td>
+<td align="left">FALSE</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">swap max age plot with overstory biomass</td>
+</tr>
+<tr class="odd">
+<td align="left">seedingAlgorithm</td>
+<td align="left">character</td>
+<td align="left">wardDisp….</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">choose which seeding algorithm will be used among noDispersal, universalDispersal, and wardDispersal (default). Species dispersal distances (in the ‘species’ table) are based on LANDIS-II parameters.</td>
+</tr>
+<tr class="even">
+<td align="left">spinupMortalityfraction</td>
+<td align="left">numeric</td>
+<td align="left">0.001</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">defines the mortality loss fraction in spin up-stage simulation</td>
+</tr>
+<tr class="odd">
+<td align="left">sppEquivCol</td>
+<td align="left">character</td>
+<td align="left">Boreal</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">The column in sim$specieEquivalency data.table to use as a naming convention</td>
+</tr>
+<tr class="even">
+<td align="left">successionTimestep</td>
+<td align="left">numeric</td>
+<td align="left">10</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis.</td>
+</tr>
+<tr class="odd">
+<td align="left">vegLeadingProportion</td>
+<td align="left">numeric</td>
+<td align="left">0.8</td>
+<td align="left">0</td>
+<td align="left">1</td>
+<td align="left">a number that define whether a species is leading for a given pixel</td>
+</tr>
+<tr class="even">
+<td align="left">.maxMemory</td>
+<td align="left">numeric</td>
+<td align="left">5</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">maximum amount of memory (in GB) to use for dispersal calculations.</td>
+</tr>
+<tr class="odd">
+<td align="left">.plotInitialTime</td>
+<td align="left">numeric</td>
+<td align="left">start(sim)</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">Vector of length = 1, describing the simulation time at which the first plot event should occur. Set to NA to turn plotting off.</td>
+</tr>
+<tr class="even">
+<td align="left">.plotInterval</td>
+<td align="left">numeric</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">defines the plotting time step. If NA, the default, .plotInterval is set to successionTimestep.</td>
+</tr>
+<tr class="odd">
+<td align="left">.plotMaps</td>
+<td align="left">logical</td>
+<td align="left">TRUE</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">Controls whether maps should be plotted or not</td>
+</tr>
+<tr class="even">
+<td align="left">.saveInitialTime</td>
+<td align="left">numeric</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">Vector of length = 1, describing the simulation time at which the first save event should occur. Set to NA if no saving is desired. If not NA, then saving will occur at .saveInitialTime with a frequency equal to .saveInterval</td>
+</tr>
+<tr class="odd">
+<td align="left">.saveInterval</td>
+<td align="left">numeric</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">defines the saving time step. If NA, the default, .saveInterval is set to successionTimestep.</td>
+</tr>
+<tr class="even">
+<td align="left">.studyAreaName</td>
+<td align="left">character</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">Human-readable name for the study area used. If NA, a hash of studyArea will be used.</td>
+</tr>
+<tr class="odd">
+<td align="left">.useCache</td>
+<td align="left">character</td>
+<td align="left">.inputOb….</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">Internal. Can be names of events or the whole module name; these will be cached by SpaDES</td>
+</tr>
+<tr class="even">
+<td align="left">.useParallel</td>
+<td align="left">ANY</td>
+<td align="left">2</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">Used only in seed dispersal. If numeric, it will be passed to data.table::setDTthreads and should be &lt;= 2; If TRUE, it will be passed to <code>parallel:makeCluster</code>; and if a cluster object, it will be passed to <code>parallel::parClusterApplyB</code>.</td>
 </tr>
 </tbody>
 </table>
 </div>
 <div id="initialization" class="section level2">
 <h2>Initialization</h2>
-<p>Unlike the initialisation in LANDIS-II, which “iterates the number of time steps equal to the maximum cohort age for each site”, beginning at t - oldest cohort age and adding cohorts at the appropriate time (<a href="https://studylib.net/doc/6761603/landis-ii-biomass-succession-v3.2-user-guide">Scheller &amp; Miranda 2016</a>), Biomass_core initialises the simulation by deriving initial biomasses from available data.</p>
+<p>Unlike the initialization in LANDIS-II, which “iterates the number of time steps equal to the maximum cohort age for each site”, beginning at t - oldest cohort age and adding cohorts at the appropriate time (<a href="https://studylib.net/doc/6761603/landis-ii-biomass-succession-v3.2-user-guide">Scheller &amp; Miranda 2016</a>), Biomass_core initializes the simulation by deriving initial biomasses from available data.</p>
 </div>
 <div id="compartmentalisation-and-modularity" class="section level2">
 <h2>Compartmentalisation and modularity</h2>
@@ -1866,9 +2167,20 @@ spadesModulesDirectory &lt;- &quot;..&quot; # In general, a module code will be 
 
 times &lt;- list(start = 0, end = 1)
 
+studyArea &lt;- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
+
+# Pick the species you want to work with -- using the naming convention in &quot;Boreal&quot; column of LandR::sppEquivalencies_CA
+speciesNameConvention &lt;- &quot;Boreal&quot;
+speciesToUse &lt;- c(&quot;Pice_Gla&quot;, &quot;Popu_Tre&quot;, &quot;Pinu_Con&quot;)
+
+sppEquiv &lt;- LandR::sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
+# Assign a colour convention for graphics for each species
+sppColorVect &lt;- LandR::sppColors(sppEquiv, speciesNameConvention,
+                                  newVals = &quot;Mixed&quot;, palette = &quot;Accent&quot;)
+
 ## Usage example
 modules &lt;- as.list(moduleName)
-objects &lt;- list()
+objects &lt;- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppColorVect)
 paths &lt;- getPaths()
 
 successionTimestep &lt;- 1L
@@ -1878,7 +2190,7 @@ successionTimestep &lt;- 1L
 parameters &lt;- list(
   Biomass_core = list(
     &quot;.plotInitialTime&quot; = times$start
-    , &quot;sppEquivCol&quot; = &quot;Boreal&quot;
+    , &quot;sppEquivCol&quot; = speciesNameConvention
     , &quot;successionTimestep&quot; = successionTimestep*10
     , &quot;.saveInitialTime&quot; = 1
     , &quot;.useCache&quot; = FALSE 
@@ -1903,9 +2215,162 @@ mySimOut &lt;- spades(mySim, debug = TRUE)</code></pre>
 <li>Save</li>
 </ul>
 </div>
+<div id="output-data" class="section level1">
+<h1>Output data</h1>
+<p>The module produces the following outputs:</p>
+<pre><code>## defineParameter: &#39;growthInitialTime&#39; is not of specified type &#39;numeric&#39;.</code></pre>
+<pre><code>## defineParameter: &#39;.plotInitialTime&#39; is not of specified type &#39;numeric&#39;.</code></pre>
+<table>
+<colgroup>
+<col width="12%"></col>
+<col width="4%"></col>
+<col width="82%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">objectName</th>
+<th align="left">objectClass</th>
+<th align="left">desc</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">activePixelIndex</td>
+<td align="left">integer</td>
+<td align="left">internal use. Keeps track of which pixels are active</td>
+</tr>
+<tr class="even">
+<td align="left">activePixelIndexReporting</td>
+<td align="left">integer</td>
+<td align="left">internal use. Keeps track of which pixels are active in the reporting study area</td>
+</tr>
+<tr class="odd">
+<td align="left">ANPPMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">ANPP map at each succession time step</td>
+</tr>
+<tr class="even">
+<td align="left">cohortData</td>
+<td align="left">data.table</td>
+<td align="left">age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step</td>
+</tr>
+<tr class="odd">
+<td align="left">inactivePixelIndex</td>
+<td align="left">logical</td>
+<td align="left">internal use. Keeps track of which pixels are inactive</td>
+</tr>
+<tr class="even">
+<td align="left">inactivePixelIndexReporting</td>
+<td align="left">integer</td>
+<td align="left">internal use. Keeps track of which pixels are inactive in the reporting study area</td>
+</tr>
+<tr class="odd">
+<td align="left">lastFireYear</td>
+<td align="left">numeric</td>
+<td align="left">Year of the most recent fire year</td>
+</tr>
+<tr class="even">
+<td align="left">lastReg</td>
+<td align="left">numeric</td>
+<td align="left">an internal counter keeping track of when the last regeneration event occurred</td>
+</tr>
+<tr class="odd">
+<td align="left">minRelativeB</td>
+<td align="left">data.frame</td>
+<td align="left">define the cut points to classify stand shadeness</td>
+</tr>
+<tr class="even">
+<td align="left">mortalityMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">Mortality map at each succession time step</td>
+</tr>
+<tr class="odd">
+<td align="left">pixelGroupMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">updated community map at each succession time step</td>
+</tr>
+<tr class="even">
+<td align="left">regenerationOutput</td>
+<td align="left">data.table</td>
+<td align="left">TODO: description needed</td>
+</tr>
+<tr class="odd">
+<td align="left">reproductionMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">Regeneration map at each succession time step</td>
+</tr>
+<tr class="even">
+<td align="left">simulatedBiomassMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">Biomass map at each succession time step</td>
+</tr>
+<tr class="odd">
+<td align="left">simulationOutput</td>
+<td align="left">data.table</td>
+<td align="left">contains simulation results by ecoregion (main output)</td>
+</tr>
+<tr class="even">
+<td align="left">simulationTreeOutput</td>
+<td align="left">data.table</td>
+<td align="left">Summary of several characteristics about the stands, derived from cohortData</td>
+</tr>
+<tr class="odd">
+<td align="left">species</td>
+<td align="left">data.table</td>
+<td align="left">a table that has species traits such as longevity, shade tolerance, etc. Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs</td>
+</tr>
+<tr class="even">
+<td align="left">speciesEcoregion</td>
+<td align="left">data.table</td>
+<td align="left">define the maxANPP, maxB and SEP change with both ecoregion and simulation time</td>
+</tr>
+<tr class="odd">
+<td align="left">speciesLayers</td>
+<td align="left">RasterStack</td>
+<td align="left">biomass percentage raster layers by species in Canada species map</td>
+</tr>
+<tr class="even">
+<td align="left">spinupOutput</td>
+<td align="left">data.table</td>
+<td align="left">Spin-up output</td>
+</tr>
+<tr class="odd">
+<td align="left">summaryBySpecies</td>
+<td align="left">data.table</td>
+<td align="left">The total species biomass, average age and aNPP across the landscape (used for plotting and reporting).</td>
+</tr>
+<tr class="even">
+<td align="left">summaryBySpecies1</td>
+<td align="left">data.table</td>
+<td align="left">No. pixels of each leading vegetation type (used for plotting and reporting).</td>
+</tr>
+<tr class="odd">
+<td align="left">summaryLandscape</td>
+<td align="left">data.table</td>
+<td align="left">The averages of total biomass, age and aNPP across the landscape (used for plotting and reporting).</td>
+</tr>
+<tr class="even">
+<td align="left">treedFirePixelTableSinceLastDisp</td>
+<td align="left">data.table</td>
+<td align="left">3 columns: pixelIndex, pixelGroup, and burnTime. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding pixelGroup and time it occurred</td>
+</tr>
+<tr class="odd">
+<td align="left">vegTypeMap</td>
+<td align="left">RasterLayer</td>
+<td align="left">Map of leading species in each pixel, colored according to sim$sppColorVect</td>
+</tr>
+</tbody>
+</table>
+</div>
 <div id="links-to-other-modules" class="section level1">
 <h1>Links to other modules</h1>
 <p>Intended to be used with other landscape modules, such as LandMine, FireSense, Biomass_borealDataPrep, and possibly many others.</p>
+<div id="getting-help" class="section level2">
+<h2>Getting help</h2>
+<ul>
+<li><a href="https://gitter.im/PredictiveEcology/LandR_Biomass" class="uri">https://gitter.im/PredictiveEcology/LandR_Biomass</a></li>
+</ul>
+</div>
 </div>
 
 
@@ -1935,7 +2400,7 @@ $(document).ready(function () {
 
 $(document).ready(function () {
   $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
+    $(this).parent().toggleClass('nav-tabs-open');
   });
 });
 </script>
