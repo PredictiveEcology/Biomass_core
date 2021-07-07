@@ -28,7 +28,7 @@ test_that("test scheduled time for age classification and sumB at spinup stage",
   if(exists("spinUp")){
     output <- spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   } else {
-    output <- mySim$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
+    output <- mySim$.mods$Biomass_core$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   }
   age <- output$spinupOutput$age
   age_compared <- seq(2,492)
