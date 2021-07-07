@@ -2,7 +2,7 @@ test_that("test summary aboveground biomass, growth, mortality. ",{
   library(raster)
   library(data.table)
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath="..",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),

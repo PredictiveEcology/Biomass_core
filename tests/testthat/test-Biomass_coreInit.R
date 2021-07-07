@@ -4,7 +4,7 @@ test_that("test Biomass_coreInit", {
   library(data.table)
   module <- list("Biomass_core")
   path <- list(
-    modulePath = "~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+    modulePath = "..",
     outputPath = "~/output"
   )
   parameters <- list(
