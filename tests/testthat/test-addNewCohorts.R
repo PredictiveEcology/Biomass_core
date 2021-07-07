@@ -1,5 +1,8 @@
 test_that("test add new cohort function",{
   # define the module and path
+  require("raster")
+  require("data.table")
+
   module <- list("Biomass_core")
   path <- list(modulePath = "..", # TODO: use general path
                outputPath = "~/output") # TODO: use general path
