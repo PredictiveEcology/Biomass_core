@@ -25,10 +25,10 @@ test_that("test summary regeneration. ",{
                    modules=module,
                    objects=objects,
                    paths=path)
-  if(exists("Biomass_coreSummaryRegen")){
-    simOutput <- Biomass_coreSummaryRegen(mySim)
+  if(exists("SummaryRegen")){
+    simOutput <- SummaryRegen(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreSummaryRegen(mySim)
+    simOutput <- mySim$.mods$Biomass_core$SummaryRegen(mySim)
   }
   expect_is(simOutput$reproductionMap, "RasterLayer")
   expect_equal(getValues(simOutput$reproductionMap),
@@ -45,10 +45,10 @@ test_that("test summary regeneration. ",{
                    modules=module,
                    objects=objects,
                    paths=path)
-  if(exists("Biomass_coreSummaryRegen")){
-    simOutput <- Biomass_coreSummaryRegen(mySim)
+  if(exists("SummaryRegen")){
+    simOutput <- SummaryRegen(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreSummaryRegen(mySim)
+    simOutput <- mySim$.mods$Biomass_core$SummaryRegen(mySim)
   }
   expect_is(simOutput$reproductionMap, "RasterLayer")
   expect_equal(getValues(simOutput$reproductionMap),

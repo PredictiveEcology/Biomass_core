@@ -80,7 +80,7 @@ test_that("test Biomass_coreInit", {
   if (exists("Biomass_coreInit")) {
     simOutput <- Biomass_coreInit(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreInit(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreInit(mySim)
   }
   # check the cohortData table
   cohortData <- simOutput$cohortData
@@ -182,7 +182,7 @@ test_that("test Biomass_coreInit", {
   if (exists("Biomass_coreInit")) {
     simOutput <- Biomass_coreInit(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreInit(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreInit(mySim)
   }
 
   # check the calibration mode

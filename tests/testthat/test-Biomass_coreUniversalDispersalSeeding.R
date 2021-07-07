@@ -117,7 +117,7 @@ test_that("test universal dispersal seeding algorithm",{
   if(exists("Biomass_coreUniversalDispersalSeeding")){
     simOutput <- Biomass_coreUniversalDispersalSeeding(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreUniversalDispersalSeeding(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreUniversalDispersalSeeding(mySim)
   }
   output <- simOutput$regenerationOutput[
     ,.(species,numberOfReg)]
@@ -163,7 +163,7 @@ test_that("test universal dispersal seeding algorithm",{
   if(exists("Biomass_coreUniversalDispersalSeeding")){
     simOutput <- Biomass_coreUniversalDispersalSeeding(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreUniversalDispersalSeeding(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreUniversalDispersalSeeding(mySim)
   }
   output <- simOutput$regenerationOutput[
     ,.(species,numberOfReg)]

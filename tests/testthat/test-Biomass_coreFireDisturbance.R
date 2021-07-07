@@ -86,7 +86,7 @@ test_that("test regeneration after fire. ",{
   if(exists("Biomass_coreFireDisturbance")){
     simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)
@@ -134,7 +134,7 @@ test_that("test regeneration after fire. ",{
   if(exists("Biomass_coreFireDisturbance")){
     simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)
@@ -181,7 +181,7 @@ test_that("test regeneration after fire. ",{
   if(exists("Biomass_coreFireDisturbance")){
     simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)
@@ -228,7 +228,7 @@ test_that("test regeneration after fire. ",{
   if(exists("Biomass_coreFireDisturbance")){
     simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)

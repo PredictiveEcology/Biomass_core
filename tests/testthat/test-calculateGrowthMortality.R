@@ -18,7 +18,7 @@ test_that("test Growth-related Mortality calculation",{
   if(exists("calculateGrowthMortality")){
     output <- calculateGrowthMortality(cohortData,stage="spinup")
   } else {
-    output <- mySim$calculateGrowthMortality(cohortData,stage="spinup")
+    output <- mySim$.mods$Biomass_core$calculateGrowthMortality(cohortData,stage="spinup")
   }
   Mortality_Growth_output <- round(output$mBio,4)
   Mortality_Growth_output_compared <- c(rep(NA,50), 73.0667, 125.2571, 164.4, 194.8444, 219.2, 219.2,
@@ -32,7 +32,7 @@ test_that("test Growth-related Mortality calculation",{
   if(exists("calculateGrowthMortality")){
     output <- calculateGrowthMortality(cohortData,stage="mainsimulation")
   } else {
-    output <- mySim$calculateGrowthMortality(cohortData,stage="mainsimulation")
+    output <- mySim$.mods$Biomass_core$calculateGrowthMortality(cohortData,stage="mainsimulation")
   }
   Mortality_Growth_output <- round(output$mBio,4)
   Mortality_Growth_output_compared <- c(rep(c(73.0667, 125.2571, 164.4, 194.8444, 219.2, 219.2,

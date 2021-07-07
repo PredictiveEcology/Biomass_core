@@ -56,10 +56,10 @@ test_that("test summary aboveground biomass, growth, mortality. ",{
                    modules=module,
                    objects=objects,
                    paths=path)
-  if(exists("Biomass_coreSummaryBGM")){
-    simOutput <- Biomass_coreSummaryBGM(mySim)
+  if(exists("SummaryBGM")){
+    simOutput <- SummaryBGM(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreSummaryBGM(mySim)
+    simOutput <- mySim$.mods$Biomass_core$SummaryBGM(mySim)
   }
   # check the maps
   expect_is(simOutput$simulatedBiomass, "RasterLayer")

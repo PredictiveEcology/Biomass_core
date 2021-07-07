@@ -46,7 +46,7 @@ test_that("test growth and mortality at main simulation stage",{
     if(exists("Biomass_coreMortalityAndGrowth")){
       simOutput <- Biomass_coreMortalityAndGrowth(mySim)
     } else {
-      simOutput <- mySim$Biomass_coreMortalityAndGrowth(mySim)
+      simOutput <- mySim$.mods$Biomass_core$Biomass_coreMortalityAndGrowth(mySim)
     }
     cohortData <- simOutput$cohortData
     if(i == 2 | i == 3){
@@ -154,7 +154,7 @@ test_that("test growth and mortality at main simulation stage",{
     if(exists("Biomass_coreMortalityAndGrowth")){
       simOutput <- Biomass_coreMortalityAndGrowth(mySim)
     } else {
-      simOutput <- mySim$Biomass_coreMortalityAndGrowth(mySim)
+      simOutput <- mySim$.mods$Biomass_core$Biomass_coreMortalityAndGrowth(mySim)
     }
     cohortData <- simOutput$cohortData
     if(i == 2 | i == 3){

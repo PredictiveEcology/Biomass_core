@@ -36,7 +36,7 @@ test_that("test growth and mortality at spinup stage",{
   if(exists("spinUp")){
     output <- spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   } else {
-    output <- mySim$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
+    output <- mySim$.mods$Biomass_core$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   }
   newcohortData <- output$cohortData[,.(pixelGroup,speciesCode,B)]
   newcohortData_compared <- data.table(pixelGroup = 1:16,
@@ -70,7 +70,7 @@ test_that("test growth and mortality at spinup stage",{
   if(exists("spinUp")){
     output <- spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   } else {
-    output <- mySim$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
+    output <- mySim$.mods$Biomass_core$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   }
   newcohortData <- output$cohortData[,.(pixelGroup,speciesCode,B)]
   newcohortData_compared <- data.table(pixelGroup = 1:16,
@@ -100,7 +100,7 @@ test_that("test growth and mortality at spinup stage",{
   if(exists("spinUp")){
     output <- spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   } else {
-    output <- mySim$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
+    output <- mySim$.mods$Biomass_core$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   }
   newcohortData <- output$cohortData[,.(pixelGroup,speciesCode,B)]
   newcohortData_compared <- data.table(pixelGroup = 1:16,
@@ -130,7 +130,7 @@ test_that("test growth and mortality at spinup stage",{
   if(exists("spinUp")){
     output <- spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   } else {
-    output <- mySim$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
+    output <- mySim$.mods$Biomass_core$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   }
   newcohortData <- output$cohortData[,.(pixelGroup,speciesCode,B)]
   newcohortData_compared <- data.table(pixelGroup = 1:16,

@@ -67,7 +67,7 @@ test_that("test Ward dispersal seeding algorithm",{
   if (exists("Biomass_coreWardDispersalSeeding")) {
     output <- Biomass_coreWardDispersalSeeding(mySim)
   } else {
-    output <- mySim$Biomass_coreWardDispersalSeeding(mySim)
+    output <- mySim$.mods$Biomass_core$Biomass_coreWardDispersalSeeding(mySim)
   }
   output <- output$regenerationOutput$numberOfReg
   expect_equal(output,c(283,483,288,358))
@@ -114,7 +114,7 @@ test_that("test Ward dispersal seeding algorithm",{
   if(exists("Biomass_coreWardDispersalSeeding")){
     output <- Biomass_coreWardDispersalSeeding(mySim)
   } else {
-    output <- mySim$Biomass_coreWardDispersalSeeding(mySim)
+    output <- mySim$.mods$Biomass_core$Biomass_coreWardDispersalSeeding(mySim)
   }
   expect_equal(output$regenerationOutput$numberOfReg,
                c(239, 439, 254, 337))
@@ -156,7 +156,7 @@ test_that("test Ward dispersal seeding algorithm",{
   if(exists("Biomass_coreWardDispersalSeeding")){
     output <- Biomass_coreWardDispersalSeeding(mySim)
   } else {
-    output <- mySim$Biomass_coreWardDispersalSeeding(mySim)
+    output <- mySim$.mods$Biomass_core$Biomass_coreWardDispersalSeeding(mySim)
   }
   output <- output$regenerationOutput$numberOfReg
   expect_equal(output,c(64,121,69,84))

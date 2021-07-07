@@ -19,7 +19,7 @@ test_that("test competition calculation at both spinup stage and main simulation
   if(exists("calculateCompetition")){
     output <- calculateCompetition(cohortData,stage="spinup")
   } else {
-    output <- mySim$calculateCompetition(cohortData,stage="spinup")
+    output <- mySim$.mods$Biomass_core$calculateCompetition(cohortData,stage="spinup")
   }
   cohortData_output <- setkey(output[,.(pixelGroup,age,bAP,bPM)],
                               pixelGroup,age)
@@ -39,7 +39,7 @@ test_that("test competition calculation at both spinup stage and main simulation
   if(exists("calculateCompetition")){
     output <- calculateCompetition(cohortData,stage="mainsimulation")
   } else {
-    output <- mySim$calculateCompetition(cohortData,stage="mainsimulation")
+    output <- mySim$.mods$Biomass_core$calculateCompetition(cohortData,stage="mainsimulation")
   }
   cohortData_output <- setkey(output[,.(pixelGroup,age,bAP,bPM)],
                               pixelGroup,age)
