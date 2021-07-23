@@ -1567,7 +1567,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       geom_area(position = "stack") +
       scale_fill_manual(values = cols2) +
       labs(x = "Year", y = "Biomass") +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+      theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
       scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
 
     if (!is.na(P(sim)$.plotInitialTime)) {
@@ -1583,7 +1583,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       scale_fill_manual(values = cols3) +
       labs(x = "Year", y = "Count") +
       geom_area() +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+      theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
       geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey", size = 1)
 
     if (!is.na(P(sim)$.plotInitialTime)) {
@@ -1596,7 +1596,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       geom_line(size = 1) +
       scale_colour_manual(values = cols2) +
       labs(x = "Year", y = "Age") +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank())
+      theme(legend.text = element_text(size = 12), legend.title = element_blank())
 
     if (!is.na(P(sim)$.plotInitialTime)) {
       dev(mod$statsWindow)
@@ -1610,7 +1610,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
         geom_area(position = "stack") +
         scale_fill_manual(values = cols2) +
         labs(x = "Year", y = "Overstory Biomass") +
-        theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+        theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
         scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
 
       titleLab <- "Overstory biomass by species"
@@ -1621,7 +1621,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
         geom_line(size = 1) +
         scale_colour_manual(values = cols2) +
         labs(x = "Year", y = "Age") +
-        theme(legend.text = element_text(size = 6), legend.title = element_blank())
+        theme(legend.text = element_text(size = 12), legend.title = element_blank())
 
       titleLab <- paste("Oldest cohort age\n", "by species (across pixels)")
       fileNamePlot5 <- "oldest_cohorts.png"
@@ -1636,7 +1636,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       geom_line(size = 1) +
       scale_color_manual(values = cols2) +
       labs(x = "Year", y = "aNPP") +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank()) +
+      theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
       scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
 
     if (!is.na(P(sim)$.plotInitialTime)) {
