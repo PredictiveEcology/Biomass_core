@@ -1647,15 +1647,15 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"),
-             plot2 + theme_bw(base_size = 16))
+             plot2 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
       ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"),
-             plot3 + theme_bw(base_size = 16))
+             plot3 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
       ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"),
-             plot4 + theme_bw(base_size = 16))
+             plot4 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
       ggsave(file.path(outputPath(sim), "figures", fileNamePlot5),
-             plot5 + theme_bw(base_size = 16))
+             plot5 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
       ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"),
-             plot6 + theme_bw(base_size = 16))
+             plot6 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
     }
   }
 
@@ -1774,7 +1774,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
       geom_line(size = 1) +
       scale_colour_brewer(labels = varLabels, type = "qual", palette = "Dark2") +
       theme_bw() +
-      theme(legend.text = element_text(size = 6), legend.title = element_blank(),
+      theme(legend.text = element_text(size = 12), legend.title = element_blank(),
             legend.position = "bottom") +
       facet_wrap(~ variable, scales = "free_y",
                  labeller = labeller(variable = varLabels)) +
@@ -1788,7 +1788,8 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
     if (time(sim) == end(sim)) {
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "landscape_biomass_aNPP_max_age.png"),
-             plot1 + theme_bw(base_size = 16) + theme(legend.position = "bottom"))
+             plot1 + theme_bw(base_size = 16) + theme(legend.position = "bottom"),
+             width = 10, height = 5, units = "in", dpi = 300)
     }
   }
   return(invisible(sim))
