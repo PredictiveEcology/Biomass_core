@@ -200,7 +200,8 @@ outputs <- data.frame(expand.grid(objectName = "cohortData",
                                   saveTime = unique(seq(times$start, times$end, by = 1)),
                                   eventPriority = 1,
                                   stringsAsFactors = FALSE))
-set.seed(123)
+
+set.seed(123)  ## need to set seed to prevent caching issues with randomly generated objects
 mySim <- simInit(times = times,
                  params = parameters, 
                  modules = modules, 
