@@ -187,7 +187,7 @@ parameters <- list(
   Biomass_core = list(
     "sppEquivCol" = speciesNameConvention
     , "successionTimestep" = successionTimestep
-    , ".plots" = c("screen", "png")
+    , ".plots" = c("screen", "object")
     , ".plotInitialTime" = times$start
     , ".plotInterval" = 1L
     , ".saveInitialTime" = times$start
