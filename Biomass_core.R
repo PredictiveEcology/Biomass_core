@@ -627,10 +627,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
     modelCover <- Cache(statsModel,
                         modelFn = coverModel,
-                        uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(cohortDataShort$ecoregionGroup)),
                         .specialData = cohortDataShort,
                         userTags = c(cacheTags, "modelCover"),
-                        omitArgs = c("userTags", ".specialData"))
+                        omitArgs = c("userTags"))  ## DON'T IGNORE .specialData - will fail downstream due to randomness
 
     message(blue("  The rsquared is: "))
     print(modelCover$rsq)
@@ -642,10 +641,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
             magenta(paste0(format(biomassModel), collapse = "")))
     modelBiomass <- Cache(statsModel,
                           modelFn = biomassModel,
-                          uniqueEcoregionGroup = .sortDotsUnderscoreFirst(unique(pixelCohortData$ecoregionGroup)),
                           .specialData = cohortDataNoBiomass,
                           userTags = c(cacheTags, "modelBiomass"),
-                          omitArgs = c("userTags", ".specialData"))
+                          omitArgs = c("userTags"))  ## DON'T IGNORE .specialData - will fail downstream due to randomness
     message(blue("  The rsquared is: "))
     print(modelBiomass$rsq)
 
