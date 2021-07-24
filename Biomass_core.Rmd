@@ -187,7 +187,7 @@ parameters <- list(
   Biomass_core = list(
     "sppEquivCol" = speciesNameConvention
     , "successionTimestep" = successionTimestep
-    , ".plots" = "screen"
+    , ".plots" = c("screen", "png")
     , ".plotInitialTime" = times$start
     , ".plotInterval" = 1L
     , ".saveInitialTime" = times$start
@@ -201,14 +201,14 @@ outputs <- data.frame(expand.grid(objectName = "cohortData",
                                   eventPriority = 1,
                                   stringsAsFactors = FALSE))
 
-set.seed(123)  ## need to set seed to prevent caching issues with randomly generated objects
-mySim <- simInit(times = times,
-                 params = parameters, 
-                 modules = modules, 
-                 objects = objects, 
-                 paths = paths,
-                 outputs = outputs)
-mySimOut <- spades(mySim, debug = TRUE)
+graphics.off()
+mySim <- simInitAndSpades(times = times,
+                          params = parameters, 
+                          modules = modules, 
+                          objects = objects, 
+                          paths = paths,
+                          outputs = outputs,
+                          debug = TRUE)
 ```
 
 # Events
