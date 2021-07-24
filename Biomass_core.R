@@ -207,8 +207,8 @@ defineModule(sim, list(
     createsOutput("cohortData", "data.table",
                   desc = "age cohort-biomass table hooked to pixel group map by pixelGroupIndex at succession time step"),
     createsOutput("ecoregionMap", "RasterLayer",
-                 desc = paste("ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table.",
-                              "Defaults to a dummy map matching rasterToMatch with two regions")),
+                  desc = paste("ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table.",
+                               "Defaults to a dummy map matching rasterToMatch with two regions")),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
     createsOutput("inactivePixelIndexReporting", "integer",
@@ -301,7 +301,7 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
              params(sim)$Biomass_core$.saveInterval <- P(sim)$successionTimestep
 
            ## make sure plotting window is big enough
-           if (!is.na(P(sim)$.plots)) {
+           if (all(!is.na(P(sim)$.plots))) {
              ## if current plot dev is too small, open a new one
              if (is.null(dev.list())) {
                dev(x = dev.cur() + 1, height = 7, width = 14)
@@ -323,12 +323,10 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
              P(sim)$.plotMaps <- FALSE
            }
 
-           ## if end(sim) then save plots if user so wants. Otherwise only plot to screen.
+           ## if not end(sim) dont save plots and only plot to screen.
            ## plotMaps is the exception, as it never is saved.
-           mod$plotTypes <- P(sim)$.plots
-
            if (time(sim) != end(sim)) {
-             if (any(mod$plotTypes == "screen")) {
+             if (any(P(sim)$.plots == "screen")) {
                mod$plotTypes <- "screen"
              } else {
                mod$plotTypes <- NA
@@ -449,6 +447,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                                 "Biomass_core", "summaryBGM", eventPriority = summBGMPriority$end)
          },
          plotSummaryBySpecies = {
+           if (time(sim) == end(sim)) {
+             mod$plotTypes <- P(sim)$.plots
+           }
            sim <- plotSummaryBySpecies(sim)
            if (!is.na(P(sim)$.plotInterval)) {
              if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
@@ -457,6 +458,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            }
          },
          plotAvgs = {
+           if (time(sim) == end(sim)) {
+             mod$plotTypes <- P(sim)$.plots
+           }
            sim <- plotAvgVegAttributes(sim)
            if (!is.na(P(sim)$.plotInterval)) {
              if (!(time(sim) + P(sim)$.plotInterval) == end(sim))
@@ -861,7 +865,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   if (!is.integer(pixelAll[["uniqueSumB"]]))
     set(pixelAll, NULL, "uniqueSumB", asInteger(pixelAll[["uniqueSumB"]]))
 
-  if (!is.na(P(sim)$.plots)) {
+  if (all(!is.na(P(sim)$.plots))) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
@@ -1483,7 +1487,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
 
 summaryRegen <- compiler::cmpfun(function(sim) {
   #cohortData <- sim$cohortData
-  if (!is.na(P(sim)$.plots)) {
+  if (all(!is.na(P(sim)$.plots))) {
     pixelGroupMap <- sim$pixelGroupMap
     names(pixelGroupMap) <- "pixelGroup"
     # please note that the calculation of reproduction is based on successioinTime step interval,
