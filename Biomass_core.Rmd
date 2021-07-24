@@ -1,11 +1,11 @@
 ---
 title: "Biomass_core"
 author:
-  - Jean Marchal (<jean.d.marchal@gmail.com>)
-  - Ceres Barros (<cbarros@mail.ubc.ca>)
   - Eliot McIntire (<eliot.mcintire@canada.ca>)
+  - Ceres Barros (<cbarros@mail.ubc.ca>)
   - Yong Luo
   - Alex M. Chubaty (<achubaty@for-cast.ca>)
+  - Jean Marchal (<jean.d.marchal@gmail.com>)
 date: "11 May 2021"
 output:
   html_document:
@@ -37,55 +37,52 @@ The biggest differences between Biomass_core and LBSE lie on how the model is pa
 
 Ideally, however, the user should supply realistic versions of these data and the essential initialization objects that `Biomass_core` requires to run.
 
-```{r moduleInputs, eval = TRUE, echo = FALSE}
+Below is the full list of input objects that `Biomass_core` expects. Of these, the only input that **must** be provided (i.e. `Biomass_core` does not have a default for) is `studyArea`.
+
+```{r moduleInputs, eval = TRUE, echo = FALSE, message=FALSE, warning=FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")
 knitr::kable(df_inputs)
 ```
 
-Below is a list of input objects that the user (or another module) should supply to `Biomass_core` in order for it to run on a realistic setting (this is not, however, an exhaustive list of inputs). The only input that **must** be provided to `Biomass_core` is `studyArea`
-
-Type                       | Required inputs    | Description
--------------------------- | -----------------  | -------------------------------------------------------------------------------
-Spatial layers             |                    |
-| `biomassMap`       | map of total biomass in the study area
-| `ecoregionMap`     | map of ecological zones ('ecolocations') in the study area
-| `rasterToMatch`    | the map of the study area.
-| `studyArea`        | a spatial polygon of the study area. MUST be provided.
-Trait and parameter tables |                    |
-| `ecoregion`        | a table listing values in `ecoregionMap` and their state (active or not)
-| `minRelativeB`     | table defining the cut points to classify stand shadiness
-| `species`          | a table of species traits (based on LANDIS-II species traits for [v3.2.1] (https://github.com/LANDIS-II-Foundation/Extensions-Succession-Archive/blob/master/biomass-succession-archive/trunk/tests/v6.0-2.0/species.txt))
-| `speciesEcoregion` | a table of species traits by for ecological zone in ecoregionMap
-| `sppEquiv`         | a table of with species names and their correspondences across multiple datasets (see ?LandR::sppEquivalencies_CA)      
-| `sppColorVect`     | a table of species traits by for ecological zone in ecoregionMap          
-| `sufficientLight`  | table defining species responses to shade according to shade tolerance levels
-Cohort-simulation related  |                    |
-| `cohortData`       | table with cohort information by pixelGroup 
-| `pixelGroupMap`    | map of pixelGroups
+Of the above, we draw particular attention to the the following inputs, which are crucial to run `Biomass_core` on a realistic setting:
+* Spatial layers
+  + `biomassMap`
+  + `ecoregionMap`
+* Trait and parameter tables
+  + `ecoregion`
+  + `minRelativeB`
+  + `species`
+  + `speciesEcoregion`
+  + `sufficientLight`
+  + `sppEquiv`
+  + `sppColorVect`
+* Cohort-simulation related
+  + `cohortData`
+  + `pixelGroupMap`
 
 For the beginner user, we suggest running `Biomass_core` without supplying any inputs and inspecting the above mentioned objects to understand their structure and format.
-The user can later either feed these objects via `simInit`, or make a module that makes them and provides necessary inputs to `Biomass_core` (see e.g. [Boreal_Biomass_coreDataPrep](https://github.com/PredictiveEcology/Boreal_Biomass_coreDataPrep))
+The user can later either feed these objects via `simInit`, or make a module that makes them and provides necessary inputs to `Biomass_core` (see e.g. [Biomass_borealDataPrep](https://github.com/PredictiveEcology/Biomass_borealDataPrep))
 
 Besides the above mentioned inputs, `Biomass_core` uses several other parameters, which can be changed by the user if need be. Below is a list of the most useful ones, but please check module metadata for full list and descriptions.
 
-Type              | Required inputs        | Description
------------------ | ---------------------- | -------------------------------------------------------------------------------
-Plotting & saving |                        |
-| `.plots`               | activates/deactivates plotting and defines type fo plotting (see `?Plots`)
-| `.plotInitialTime`     | defines when plotting starts 
-| `.plotInterval`        | defines plotting frequency
-| `.plotMaps`            | activates/deactivates map plotting 
-| `.saveInitialTime`     | defines when saving starts 
-| `.saveInterval`        | defines saving frequency
-Simulation        |                        |
-| `seedingAlgorithm`     | dispersal type (see above)
-| `successionTimestep`   | defines frequency of dispersal/local recruitment event (growth and mortality are always yearly)
-Other             |                        |
-| `mixedType`            | how mixed forest stands are defined
-| `vegLeadingProportion` | relative biomass threshold to consider a species "leading" (i.e. dominant)
+Required inputs        | Description
+---------------------- | ------------------------------------------------------------------------------------------------
+Plotting & saving      |
+`.plots`               | activates/deactivates plotting and defines type fo plotting (see `?Plots`)
+`.plotInitialTime`     | defines when plotting starts 
+`.plotInterval`        | defines plotting frequency
+`.plotMaps`            | activates/deactivates map plotting 
+`.saveInitialTime`     | defines when saving starts 
+`.saveInterval`        | defines saving frequency
+Simulation             |
+`seedingAlgorithm`     | dispersal type (see above)
+`successionTimestep`   | defines frequency of dispersal/local recruitment event (growth and mortality are always yearly)
+Other                  |
+`mixedType`            | how mixed forest stands are defined
+`vegLeadingProportion` | relative biomass threshold to consider a species "leading" (i.e. dominant)
 
 
-```{r moduleParams, echo = FALSE, eval = TRUE}
+```{r moduleParams, echo = FALSE, eval = TRUE, message=FALSE, warning=FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_core", "..")
 knitr::kable(df_params)
 ```
@@ -117,11 +114,11 @@ Upon porting LBSE into R, we made five minor modifications to the original model
 
 1. Preparation of necessary objects for the simulation - either by accessory data prep. modules, or Biomass_core itself (using LANDIS-II test parameters and dummy data for stand age, biomass and land cover and ecological zoning)
 2. Seed dispersal - see Section 4.5.1 Seeding of the LANDIS-II Model v7.0 Description(https://drive.google.com/file/d/15gSueug-Rj9I2RZqdroDbad-k53Jq7j3/view) for details
-+ Seed dispersal can be a slow process and has been adapted to occur every 10 years. The user can set it to occur more often, but this should not make much of a difference to model outputs, because age classes are meant to be collapsed to tens.
+  + Seed dispersal can be a slow process and has been adapted to occur every 10 years. The user can set it to occur more often, but this should not make much of a difference to model outputs, because age classes are meant to be collapsed to tens.
 3. Growth and mortality - based on [Scheller and Mladenoff (2004)](https://pdfs.semanticscholar.org/4d38/d0be6b292eccd444af399775d37a757d1967.pdf)
-+ unlike dispersal, growth and mortality should occur every year
+  + unlike dispersal, growth and mortality should occur every year
 4. Ageing - based on [Scheller and Mladenoff (2004)](https://pdfs.semanticscholar.org/4d38/d0be6b292eccd444af399775d37a757d1967.pdf)
-+ follows the same frequency as dispersal, collapsing ages to classes with resolution = to this frequency
+  + follows the same frequency as dispersal, collapsing ages to classes with resolution = to this frequency
 5. Preparation of visual/saved outputs
 ... (repeat 2-4) ...
 
@@ -229,7 +226,7 @@ The module produces the following outputs:
 - Saved biomass, mortality, leading vegetation raster layers
 - Whatever objects supplied to `outputs` argument in `simInit` (only `cohortData` in the example above)
 
-```{r moduleOutputs, echo = FALSE, eval = TRUE}
+```{r moduleOutputs, echo = FALSE, eval = TRUE, message=FALSE, warning=FALSE}}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")
 knitr::kable(df_outputs)
 ```
