@@ -1538,9 +1538,9 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   thisPeriod <- thisPeriod[overstory, on = 'speciesCode']
 
   if (is.null(sim$summaryBySpecies)) {
-    sim$summaryBySpecies <- thisPeriod
+    summaryBySpecies <- thisPeriod
   } else {
-    sim$summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
+    summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
 
   ## MEAN NO. PIXELS PER LEADING SPECIES
@@ -1565,14 +1565,12 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   colorIDs <- match(summaryBySpecies1$leadingType, colours)
   summaryBySpecies1$cols <- sim$sppColorVect[colorIDs]
 
-  if (is.null(sim$summaryBySpecies1)) {
-    sim$summaryBySpecies1 <- summaryBySpecies1
-  } else {
-    sim$summaryBySpecies1 <- rbindlist(list(sim$summaryBySpecies1, summaryBySpecies1))
+  if (!is.null(sim$summaryBySpecies1)) {
+    summaryBySpecies1 <- rbindlist(list(sim$summaryBySpecies1, summaryBySpecies1))
   }
 
-  if (length(unique(sim$summaryBySpecies1$year)) > 1) {
-    df <- sim$species[, list(speciesCode, species)][sim$summaryBySpecies, on = "speciesCode"]
+  if (length(unique(summaryBySpecies1$year)) > 1) {
+    df <- sim$species[, list(speciesCode, species)][summaryBySpecies, on = "speciesCode"]
     df$species <- equivalentName(df$species, sim$sppEquiv, "EN_generic_short")
 
     colorIDs <- match(df$species, colours)
@@ -1648,19 +1646,8 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   }
 
   ## export to sim
-      # if (!is.na(P(sim)$.saveInitialTime))
-      ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"),
-             plot2 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
-      ggsave(file.path(outputPath(sim), "figures", "N_pixels_leading.png"),
-             plot3 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
-      ggsave(file.path(outputPath(sim), "figures", "biomass-weighted_species_age.png"),
-             plot4 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
-      ggsave(file.path(outputPath(sim), "figures", fileNamePlot5),
-             plot5 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
-      ggsave(file.path(outputPath(sim), "figures", "total_aNPP_by_species.png"),
-             plot6 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
-    }
-  }
+  sim$summaryBySpecies <- summaryBySpecies
+  sim$summaryBySpecies1 <- summaryBySpecies1
 
   return(invisible(sim))
 })
@@ -1780,13 +1767,13 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   thisPeriod[, sumANPP := asInteger(sumANPP/denominator)]
 
   if (is.null(sim$summaryLandscape)) {
-    sim$summaryLandscape <- thisPeriod
+    summaryLandscape <- thisPeriod
   } else {
-    sim$summaryLandscape <- rbindlist(list(sim$summaryLandscape, thisPeriod))
+    summaryLandscape <- rbindlist(list(sim$summaryLandscape, thisPeriod))
   }
 
-  if (length(unique(sim$summaryLandscape$year)) > 1) {
-    df2 <- melt(sim$summaryLandscape, id.vars = "year")
+  if (length(unique(summaryLandscape$year)) > 1) {
+    df2 <- melt(summaryLandscape, id.vars = "year")
 
     varLabels <- c(sumB = "Biomass", maxAge = "Age", sumANPP = "aNPP")
 
@@ -1799,12 +1786,8 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   }
 
   ## export to sim
-      # if (!is.na(P(sim)$.saveInitialTime))
-      ggsave(file.path(outputPath(sim), "figures", "landscape_biomass_aNPP_max_age.png"),
-             plot1 + theme_bw(base_size = 16) + theme(legend.position = "bottom"),
-             width = 10, height = 5, units = "in", dpi = 300)
-    }
-  }
+  sim$summaryLandscape <- summaryLandscape
+
   return(invisible(sim))
 })
 
