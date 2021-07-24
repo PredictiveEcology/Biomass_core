@@ -1778,6 +1778,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
 
     varLabels <- c(sumB = "Biomass", maxAge = "Age", sumANPP = "aNPP")
 
+    dev(mod$statsWindow)
     Plots(df2, fn = landscapeAttributesPlot,
           types = mod$plotTypes,
           filename = "landscape_biomass_aNPP_max_age",
