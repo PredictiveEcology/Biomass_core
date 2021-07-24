@@ -304,11 +304,11 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            if (!is.na(P(sim)$.plots)) {
              ## if current plot dev is too small, open a new one
              if (is.null(dev.list())) {
-               dev(x = dev.cur() + 1, height = 10, width = 14)
+               dev(x = dev.cur() + 1, height = 7, width = 14)
                clearPlot()
              } else {
                if (dev.size()[2] < 14) {
-                 dev(x = dev.cur() + 1, height = 10, width = 14)
+                 dev(x = dev.cur() + 1, height = 7, width = 14)
                  clearPlot()
                }
              }
