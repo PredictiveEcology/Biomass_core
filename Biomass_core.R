@@ -97,14 +97,18 @@ defineModule(sim, list(
                     desc = "a number that define whether a species is leading for a given pixel"),
     defineParameter(".maxMemory", "numeric", 5, NA, NA,
                     desc = "maximum amount of memory (in GB) to use for dispersal calculations."),
+    defineParameter(".plots", "character", default = "object",
+                    desc = paste("Passed to `types` in Plots (see ?Plots). There are a few plots that are made within this module, if set.",
+                                 "Note that plots (or their data) saving will ONLY occur at end(sim).",
+                                 "If  NA plotting is off completely (this includes saving).")),
     defineParameter(".plotInitialTime", "numeric", start(sim), NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first plot event should occur.",
-                                 "Set to NA to turn plotting off.")),
+                                 "Set to NA to turn plotting off completely (this includes saving).")),
     defineParameter(".plotInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the plotting time step.",
                                  "If NA, the default, .plotInterval is set to successionTimestep.")),
     defineParameter(".plotMaps", "logical", TRUE, NA, NA,
-                    desc = "Controls whether maps should be plotted or not"),
+                    desc = "Controls whether maps should be plotted or not. Set to FALSE if .plots == NA"),
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first save event should occur.",
                                  "Set to NA if no saving is desired. If not NA, then saving will occur at",
@@ -294,7 +298,7 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
              params(sim)$Biomass_core$.saveInterval <- P(sim)$successionTimestep
 
            ## make sure plotting window is big enough
-           if (!is.na(P(sim)$.plotInitialTime)) {
+           if (!is.na(P(sim)$.plots)) {
              ## if current plot dev is too small, open a new one
              if (is.null(dev.list())) {
                dev(x = dev.cur() + 1, height = 10, width = 14)
@@ -311,6 +315,20 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
              if (P(sim)$.plotMaps) {
                mod$mapWindow <- mod$statsWindow + 1
                dev(x = mod$mapWindow, height = 8, width = 10)
+             }
+           } else {
+             P(sim)$.plotMaps <- FALSE
+           }
+
+           ## if end(sim) then save plots if user so wants. Otherwise only plot to screen.
+           ## plotMaps is the exception, as it never is saved.
+           mod$plotTypes <- P(sim)$.plots
+
+           if (time(sim) != end(sim)) {
+             if (any(mod$plotTypes == "screen")) {
+               mod$plotTypes <- "screen"
+             } else {
+               mod$plotTypes <- NA
              }
            }
 
@@ -842,7 +860,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   if (!is.integer(pixelAll[["uniqueSumB"]]))
     set(pixelAll, NULL, "uniqueSumB", asInteger(pixelAll[["uniqueSumB"]]))
 
-  if (!any(is.na(P(sim)$.plotInitialTime)) | !any(is.na(P(sim)$.saveInitialTime))) {
+  if (!is.na(P(sim)$.plots)) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
@@ -1464,7 +1482,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
 
 summaryRegen <- compiler::cmpfun(function(sim) {
   #cohortData <- sim$cohortData
-  if (!is.na(P(sim)$.plotInitialTime) | !is.na(P(sim)$.saveInitialTime)) {
+  if (!is.na(P(sim)$.plots)) {
     pixelGroupMap <- sim$pixelGroupMap
     names(pixelGroupMap) <- "pixelGroup"
     # please note that the calculation of reproduction is based on successioinTime step interval,
@@ -1563,88 +1581,73 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     cols2 <- df$cols
     names(cols2) <- df$species
 
-    plot2 <- ggplot(data = df, aes(x = year, y = BiomassBySpecies, fill = species, group = species)) +
-      geom_area(position = "stack") +
-      scale_fill_manual(values = cols2) +
-      labs(x = "Year", y = "Biomass") +
-      theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
-      scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
-
-    if (!is.na(P(sim)$.plotInitialTime)) {
+    ## although Plots can deal with   .plotInitialTime == NA by not plotting, we need to
+    ## make sure the plotting windows are not changed/opened if  .plotInitialTime == NA
+    if (any(P(sim)$.plots == "screen")) {
       dev(mod$statsWindow)
-      Plot(plot2, title = paste0("Total biomass by species\n", "across pixels"), new = TRUE)
     }
+    ## biomass by species
+    Plots(df, fn = speciesBiomassPlot,
+          filename = "biomass_by_species",
+          path = file.path(outputPath(sim), "figures"),
+          types = mod$plotTypes,
+          ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
+          y = "BiomassBySpecies",
+          cols = cols2, ylab = "Biomass",
+          plotTitle = paste0("Total biomass by species\n", "across pixels"))
 
+    ## leading species
     maxNpixels <- length(sim$activePixelIndexReporting)
-    cols3 <- sim$summaryBySpecies1$cols
-    names(cols3) <- sim$summaryBySpecies1$leadingType
+    cols3 <- summaryBySpecies1$cols
+    names(cols3) <- summaryBySpecies1$leadingType
+    Plots(summaryBySpecies1, fn = speciesLeadingPlot,
+          filename = "N_pixels_leading",
+          path = file.path(outputPath(sim), "figures"),
+          types = mod$plotTypes,
+          ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
+          cols = cols3, maxNpixels = maxNpixels)
 
-    plot3 <- ggplot(data = sim$summaryBySpecies1, aes(x = year, y = counts, fill = leadingType)) +
-      scale_fill_manual(values = cols3) +
-      labs(x = "Year", y = "Count") +
-      geom_area() +
-      theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
-      geom_hline(yintercept = maxNpixels, linetype = "dashed", color = "darkgrey", size = 1)
+    ## species age
+    Plots(df, fn = speciesAgeANPPPlot,
+          filename = "biomass-weighted_species_age",
+          path = file.path(outputPath(sim), "figures"),
+          types = mod$plotTypes,
+          ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
+          y = "AgeBySppWeighted", cols = cols2,
+          ylab = "Age", plotTitle = paste0("Biomass-weighted species age\n",
+                                           "averaged across pixels"))
 
-    if (!is.na(P(sim)$.plotInitialTime)) {
-      dev(mod$statsWindow)
-      Plot(plot3, title = "Number of pixels, by leading type", new = TRUE)
-    }
-
-    plot4 <- ggplot(data = df, aes(x = year, y = AgeBySppWeighted,
-                                   colour = species, group = species)) +
-      geom_line(size = 1) +
-      scale_colour_manual(values = cols2) +
-      labs(x = "Year", y = "Age") +
-      theme(legend.text = element_text(size = 12), legend.title = element_blank())
-
-    if (!is.na(P(sim)$.plotInitialTime)) {
-      dev(mod$statsWindow)
-      Plot(plot4, title = paste0("Biomass-weighted species age\n",
-                                 "(averaged across pixels)"), new = TRUE)
-    }
-
+    ## overstory biomass by species OR oldest cohort age
     if (P(sim)$plotOverstory) {
-      plot5 <- ggplot(data = df, aes(x = year, y = overstoryBiomass,
-                                     fill = species, group = species)) +
-        geom_area(position = "stack") +
-        scale_fill_manual(values = cols2) +
-        labs(x = "Year", y = "Overstory Biomass") +
-        theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
-        scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
+      Plots(df, fn = speciesBiomassPlot,
+            filename = "overstory_biomass",
+            path = file.path(outputPath(sim), "figures"),
+            types = mod$plotTypes,
+            ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
+            y = "overstoryBiomass",
+            cols = cols2, ylab = "Overstory Biomass",
+            plotTitle = "Overstory biomass by species")
 
-      titleLab <- "Overstory biomass by species"
-      fileNamePlot5 <- "overstory_biomass.png"
     } else {
-      plot5 <- ggplot(data = df, aes(x = year, y = OldestCohortBySpp,
-                                     colour = species, group = species)) +
-        geom_line(size = 1) +
-        scale_colour_manual(values = cols2) +
-        labs(x = "Year", y = "Age") +
-        theme(legend.text = element_text(size = 12), legend.title = element_blank())
-
-      titleLab <- paste("Oldest cohort age\n", "by species (across pixels)")
-      fileNamePlot5 <- "oldest_cohorts.png"
+      Plots(df, fn = speciesAgeANPPPlot,
+            filename = "oldest_cohorts",
+            path = file.path(outputPath(sim), "figures"),
+            types = mod$plotTypes,
+            ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
+            y = "OldestCohortBySpp", cols = cols2,
+            ylab = "Age", plotTitle = paste("Oldest cohort age\n", "across pixels"))
     }
+    ## aNPP by species
+    Plots(df, fn = speciesAgeANPPPlot,
+          filename = "total_aNPP_by_species",
+          path = file.path(outputPath(sim), "figures"),
+          types = mod$plotTypes,
+          ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
+          y = "aNPPBySpecies", cols = cols2,
+          ylab = "aNPP", plotTitle = paste0("Total aNPP by species\n", "across pixels"))
+  }
 
-    if (!is.na(P(sim)$.plotInitialTime)) {
-      dev(mod$statsWindow)
-      Plot(plot5, title = titleLab, new = TRUE)
-    }
-
-    plot6 <- ggplot(data = df, aes(x = year, y = aNPPBySpecies, colour = species, group = species)) +
-      geom_line(size = 1) +
-      scale_color_manual(values = cols2) +
-      labs(x = "Year", y = "aNPP") +
-      theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
-      scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
-
-    if (!is.na(P(sim)$.plotInitialTime)) {
-      dev(mod$statsWindow)
-      Plot(plot6, title = paste0("Total aNPP by species\n", "across pixels"), new = TRUE)
-    }
-
-    if (time(sim) == end(sim)) {
+  ## export to sim
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "biomass_by_species.png"),
              plot2 + theme_bw(base_size = 16), width = 7, height = 5, units = "in", dpi = 300)
@@ -1665,79 +1668,96 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
-  if (!is.na(P(sim)$.plotInitialTime)) {
-    biomassMapForPlot <- raster::mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
-    ANPPMapForPlot <- raster::mask(sim$ANPPMap, sim$studyAreaReporting)
-    mortalityMapForPlot <- raster::mask(sim$mortalityMap, sim$studyAreaReporting)
-    if (is.null(sim$reproductionMap)) {
-      reproductionMapForPlot <- biomassMapForPlot
-      reproductionMapForPlot[!is.na(reproductionMapForPlot)][] <- 0
-    } else {
-      reproductionMapForPlot <-  raster::mask(sim$reproductionMap, sim$studyAreaReporting)
-    }
+  ## these plots are not saved.
+  plotTypes <- "screen"
 
-    levs <- raster::levels(sim$vegTypeMap)[[1]]
-    levelsName <- names(levs)[2]
-    # facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
-    #                                  att = levelsName,
-    #                                  na.rm = TRUE)
+  biomassMapForPlot <- raster::mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
+  ANPPMapForPlot <- raster::mask(sim$ANPPMap, sim$studyAreaReporting)
+  mortalityMapForPlot <- raster::mask(sim$mortalityMap, sim$studyAreaReporting)
 
-    ## Doesn't change anything in the current default setting, but it does create
-    ##  an NA where there is "Mixed".
-    ## Other species in levs[[levelsName]] are already "Leading",
-    ##  but it needs to be here in case it is not Leading in the future.
-    # The ones we want
-    sppEquiv <- sim$sppEquiv[!is.na(sim$sppEquiv[[P(sim)$sppEquivCol]]),]
-
-    levsLeading <- equivalentName(levs[[levelsName]], sppEquiv, "Leading")
-
-    if (any(grepl("Mixed", levs[[levelsName]]))) {
-      hasOnlyMixedAsOther <- sum(is.na(levsLeading) == 1) &&
-        levs[[levelsName]][is.na(levsLeading)] == "Mixed"
-      #extraValues <- setdiff(levs[[levelsName]], levsLeading)
-      if (!isTRUE(hasOnlyMixedAsOther)) {
-        stop("'plotVegAttributesMaps' in Biomass_core can only deal with 'Mixed' category or the ones in sim$sppEquiv")
-      }
-    }
-
-    whMixedLevs <- which(levs[[levelsName]] == "Mixed")
-    whMixedSppColors <- which(names(sim$sppColorVect) == "Mixed")
-
-    # Will return NA where there is no value, e.g., Mixed
-    levsLeading[whMixedLevs] <- "Mixed"
-
-    shortNames <- equivalentName(levsLeading, sppEquiv, "EN_generic_short")
-    shortNames[whMixedLevs] <- "Mixed"
-    levs[[levelsName]] <- shortNames
-    levels(sim$vegTypeMap) <- levs
-
-    colsLeading <- equivalentName(names(sim$sppColorVect), sppEquiv, "Leading")
-    colsLeading[whMixedSppColors] <- "Mixed"
-    sppColorVect <- sim$sppColorVect
-    names(sppColorVect) <- colsLeading
-    colours <- sppColorVect[na.omit(match(levsLeading, colsLeading))]
-    setColors(sim$vegTypeMap, levs$ID) <- colours
-
-    # Mask out NAs based on rasterToMatch (for plotting only!)
-    vegTypeMapForPlot <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
-
-    ## Plot
-    tryCatch({
-      dev(mod$mapWindow) # Protecting from error of headless/terminal run
-      if (!is.null(biomassMapForPlot))
-        Plot(biomassMapForPlot, title = "Biomass", new = TRUE)
-      if (!is.null(ANPPMapForPlot))
-        Plot(ANPPMapForPlot, title = "ANPP", new = TRUE)
-      if (!is.null(mortalityMapForPlot))
-        Plot(mortalityMapForPlot, title = "Mortality", new = TRUE)
-      Plot(vegTypeMapForPlot, new = TRUE, title = "Leading vegetation")
-      grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
-      grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
-      #if (!is.null(reproductionMapForPlot))
-      #  Plot(reproductionMapForPlot, title = "Reproduction", new = TRUE)
-    }, error = function(e)
-      message("Can't open the device for plotting. Plotting will be disabled to avoid errors"))
+  if (is.null(sim$reproductionMap)) {
+    reproductionMapForPlot <- biomassMapForPlot
+    reproductionMapForPlot[!is.na(reproductionMapForPlot)][] <- 0
+  } else {
+    reproductionMapForPlot <- raster::mask(sim$reproductionMap, sim$studyAreaReporting)
   }
+
+  levs <- raster::levels(sim$vegTypeMap)[[1]]
+  levelsName <- names(levs)[2]
+  # facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
+  #                                  att = levelsName,
+  #                                  na.rm = TRUE)
+
+  ## Doesn't change anything in the current default setting, but it does create
+  ##  an NA where there is "Mixed".
+  ## Other species in levs[[levelsName]] are already "Leading",
+  ##  but it needs to be here in case it is not Leading in the future.
+  # The ones we want
+  sppEquiv <- sim$sppEquiv[!is.na(sim$sppEquiv[[P(sim)$sppEquivCol]]),]
+
+  levsLeading <- equivalentName(levs[[levelsName]], sppEquiv, "Leading")
+
+  if (any(grepl("Mixed", levs[[levelsName]]))) {
+    hasOnlyMixedAsOther <- sum(is.na(levsLeading) == 1) &&
+      levs[[levelsName]][is.na(levsLeading)] == "Mixed"
+    #extraValues <- setdiff(levs[[levelsName]], levsLeading)
+    if (!isTRUE(hasOnlyMixedAsOther)) {
+      stop("'plotVegAttributesMaps' in Biomass_core can only deal with 'Mixed' category or the ones in sim$sppEquiv")
+    }
+  }
+
+  whMixedLevs <- which(levs[[levelsName]] == "Mixed")
+  whMixedSppColors <- which(names(sim$sppColorVect) == "Mixed")
+
+  # Will return NA where there is no value, e.g., Mixed
+  levsLeading[whMixedLevs] <- "Mixed"
+
+  shortNames <- equivalentName(levsLeading, sppEquiv, "EN_generic_short")
+  shortNames[whMixedLevs] <- "Mixed"
+  levs[[levelsName]] <- shortNames
+  levels(sim$vegTypeMap) <- levs
+
+  colsLeading <- equivalentName(names(sim$sppColorVect), sppEquiv, "Leading")
+  colsLeading[whMixedSppColors] <- "Mixed"
+  sppColorVect <- sim$sppColorVect
+  names(sppColorVect) <- colsLeading
+  colours <- sppColorVect[na.omit(match(levsLeading, colsLeading))]
+  setColors(sim$vegTypeMap, levs$ID) <- colours
+
+  # Mask out NAs based on rasterToMatch (for plotting only!)
+  vegTypeMapForPlot <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
+
+  ## Plot
+  mapsToPlot <- vegTypeMapForPlot
+  names(mapsToPlot) <- c("Leading vegetation")
+
+  if (!is.null(reproductionMapForPlot)) {
+    mapsToPlot <- stack(reproductionMapForPlot, mapsToPlot)
+    names(mapsToPlot)[1] <- "Reproduction"
+  }
+
+  if (!is.null(mortalityMapForPlot)) {
+    mapsToPlot <- stack(mortalityMapForPlot, mapsToPlot)
+    names(mapsToPlot)[1] <- "Mortality"
+  }
+
+  if (!is.null(ANPPMapForPlot)) {
+    mapsToPlot <- stack(ANPPMapForPlot, mapsToPlot)
+    names(mapsToPlot)[1] <- "ANPP"
+  }
+
+  if (!is.null(biomassMapForPlot)) {
+    mapsToPlot <- stack(biomassMapForPlot, mapsToPlot)
+    names(mapsToPlot)[1] <- "Biomass"
+  }
+
+  dev(mod$mapWindow)
+  ## for some reason not clearing the plot at the start was causing issues.
+  ## even when graphics were turned off, there seemed to be some inheritance of previous plots
+  clearPlot()
+  Plots(mapsToPlot, type = plotTypes, title = names(mapsToPlot), new = TRUE)
+  grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
+  grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
 
   return(invisible(sim))
 })
@@ -1770,22 +1790,15 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
 
     varLabels <- c(sumB = "Biomass", maxAge = "Age", sumANPP = "aNPP")
 
-    plot1 <- ggplot(data = df2, aes(x = year, y = value, colour = variable)) +
-      geom_line(size = 1) +
-      scale_colour_brewer(labels = varLabels, type = "qual", palette = "Dark2") +
-      theme_bw() +
-      theme(legend.text = element_text(size = 12), legend.title = element_blank(),
-            legend.position = "bottom") +
-      facet_wrap(~ variable, scales = "free_y",
-                 labeller = labeller(variable = varLabels)) +
-      labs(x = "Year", y = "Value", colour = "")
+    Plots(df2, fn = landscapeAttributesPlot,
+          types = mod$plotTypes,
+          filename = "landscape_biomass_aNPP_max_age",
+          path = file.path(outputPath(sim), "figures"),
+          ggsaveArgs = list(width = 10, height = 5, units = "in", dpi = 300),
+          varLabels = varLabels)
+  }
 
-    if (!is.na(P(sim)$.plotInitialTime)) {
-      dev(mod$statsWindow)
-      Plot(plot1, title = "mean landscape biomass and aNPP (Mg/ha) and max stand age", new = TRUE)
-    }
-
-    if (time(sim) == end(sim)) {
+  ## export to sim
       # if (!is.na(P(sim)$.saveInitialTime))
       ggsave(file.path(outputPath(sim), "figures", "landscape_biomass_aNPP_max_age.png"),
              plot1 + theme_bw(base_size = 16) + theme(legend.position = "bottom"),
