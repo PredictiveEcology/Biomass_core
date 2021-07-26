@@ -98,16 +98,6 @@ Other                  |
 
 
 
-```
-## defineParameter: 'growthInitialTime' is not of specified type 'numeric'.
-```
-
-```
-## defineParameter: '.plotInitialTime' is not of specified type 'numeric'.
-```
-
-
-
 |paramName                 |paramClass |default      |min |max |paramDesc                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 |:-------------------------|:----------|:------------|:---|:---|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |calcSummaryBGM            |character  |end          |NA  |NA  |A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: 'start'- as before vegetation succession events, i.e. before dispersal, 'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'), 'postGM' - after growth and mortality, 'postAging' - after aging, 'end' - at the end of vegetation succesion events, before plotting and saving. The 'end' option is always active, being also the default option.                                                           |
@@ -280,16 +270,6 @@ The module produces the following outputs:
 - Plotting - live and/or saved plot objects/images (depending on `.plots`)
 - Saved biomass, mortality, leading vegetation raster layers
 - Whatever objects supplied to `outputs` argument in `simInit` (only `cohortData` in the example above)
-
-
-```
-## defineParameter: 'growthInitialTime' is not of specified type 'numeric'.
-```
-
-```
-## defineParameter: '.plotInitialTime' is not of specified type 'numeric'.
-```
-
 
 
 |objectName                       |objectClass |desc                                                                                                                                                                                                                    |

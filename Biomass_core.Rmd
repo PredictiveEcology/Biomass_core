@@ -226,7 +226,7 @@ The module produces the following outputs:
 - Saved biomass, mortality, leading vegetation raster layers
 - Whatever objects supplied to `outputs` argument in `simInit` (only `cohortData` in the example above)
 
-```{r moduleOutputs, echo = FALSE, eval = TRUE, message=FALSE, warning=FALSE}}
+```{r moduleOutputs, echo = FALSE, eval = TRUE, message=FALSE, warning=FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")
 knitr::kable(df_outputs)
 ```
