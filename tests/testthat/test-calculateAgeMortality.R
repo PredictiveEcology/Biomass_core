@@ -2,7 +2,7 @@ test_that("test process of age reclassification",{
   library(SpaDES)
   # define the module and path
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath="..",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
@@ -72,7 +72,7 @@ test_that("test process of age reclassification",{
   if(exists("calculateAgeMortality")){
     output <- calculateAgeMortality(cohortData, stage="spinup", spinupMortalityfraction)
   } else {
-    output <- mySim$calculateAgeMortality(cohortData, stage="spinup", spinupMortalityfraction)
+    output <- mySim$.mods$Biomass_core$calculateAgeMortality(cohortData, stage="spinup", spinupMortalityfraction)
   }
   cohortData_output <- output[,.(age,mAge=round(mAge,2))]
   cohortData_output_compared <- data.table(age = 2:496, mAge = c(1.15, 1.94, 2.76, 3.56, 4.35, 5.12, 5.87, 6.6, 7.3, 7.98, 8.64,
@@ -193,7 +193,7 @@ test_that("test process of age reclassification",{
   if(exists("calculateAgeMortality")){
     output <- calculateAgeMortality(cohortData, stage="mainsimulation", spinupMortalityfraction)
   } else {
-    output <- mySim$calculateAgeMortality(cohortData,stage="mainsimulation", spinupMortalityfraction)
+    output <- mySim$.mods$Biomass_core$calculateAgeMortality(cohortData,stage="mainsimulation", spinupMortalityfraction)
   }
   cohortData_output <- output[,.(age,mAge=round(mAge,2))]
   cohortData_output_compared <- data.table(age = 2:452,

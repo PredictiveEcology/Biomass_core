@@ -2,7 +2,7 @@ test_that("test assign light probability for a given species tolerance and site 
   library(SpaDES)
   # define the module and path
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath="..",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
@@ -25,7 +25,7 @@ test_that("test assign light probability for a given species tolerance and site 
   if(exists("assignLightProb")){
     output <- assignLightProb(sufficientLight, newCohortData = cohortData)
   } else {
-    output <- mySim$assignLightProb(sufficientLight, newCohortData = cohortData)
+    output <- mySim$.mods$Biomass_core$assignLightProb(sufficientLight, newCohortData = cohortData)
   }
   cohortData[,lightProb:=c(seq(1,0.8,length=5),seq(0.8,0.6,length=5),
                            seq(0.6,0.4,length=5),seq(0.4,0.2,length=5),

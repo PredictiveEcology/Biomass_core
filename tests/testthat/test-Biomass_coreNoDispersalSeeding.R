@@ -1,7 +1,7 @@
 test_that("test no dispersal seeding algorithm",{
   # define the module and path
   module <- list("Biomass_core")
-  path <- list(modulePath = "~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath = "..",
                outputPath = "~/output")
   parameters <- list(.progress = list(type = "graphical", interval = 1),
                      .globals = list(verbose = FALSE),
@@ -56,7 +56,7 @@ test_that("test no dispersal seeding algorithm",{
   if(exists("Biomass_coreNoDispersalSeeding")){
     output <- Biomass_coreNoDispersalSeeding(mySim)
   } else {
-    output <- mySim$Biomass_coreNoDispersalSeeding(mySim)
+    output <- mySim$.mods$Biomass_core$Biomass_coreNoDispersalSeeding(mySim)
   }
   output <- output$regenerationOutput$numberOfReg
   expect_equal(output,2196)
@@ -89,7 +89,7 @@ test_that("test no dispersal seeding algorithm",{
   if (exists("Biomass_coreNoDispersalSeeding")) {
     output <- Biomass_coreNoDispersalSeeding(mySim)
   } else {
-    output <- mySim$Biomass_coreNoDispersalSeeding(mySim)
+    output <- mySim$.mods$Biomass_core$Biomass_coreNoDispersalSeeding(mySim)
   }
   output <- output$regenerationOutput$numberOfReg
   expect_equal(output,1962)
@@ -123,7 +123,7 @@ test_that("test no dispersal seeding algorithm",{
     if(exists("Biomass_coreNoDispersalSeeding")){
       output <- Biomass_coreNoDispersalSeeding(mySim)
     } else {
-      output <- mySim$Biomass_coreNoDispersalSeeding(mySim)
+      output <- mySim$.mods$Biomass_core$Biomass_coreNoDispersalSeeding(mySim)
     }
     output <- output$regenerationOutput$numberOfReg
     expect_equal(output,numeric(0))

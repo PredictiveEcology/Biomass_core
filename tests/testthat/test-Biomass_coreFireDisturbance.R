@@ -4,7 +4,7 @@ test_that("test regeneration after fire. ",{
   library(raster)
   # define the module and path
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath="..",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
@@ -86,7 +86,7 @@ test_that("test regeneration after fire. ",{
   if(exists("Biomass_coreFireDisturbance")){
     simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)
@@ -134,7 +134,7 @@ test_that("test regeneration after fire. ",{
   if(exists("Biomass_coreFireDisturbance")){
     simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)
@@ -181,7 +181,7 @@ test_that("test regeneration after fire. ",{
   if(exists("Biomass_coreFireDisturbance")){
     simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)
@@ -228,7 +228,7 @@ test_that("test regeneration after fire. ",{
   if(exists("Biomass_coreFireDisturbance")){
     simOutput <- Biomass_coreFireDisturbance(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreFireDisturbance(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreFireDisturbance(mySim)
   }
   postFireRegenSummary <- simOutput$postFireRegenSummary
   postFireRegenSummary$species <- as.character(postFireRegenSummary$species)

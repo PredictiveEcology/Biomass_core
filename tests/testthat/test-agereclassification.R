@@ -1,7 +1,7 @@
 test_that("test process of age reclassification",{
   # define the module and path
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath="..",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
@@ -19,7 +19,7 @@ test_that("test process of age reclassification",{
   if(exists("ageReclassification")){
     output <- ageReclassification(cohortData, successionTimestep, stage="spinup")
   } else {
-    output <- mySim$ageReclassification(cohortData, successionTimestep, stage="spinup")
+    output <- mySim$.mods$Biomass_core$ageReclassification(cohortData, successionTimestep, stage="spinup")
   }
   cohortData_output <- setkey(output,age)
   cohortData_output_compared <- setkey(data.table(pixelGroup = 1, ecoregionGroup = 1,
@@ -34,7 +34,7 @@ test_that("test process of age reclassification",{
   if(exists("ageReclassification")){
     output <- ageReclassification(cohortData, successionTimestep, stage="mainsimulaiton")
   } else {
-    output <- mySim$ageReclassification(cohortData, successionTimestep, stage="mainsimulaiton")
+    output <- mySim$.mods$Biomass_core$ageReclassification(cohortData, successionTimestep, stage="mainsimulaiton")
   }
 
   cohortData_output <- setkey(output,age)

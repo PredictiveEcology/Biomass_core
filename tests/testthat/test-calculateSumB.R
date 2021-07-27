@@ -2,7 +2,7 @@ test_that("test total site biomass (sumB) ",{
   library(SpaDES)
   # define the module and path
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath="..",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
@@ -22,7 +22,7 @@ test_that("test total site biomass (sumB) ",{
   if(exists("calculateSumB")){
     output <- calculateSumB(cohortData, lastReg=10, currentTime=18, successionTimestep)
   } else {
-    output <- mySim$calculateSumB(cohortData, lastReg=10, currentTime=18, successionTimestep)
+    output <- mySim$.mods$Biomass_core$calculateSumB(cohortData, lastReg=10, currentTime=18, successionTimestep)
   }
   cohortData_output <- setkey(output,pixelGroup,age)
   cohortData_output_compared <- setkey(data.table(pixelGroup = c(rep(1,13),rep(2,10)), ecoregionGroup = 1,
@@ -35,7 +35,7 @@ test_that("test total site biomass (sumB) ",{
     if(exists("calculateSumB")){
       output <- calculateSumB(cohortData, lastReg=10, currentTime=i, successionTimestep)
     } else {
-      output <- mySim$calculateSumB(cohortData, lastReg=10, currentTime=i, successionTimestep)
+      output <- mySim$.mods$Biomass_core$calculateSumB(cohortData, lastReg=10, currentTime=i, successionTimestep)
     }
     cohortData_output <- setkey(output,pixelGroup,age)
     cohortData_output_compared <- setkey(data.table(pixelGroup = c(rep(1,13),rep(2,10)), ecoregionGroup = 1,

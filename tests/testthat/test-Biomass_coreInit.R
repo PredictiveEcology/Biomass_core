@@ -4,7 +4,7 @@ test_that("test Biomass_coreInit", {
   library(data.table)
   module <- list("Biomass_core")
   path <- list(
-    modulePath = "~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+    modulePath = "..",
     outputPath = "~/output"
   )
   parameters <- list(
@@ -80,7 +80,7 @@ test_that("test Biomass_coreInit", {
   if (exists("Biomass_coreInit")) {
     simOutput <- Biomass_coreInit(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreInit(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreInit(mySim)
   }
   # check the cohortData table
   cohortData <- simOutput$cohortData
@@ -182,7 +182,7 @@ test_that("test Biomass_coreInit", {
   if (exists("Biomass_coreInit")) {
     simOutput <- Biomass_coreInit(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreInit(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Biomass_coreInit(mySim)
   }
 
   # check the calibration mode
