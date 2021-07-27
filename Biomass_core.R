@@ -97,16 +97,16 @@ defineModule(sim, list(
                     desc = "a number that define whether a species is leading for a given pixel"),
     defineParameter(".maxMemory", "numeric", 5, NA, NA,
                     desc = "maximum amount of memory (in GB) to use for dispersal calculations."),
+    defineParameter(".plotInitialTime", "numeric", start(sim), NA, NA,
+                    desc = paste("Vector of length = 1, describing the simulation time at which the first plot event should occur.",
+                                 "To plotting off completely use .plots.")),
+    defineParameter(".plotInterval", "numeric", NA, NA, NA,
+                    desc = paste("defines the plotting time step.",
+                                 "If NA, the default, .plotInterval is set to successionTimestep.")),
     defineParameter(".plots", "character", default = "object",
                     desc = paste("Passed to `types` in Plots (see ?Plots). There are a few plots that are made within this module, if set.",
                                  "Note that plots (or their data) saving will ONLY occur at end(sim).",
                                  "If  NA plotting is off completely (this includes saving).")),
-    defineParameter(".plotInitialTime", "numeric", start(sim), NA, NA,
-                    desc = paste("Vector of length = 1, describing the simulation time at which the first plot event should occur.",
-                                 "Set to NA to turn plotting off completely (this includes saving).")),
-    defineParameter(".plotInterval", "numeric", NA, NA, NA,
-                    desc = paste("defines the plotting time step.",
-                                 "If NA, the default, .plotInterval is set to successionTimestep.")),
     defineParameter(".plotMaps", "logical", TRUE, NA, NA,
                     desc = "Controls whether maps should be plotted or not. Set to FALSE if .plots == NA"),
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
@@ -301,7 +301,8 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
              params(sim)$Biomass_core$.saveInterval <- P(sim)$successionTimestep
 
            ## make sure plotting window is big enough
-           if (all(!is.na(P(sim)$.plots))) {
+           if (anyPlotting(P(sim)$.plots) &&
+               any(P(sim)$.plots == "screen")) {
              ## if current plot dev is too small, open a new one
              if (is.null(dev.list())) {
                dev(x = dev.cur() + 1, height = 7, width = 14)
@@ -320,10 +321,11 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                dev(x = mod$mapWindow, height = 8, width = 10)
              }
            } else {
-             P(sim)$.plotMaps <- FALSE
+             ## if plotting is deactivated make sure maps are NOT plotted
+             params(sim)[[currentModule(sim)]]$.plotMaps <- FALSE
            }
 
-           ## if not end(sim) dont save plots and only plot to screen.
+           ## if not end(sim) don't save plots and only plot to screen.
            ## plotMaps is the exception, as it never is saved.
            if (time(sim) != end(sim)) {
              if (any(P(sim)$.plots == "screen")) {
@@ -331,6 +333,13 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
              } else {
                mod$plotTypes <- NA
              }
+           }
+
+           ## P(sim)$.plotInitialTime == NA is no longer used to turn plotting off
+           ## override if necessary
+           if (is.na(P(sim)$.plotInitialTime)) {
+             params(sim)[[currentModule(sim)]]$.plotInitialTime <- start(sim)
+             message("Using .plotInitialTime == NA no longer turns off plotting. Please use .plots == NA instead.")
            }
 
            ## Run Init event
@@ -371,15 +380,16 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- scheduleEvent(sim, end(sim),
                                 "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)  ## schedule the last plotting events (so that it doesn't depend on plot interval)
 
-           if (P(sim)$.plotMaps) {
-             sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
-                                  "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
+           if (anyPlotting(P(sim)$.plots)) {
+             if (P(sim)$.plotMaps) {
+               sim <- scheduleEvent(sim, P(sim)$.plotInitialTime,
+                                    "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
+             }
+             sim <- scheduleEvent(sim, start(sim),
+                                  "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
+             sim <- scheduleEvent(sim, end(sim),
+                                  "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
            }
-
-           sim <- scheduleEvent(sim, start(sim),
-                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
-           sim <- scheduleEvent(sim, end(sim),
-                                "Biomass_core", "plotAvgs", eventPriority = plotPriority + 0.5)
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
@@ -1743,13 +1753,20 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
     names(mapsToPlot)[1] <- "Biomass"
   }
 
-  dev(mod$mapWindow)
-  ## for some reason not clearing the plot at the start was causing issues.
-  ## even when graphics were turned off, there seemed to be some inheritance of previous plots
-  clearPlot()
+  if (any(P(sim)$.plots == "screen")) {
+    dev(mod$mapWindow)
+    ## for some reason not clearing the plot at the start was causing issues.
+    ## even when graphics were turned off, there seemed to be some inheritance of previous plots
+    clearPlot()
+  }
+
   Plots(mapsToPlot, type = plotTypes, title = names(mapsToPlot), new = TRUE)
-  grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
-  grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
+
+  ## add year
+  if (any(P(sim)$.plots == "screen")) {
+    grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
+    grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
+  }
 
   return(invisible(sim))
 })
@@ -1782,7 +1799,9 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
 
     varLabels <- c(sumB = "Biomass", maxAge = "Age", sumANPP = "aNPP")
 
-    dev(mod$statsWindow)
+    if (any(P(sim)$.plots == "screen")) {
+      dev(mod$statsWindow)
+    }
     Plots(df2, fn = landscapeAttributesPlot,
           types = mod$plotTypes,
           filename = "landscape_biomass_aNPP_max_age",
