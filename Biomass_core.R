@@ -1894,7 +1894,7 @@ CohortAgeReclassification <- function(sim) {
                                  "2001-attributes_attributs-2001/",
                                  "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
       rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-      httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+      # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
         #necessary for KNN
         rawBiomassMap <- Cache(prepInputs,
                                targetFile = rawBiomassMapFilename,
@@ -1909,7 +1909,7 @@ CohortAgeReclassification <- function(sim) {
                                filename2 = NULL,
                                userTags = c(cacheTags, "rawBiomassMap"),
                                omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
-      })
+      # })
     } else {
       rawBiomassMap <- Cache(postProcess,
                              x = sim$rawBiomassMap,
