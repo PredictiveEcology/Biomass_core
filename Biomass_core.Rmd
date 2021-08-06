@@ -186,7 +186,7 @@ parameters <- list(
     , "successionTimestep" = successionTimestep
     , ".plots" = c("screen", "object")
     , ".plotInitialTime" = times$start
-    , ".plotInterval" = 1L
+    , ".plots" = c("screen", "png")
     , ".saveInitialTime" = times$start
     , ".useCache" = "init"
     , ".useParallel" = FALSE
