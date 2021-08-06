@@ -1,6 +1,6 @@
 test_that("test summary regeneration. ",{
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath="..",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
@@ -25,10 +25,10 @@ test_that("test summary regeneration. ",{
                    modules=module,
                    objects=objects,
                    paths=path)
-  if(exists("Biomass_coreSummaryRegen")){
-    simOutput <- Biomass_coreSummaryRegen(mySim)
+  if(exists("SummaryRegen")){
+    simOutput <- SummaryRegen(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreSummaryRegen(mySim)
+    simOutput <- mySim$.mods$Biomass_core$SummaryRegen(mySim)
   }
   expect_is(simOutput$reproductionMap, "RasterLayer")
   expect_equal(getValues(simOutput$reproductionMap),
@@ -45,10 +45,10 @@ test_that("test summary regeneration. ",{
                    modules=module,
                    objects=objects,
                    paths=path)
-  if(exists("Biomass_coreSummaryRegen")){
-    simOutput <- Biomass_coreSummaryRegen(mySim)
+  if(exists("SummaryRegen")){
+    simOutput <- SummaryRegen(mySim)
   } else {
-    simOutput <- mySim$Biomass_coreSummaryRegen(mySim)
+    simOutput <- mySim$.mods$Biomass_core$SummaryRegen(mySim)
   }
   expect_is(simOutput$reproductionMap, "RasterLayer")
   expect_equal(getValues(simOutput$reproductionMap),

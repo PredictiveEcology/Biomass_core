@@ -1,6 +1,6 @@
 test_that("test cache function for spinUp",{
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath="..",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
@@ -19,7 +19,7 @@ test_that("test cache function for spinUp",{
   if(exists("cacheSpinUpFunction")){
     output <- cacheSpinUpFunction(mySim, cachePath = cachePath)
   } else {
-    output <- mySim$cacheSpinUpFunction(mySim, cachePath = cachePath)
+    output <- mySim$.mods$Biomass_core$cacheSpinUpFunction(mySim, cachePath = cachePath)
   }
   expect_is(output$spinUpCache,"function")
   expect_true(dir.exists(file.path(cachePath,"spinUp")))
@@ -36,7 +36,7 @@ test_that("test cache function for spinUp",{
   if(exists("cacheSpinUpFunction")){
     output <- cacheSpinUpFunction(mySim, cachePath = cachePath)
   } else {
-    output <- mySim$cacheSpinUpFunction(mySim, cachePath = cachePath)
+    output <- mySim$.mods$Biomass_core$cacheSpinUpFunction(mySim, cachePath = cachePath)
   }
   expect_is(output$spinUpCache,"function")
   expect_false(dir.exists(file.path(cachePath,"spinUp")))

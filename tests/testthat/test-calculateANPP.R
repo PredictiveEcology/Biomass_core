@@ -2,7 +2,7 @@ test_that("test ANPP calculation",{
   library(SpaDES)
   # define the module and path
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath="..",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
@@ -18,7 +18,7 @@ test_that("test ANPP calculation",{
   if(exists("calculateANPP")){
     output <- calculateANPP(cohortData,stage="spinup")
   } else {
-    output <- mySim$calculateANPP(cohortData,stage="spinup")
+    output <- mySim$.mods$Biomass_core$calculateANPP(cohortData,stage="spinup")
   }
   ANPP_output <- round(output$aNPPAct,4)
   ANPP_output_compared <- c(rep(NA,10), 381.8944, 408.3121,
@@ -36,7 +36,7 @@ test_that("test ANPP calculation",{
   if(exists("calculateANPP")){
     output <- calculateANPP(cohortData,stage="mainsimulation")
   } else {
-    output <- mySim$calculateANPP(cohortData,stage="mainsimulation")
+    output <- mySim$.mods$Biomass_core$calculateANPP(cohortData,stage="mainsimulation")
   }
   ANPP_output <- round(output$aNPPAct,4)
   ANPP_output_compared <- c(190.9472, 204.1561, 210.3786, 213.9283, 216.113, 217.4929,

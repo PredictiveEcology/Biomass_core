@@ -29,7 +29,6 @@ setPaths(modulePath = modulePath)
 # Pick 5 species of tree
 sppEquiv <- LandR::sppEquivalencies_CA
 sppEquiv <- sppEquiv[Boreal %in% c("Pice_Gla", "Pice_Mar", "Pinu_Ban", "Pinu_Con", "Popu_Tre")]
-
 ```
 
 ## Using Landis txt files

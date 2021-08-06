@@ -2,7 +2,7 @@ test_that("test scheduled time for age classification and sumB at spinup stage",
   library(SpaDES)
   # define the module and path
   module <- list("Biomass_core")
-  path <- list(modulePath="~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core",
+  path <- list(modulePath="..",
                outputPath="~/output")
   parameters <- list(.progress=list(type="graphical", interval=1),
                      .globals=list(verbose=FALSE),
@@ -28,7 +28,7 @@ test_that("test scheduled time for age classification and sumB at spinup stage",
   if(exists("spinUp")){
     output <- spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   } else {
-    output <- mySim$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
+    output <- mySim$.mods$Biomass_core$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   }
   age <- output$spinupOutput$age
   age_compared <- seq(2,492)
@@ -103,7 +103,7 @@ test_that("test scheduled time for age classification and sumB at spinup stage",
   if(exists("spinUp")){
     output <- spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   } else {
-    output <- mySim$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
+    output <- mySim$.mods$Biomass_core$spinUp(cohortData, calibrate, successionTimestep, spinupMortalityfraction, species)
   }
   age <- output$spinupOutput$age
   age_compared <- c(2:4,4:492)

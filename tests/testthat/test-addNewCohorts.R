@@ -1,7 +1,10 @@
 test_that("test add new cohort function",{
   # define the module and path
+  require("raster")
+  require("data.table")
+
   module <- list("Biomass_core")
-  path <- list(modulePath = "~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core", # TODO: use general path
+  path <- list(modulePath = "..", # TODO: use general path
                outputPath = "~/output") # TODO: use general path
   parameters <- list(.progress = list(type = "graphical", interval = 1),
                      .globals = list(verbose = FALSE),
