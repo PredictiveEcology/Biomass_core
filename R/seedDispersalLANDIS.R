@@ -125,140 +125,255 @@ WardFast <- expression(ifelse(cellSize <= effDist, {
 #' @author Eliot McIntire
 #'
 #' @name LANDISDisp
-#' @aliases LANDISDisp
 #' @rdname LANDISDisp
+#'
+#' @examples
 #' library(raster)
+#' library(SpaDES.tools)
 #'
 #' # Make random forest cover map
-#' a <- raster(extent(0,1e4,0,1e4),res=100)
-#' hab <- gaussMap(a,speedup=1) # if raster is large (>1e6 pixels), use speedup>1
-#' names(hab)="hab"
+#' a <- raster(extent(0, 1e4, 0, 1e4), res = 100)
+#' hab <- gaussMap(a, speedup = 1) # if raster is large (>1e6 pixels), use speedup>1
+#' names(hab) <- "hab"
 #'
-#' seedSrc <- hab>5
-#' setColors(seedSrc,1) <- c("white","black")
+#' seedSrc <- hab > 5
+#' setColors(seedSrc, 1) <- c("white", "black")
 #'
-#' seedRcv <- hab>5
-#' system.time(seeds <- LANDISDisp(seedSrc, seedRcv = seedRcv,
-#'   maxDist=250, plot.it=TRUE))
+#' seedRcv <- hab > 5
+#' system.time(seeds <- LANDISDisp(seedSrc, seedRcv = seedRcv, maxDist = 250, plot.it = TRUE))
 #' seedRcvRaster <- raster(seedSrc)
-#' if(length(seeds)>0) {
+#' if (length(seeds) > 0) {
 #'   seedRcvRaster[seeds] <- 1
-#'   Plot(seedRcvRaster, cols="black")
+#'   Plot(seedRcvRaster, cols = "black")
 #' }
-LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = WardFast,
-                       b = 0.01, k = 0.95, plot.it = FALSE, maxPotentialsLength = 1e3,
-                       successionTimestep,
-                       verbose = getOption("LandR.verbose", TRUE),
-                       useParallel, ...) {
-  cellSize <- res(pixelGroupMap) %>% unique()
-  if (length(cellSize) > 1) {
-    ## check for equal cell sizes that "aren't" due to floating point error
-    res <- vapply(cellSize, function(x) isTRUE(all.equal(x, cellSize[1])), logical(1))
-    if (all(res))
-      cellSize <- cellSize[1]
-  }
-  seedsReceived <- raster(pixelGroupMap)
-  seedsReceived[] <- 0L
+#'
+LANDISDisp <- compiler::cmpfun(function(sim, dtSrc, dtRcv, pixelGroupMap, species,
+                                        dispersalFn = WardFast, b = 0.01, k = 0.95, plot.it = FALSE,
+                                        maxPotentialsLength = 1e5, successionTimestep,
+                                        verbose = getOption("LandR.verbose", TRUE),
+                                        useParallel, ...) {
+    cellSize <- res(pixelGroupMap) %>% unique()
+    if (length(cellSize) > 1) {
+      ## check for equal cell sizes that "aren't" due to floating point error
+      res <-
+        vapply(cellSize, function(x)
+          isTRUE(all.equal(x, cellSize[1])), logical(1))
+      if (all(res))
+        cellSize <- cellSize[1]
+    }
+    seedsReceived <- raster(pixelGroupMap)
+    seedsReceived[] <- 0L
 
-  # NOTE new as.integer for speciesCode -- it is now a factor
-  sc <- species[, list(speciesCode = as.integer(speciesCode),
-                       effDist = seeddistance_eff,
-                       maxDist = seeddistance_max)]
-  # sc <- species %>%
-  #   dplyr::select(speciesCode, seeddistance_eff, seeddistance_max) %>%
-  #   rename(effDist = seeddistance_eff, maxDist = seeddistance_max) %>%
-  #   mutate(speciesCode = as.integer(speciesCode)) %>%
-  #   data.table()
-  dtSrc[, speciesCode := as.integer(speciesCode)]
-  dtRcv[, speciesCode := as.integer(speciesCode)]
+    # NOTE new as.integer for speciesCode -- it is now a factor
+    sc <- species[, list(
+      speciesCode = as.integer(speciesCode),
+      effDist = seeddistance_eff,
+      maxDist = seeddistance_max
+    )]
+    # sc <- species %>%
+    #   dplyr::select(speciesCode, seeddistance_eff, seeddistance_max) %>%
+    #   rename(effDist = seeddistance_eff, maxDist = seeddistance_max) %>%
+    #   mutate(speciesCode = as.integer(speciesCode)) %>%
+    #   data.table()
+    dtSrc[, speciesCode := as.integer(speciesCode)]
+    dtRcv[, speciesCode := as.integer(speciesCode)]
 
-  setkey(sc, speciesCode)
-  setkey(dtSrc, speciesCode)
-  setkey(dtRcv, speciesCode)
+    setkey(sc, speciesCode)
+    setkey(dtSrc, speciesCode)
+    setkey(dtRcv, speciesCode)
 
-  speciesSrcPool <- sc[dtSrc] %>%
-    group_by(pixelGroup) %>%
-    summarise(speciesSrcPool = sum(2 ^ speciesCode)) %>%
-    data.table(key = "pixelGroup") %>%
-    na.omit()
+    # speciesSrcPool <- sc[dtSrc] %>%
+    #   group_by(pixelGroup) %>%
+    #   summarise(speciesSrcPool = sum(2 ^ speciesCode)) %>%
+    #   data.table(key = "pixelGroup") %>%
+    #   na.omit()
 
-  speciesRcvPool <- sc[dtRcv] %>%
-    group_by(pixelGroup) %>%
-    summarise(speciesRcvPool = sum(2 ^ speciesCode)) %>%
-    data.table(key = "pixelGroup") %>%
-    na.omit()
+    speciesSrcPool <-
+      sc[dtSrc][, list(speciesSrcPool = sum(2 ^ speciesCode)), by = "pixelGroup"]
+    setkeyv(speciesSrcPool, "pixelGroup")
+    speciesSrcPool <- na.omit(speciesSrcPool)
 
-  setkey(sc, speciesCode)
-  spPool <- merge(speciesRcvPool, speciesSrcPool, all = TRUE)
-  seedSourceMaps <- rasterizeReduced(
+    # speciesRcvPool <- sc[dtRcv] %>%
+    #   group_by(pixelGroup) %>%
+    #   summarise(speciesRcvPool = sum(2 ^ speciesCode)) %>%
+    #   data.table(key = "pixelGroup") %>%
+    #   na.omit()
+
+    speciesRcvPool <-
+      sc[dtRcv][, list(speciesRcvPool = sum(2 ^ speciesCode)), by = "pixelGroup"]
+    setkeyv(speciesRcvPool, "pixelGroup")
+    speciesRcvPool <- na.omit(speciesRcvPool)
+
+    setkey(sc, speciesCode)
+    spPool <- merge(speciesRcvPool, speciesSrcPool, all = TRUE)
+    seedSourceMaps <- rasterizeReduced(
       spPool,
       fullRaster = pixelGroupMap,
       mapcode = "pixelGroup",
       newRasterCols = c("speciesSrcPool", "speciesRcvPool")
-  )
-  # seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap,
-  #                                   mapcode = "pixelGroup", newRasterCols = "speciesSrcPool")
-  # seedReceiveMap <- rasterizeReduced(speciesRcvPool, fullRaster = pixelGroupMap,
-  #                                    mapcode = "pixelGroup", newRasterCols = "speciesRcvPool")
-  seedSourceMaps <- lapply(seedSourceMaps, function(x) setValues(x, as.integer(x[])))
+    )
+    # seedSourceMap <- rasterizeReduced(speciesSrcPool, fullRaster = pixelGroupMap,
+    #                                   mapcode = "pixelGroup", newRasterCols = "speciesSrcPool")
+    # seedReceiveMap <- rasterizeReduced(speciesRcvPool, fullRaster = pixelGroupMap,
+    #                                    mapcode = "pixelGroup", newRasterCols = "speciesRcvPool")
+    seedSourceMaps <-
+      lapply(seedSourceMaps, function(x)
+        setValues(x, as.integer(x[])))
 
-  seedRcvOrig <- which(!is.na(seedSourceMaps$speciesRcvPool[]))
-  seedSrcOrig <- which(seedSourceMaps$speciesSrcPool[] > 0)
+    seedRcvOrig <- which(!is.na(seedSourceMaps$speciesRcvPool[]))
+    seedSrcOrig <- which(seedSourceMaps$speciesSrcPool[] > 0)
 
-  xysAll <- xyFromCell(seedSourceMaps$speciesSrcPool, 1:ncell(seedSourceMaps$speciesSrcPool))
+    xysAll <-
+      xyFromCell(seedSourceMaps$speciesSrcPool,
+                 1:ncell(seedSourceMaps$speciesSrcPool))
 
-  if (is.null(seedRcvOrig))  {
-    # start it in the centre cell
-    activeCell <- (nrow(seedSrcOrig) / 2L + 0.5) * ncol(seedSrcOrig)
-  }
-  if (length(cellSize) > 1)
-    stop("pixelGroupMap resolution must be same in x and y dimension")
-  ### should sanity check map extents
-  if (plot.it) {
-    wardSeedDispersalHab1 <- raster(seedSourceMaps$speciesSrcPool)
-    wardSeedDispersalHab1[] <- NA
-    Plot(wardSeedDispersalHab1, new = TRUE)
-  }
+    if (is.null(seedRcvOrig))  {
+      # start it in the centre cell
+      activeCell <- (nrow(seedSrcOrig) / 2L + 0.5) * ncol(seedSrcOrig)
+    }
+    if (length(cellSize) > 1)
+      stop("pixelGroupMap resolution must be same in x and y dimension")
+    ### should sanity check map extents
+    if (plot.it) {
+      wardSeedDispersalHab1 <- raster(seedSourceMaps$speciesSrcPool)
+      wardSeedDispersalHab1[] <- NA
+      Plot(wardSeedDispersalHab1, new = TRUE)
+    }
 
-  seedSourceMaps$speciesSrcPool <- NULL # don't need once xysAll are gotten
+    seedSourceMaps$speciesSrcPool <-
+      NULL # don't need once xysAll are gotten
 
-  lociReturn <- data.table(fromInit = seedRcvOrig, key = "fromInit")
+    lociReturn <- data.table(fromInit = seedRcvOrig, key = "fromInit")
 
-  #            scFull <- sc[speciesComm(getValues(seedSourceMap))] %>%
-  #              setkey(.,pixelIndex)
-  potentialsOrig <- data.table(
-    "fromInit" = seedRcvOrig,
-    "RcvCommunity" = seedSourceMaps$speciesRcvPool[][seedRcvOrig],
-    key = "fromInit"
-  )
-  potentialsOrig[, from := fromInit]
+    #            scFull <- sc[speciesComm(getValues(seedSourceMap))] %>%
+    #              setkey(.,pixelIndex)
+    potentialsOrig <- data.table(
+      "fromInit" = seedRcvOrig,
+      "RcvCommunity" = seedSourceMaps$speciesRcvPool[][seedRcvOrig],
+      key = "fromInit"
+    )
+    potentialsOrig[, from := fromInit]
 
-  #maxPotentialsLength <- 3e3
-  nPotentials <- length(seedRcvOrig)
+    #maxPotentialsLength <- 3e3
+    nPotentials <- length(seedRcvOrig)
 
-  if (nPotentials > maxPotentialsLength) {
-    subSamp <- ceiling(nPotentials / maxPotentialsLength)
-  } else {
-    subSamp <- 1
-  }
-  ultimateMaxDist <- max(dtRcv$seeddistance_max)
-  splitFactor <- sort(rep(seq_len(subSamp), length.out = nPotentials))
-  subSampList <- purrr::transpose(list(
-    activeCell = split(seedRcvOrig, splitFactor),
-    potentials = split(potentialsOrig, splitFactor)
-  ))
+    if (nPotentials > maxPotentialsLength) {
+      subSamp <- ceiling(nPotentials / maxPotentialsLength)
+    } else {
+      subSamp <- 1
+    }
+    ultimateMaxDist <- max(dtRcv$seeddistance_max)
+    splitFactor <-
+      sort(rep(seq_len(subSamp), length.out = nPotentials))
+    subSampList <- purrr::transpose(list(
+      activeCell = split(seedRcvOrig, splitFactor),
+      potentials = split(potentialsOrig, splitFactor)
+    ))
 
-  if (verbose > 0)
-    message("  Seed dispersal: starting ", length(subSampList), " groups")
-  if (is.logical(useParallel) | is.numeric(useParallel)) {
-    if (isTRUE(useParallel)) {
-      numCores <- min(length(subSampList), parallel::detectCores() - 1)
-      if (Sys.info()[["sysname"]] == "Windows") {
-        cl <- parallel::makeCluster(numCores)
+    if (verbose > 0)
+      message("  Seed dispersal: starting ", length(subSampList), " groups")
+    if (is.logical(useParallel) | is.numeric(useParallel)) {
+      if (isTRUE(useParallel)) {
+        numCores <- min(length(subSampList), parallel::detectCores() - 1)
+        if (Sys.info()[["sysname"]] == "Windows") {
+          cl <- parallel::makeCluster(numCores)
+          allarguementsInMainFunc <- formalArgs(seedDispInnerFn)
+          parallel::clusterExport(
+            cl,
+            c(
+              "seedDispInnerFn",
+              "data.table",
+              "%>%",
+              "setkey",
+              "adj",
+              "%<=%",
+              "set",
+              "rbindlist",
+              "%<<%",
+              allarguementsInMainFunc[!(allarguementsInMainFunc %in% c("activeCell", "potentials", "n"))]
+            ),
+            envir = environment()
+          )
+        } else {
+          cl <- parallel::makeForkCluster(numCores)
+        }
+        if (verbose > 0)
+          message("Running seed dispersal in parallel on ",
+                  length(cl),
+                  " clusters")
+        seedsArrived <- parallel::parLapply(cl, subSampList,
+                                            function(y)
+                                              seedDispInnerFn(
+                                                activeCell = y[[1]],
+                                                potentials = y[[2]],
+                                                n = cellSize,
+                                                speciesRcvPool,
+                                                sc,
+                                                pixelGroupMap,
+                                                ultimateMaxDist,
+                                                cellSize,
+                                                xysAll,
+                                                dtSrc,
+                                                dispersalFn,
+                                                k,
+                                                b,
+                                                lociReturn,
+                                                speciesComm,
+                                                pointDistance,
+                                                successionTimestep = successionTimestep
+                                              )) %>%
+          rbindlist()
+        parallel::stopCluster(cl)
+      } else {
+        allSeedsArrived <- list()
+        if (verbose > 0)
+          message("  Seed dispersal should be using more than 100% CPU because of data.table openMP use")
+
+        for (y in seq_along(subSampList)) {
+          curThreads <- getDTthreads()
+          if (useParallel != curThreads) {
+            a <- if (isFALSE(useParallel))
+              data.table::setDTthreads(1)
+            else {
+              if (isTRUE(useParallel))
+                data.table::setDTthreads(0)   ## use all threads
+              else
+                data.table::setDTthreads(useParallel)
+            }
+            on.exit(data.table::setDTthreads(a), add = TRUE)
+          }
+          allSeedsArrived[[y]] <- seedDispInnerFn(
+            activeCell = subSampList[[y]][[1]],
+            potentials = subSampList[[y]][[2]],
+            n = cellSize,
+            speciesRcvPool,
+            sc,
+            pixelGroupMap,
+            ultimateMaxDist,
+            cellSize,
+            xysAll,
+            dtSrc,
+            dispersalFn,
+            k,
+            b,
+            lociReturn,
+            speciesComm,
+            pointDistance,
+            successionTimestep = successionTimestep
+          )
+        }
+        if (verbose > 0)
+          message("    End of using more than 100% CPU because of data.table openMP use")
+        seedsArrived <- rbindlist(allSeedsArrived)
+      }
+    } else if (is(useParallel, "cluster")) {
+      if (!all(unlist(lapply(useParallel, function(x)
+        is(x, "forknode"))))) {
         allarguementsInMainFunc <- formalArgs(seedDispInnerFn)
         parallel::clusterExport(
-          cl,
-          c("seedDispInnerFn",
+          useParallel,
+          c(
+            "seedDispInnerFn",
             "data.table",
             "%>%",
             "setkey",
@@ -267,153 +382,71 @@ LANDISDisp <- function(sim, dtSrc, dtRcv, pixelGroupMap, species, dispersalFn = 
             "set",
             "rbindlist",
             "%<<%",
-            allarguementsInMainFunc[!(allarguementsInMainFunc %in% c("activeCell", "potentials", "n"))]
+            allarguementsInMainFunc[!(allarguementsInMainFunc %in%
+                                        c("activeCell", "potentials", "n"))]
           ),
           envir = environment()
         )
-      } else {
-        cl <- parallel::makeForkCluster(numCores)
       }
       if (verbose > 0)
-        message("Running seed dispersal in parallel on ", length(cl), " clusters")
-      seedsArrived <- parallel::parLapply(cl, subSampList,
-                                          function(y)
-                                            seedDispInnerFn(
-                                              activeCell = y[[1]],
-                                              potentials = y[[2]],
-                                              n = cellSize,
-                                              speciesRcvPool,
-                                              sc,
-                                              pixelGroupMap,
-                                              ultimateMaxDist,
-                                              cellSize,
-                                              xysAll,
-                                              dtSrc,
-                                              dispersalFn,
-                                              k,
-                                              b,
-                                              lociReturn,
-                                              speciesComm,
-                                              pointDistance,
-                                              successionTimestep = successionTimestep
-                                            )) %>%
+        message("Running seed dispersal in parallel on ",
+                length(useParallel),
+                " clusters")
+      reqdPkgs <-
+        unlist(depends(sim)@dependencies[[current(sim)[["moduleName"]]]]@reqdPkgs)
+      parallel::clusterExport(useParallel, c("reqdPkgs"), envir = environment())
+      clusterEvalQ(cl = useParallel, {
+        SpaDES.core:::.modifySearchPath(reqdPkgs, removeOthers = FALSE)
+      })
+      seedsArrived <- parallel::parLapplyLB(useParallel, subSampList,
+                                            function(y)
+                                              seedDispInnerFn(
+                                                activeCell = y[[1]],
+                                                potentials = y[[2]],
+                                                n = cellSize,
+                                                speciesRcvPool,
+                                                sc,
+                                                seedSourceMaps$speciesRcvPool,
+                                                ultimateMaxDist,
+                                                cellSize,
+                                                xysAll,
+                                                dtSrc,
+                                                dispersalFn,
+                                                k,
+                                                b,
+                                                lociReturn,
+                                                speciesComm,
+                                                pointDistance,
+                                                successionTimestep = successionTimestep
+                                              )) %>%
         rbindlist()
-      parallel::stopCluster(cl)
     } else {
-      allSeedsArrived <- list()
-      if (verbose > 0)
-        message("  Seed dispersal should be using more than 100% CPU because of data.table openMP use")
-
-      for (y in seq_along(subSampList)) {
-        curThreads <- getDTthreads()
-        if (useParallel != curThreads) {
-          a <- data.table::setDTthreads(useParallel)
-          on.exit(data.table::setDTthreads(a), add = TRUE)
-        }
-        allSeedsArrived[[y]] <- seedDispInnerFn(
-          activeCell = subSampList[[y]][[1]],
-          potentials = subSampList[[y]][[2]],
-          n = cellSize,
-          speciesRcvPool,
-          sc,
-          pixelGroupMap,
-          ultimateMaxDist,
-          cellSize,
-          xysAll,
-          dtSrc,
-          dispersalFn,
-          k,
-          b,
-          lociReturn,
-          speciesComm,
-          pointDistance,
-          successionTimestep = successionTimestep
-        )
-      }
-      if (verbose > 0)
-        message("    End of using more than 100% CPU because of data.table openMP use")
-      seedsArrived <- rbindlist(allSeedsArrived)
-    }
-  } else if (is(useParallel, "cluster")) {
-    if (!all(unlist(lapply(useParallel, function(x)
-      is(x, "forknode"))))) {
-      allarguementsInMainFunc <- formalArgs(seedDispInnerFn)
-      parallel::clusterExport(
-        useParallel,
-        c("seedDispInnerFn",
-          "data.table",
-          "%>%",
-          "setkey",
-          "adj",
-          "%<=%",
-          "set",
-          "rbindlist",
-          "%<<%",
-          allarguementsInMainFunc[!(allarguementsInMainFunc %in%
-                                      c("activeCell", "potentials", "n"))]
-        ),
-        envir = environment()
+      stop(
+        "Please specify the useParallel argument correctly. ",
+        "Currently, it takes either numeric, logical or cluster object"
       )
     }
-    if (verbose > 0)
-      message("Running seed dispersal in parallel on ", length(useParallel), " clusters")
-    reqdPkgs <- unlist(depends(sim)@dependencies[[current(sim)[["moduleName"]]]]@reqdPkgs)
-    parallel::clusterExport(useParallel, c("reqdPkgs"), envir = environment())
-    clusterEvalQ(cl = useParallel, {
-      SpaDES.core:::.modifySearchPath(reqdPkgs, removeOthers = FALSE)
-    })
-    seedsArrived <- parallel::parLapplyLB(useParallel, subSampList,
-                                          function(y)
-                                            seedDispInnerFn(
-                                              activeCell = y[[1]],
-                                              potentials = y[[2]],
-                                              n = cellSize,
-                                              speciesRcvPool,
-                                              sc,
-                                              seedSourceMaps$speciesRcvPool,
-                                              ultimateMaxDist,
-                                              cellSize,
-                                              xysAll,
-                                              dtSrc,
-                                              dispersalFn,
-                                              k,
-                                              b,
-                                              lociReturn,
-                                              speciesComm,
-                                              pointDistance,
-                                              successionTimestep = successionTimestep
-                                            )) %>%
-      rbindlist()
-  } else {
-    stop(
-      "Please specify the useParallel argument correctly. ",
-      "Currently, it takes either numeric, logical or cluster object"
-    )
-  }
 
-  # COnvert speciesCode back to factor using original species object from top of this fn
-  seedsArrived[ , speciesCode := species$speciesCode[speciesCode]]
-  setnames(seedsArrived, "fromInit", "pixelIndex")
-  return(seedsArrived)
-}
+    # COnvert speciesCode back to factor using original species object from top of this fn
+    seedsArrived[, speciesCode := species$speciesCode[speciesCode]]
+    setnames(seedsArrived, "fromInit", "pixelIndex")
+    return(seedsArrived)
+  })
 
 speciesComm <- function(num, sc) {
-  indices <- lapply(strsplit(R.utils::intToBin(num), split = ""),
-                    function(x)
-                      rev(as.logical(as.numeric(x))))
+  indices <- lapply(strsplit(R.utils::intToBin(num), split = ""), function(x) {
+    rev(as.logical(as.numeric(x)))
+  })
 
   speciesCode <- lapply(indices, function(x) (seq_len(length(x)) - 1)[x])
-  data.table(
-    RcvCommunity = as.integer(rep(num, sapply(
-      speciesCode, length
-    ))),
-    speciesCode = unlist(speciesCode),
-    key = "speciesCode"
-  )[!is.na(speciesCode)] %>%
+
+  data.table(RcvCommunity = as.integer(rep(num, sapply(speciesCode, length))),
+             speciesCode = unlist(speciesCode),
+             key = "speciesCode")[!is.na(speciesCode)] %>%
     sc[.]
 }
 
-ringCells <- function(x, index, minDist, maxDist) {
+ringCells <- compiler::cmpfun(function(x, index, minDist, maxDist) {
   ras <- raster(x)
   ras[index] <- 1
   xOuter <- buffer(ras, width = maxDist)
@@ -423,7 +456,7 @@ ringCells <- function(x, index, minDist, maxDist) {
 
   #  xOuter[xInner==1] <- NA
   #  return(xOuter)
-}
+})
 
 # ringWeight <- function(x, minDist, maxDist) {
 #   b = focalWeight(x, minDist, "circle")
@@ -442,7 +475,7 @@ ringCells <- function(x, index, minDist, maxDist) {
 #   return(dis)
 # }
 
-WardEqn <- function(dis, cellSize, effDist, maxDist, k, b) {
+WardEqn <- compiler::cmpfun(function(dis, cellSize, effDist, maxDist, k, b) {
   if (cellSize %<=% effDist) {
     ifelse(
       dis %<=% effDist,
@@ -460,7 +493,7 @@ WardEqn <- function(dis, cellSize, effDist, maxDist, k, b) {
         (1 - k) * exp((dis - effDist) * log(b) / maxDist)
     )
   }
-}
+})
 
 # WardFn <- function(dis, maxDist=3000, effDist=30, ...) {
 #   #effDist = 100
@@ -519,126 +552,134 @@ WardEqn <- function(dis, cellSize, effDist, maxDist, k, b) {
 # Plot(h)
 
 #' @inheritParams LANDISDisp
-seedDispInnerFn <- function(activeCell, potentials, n, speciesRcvPool, sc,
-                            pixelGroupMap, ultimateMaxDist, cellSize, xysAll,
-                            dtSrc, dispersalFn, k, b, lociReturn, speciesComm,
-                            pointDistance, successionTimestep,
-                            verbose = getOption("LandR.verbose", TRUE)) {
-  if (verbose > 0)
-    message("  Dispersal for pixels ", min(activeCell), " to ", max(activeCell))
+seedDispInnerFn <- compiler::cmpfun(function(activeCell, potentials, n, speciesRcvPool, sc,
+                                             pixelGroupMap, ultimateMaxDist, cellSize, xysAll,
+                                             dtSrc, dispersalFn, k, b, lociReturn, speciesComm,
+                                             pointDistance, successionTimestep,
+                                             verbose = getOption("LandR.verbose", TRUE)) {
+    if (verbose > 0)
+      message("  Dispersal for pixels ", min(activeCell), " to ", max(activeCell))
 
-  seedsArrived <- data.table(
-    fromInit = integer(),
-    speciesCode = integer(),
-    key = c("fromInit", "speciesCode")
-  )
-  # Go to species level
-  spRcvCommCodes <- speciesComm(unique(speciesRcvPool$speciesRcvPool), sc = sc)
-  #spRcvCommCodes <- speciesComm(unique(potentials$RcvCommunity))
-  setkey(spRcvCommCodes, RcvCommunity)
-  setkey(potentials, RcvCommunity)
+    seedsArrived <- data.table(
+      fromInit = integer(),
+      speciesCode = integer(),
+      key = c("fromInit", "speciesCode")
+    )
+    # Go to species level
+    spRcvCommCodes <-
+      speciesComm(unique(speciesRcvPool$speciesRcvPool), sc = sc)
+    #spRcvCommCodes <- speciesComm(unique(potentials$RcvCommunity))
+    setkey(spRcvCommCodes, RcvCommunity)
+    setkey(potentials, RcvCommunity)
 
-  # Make potentials have all Rcv pixels, with each species as unique line
-  potentials = spRcvCommCodes[potentials, allow.cartesian = TRUE][, ':='(RcvCommunity = NULL)]
-  setkey(potentials, "from")
-  # identify which are 8 neighbours from each "active cell", don't need internal sort because data.table will do in 2nd line
-  adjCells <- adj(
-    pixelGroupMap,
-    unique(activeCell),
-    directions = 8,
-    pairs = TRUE,
-    include = TRUE,
-    sort = FALSE
-  ) %>%
-    data.table(key = c("from"))
-  set(adjCells, NULL, "from", as.integer(adjCells$from))
-  set(adjCells, NULL, "to", as.integer(adjCells$to))
-  #adjCells[, ':='(from = as.integer(from), to = as.integer(to))]
-  startTime <- Sys.time()
-  ## while there are active cells and less than maxDistance:
-  while (NROW(potentials) && ((n - cellSize) %<=% ultimateMaxDist)) {
-    if (n > cellSize) {
-      potentials[, ':='(from = NULL)][, from := to][, ':='(to = NULL, dis = NULL)]
-      setkey(potentials, "from")
-    }
-    ################ original
-    # join these to the potentials object
-    potentials <- potentials[adjCells, allow.cartesian = TRUE, nomatch = 0] %>%
-      unique(by = c("fromInit", "to", "speciesCode"))
-    # if (anyNA(potentials$fromInit)) {
-    #   potentials <- potentials[!is.na(fromInit),]
-    # }
+    # Make potentials have all Rcv pixels, with each species as unique line
+    potentials = spRcvCommCodes[potentials, allow.cartesian = TRUE][, ':='(RcvCommunity = NULL)]
+    setkey(potentials, "from")
 
-    # because there will be duplicate "from - to" pairs, say from 2 different species, only calculate
-    #   distance once, then re-join the shorter version back to longer version by species
-    shortPotentials <- setkey(potentials, fromInit, to) %>%
-      unique(., by = c("fromInit", "to")) %>%
-      .[, list(fromInit, to)]
-    set(shortPotentials, NULL, "dis", as.integer(pointDistance(xysAll[shortPotentials$fromInit, ],
-                                                               xysAll[shortPotentials$to, ],
-                                                               lonlat = FALSE)))
-
-    # merge shorter object with no duplicate from-to pairs back with potentials, which does have duplicate from-to pairs
-    #   due to multiple species having same from-to pair
-    if (n - cellSize == 0) {
-      # the first loop incudes on site regeneration
-      potentials <- shortPotentials[((n - cellSize) %<=% dis) & (dis %<=% n), ][
-        potentials, nomatch = 0][(dis %<=% maxDist), ]
-    } else {
-      potentials <- shortPotentials[((n - cellSize) %<<% dis) & (dis %<=% n), ][
-        potentials, nomatch = 0][(dis %<=% maxDist), ]
-    }
-
-    if (NROW(potentials) > 0) {
-      dtSrcShort <- dtSrc[, list(pixelGroup, speciesCode)]
-      set(potentials, NULL, "pixelGroup", pixelGroupMap[][potentials$to])
-      setkey(dtSrcShort, speciesCode, pixelGroup)
-      setkey(potentials, speciesCode, pixelGroup)
-
-      potentialsWithSeedDT <- potentials[dtSrcShort, nomatch = 0]
-      if (NROW(potentialsWithSeedDT) > 0) {
-        set(potentialsWithSeedDT, NULL, "receivesSeeds", NA)
-        nr <- NROW(potentialsWithSeedDT)
-
-        # back to Ward
-        # Don't include the ones that were already, calculate probability
-        whDisZero <- which(potentialsWithSeedDT$dis == 0)
-        if (length(whDisZero)) {
-          potentialsWithSeedDT[whDisZero, dispersalProb := 1]
-          potentialsWithSeedDT[-whDisZero, dispersalProb := eval(dispersalFn)]
-        } else {
-          potentialsWithSeedDT[ , dispersalProb := eval(dispersalFn)]
-        }
-
-        # Eliot -- Jan 11, 2019 -- adjust based on successionTimestep --
-        #  seeds can disperse every year in reality, their probabilities must be scaled
-        #  to timestep
-        potentialsWithSeedDT[, dispersalProb := 1 - (1 - dispersalProb) ^ successionTimestep]
-
-        potentialsWithSeedDT <- potentialsWithSeedDT[
-          , .(receivesSeeds = runif(nr) < dispersalProb, fromInit, speciesCode)]
-        receivedSeeds <- potentialsWithSeedDT[
-          , any(receivesSeeds), by = c("fromInit,speciesCode")]
-        setkey(receivedSeeds, fromInit, speciesCode)
-
-        #drop any that received seeds from potentials, as they are now in lociReturn
-        if (NROW(receivedSeeds[V1 == TRUE]) > 0)  {
-          seedsArrived <- rbindlist(list(seedsArrived,
-                                         lociReturn[receivedSeeds[V1 == TRUE]][, V1 := NULL]))
-          setkey(seedsArrived, fromInit, speciesCode)
-          setkey(potentials, fromInit, speciesCode)
-          potentials <- potentials[!receivedSeeds[V1 == TRUE]]
-          #potentials <- potentials[!receivedSeeds[V1 == TRUE]]
-        }
-        #potentials <- specPotentials[, list(RcvCommunity = sum(2^speciesCode)), by = c("fromInit", "from", "to")]
+    ## identify which are 8 neighbours from each "active cell";
+    ## don't need internal sort because data.table will do in 2nd line
+    adjCells <- adj(
+      pixelGroupMap,
+      unique(activeCell),
+      directions = 8,
+      pairs = TRUE,
+      include = TRUE,
+      sort = FALSE
+    ) %>%
+      data.table(key = c("from"))
+    set(adjCells, NULL, "from", as.integer(adjCells$from))
+    set(adjCells, NULL, "to", as.integer(adjCells$to))
+    #adjCells[, ':='(from = as.integer(from), to = as.integer(to))]
+    startTime <- Sys.time()
+    ## while there are active cells and less than maxDistance:
+    while (NROW(potentials) &&
+           ((n - cellSize) %<=% ultimateMaxDist)) {
+      if (n > cellSize) {
+        potentials[, ':='(from = NULL)][, from := to][, ':='(to = NULL, dis = NULL)]
+        setkey(potentials, "from")
       }
+      ################ original
+      # join these to the potentials object
+      potentials <-
+        potentials[adjCells, allow.cartesian = TRUE, nomatch = 0] %>%
+        unique(by = c("fromInit", "to", "speciesCode"))
+      # if (anyNA(potentials$fromInit)) {
+      #   potentials <- potentials[!is.na(fromInit),]
+      # }
+
+      # because there will be duplicate "from - to" pairs, say from 2 different species, only calculate
+      #   distance once, then re-join the shorter version back to longer version by species
+      shortPotentials <- setkey(potentials, fromInit, to) %>%
+        unique(., by = c("fromInit", "to")) %>%
+        .[, list(fromInit, to)]
+      set(shortPotentials, NULL, "dis", as.integer(pointDistance(xysAll[shortPotentials$fromInit,],
+                                                                 xysAll[shortPotentials$to,],
+                                                                 lonlat = FALSE)))
+
+      # merge shorter object with no duplicate from-to pairs back with potentials,
+      # which does have duplicate from-to pairs due to multiple species having same from-to pair
+      if (n - cellSize == 0) {
+        # the first loop incudes on site regeneration
+        potentials <-
+          shortPotentials[((n - cellSize) %<=% dis) & (dis %<=% n),][potentials, nomatch = 0][(dis %<=% maxDist),]
+      } else {
+        potentials <-
+          shortPotentials[((n - cellSize) %<<% dis) & (dis %<=% n),][potentials, nomatch = 0][(dis %<=% maxDist),]
+      }
+
+      if (NROW(potentials) > 0) {
+        dtSrcShort <- dtSrc[, list(pixelGroup, speciesCode)]
+        set(potentials, NULL, "pixelGroup", pixelGroupMap[][potentials$to])
+        setkey(dtSrcShort, speciesCode, pixelGroup)
+        setkey(potentials, speciesCode, pixelGroup)
+
+        potentialsWithSeedDT <- potentials[dtSrcShort, nomatch = 0]
+        if (NROW(potentialsWithSeedDT) > 0) {
+          set(potentialsWithSeedDT, NULL, "receivesSeeds", NA)
+          nr <- NROW(potentialsWithSeedDT)
+
+          # back to Ward
+          # Don't include the ones that were already, calculate probability
+          whDisZero <- which(potentialsWithSeedDT$dis == 0)
+          if (length(whDisZero)) {
+            potentialsWithSeedDT[whDisZero, dispersalProb := 1]
+            potentialsWithSeedDT[-whDisZero, dispersalProb := eval(dispersalFn)]
+          } else {
+            potentialsWithSeedDT[, dispersalProb := eval(dispersalFn)]
+          }
+
+          # Eliot -- Jan 11, 2019 -- adjust based on successionTimestep --
+          #  seeds can disperse every year in reality, their probabilities must be scaled
+          #  to timestep
+          potentialsWithSeedDT[, dispersalProb := 1 - (1 - dispersalProb) ^ successionTimestep]
+
+          potentialsWithSeedDT <- potentialsWithSeedDT[, .(receivesSeeds = runif(nr) < dispersalProb,
+                                                           fromInit,
+                                                           speciesCode)]
+          receivedSeeds <- potentialsWithSeedDT[, any(receivesSeeds), by = c("fromInit,speciesCode")]
+          setkey(receivedSeeds, fromInit, speciesCode)
+
+          #drop any that received seeds from potentials, as they are now in lociReturn
+          if (NROW(receivedSeeds[V1 == TRUE]) > 0)  {
+            seedsArrived <- rbindlist(list(seedsArrived,
+                                           lociReturn[receivedSeeds[V1 == TRUE]][, V1 := NULL]))
+            setkey(seedsArrived, fromInit, speciesCode)
+            setkey(potentials, fromInit, speciesCode)
+            potentials <- potentials[!receivedSeeds[V1 == TRUE]]
+            #potentials <- potentials[!receivedSeeds[V1 == TRUE]]
+          }
+          #potentials <- specPotentials[, list(RcvCommunity = sum(2^speciesCode)), by = c("fromInit", "from", "to")]
+        }
+      }
+      midTime <- Sys.time()
+      if (verbose > 1)
+        message("    Dispersal for ",
+                n,
+                " m from source. Elapsed time: ",
+                midTime - startTime)
+      n <- n + cellSize
+      # refresh so that "to" cells become new "from" cells
+      activeCell <- potentials[, to]
     }
-    midTime <- Sys.time()
-    if (verbose > 1)
-      message("    Dispersal for ", n, " m from source. Elapsed time: ", midTime - startTime)
-    n <- n + cellSize
-    # refresh so that "to" cells become new "from" cells
-    activeCell <- potentials[, to]
-  }
-  return(seedsArrived)
-}
+    return(seedsArrived)
+})

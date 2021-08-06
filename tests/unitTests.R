@@ -3,7 +3,7 @@
 # please specify the package you need to run the sim function in the test files.
 
 # to test all the test files in the tests folder:
-test_dir("~/GitHub/nrv-succession/code blitz succession/Module_LBMR/LBMR/tests/testthat")
+test_dir("~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core/Biomass_core/tests/testthat")
 
 # Alternative, you can use test_file to test individual test file, e.g.:
-test_file("~/GitHub/nrv-succession/code blitz succession/Module_LBMR/LBMR/tests/testthat/test-template.R")
+test_file("~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core/Biomass_core/tests/testthat/test-template.R")

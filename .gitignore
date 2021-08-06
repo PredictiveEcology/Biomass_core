@@ -1,9 +1,13 @@
 # Ignore
-.csv
+*.csv
 .log
 .Rapp.history
 .RData
 .Rhistory
 .Rproj.user/
 .Rproj.user
-.tif
+*.tif
+*.R.save
+*.swp
+
+cache/

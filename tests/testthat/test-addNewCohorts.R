@@ -1,11 +1,11 @@
 test_that("test add new cohort function",{
   # define the module and path
-  module <- list("LBMR")
-  path <- list(modulePath = "~/GitHub/nrv-succession/code blitz succession/Module_LBMR", # TODO: use general path
+  module <- list("Biomass_core")
+  path <- list(modulePath = "~/GitHub/nrv-succession/code blitz succession/Module_Biomass_core", # TODO: use general path
                outputPath = "~/output") # TODO: use general path
   parameters <- list(.progress = list(type = "graphical", interval = 1),
                      .globals = list(verbose = FALSE),
-                     LBMR = list(.saveInitialTime = NA))
+                     Biomass_core = list(.saveInitialTime = NA))
 
   pixelGroupMap <- raster(xmn = 50, xmx = 50 + 3 * 100,
                           ymn = 50, ymx = 50 + 3 * 100,
@@ -40,7 +40,7 @@ test_that("test add new cohort function",{
                    objects = objects,
                    paths = path)
   output <- addNewCohorts(newcohortdata, cohortData, pixelGroupMap,
-                          time = time(mySim), speciesEcoregion = speciesEcoregion)
+                          currentTime = time(mySim), speciesEcoregion = speciesEcoregion)
   mapOutput <- getValues(output$pixelGroupMap)
   mapOutput_compared <- c(-1, 2, 2, 4, 4, 6, 3, 5, 1)
   expect_equal(mapOutput,mapOutput_compared)
