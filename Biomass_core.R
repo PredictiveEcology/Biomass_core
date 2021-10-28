@@ -1523,7 +1523,6 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 })
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
-
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
   checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
