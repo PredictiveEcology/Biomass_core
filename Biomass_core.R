@@ -328,7 +328,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            ## if not end(sim) don't save plots and only plot to screen.
            ## plotMaps is the exception, as it never is saved.
            if (time(sim) != end(sim)) {
-             if (any(P(sim)$.plots == "screen")) {
+             if (any(is.na(P(sim)$.plots))) {
+               mod$plotTypes <- NA
+             } else if (any(P(sim)$.plots == "screen")) {
                mod$plotTypes <- "screen"
              } else {
                mod$plotTypes <- NA
