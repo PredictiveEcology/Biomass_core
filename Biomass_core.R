@@ -1598,8 +1598,10 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
     ## although Plots can deal with   .plotInitialTime == NA by not plotting, we need to
     ## make sure the plotting windows are not changed/opened if  .plotInitialTime == NA
-    if (any(P(sim)$.plots == "screen")) {
-      dev(mod$statsWindow)
+    if (!any(is.na(P(sim)$.plots))) {
+      if (any(P(sim)$.plots == "screen")) {
+        dev(mod$statsWindow)
+      }
     }
     ## biomass by species
     Plots(df, fn = speciesBiomassPlot,
