@@ -143,9 +143,14 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
 
   if (algo == 2 || isTRUE(doAssertion)) {
     ## this newer version is typically much faster than the older one above (Eliot June 2, 2019)
-    cohortData2 <- copy(cohortData)
+    oldKey <- key(cohortData)
+    keepCols <- union(c("B", "pixelGroup", "age"), oldKey)
+    cohortData2 <- copy(cohortData[, ..keepCols])
+    #cohortData2 <- copy(cohortData)
+    set(cohortData2, NULL, "origOrd", seq(NROW(cohortData)))
     new1 <- Sys.time()
-    oldKey <- checkAndChangeKey(cohortData2, "pixelGroup")
+    oldKeyToDelete <- checkAndChangeKey(cohortData2, "pixelGroup")
+    #oldKey <- checkAndChangeKey(cohortData2, "pixelGroup")
     wh <- which(cohortData2$age >= successionTimestep)
     sumBtmp <- cohortData2[wh, list(N = .N, sumB = sum(B, na.rm = TRUE)), by = "pixelGroup"]
     if ("sumB" %in% names(cohortData2)) set(cohortData2, NULL, "sumB", NULL)
@@ -161,6 +166,11 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     set(cohortData2, NULL, "sumB", sumB)
     if (!is.null(oldKey))
       setkeyv(cohortData2, oldKey)
+    setorderv(cohortData2, "origOrd")
+    set(cohortData2, NULL, "origOrd", NULL)
+    rejoinCols <- setdiff(colnames(cohortData), keepCols)
+    cohortData2 <- data.table(cohortData2, cohortData[, ..rejoinCols])
+    setcolorder(cohortData2, colnames(cohortData))
     new2 <- Sys.time()
     if (!is.integer(cohortData2[["sumB"]]))
       set(cohortData2, NULL, "sumB", asInteger(cohortData2[["sumB"]]))
