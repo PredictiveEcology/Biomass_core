@@ -1,20 +1,27 @@
 test_that("test add new cohort function",{
-  # define the module and path
+  opts <- options(reproducible.useGDAL = FALSE,
+                  spades.moduleCodeChecks = FALSE,
+                  reproducible.useMemoise = TRUE,
+                  spades.useRequire = FALSE,
+                  LandR.assertions = FALSE,
+                  spades.recoveryMode = FALSE)
+  on.exit(options(opts))
   require("raster")
   require("data.table")
+  module <- "Biomass_core"
+  modulePath <- getwd()
+  while( grepl(module, modulePath)) modulePath <- dirname(modulePath)
+  outputPath <- checkPath(file.path(tempdir(), rndstr(1)), create = TRUE)
+  path <- list(modulePath = modulePath, # TODO: use general path
+               outputPath = outputPath) # TODO: use general path
+  parameters <- list(Biomass_core = list(.saveInitialTime = NA))
 
-  module <- list("Biomass_core")
-  path <- list(modulePath = "..", # TODO: use general path
-               outputPath = "~/output") # TODO: use general path
-  parameters <- list(.progress = list(type = "graphical", interval = 1),
-                     .globals = list(verbose = FALSE),
-                     Biomass_core = list(.saveInitialTime = NA))
-
+  successionTimestep <- 10
   pixelGroupMap <- raster(xmn = 50, xmx = 50 + 3 * 100,
                           ymn = 50, ymx = 50 + 3 * 100,
                           res = c(100, 100), val = 1)
   pixelGroupMap[1] <- -1
-  pixelGroupMap[2:6] <- 2
+  pixelGroupMap[2:6] <- 0
 
   cohortData <- data.table(pixelGroup = 1, ecoregionGroup = 1L,
                            speciesCode = 7, age = 31, B = 30000L,
@@ -23,7 +30,7 @@ test_that("test add new cohort function",{
     , ':='(speciesCode = c(7, 1, 7), pixelIndex = c(7:8, 8))]
   newcohortdata2 <- rbindlist(list(cohortData, cohortData,
                                    cohortData, cohortData))[
-                                     ,':='(pixelGroup = 2,
+                                     ,':='(pixelGroup = 0,
                                            speciesCode = c(7, 7, 7, 1),
                                            pixelIndex = c(4:6, 6))]
   newcohortdata <- rbindlist(list(newcohortdata1,newcohortdata2))[
@@ -42,18 +49,25 @@ test_that("test add new cohort function",{
                    modules = module,
                    objects = objects,
                    paths = path)
-  output <- addNewCohorts(newcohortdata, cohortData, pixelGroupMap,
-                          currentTime = time(mySim), speciesEcoregion = speciesEcoregion)
+  output <- updateCohortData(newcohortdata, cohortData, pixelGroupMap,
+                          currentTime = time(mySim), speciesEcoregion = speciesEcoregion,
+                          successionTimestep = successionTimestep)
   mapOutput <- getValues(output$pixelGroupMap)
   mapOutput_compared <- c(-1, 2, 2, 4, 4, 6, 3, 5, 1)
+  mapOutput_compared <- c(-1, 0, 0, 1, 1, 2, 5, 4, 3)
   expect_equal(mapOutput,mapOutput_compared)
 
   cohortdataOutput <- output$cohortData[,.(pixelGroup, speciesCode, age, B)]
 
-  cohortdataOutput_compared <- data.table(pixelGroup = c(1, 3, 3, 4, 5, 5, 5, 6, 6),
-                                          speciesCode = c(rep(7, 4), 1, 7, 7, 1, 7),
-                                          age = c(31, 1, 31, 1, 1, 1, 31, 1, 1),
-                                          B = c(30000L, 225L, 30000L, 969L, 205L, 225L, 30000L, 886L, 969L))
+  cohortdataOutput_compared <-
+    setDT(list(pixelGroup = c(5L, 4L, 3L, 5L, 4L, 4L, 1L, 2L, 2L),
+               speciesCode = c(7, 7, 7, 7, 1, 7, 7, 7, 1),
+               age = c(31, 31, 31, 1, 1, 1, 1, 1, 1),
+               B = c(30000L, 30000L, 30000L, 225L, 206L, 225L, 969L, 969L, 886L)))
+  # cohortdataOutput_compared <- data.table(pixelGroup = c(1, 3, 3, 4, 5, 5, 5, 6, 6),
+  #                                         speciesCode = c(rep(7, 4), 1, 7, 7, 1, 7),
+  #                                         age = c(31, 1, 31, 1, 1, 1, 31, 1, 1),
+  #                                         B = c(30000L, 225L, 30000L, 969L, 205L, 225L, 30000L, 886L, 969L))
 
   expect_equal(cohortdataOutput,cohortdataOutput_compared)
 })

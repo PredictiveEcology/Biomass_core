@@ -6,14 +6,15 @@ test_that("test growth and mortality at main simulation stage",{
                   LandR.assertions = FALSE,
                   spades.recoveryMode = FALSE)
   on.exit(options(opts))
-  Require::Require(c("SpaDES.core", "reproducible", "data.table", "raster", "LandR"))
-  # define the module and path
-  module <- list("Biomass_core")
-  path <- list(modulePath="..",
-               outputPath="~/output")
-  parameters <- list(.progress=list(type="graphical", interval=1),
-                     .globals=list(verbose=FALSE),
-                     Biomass_core=list( .saveInitialTime=NA, .useCache = FALSE))
+  require("raster")
+  require("data.table")
+  module <- "Biomass_core"
+  modulePath <- getwd()
+  while( grepl(module, modulePath)) modulePath <- dirname(modulePath)
+  outputPath <- checkPath(file.path(tempdir(), rndstr(1)), create = TRUE)
+  path <- list(modulePath = modulePath, # TODO: use general path
+               outputPath = outputPath) # TODO: use general path
+  parameters <- list(Biomass_core = list(.saveInitialTime = NA))
 
   endYr <- 3
   startAge <- 1L

@@ -1,12 +1,21 @@
 test_that("test site shade calculation",{
-  library(SpaDES)
-  # define the module and path
-  module <- list("Biomass_core")
-  path <- list(modulePath="..",
-               outputPath="~/output")
-  parameters <- list(.progress=list(type="graphical", interval=1),
-                     .globals=list(verbose=FALSE),
-                     Biomass_core=list( .saveInitialTime=NA))
+  opts <- options(reproducible.useGDAL = FALSE,
+                  spades.moduleCodeChecks = FALSE,
+                  reproducible.useMemoise = TRUE,
+                  spades.useRequire = FALSE,
+                  LandR.assertions = FALSE,
+                  spades.recoveryMode = FALSE)
+  on.exit(options(opts))
+  require("raster")
+  require("data.table")
+  module <- "Biomass_core"
+  modulePath <- getwd()
+  while( grepl(module, modulePath)) modulePath <- dirname(modulePath)
+  outputPath <- checkPath(file.path(tempdir(), rndstr(1)), create = TRUE)
+  path <- list(modulePath = modulePath, # TODO: use general path
+               outputPath = outputPath) # TODO: use general path
+  parameters <- list(Biomass_core = list(.saveInitialTime = NA))
+
   minRelativeB <- data.table(ecoregion = c("eco1", "eco2"), X1 = c(0.145, 0.15),
                              X2 = c(0.217, 0.25), X3 = c(0.288, 0.5), X4 = c(0.359, 0.8),
                              X5 = c(0.430, 0.95), ecoregionGroup = 1:2)

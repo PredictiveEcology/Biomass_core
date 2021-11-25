@@ -38,6 +38,11 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, coho
 #' @importFrom data.table setkey
 updateSpeciesAttributes <- function(species, cohortData) {
   # to assign longevity, mortalityshape, growthcurve to cohortData
+  if (!("speciesCode" %in% colnames(species)) | !("speciesCode" %in% colnames(cohortData))) {
+    browser()
+    species <- species[, speciesCode := as.factor(species)]
+  }
+
   species_temp <- setkey(species[, .(speciesCode, longevity, mortalityshape, growthcurve)], speciesCode)
   setkey(cohortData, speciesCode)
   cohortData <- cohortData[species_temp, nomatch = 0]
@@ -60,7 +65,8 @@ updateSpeciesAttributes <- function(species, cohortData) {
 #'
 #' @export
 #' @importFrom data.table copy rbindlist setkey
-calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, successionTimestep,
+calculateSumB2 <- #compiler::cmpfun(
+  function(cohortData, lastReg, currentTime, successionTimestep,
                                            doAssertion = getOption("LandR.assertions", TRUE)) {
   nrowCohortData <- NROW(cohortData)
 
@@ -123,7 +129,8 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
   if (algo == 1 || isTRUE(doAssertion)) {
     ## this older version is typically much slower than the newer one below (Eliot June 2, 2019)
     cohortData1 <- copy(cohortData)
-    old1 <- Sys.time()
+    if (isTRUE(doAssertion))
+      old1 <- Sys.time()
     oldKey <- checkAndChangeKey(cohortData1, "pixelGroup")
     cohortData1[age >= successionTimestep, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
     setorderv(cohortData1, c("sumB"), na.last = TRUE)
@@ -136,7 +143,8 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     set(cohortData1, NULL, "sumB2", NULL)
     if (!is.null(oldKey))
       setkeyv(cohortData1, oldKey)
-    old2 <- Sys.time()
+    if (isTRUE(doAssertion))
+      old2 <- Sys.time()
     if (!is.integer(cohortData1[["sumB"]]))
       set(cohortData1, NULL, "sumB", asInteger(cohortData1[["sumB"]]))
   }
@@ -144,7 +152,8 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
   if (algo == 2 || isTRUE(doAssertion)) {
     ## this newer version is typically much faster than the older one above (Eliot June 2, 2019)
     cohortData2 <- copy(cohortData)
-    new1 <- Sys.time()
+    if (isTRUE(doAssertion))
+      new1 <- Sys.time()
     oldKey <- checkAndChangeKey(cohortData2, "pixelGroup")
     wh <- which(cohortData2$age >= successionTimestep)
     sumBtmp <- cohortData2[wh, list(N = .N, sumB = sum(B, na.rm = TRUE)), by = "pixelGroup"]
@@ -161,21 +170,21 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     set(cohortData2, NULL, "sumB", sumB)
     if (!is.null(oldKey))
       setkeyv(cohortData2, oldKey)
-    new2 <- Sys.time()
+    if (isTRUE(doAssertion))
+      new2 <- Sys.time()
     if (!is.integer(cohortData2[["sumB"]]))
       set(cohortData2, NULL, "sumB", asInteger(cohortData2[["sumB"]]))
   }
 
   cohortData <- if (algo == 1) copy(cohortData1) else copy(cohortData2)
-
   if (isTRUE(doAssertion)) {
-    if (!exists("oldAlgoSumB")) mod$oldAlgoSumB <- 0
-    if (!exists("newAlgoSumB")) mod$newAlgoSumB <- 0
+    if (!exists("oldAlgoSumB", envir = mod)) mod$oldAlgoSumB <- 0
+    if (!exists("newAlgoSumB", envir = mod)) mod$newAlgoSumB <- 0
     mod$oldAlgoSumB <- mod$oldAlgoSumB + (old2 - old1)
     mod$newAlgoSumB <- mod$newAlgoSumB + (new2 - new1)
 
-    print(paste("Biomass_core:calculateSumB: new algo", mod$newAlgoSumB))
-    print(paste("Biomass_core:calculateSumB: old algo", mod$oldAlgoSumB))
+    print(paste("Biomass_core:calculateSumB: new algo (cumulative)", mod$newAlgoSumB))
+    print(paste("Biomass_core:calculateSumB: old algo (cumulative)", mod$oldAlgoSumB))
 
     setkeyv(cohortData, c("pixelGroup", "speciesCode", "age"))
     setkeyv(cohortData1, c("pixelGroup", "speciesCode", "age"))
@@ -192,11 +201,11 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     #}
   }
   return(cohortData)
-})
+}#)
 
 #' calculateAgeMortality
 #'
-#' TODO: description and title needed
+#' Follows https://github.com/LANDIS-II-Foundation/Extension-Biomass-Succession/blob/c07f044c4ffaeb075c714b3c0a23e3c22761e7ab/src/CohortBiomass.cs#L141
 #'
 #' @param cohortData \code{data.table} TODO: description needed
 #' @param stage TODO: description needed
@@ -224,7 +233,7 @@ calculateAgeMortality <- function(cohortData, stage = "nonSpinup", spinupMortali
 
 #' calculateANPP
 #'
-#' TODO: description and title needed
+#' Follows https://github.com/LANDIS-II-Foundation/Extension-Biomass-Succession/blob/c07f044c4ffaeb075c714b3c0a23e3c22761e7ab/src/CohortBiomass.cs#L163
 #'
 #' @param cohortData \code{data.table} TODO: description needed
 #' @param stage TODO: description needed
@@ -233,7 +242,8 @@ calculateAgeMortality <- function(cohortData, stage = "nonSpinup", spinupMortali
 #'
 #' @export
 #' @importFrom data.table set
-calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
+calculateANPP <- # compiler::cmpfun(
+  function(cohortData, stage = "nonSpinup") {
   if (stage == "spinup") {
     cohortData[age > 0, aNPPAct := maxANPP * exp(1) * (bAP^growthcurve) *
                  exp(-(bAP^growthcurve)) * bPM]
@@ -245,11 +255,11 @@ calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
         pmin(cohortData$maxANPP*cohortData$bPM, aNPPAct))
   }
   return(cohortData)
-})
+}# )
 
 #' calculateGrowthMortality
 #'
-#' TODO: description and title needed
+#' Follows https://github.com/LANDIS-II-Foundation/Extension-Biomass-Succession/blob/c07f044c4ffaeb075c714b3c0a23e3c22761e7ab/src/CohortBiomass.cs#L243
 #'
 #' @param cohortData \code{data.table} TODO: description needed
 #' @param stage TODO: description needed
@@ -259,7 +269,8 @@ calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
 #' @export
 #' @importFrom data.table set
 #' @importFrom fpCompare %>>% %<=%
-calculateGrowthMortality <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
+calculateGrowthMortality <- #compiler::cmpfun(
+  function(cohortData, stage = "nonSpinup") {
   if (stage == "spinup") {
     cohortData[age > 0 & bAP %>>% 1.0, mBio := maxANPP*bPM]
     cohortData[age > 0 & bAP %<=% 1.0, mBio := maxANPP*(2*bAP) / (1 + bAP)*bPM]
@@ -274,10 +285,11 @@ calculateGrowthMortality <- compiler::cmpfun(function(cohortData, stage = "nonSp
         pmin(cohortData$maxANPP*cohortData$bPM, cohortData$mBio))
   }
   return(cohortData)
-})
+}#)
 
 #' calculateCompetition
 #'
+#' Follows https://github.com/LANDIS-II-Foundation/Extension-Biomass-Succession/blob/c07f044c4ffaeb075c714b3c0a23e3c22761e7ab/src/CohortBiomass.cs#L437
 #' TODO: description and title needed
 #'
 #' @param cohortData \code{data.table} TODO: description needed
@@ -287,7 +299,8 @@ calculateGrowthMortality <- compiler::cmpfun(function(cohortData, stage = "nonSp
 #'
 #' @export
 #' @importFrom data.table key setkeyv
-calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
+calculateCompetition <- #compiler::cmpfun(
+  function(cohortData, stage = "nonSpinup") {
   # two competition indics are calculated bAP and bPM
   if (stage == "spinup") {
     cohortData[age > 0, bPot := pmax(1, maxB - sumB + B)]
@@ -321,7 +334,7 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
     set(cohortData, NULL, c("cMultiplier"), NULL)
   }
   return(cohortData)
-})
+}#)
 
 checkAndChangeKey <- function(obj, key) {
   oldKey <- key(obj)

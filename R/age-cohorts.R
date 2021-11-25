@@ -1,4 +1,5 @@
-ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep, stage, byGroups = c('pixelGroup', 'speciesCode', 'age')) {
+ageReclassification <- # ompiler::cmpfun(
+  function(cohortData, successionTimestep, stage, byGroups = c('pixelGroup', 'speciesCode', 'age')) {
 
   byGroupsNoAge <- byGroups[!byGroups %in% 'age'] #age is what will be lumped
   #byGroups default added for backwards compatibility
@@ -23,9 +24,8 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
     cdColNames <- colnames(cohortData)
     message("  Setting all ages <= ", successionTimestep, " to ", successionTimestepPlusOne)
     if (any(anyDuplicates)) {
-
       # pull out only duplicated types -- note "which = TRUE" gives only the indices of the joined rows -- will use the inverse below
-      tdDuplicates <- targetData[targetData[anyDuplicates], nomatch = NULL,
+      tdDuplicates <- targetData[unique(targetData[anyDuplicates], by = byGroupsNoAge), nomatch = NULL,
                                  on = byGroupsNoAge, which = TRUE]
 
       td <- targetData[tdDuplicates]
@@ -57,4 +57,4 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
     }
   }
   return(cohortData)
-})
+}#)
