@@ -3,7 +3,5 @@
 # please specify the package you need to run the sim function in the test files.
 
 # to test all the test files in the tests folder:
-test_dir("../Biomass_core/tests/testthat")
+try(test_dir("../Biomass_core/tests/testthat"))
 
-# Alternative, you can use test_file to test individual test file, e.g.:
-test_file("../Biomass_core/tests/testthat/test-template.R")

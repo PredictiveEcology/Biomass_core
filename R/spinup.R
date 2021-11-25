@@ -12,7 +12,8 @@
 #' @export
 #' @importFrom data.table data.table set setkey
 #'
-spinUp <- compiler::cmpfun(function(cohortData, calibrate, successionTimestep,
+spinUp <- #compiler::cmpfun(
+  function(cohortData, calibrate, successionTimestep,
                                     spinupMortalityfraction, species) {
   maxAge <- max(cohortData$age, na.rm = TRUE) # determine the pre-simulation length
   set(cohortData, NULL, "origAge", cohortData$age)
@@ -113,7 +114,7 @@ spinUp <- compiler::cmpfun(function(cohortData, calibrate, successionTimestep,
     all <- list(cohortData = cohortData)
   }
   return(all)
-})
+}#)
 
 # cacheSpinUpFunction <- function(sim, cachePath) {
 #   # for slow functions, add cached versions. Then use sim$xxx() throughout module instead of xxx()
