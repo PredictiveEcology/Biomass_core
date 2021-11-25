@@ -1,11 +1,20 @@
 test_that("test no dispersal seeding algorithm",{
-  # define the module and path
-  module <- list("Biomass_core")
-  path <- list(modulePath = "..",
-               outputPath = "~/output")
-  parameters <- list(.progress = list(type = "graphical", interval = 1),
-                     .globals = list(verbose = FALSE),
-                     Biomass_core = list( .saveInitialTime = NA))
+  opts <- options(reproducible.useGDAL = FALSE,
+                  spades.moduleCodeChecks = FALSE,
+                  reproducible.useMemoise = TRUE,
+                  spades.useRequire = FALSE,
+                  LandR.assertions = FALSE,
+                  spades.recoveryMode = FALSE)
+  on.exit(options(opts))
+  require("raster")
+  require("data.table")
+  module <- "Biomass_core"
+  modulePath <- getwd()
+  while( grepl(module, modulePath)) modulePath <- dirname(modulePath)
+  outputPath <- checkPath(file.path(tempdir(), rndstr(1)), create = TRUE)
+  path <- list(modulePath = modulePath, # TODO: use general path
+               outputPath = outputPath) # TODO: use general path
+  parameters <- list(Biomass_core = list(.saveInitialTime = NA))
 
   pixelGroupMap <- raster(xmn = 50, xmx = 50 + 100 * 100,
                         ymn = 50, ymx = 50 + 100 * 100,

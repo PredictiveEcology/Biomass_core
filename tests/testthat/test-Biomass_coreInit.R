@@ -1,17 +1,21 @@
-test_that("test Biomass_coreInit", {
-  # define the module and path
-  library(raster)
-  library(data.table)
-  module <- list("Biomass_core")
-  path <- list(
-    modulePath = "..",
-    outputPath = "~/output"
-  )
-  parameters <- list(
-    .progress = list(type = "graphical", interval = 1),
-    .globals = list(verbose = FALSE),
-    Biomass_core = list(.saveInitialTime = NA)
-  )
+test_that("test Init", {
+  opts <- options(reproducible.useGDAL = FALSE,
+                  spades.moduleCodeChecks = FALSE,
+                  reproducible.useMemoise = TRUE,
+                  spades.useRequire = FALSE,
+                  LandR.assertions = FALSE,
+                  spades.recoveryMode = FALSE)
+  on.exit(options(opts))
+  require("raster")
+  require("data.table")
+  module <- "Biomass_core"
+  modulePath <- getwd()
+  while( grepl(module, modulePath)) modulePath <- dirname(modulePath)
+  outputPath <- checkPath(file.path(tempdir(), rndstr(1)), create = TRUE)
+  path <- list(modulePath = modulePath, # TODO: use general path
+               outputPath = outputPath) # TODO: use general path
+  parameters <- list(Biomass_core = list(.saveInitialTime = NA))
+
   initialCommunitiesMap <- raster(
     xmn = 50, xmx = 50 + 3 * 100,
     ymn = 50, ymx = 50 + 3 * 100,
@@ -77,10 +81,10 @@ test_that("test Biomass_coreInit", {
     objects = objects,
     paths = path
   )
-  if (exists("Biomass_coreInit")) {
-    simOutput <- Biomass_coreInit(mySim)
+  if (exists("Init")) {
+    simOutput <- Init(mySim)
   } else {
-    simOutput <- mySim$.mods$Biomass_core$Biomass_coreInit(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Init(mySim)
   }
   # check the cohortData table
   cohortData <- simOutput$cohortData
@@ -179,10 +183,10 @@ test_that("test Biomass_coreInit", {
     objects = objects,
     paths = path
   )
-  if (exists("Biomass_coreInit")) {
-    simOutput <- Biomass_coreInit(mySim)
+  if (exists("Init")) {
+    simOutput <- Init(mySim)
   } else {
-    simOutput <- mySim$.mods$Biomass_core$Biomass_coreInit(mySim)
+    simOutput <- mySim$.mods$Biomass_core$Init(mySim)
   }
 
   # check the calibration mode

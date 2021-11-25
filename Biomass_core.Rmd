@@ -135,11 +135,13 @@ setPaths(inputPath = "inputs",
 
 times <- list(start = 0, end = 1)
 
-studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
+studyArea <- Cache(randomStudyArea, size = 1e10) # cache this so it creates a random one only once on a machine
 
+set.seed(123)
 # Pick the species you want to work with -- using the naming convention in "Boreal" column of LandR::sppEquivalencies_CA
 speciesNameConvention <- "Boreal"
 speciesToUse <- c("Pice_Gla", "Popu_Tre", "Pinu_Con")
+#speciesToUse <- c("Pice_Gla")
 
 sppEquiv <- LandR::sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
 # Assign a colour convention for graphics for each species
@@ -157,10 +159,11 @@ successionTimestep <- 1L
 ## (ommitted from this list)
 parameters <- list(
   Biomass_core = list(
-    ".plotInitialTime" = times$start
+    ".plotInitialTime" = NA#times$start
     , "sppEquivCol" = speciesNameConvention
-    , "successionTimestep" = successionTimestep*10
-    , ".saveInitialTime" = 1
+#    , "seedingAlgorithm" = "universalDispersal"
+    , "successionTimestep" = successionTimestep*200
+    , ".saveInitialTime" = NA#1
     , ".useCache" = FALSE 
     , ".useParallel" = FALSE
   )
