@@ -1022,9 +1022,11 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
 })
 
 MortalityAndGrowth <- compiler::cmpfun(function(sim) {
+  # If cohortData has length 0, don't do this -- this can happen in more theoretical use cases where e.g., end(sim) is longer than longevity
+  if (NROW(sim$cohortData)) {
 
-  if (is.numeric(P(sim)$.useParallel)) {
-    data.table::setDTthreads(P(sim)$.useParallel)
+    if (is.numeric(P(sim)$.useParallel)) {
+      data.table::setDTthreads(P(sim)$.useParallel)
       if (data.table::getDTthreads() > 1L) message("Mortality and Growth should be using >100% CPU")
   }
 
@@ -1204,9 +1206,10 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
     if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = P(sim)$cohortDefinitionCols)))) {
       stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
+      }
     }
+    LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   }
-  LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   return(invisible(sim))
 })
 
