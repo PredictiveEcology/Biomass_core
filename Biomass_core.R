@@ -1126,11 +1126,14 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       set(subCohortData, NULL, "sumB", NULL)
     }
 
-    subCohortData <- calculateANPP(cohortData = subCohortData)  ## competition effect on aNPP via bPM
-    set(subCohortData, NULL, "growthcurve", NULL)
-    set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
+      subCohortData <- calculateANPP(cohortData = subCohortData)  ## competition effect on aNPP via bPM
+      set(subCohortData, NULL, "growthcurve", NULL)
 
-    ## generate climate-sensitivity predictions - this will no longer run if LandR pkg is the driver
+      # This next line is step one of a double removal of mAge ... see comments a few
+      #    lines down to discuss this double counting
+      set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
+
+      ## generate climate-sensitivity predictions - this will no longer run if LandR pkg is the driver
     if (!P(sim)$growthAndMortalityDrivers == "LandR") {
       #necessary due to column joining
       if (!is.null(subCohortData$growthPred)) {
@@ -1153,12 +1156,20 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       #Join must be done this way
       commonNames <- names(predObj)[names(predObj) %in% names(subCohortData)]
       subCohortData <- subCohortData[predObj, on = commonNames]
-      subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred/100))] #changed from ratio to pct for memory
-    }
-    subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
-    set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
-    set(subCohortData, NULL, "mBio", pmin(subCohortData$mBio, subCohortData$aNPPAct))
-    set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
+        subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred/100))] #changed from ratio to pct for memory
+      }
+      subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
+
+
+      # NOTE RE: double removal of mAge -- it is a correct implementation of the LANDIS source#
+      # We already tried to purge the double removal... but reverted: https://github.com/PredictiveEcology/Biomass_core/commit/5227ae9acfe291bcb8596fd9e63c79602de5d2c6
+      ## LANDIS BSExt v3.2 (implemented in LandR):
+      ## https://github.com/LANDIS-II-Foundation/Extensions-Succession-Archive/blob/master/biomass-succession-archive/tags/release-3.2/src/CohortBiomass.cs
+      ## LANDIS BSExt current version:
+      ## https://github.com/LANDIS-II-Foundation/Extension-Biomass-Succession/blob/master/src/CohortBiomass.cs
+      set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
+      set(subCohortData, NULL, "mBio", pmin(subCohortData$mBio, subCohortData$aNPPAct))
+      set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
     ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
     if (!P(sim)$growthAndMortalityDrivers == "LandR") {
