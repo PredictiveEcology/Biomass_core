@@ -83,7 +83,8 @@ defineModule(sim, list(
     defineParameter("plotOverstory", "logical", FALSE, NA, NA, desc = "swap max age plot with overstory biomass"),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
                     desc = paste("choose which seeding algorithm will be used among",
-                                 "noDispersal, universalDispersal, and wardDispersal (default).",
+                                 "noSeeding (no horizontal, nor vertical seeding), noDispersal (no horizontal disperal),",
+                                 "universalDispersal, and wardDispersal (default).",
                                  "Species dispersal distances (in the 'species' table) are based",
                                  "on LANDIS-II parameters.")),
     defineParameter("spinupMortalityfraction", "numeric", 0.001,
@@ -1211,7 +1212,9 @@ Dispersal <- function(sim) {
     sim <- UniversalDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
   } else if (P(sim)$seedingAlgorithm == "wardDispersal") {
     sim <- WardDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
-  } else stop("Undefined seed dispersal type!")
+  } else if (!P(sim)$seedingAlgorithm == "noSeeding") {
+    stop("Undefined seed dispersal type!")
+  }
 
   sim$treedFirePixelTableSinceLastDisp <- treedFirePixelTableCurYr
   return(invisible(sim))
