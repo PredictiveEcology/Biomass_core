@@ -380,8 +380,8 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
              sim <- scheduleEvent(sim, start(sim),
                                   "Biomass_core", "summaryBGM", eventPriority = summBGMPriority$end)
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
-                                "Biomass_core", "summaryRegen", eventPriority = summRegenPriority)
-           sim <- scheduleEvent(sim, start(sim),
+                                  "Biomass_core", "summaryRegen", eventPriority = summRegenPriority)
+             sim <- scheduleEvent(sim, start(sim),
                                   "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
              sim <- scheduleEvent(sim, end(sim),
                                   "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)  ## schedule the last plotting events (so that it doesn't depend on plot interval)
@@ -1028,104 +1028,104 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     if (is.numeric(P(sim)$.useParallel)) {
       data.table::setDTthreads(P(sim)$.useParallel)
       if (data.table::getDTthreads() > 1L) message("Mortality and Growth should be using >100% CPU")
-  }
+    }
 
-  ## Install climate-sensitive functions (or not)
-  #a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers, quietly = TRUE)) ## Fixed (Eliot) TODO: this is not working. requireNamespace overrides try
-  #if (class(a) == "try-error") {
-  if (!requireNamespace(P(sim)$growthAndMortalityDrivers, quietly = TRUE)) {
-    stop(paste0("The package specified for growthAndMortalityDrivers, ",
-                P(sim)$growthAndMortalityDrivers, ", must be installed"))
-  }
+    ## Install climate-sensitive functions (or not)
+    #a <- try(requireNamespace(P(sim)$growthAndMortalityDrivers, quietly = TRUE)) ## Fixed (Eliot) TODO: this is not working. requireNamespace overrides try
+    #if (class(a) == "try-error") {
+    if (!requireNamespace(P(sim)$growthAndMortalityDrivers, quietly = TRUE)) {
+      stop(paste0("The package specified for growthAndMortalityDrivers, ",
+                  P(sim)$growthAndMortalityDrivers, ", must be installed"))
+    }
 
-  calculateClimateEffect <- getFromNamespace("calculateClimateEffect", P(sim)$growthAndMortalityDrivers)
+    calculateClimateEffect <- getFromNamespace("calculateClimateEffect", P(sim)$growthAndMortalityDrivers)
 
-  cohortData <- sim$cohortData
-  pgs <- unique(cohortData$pixelGroup)
-  groupSize <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory)
-  numGroups <- ceiling(length(pgs) / groupSize)
-  groupNames <- paste0("Group", seq(numGroups))
-  if (length(pgs) > groupSize) {
-    sim$cohortData <- cohortData[0, ]
-    pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
-                              temID = 1:length(unique(cohortData$pixelGroup)))
-    cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
-    #cutpoints <- c(1,max(pixelGroups$temID))
-    if (length(cutpoints) == 1)
-      cutpoints <- c(cutpoints, cutpoints + 1)
+    cohortData <- sim$cohortData
+    pgs <- unique(cohortData$pixelGroup)
+    groupSize <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory)
+    numGroups <- ceiling(length(pgs) / groupSize)
+    groupNames <- paste0("Group", seq(numGroups))
+    if (length(pgs) > groupSize) {
+      sim$cohortData <- cohortData[0, ]
+      pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
+                                temID = 1:length(unique(cohortData$pixelGroup)))
+      cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
+      #cutpoints <- c(1,max(pixelGroups$temID))
+      if (length(cutpoints) == 1)
+        cutpoints <- c(cutpoints, cutpoints + 1)
 
-    pixelGroups[, groups := rep(groupNames, each = groupSize, length.out = NROW(pixelGroups))]
-  }
-  for (subgroup in groupNames) {
-    if (numGroups == 1) {
-      subCohortData <- cohortData
+      pixelGroups[, groups := rep(groupNames, each = groupSize, length.out = NROW(pixelGroups))]
+    }
+    for (subgroup in groupNames) {
+      if (numGroups == 1) {
+        subCohortData <- cohortData
     } else {
-      subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
+        subCohortData <- cohortData[cohortData$pixelGroup %in% pixelGroups$pixelGroupIndex[pixelGroups$groups == subgroup], ]
     }
 
     subCohortData[age > 1, age := age + 1L]
     subCohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
-                                                      currentTime = round(time(sim)),
-                                                      cohortData = subCohortData)
-    subCohortData <- updateSpeciesAttributes(species = sim$species, cohortData = subCohortData)
+                                                        currentTime = round(time(sim)),
+                                                        cohortData = subCohortData)
+      subCohortData <- updateSpeciesAttributes(species = sim$species, cohortData = subCohortData)
       setkeyv(subCohortData, "pixelGroup")
-    subCohortData <- calculateSumB(cohortData = subCohortData,
-                                   lastReg = sim$lastReg,
-                                   currentTime = time(sim),
-                                   successionTimestep = P(sim)$successionTimestep)
-    startNumCohorts <- NROW(subCohortData)
+      subCohortData <- calculateSumB(cohortData = subCohortData,
+                                     lastReg = sim$lastReg,
+                                     currentTime = time(sim),
+                                     successionTimestep = P(sim)$successionTimestep)
+      startNumCohorts <- NROW(subCohortData)
 
-    #########################################################
-    # Die from old age or low biomass -- rm from cohortData
-    #########################################################
-    keep <- (subCohortData$age <= subCohortData$longevity) & (subCohortData$B >=  P(sim)$minCohortBiomass)
-    subCohortPostLongevity <- subCohortData[keep,]
-    diedCohortData <- subCohortData[!keep]
-    numCohortsDied <- NROW(diedCohortData)
+      #########################################################
+      # Die from old age or low biomass -- rm from cohortData
+      #########################################################
+      keep <- (subCohortData$age <= subCohortData$longevity) & (subCohortData$B >=  P(sim)$minCohortBiomass)
+      subCohortPostLongevity <- subCohortData[keep,]
+      diedCohortData <- subCohortData[!keep]
+      numCohortsDied <- NROW(diedCohortData)
 
-    if (numCohortsDied > 0) {
-      # Identify the PGs that are totally gone, not just an individual cohort that died
-      pgsToRm <- diedCohortData[!pixelGroup %in% subCohortPostLongevity$pixelGroup]
+      if (numCohortsDied > 0) {
+        # Identify the PGs that are totally gone, not just an individual cohort that died
+        pgsToRm <- diedCohortData[!pixelGroup %in% subCohortPostLongevity$pixelGroup]
 
-      pixelsToRm <- which(getValues(sim$pixelGroupMap) %in% unique(pgsToRm$pixelGroup))
-      # RM from the pixelGroupMap -- since it is a whole pixelGroup that is gone, not just a cohort, this is necessary
-      if (isTRUE(getOption("LandR.assertions"))) {
-        a <- subCohortPostLongevity$pixelGroup %in% na.omit(getValues(sim$pixelGroupMap))
-        if (!all(a)) {
-          stop("Post longevity-based mortality, there is a divergence between pixelGroupMap and cohortData pixelGroups")
+        pixelsToRm <- which(getValues(sim$pixelGroupMap) %in% unique(pgsToRm$pixelGroup))
+        # RM from the pixelGroupMap -- since it is a whole pixelGroup that is gone, not just a cohort, this is necessary
+        if (isTRUE(getOption("LandR.assertions"))) {
+          a <- subCohortPostLongevity$pixelGroup %in% na.omit(getValues(sim$pixelGroupMap))
+          if (!all(a)) {
+            stop("Post longevity-based mortality, there is a divergence between pixelGroupMap and cohortData pixelGroups")
+          }
+        }
+        if (length(pixelsToRm) > 0) {
+          if (getOption("LandR.verbose", TRUE) > 0) {
+            numPixelGrps <- sum(sim$pixelGroupMap[] != 0, na.rm = TRUE)
+          }
+          sim$pixelGroupMap[pixelsToRm] <- 0L
+          if (getOption("LandR.verbose", TRUE) > 1) {
+            message(blue("Death due to old age:",
+                         "\n  ", numCohortsDied, "cohorts died of old age (i.e., due to passing longevity) or biomass <= 1; ",
+                         sum(is.na(diedCohortData$age)), " of those because age == NA; ",
+                         "\n  ", NROW(unique(pgsToRm$pixelGroup)), "pixelGroups to be removed (i.e., ",
+                         "\n  ", length(pixelsToRm), "pixels; "))
+          }
+          if (getOption("LandR.verbose", TRUE) > 0) {
+            message(blue("\n   Total number of pixelGroups -- Was:", numPixelGrps,
+                         ", Now:", magenta(sum(sim$pixelGroupMap[] != 0, na.rm = TRUE))))
+          }
         }
       }
-      if (length(pixelsToRm) > 0) {
-        if (getOption("LandR.verbose", TRUE) > 0) {
-          numPixelGrps <- sum(sim$pixelGroupMap[] != 0, na.rm = TRUE)
-        }
-        sim$pixelGroupMap[pixelsToRm] <- 0L
-        if (getOption("LandR.verbose", TRUE) > 1) {
-          message(blue("Death due to old age:",
-                       "\n  ", numCohortsDied, "cohorts died of old age (i.e., due to passing longevity) or biomass <= 1; ",
-                       sum(is.na(diedCohortData$age)), " of those because age == NA; ",
-                       "\n  ", NROW(unique(pgsToRm$pixelGroup)), "pixelGroups to be removed (i.e., ",
-                       "\n  ", length(pixelsToRm), "pixels; "))
-        }
-        if (getOption("LandR.verbose", TRUE) > 0) {
-          message(blue("\n   Total number of pixelGroups -- Was:", numPixelGrps,
-                       ", Now:", magenta(sum(sim$pixelGroupMap[] != 0, na.rm = TRUE))))
-        }
+
+      subCohortData <- subCohortPostLongevity
+
+      #########################################################
+      # Calculate age and competition effects
+      #########################################################
+      subCohortData <- calculateAgeMortality(cohortData = subCohortData)
+
+      set(subCohortData, NULL, c("longevity", "mortalityshape"), NULL)
+      subCohortData <- calculateCompetition(cohortData = subCohortData)
+      if (!P(sim)$calibrate) {
+        set(subCohortData, NULL, "sumB", NULL)
       }
-    }
-
-    subCohortData <- subCohortPostLongevity
-
-    #########################################################
-    # Calculate age and competition effects
-    #########################################################
-    subCohortData <- calculateAgeMortality(cohortData = subCohortData)
-
-    set(subCohortData, NULL, c("longevity", "mortalityshape"), NULL)
-    subCohortData <- calculateCompetition(cohortData = subCohortData)
-    if (!P(sim)$calibrate) {
-      set(subCohortData, NULL, "sumB", NULL)
-    }
 
       subCohortData <- calculateANPP(cohortData = subCohortData)  ## competition effect on aNPP via bPM
       set(subCohortData, NULL, "growthcurve", NULL)
@@ -1135,28 +1135,28 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
       ## generate climate-sensitivity predictions - this will no longer run if LandR pkg is the driver
-    if (!P(sim)$growthAndMortalityDrivers == "LandR") {
-      #necessary due to column joining
-      if (!is.null(subCohortData$growthPred)) {
-        set(subCohortData, NULL, c('growthPred', 'mortPred'), NULL)
-      }
-      #get arguments from sim environment - this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
-      #as long as the function is called 'calculateClimateEffect', represents a multiplier, and uses growth, mortality and age limits
-      cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
-        arg <-  eval(x, envir = sim)
-      })
-      names(cceArgs) <- paste(sim$cceArgs)
+      if (!P(sim)$growthAndMortalityDrivers == "LandR") {
+        #necessary due to column joining
+        if (!is.null(subCohortData$growthPred)) {
+          set(subCohortData, NULL, c('growthPred', 'mortPred'), NULL)
+        }
+        #get arguments from sim environment - this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
+        #as long as the function is called 'calculateClimateEffect', represents a multiplier, and uses growth, mortality and age limits
+        cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
+          arg <-  eval(x, envir = sim)
+        })
+        names(cceArgs) <- paste(sim$cceArgs)
 
-      predObj <- calculateClimateEffect(cceArgs = cceArgs,
-                                        cohortData = subCohortData,
-                                        pixelGroupMap = sim$pixelGroupMap,
-                                        gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
-                                        gmcsMortLimits = P(sim)$gmcsMortLimits,
-                                        gmcsMinAge = P(sim)$gmcsMinAge,
-                                        cohortDefinitionCols = P(sim)$cohortDefinitionCols)
-      #Join must be done this way
-      commonNames <- names(predObj)[names(predObj) %in% names(subCohortData)]
-      subCohortData <- subCohortData[predObj, on = commonNames]
+        predObj <- calculateClimateEffect(cceArgs = cceArgs,
+                                          cohortData = subCohortData,
+                                          pixelGroupMap = sim$pixelGroupMap,
+                                          gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
+                                          gmcsMortLimits = P(sim)$gmcsMortLimits,
+                                          gmcsMinAge = P(sim)$gmcsMinAge,
+                                          cohortDefinitionCols = P(sim)$cohortDefinitionCols)
+        #Join must be done this way
+        commonNames <- names(predObj)[names(predObj) %in% names(subCohortData)]
+        subCohortData <- subCohortData[predObj, on = commonNames]
         subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred/100))] #changed from ratio to pct for memory
       }
       subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
@@ -1172,40 +1172,40 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       set(subCohortData, NULL, "mBio", pmin(subCohortData$mBio, subCohortData$aNPPAct))
       set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
 
-    ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
-    if (!P(sim)$growthAndMortalityDrivers == "LandR") {
+      ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
+      if (!P(sim)$growthAndMortalityDrivers == "LandR") {
 
-      subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred/100))]
-      subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
-      if (!P(sim)$keepClimateCols) {
-        set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
-      }
+        subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred/100))]
+        subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
+        if (!P(sim)$keepClimateCols) {
+          set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
+        }
     }
 
     set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
     if (P(sim)$calibrate) {
       set(subCohortData, NULL, "deltaB", asInteger(subCohortData$aNPPAct - subCohortData$mortality))
       set(subCohortData, NULL, "B", subCohortData$B + subCohortData$deltaB)
-      tempcohortdata <- subCohortData[,.(pixelGroup, Year = time(sim), siteBiomass = sumB, speciesCode,
-                                         Age = age, iniBiomass = B - deltaB, ANPP = round(aNPPAct, 1),
-                                         Mortality = round(mortality,1), deltaB, finBiomass = B)]
-      tempcohortdata <- setkey(tempcohortdata, speciesCode)[
-        setkey(sim$species[, .(species, speciesCode)], speciesCode),
-        nomatch = 0][, ':='(speciesCode = species, species = NULL, pixelGroup = NULL)]
-      setnames(tempcohortdata, "speciesCode", "Species")
-      sim$simulationTreeOutput <- rbind(sim$simulationTreeOutput, tempcohortdata)
-      set(subCohortData, NULL, c("deltaB", "sumB"), NULL)
-    } else {
-      set(subCohortData, NULL, "B",
-          subCohortData$B + asInteger(subCohortData$aNPPAct - subCohortData$mortality))
-    }
-    subCohortData[, `:=`(mortality = asInteger(mortality), aNPPAct = asInteger(aNPPAct))]
+        tempcohortdata <- subCohortData[,.(pixelGroup, Year = time(sim), siteBiomass = sumB, speciesCode,
+                                           Age = age, iniBiomass = B - deltaB, ANPP = round(aNPPAct, 1),
+                                           Mortality = round(mortality,1), deltaB, finBiomass = B)]
+        tempcohortdata <- setkey(tempcohortdata, speciesCode)[
+          setkey(sim$species[, .(species, speciesCode)], speciesCode),
+          nomatch = 0][, ':='(speciesCode = species, species = NULL, pixelGroup = NULL)]
+        setnames(tempcohortdata, "speciesCode", "Species")
+        sim$simulationTreeOutput <- rbind(sim$simulationTreeOutput, tempcohortdata)
+        set(subCohortData, NULL, c("deltaB", "sumB"), NULL)
+      } else {
+        set(subCohortData, NULL, "B",
+            subCohortData$B + asInteger(subCohortData$aNPPAct - subCohortData$mortality))
+      }
+      subCohortData[, `:=`(mortality = asInteger(mortality), aNPPAct = asInteger(aNPPAct))]
 
-    if (numGroups == 1) {
-      sim$cohortData <- subCohortData
-    } else {
-      sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
-    }
+      if (numGroups == 1) {
+        sim$cohortData <- subCohortData
+      } else {
+        sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
+      }
       rm(subCohortData)
     }
     rm(cohortData)
@@ -1214,10 +1214,10 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     ## now age this year's recruits
     sim$cohortData[age == 1, age := age + 1L]
 
-  if (isTRUE(getOption("LandR.assertions"))) {
+    if (isTRUE(getOption("LandR.assertions"))) {
 
-    if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = P(sim)$cohortDefinitionCols)))) {
-      stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
+      if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = P(sim)$cohortDefinitionCols)))) {
+        stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
       }
     }
     LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
@@ -1927,20 +1927,20 @@ CohortAgeReclassification <- function(sim) {
                                  "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
       rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
       # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
-        #necessary for KNN
-        rawBiomassMap <- Cache(prepInputs,
-                               targetFile = rawBiomassMapFilename,
-                               url = rawBiomassMapURL,
-                               destinationPath = dPath,
-                               studyArea = sim$studyArea,
-                               rasterToMatch = NULL,
-                               maskWithRTM = FALSE,
-                               useSAcrs = FALSE,     ## never use SA CRS
-                               method = "bilinear",
-                               datatype = "INT2U",
-                               filename2 = NULL,
-                               userTags = c(cacheTags, "rawBiomassMap"),
-                               omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
+      #necessary for KNN
+      rawBiomassMap <- Cache(prepInputs,
+                             targetFile = rawBiomassMapFilename,
+                             url = rawBiomassMapURL,
+                             destinationPath = dPath,
+                             studyArea = sim$studyArea,
+                             rasterToMatch = NULL,
+                             maskWithRTM = FALSE,
+                             useSAcrs = FALSE,     ## never use SA CRS
+                             method = "bilinear",
+                             datatype = "INT2U",
+                             filename2 = NULL,
+                             userTags = c(cacheTags, "rawBiomassMap"),
+                             omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
       # })
     } else {
       rawBiomassMap <- Cache(postProcess,
