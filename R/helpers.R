@@ -304,12 +304,14 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
     set(cohortData, NULL, "cMultiplier", pmax(as.numeric(cohortData$B^0.95), 1))
 
     # These 2 lines are 5x slower compared to replacement 6 lines below -- Eliot June 2, 2019
+    #  Still faster on Nov 2021 by Eliot, for cohortData of ~800,000 rows
     if (FALSE) {
       cohortData[, cMultTotal := sum(cMultiplier), by = pixelGroup]
       set(cohortData, NULL, "bPM", cohortData$cMultiplier / cohortData$cMultTotal)
     }
 
-    # Faster replacement
+    # Faster replacement -- 1) sort on pixelGroup, 2) sum by group and .N by group, but don't reassign to full table
+    #                       3) rep the sumByGroup each .N times  4) now reassign vector back to data.table
     oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
     cMultTotalTmp <- cohortData[, list(N = .N, Sum = sum(cMultiplier)), by = pixelGroup]
     cMultTotal <- rep.int(cMultTotalTmp$Sum, cMultTotalTmp$N)
