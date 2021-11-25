@@ -266,8 +266,7 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
   if (is.numeric(P(sim)$.useParallel)) {
     a <- data.table::setDTthreads(P(sim)$.useParallel)
     if (getOption("LandR.verbose", TRUE) > 0) {
-      message("Biomass_core should be using >100% CPU")
-      if (data.table::getDTthreads() == 1L) crayon::red(message("Only using 1 thread."))
+      if (data.table::getDTthreads() > 1L) message("Biomass_core should be using >100% CPU")
     }
     on.exit(data.table::setDTthreads(a), add = TRUE)
   }
@@ -1026,7 +1025,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
   if (is.numeric(P(sim)$.useParallel)) {
     data.table::setDTthreads(P(sim)$.useParallel)
-    message("Mortality and Growth should be using >100% CPU")
+      if (data.table::getDTthreads() > 1L) message("Mortality and Growth should be using >100% CPU")
   }
 
   ## Install climate-sensitive functions (or not)
