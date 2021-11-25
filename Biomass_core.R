@@ -94,7 +94,8 @@ defineModule(sim, list(
                     "The column in sim$specieEquivalency data.table to use as a naming convention"),
     defineParameter("successionTimestep", "numeric", 10, NA, NA,
                     paste("defines the simulation time step, default is 10 years.",
-                          "Note that growth and mortality always happen on a yearly basis.")),
+                          "Note that growth and mortality always happen on a yearly basis.",
+                          "Cohorts younger than this age will not be included in competitive interactions")),
     defineParameter("vegLeadingProportion", "numeric", 0.8, 0, 1,
                     desc = "a number that define whether a species is leading for a given pixel"),
     defineParameter(".maxMemory", "numeric", 5, NA, NA,
@@ -510,6 +511,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   #  stop("the species in sim$cohortData are not the same as the species in sim$species; these must match")
   cacheTags <- c(currentModule(sim), "init")
 
+  # Check some parameter values
+  if (P(sim)$successionTimestep > 10)
+    warning("successionTimestep parameter is > 10. Make sure this intended, ",
+            "keeping in mind that growth in the model depends on estimating 'sumB'. ",
+            "Only trees that are older than successionTimestep are included in the ",
+            "calculation of sumB, i.e., trees younger than this do not contribute ",
+            "to competitive interactions")
   ##############################################
   ## Prepare individual objects
   ##############################################
