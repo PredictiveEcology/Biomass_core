@@ -35,7 +35,8 @@ defineModule(sim, list(
                                  "'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'),",
                                  "'postGM' - after growth and mortality, 'postAging' - after aging,",
                                  "'end' - at the end of vegetation succesion events, before plotting and saving.",
-                                 "The 'end' option is always active, being also the default option.")),
+                                 "The 'end' option is always active, being also the default option.",
+                                 "If NULL, then will skip all summaryBGM related events")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to FALSE"),
     defineParameter("cohortDefinitionCols", "character", c("pixelGroup", "speciesCode", "age"), NA, NA,
@@ -283,8 +284,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                           postAging = agingEvtPriotity + 0.25,
                           end = summRegenPriority + 0.25)
   ## add "end" to parameter vector if necessary
-  if (!any(P(sim)$calcSummaryBGM == "end"))
-    params(sim)$Biomass_core$calcSummaryBGM <- c(P(sim)$calcSummaryBGM, "end")
+  if (!is.null(P(sim)$calcSummaryBGM))
+    if (!any(P(sim)$calcSummaryBGM == "end"))
+      params(sim)$Biomass_core$calcSummaryBGM <- c(P(sim)$calcSummaryBGM, "end")
   summBGMPriority <- summBGMPriority[P(sim)$calcSummaryBGM] ## filter necessary priorities
 
   plotPriority <- 9
@@ -374,14 +376,16 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            }
 
            ## note that summaryBGM and summaryBySpecies, will occur during init too
-           sim <- scheduleEvent(sim, start(sim),
-                                "Biomass_core", "summaryBGM", eventPriority = summBGMPriority$end)
-           sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
+           if (!is.null(P(sim)$calcSummaryBGM)) {
+             sim <- scheduleEvent(sim, start(sim),
+                                  "Biomass_core", "summaryBGM", eventPriority = summBGMPriority$end)
+             sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "Biomass_core", "summaryRegen", eventPriority = summRegenPriority)
            sim <- scheduleEvent(sim, start(sim),
-                                "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
-           sim <- scheduleEvent(sim, end(sim),
-                                "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)  ## schedule the last plotting events (so that it doesn't depend on plot interval)
+                                  "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)   ## only occurs before summaryRegen in init.
+             sim <- scheduleEvent(sim, end(sim),
+                                  "Biomass_core", "plotSummaryBySpecies", eventPriority = plotPriority)  ## schedule the last plotting events (so that it doesn't depend on plot interval)
+           }
 
            if (anyPlotting(P(sim)$.plots)) {
              if (P(sim)$.plotMaps) {
