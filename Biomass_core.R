@@ -692,7 +692,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                              modelBiomass = modelBiomass,
                                              successionTimestep = P(sim)$successionTimestep,
                                              currentYear = time(sim))
-    if (ncell(sim$rasterToMatch) > 3e6) .gc()
+    if (ncell(sim$rasterToMatch) > 3e7) .gc()
 
     ########################################################################
     # Create initial communities, i.e., pixelGroups
@@ -1193,13 +1193,13 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     } else {
       sim$cohortData <- rbindlist(list(sim$cohortData, subCohortData), fill = TRUE)
     }
-    rm(subCohortData)
-  }
-  rm(cohortData)
-  gc() ## restored this gc call 2019-08-20 (AMC)
+      rm(subCohortData)
+    }
+    rm(cohortData)
+    if (ncell(sim$rasterToMatch) > 3e7) gc() ## restored this gc call 2019-08-20 (AMC)
 
-  ## now age this year's recruits
-  sim$cohortData[age == 1, age := age + 1L]
+    ## now age this year's recruits
+    sim$cohortData[age == 1, age := age + 1L]
 
   if (isTRUE(getOption("LandR.assertions"))) {
 
