@@ -1068,6 +1068,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                                       currentTime = round(time(sim)),
                                                       cohortData = subCohortData)
     subCohortData <- updateSpeciesAttributes(species = sim$species, cohortData = subCohortData)
+      setkeyv(subCohortData, "pixelGroup")
     subCohortData <- calculateSumB(cohortData = subCohortData,
                                    lastReg = sim$lastReg,
                                    currentTime = time(sim),
