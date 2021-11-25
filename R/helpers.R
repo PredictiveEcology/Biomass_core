@@ -239,8 +239,14 @@ calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
                  exp(-(bAP^growthcurve)) * bPM]
     cohortData[age > 0, aNPPAct := pmin(maxANPP * bPM, aNPPAct)]
   } else {
-    aNPPAct <- cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
-      exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM
+    # if (any(cohortData$pixelGroup == 519359 & cohortData$age > 200)) browser()
+    bAPExponentGrowthCurve <- cohortData$bAP^cohortData$growthcurve
+    aNPPAct <- cohortData$maxANPP * exp(1) * (bAPExponentGrowthCurve) *
+      exp(-(bAPExponentGrowthCurve)) * cohortData$bPM
+
+    # aNPPAct <- cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
+    #   exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM
+
     set(cohortData, NULL, "aNPPAct",
         pmin(cohortData$maxANPP*cohortData$bPM, aNPPAct))
   }
