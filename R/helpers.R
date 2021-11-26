@@ -153,7 +153,7 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     #oldKey <- checkAndChangeKey(cohortData2, "pixelGroup")
     wh <- which(cohortData2$age >= successionTimestep)
     sumBtmp <- cohortData2[wh, list(N = .N, sumB = sum(B, na.rm = TRUE)), by = "pixelGroup"]
-    if ("sumB" %in% names(cohortData2)) set(cohortData2, NULL, "sumB", NULL)
+    if ("sumB" %in% names(cohortData)) set(cohortData, NULL, "sumB", NULL)
     # create empty column as there are some cases with wh is length 0
     if (length(wh) == 0)
       set(cohortData2, NULL, "sumB", NA_integer_)
