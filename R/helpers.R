@@ -143,9 +143,14 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
 
   if (algo == 2 || isTRUE(doAssertion)) {
     ## this newer version is typically much faster than the older one above (Eliot June 2, 2019)
-    cohortData2 <- copy(cohortData)
+    oldKey <- key(cohortData)
+    keepCols <- union(c("B", "pixelGroup", "age"), oldKey)
+    cohortData2 <- copy(cohortData[, ..keepCols])
+    #cohortData2 <- copy(cohortData)
+    set(cohortData2, NULL, "origOrd", seq(NROW(cohortData)))
     new1 <- Sys.time()
-    oldKey <- checkAndChangeKey(cohortData2, "pixelGroup")
+    oldKeyToDelete <- checkAndChangeKey(cohortData2, "pixelGroup")
+    #oldKey <- checkAndChangeKey(cohortData2, "pixelGroup")
     wh <- which(cohortData2$age >= successionTimestep)
     sumBtmp <- cohortData2[wh, list(N = .N, sumB = sum(B, na.rm = TRUE)), by = "pixelGroup"]
     if ("sumB" %in% names(cohortData2)) set(cohortData2, NULL, "sumB", NULL)
@@ -161,6 +166,11 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     set(cohortData2, NULL, "sumB", sumB)
     if (!is.null(oldKey))
       setkeyv(cohortData2, oldKey)
+    setorderv(cohortData2, "origOrd")
+    set(cohortData2, NULL, "origOrd", NULL)
+    rejoinCols <- setdiff(colnames(cohortData), keepCols)
+    cohortData2 <- data.table(cohortData2, cohortData[, ..rejoinCols])
+    setcolorder(cohortData2, colnames(cohortData))
     new2 <- Sys.time()
     if (!is.integer(cohortData2[["sumB"]]))
       set(cohortData2, NULL, "sumB", asInteger(cohortData2[["sumB"]]))
@@ -239,8 +249,14 @@ calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
                  exp(-(bAP^growthcurve)) * bPM]
     cohortData[age > 0, aNPPAct := pmin(maxANPP * bPM, aNPPAct)]
   } else {
-    aNPPAct <- cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
-      exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM
+    # if (any(cohortData$pixelGroup == 519359 & cohortData$age > 200)) browser()
+    bAPExponentGrowthCurve <- cohortData$bAP^cohortData$growthcurve
+    aNPPAct <- cohortData$maxANPP * exp(1) * (bAPExponentGrowthCurve) *
+      exp(-(bAPExponentGrowthCurve)) * cohortData$bPM
+
+    # aNPPAct <- cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
+    #   exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM
+
     set(cohortData, NULL, "aNPPAct",
         pmin(cohortData$maxANPP*cohortData$bPM, aNPPAct))
   }
@@ -304,12 +320,14 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
     set(cohortData, NULL, "cMultiplier", pmax(as.numeric(cohortData$B^0.95), 1))
 
     # These 2 lines are 5x slower compared to replacement 6 lines below -- Eliot June 2, 2019
+    #  Still faster on Nov 2021 by Eliot, for cohortData of ~800,000 rows
     if (FALSE) {
       cohortData[, cMultTotal := sum(cMultiplier), by = pixelGroup]
       set(cohortData, NULL, "bPM", cohortData$cMultiplier / cohortData$cMultTotal)
     }
 
-    # Faster replacement
+    # Faster replacement -- 1) sort on pixelGroup, 2) sum by group and .N by group, but don't reassign to full table
+    #                       3) rep the sumByGroup each .N times  4) now reassign vector back to data.table
     oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
     cMultTotalTmp <- cohortData[, list(N = .N, Sum = sum(cMultiplier)), by = pixelGroup]
     cMultTotal <- rep.int(cMultTotalTmp$Sum, cMultTotalTmp$N)
