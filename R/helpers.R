@@ -64,13 +64,14 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
                                            doAssertion = getOption("LandR.assertions", TRUE)) {
   nrowCohortData <- NROW(cohortData)
 
+  is2YrsBeforeSuccessionTS <- (currentTime == lastReg + successionTimestep - 2)
+
   if (isTRUE(doAssertion))
     message("LandR::vegTypeMapGenerator: NROW(cohortData) == ", nrowCohortData)
 
   ## use new vs old algorithm based on size of cohortData. new one (2) is faster in most cases.
   ## enable assertions to view timings for each algorithm before deciding which to use.
   algo <- 2 #ifelse(nrowCohortData > 3.5e6, 1, 2) ## TODO: fix error in algo1
-
   if (isTRUE(doAssertion)) {
     cohortDataCopy <- data.table::copy(cohortData)
 
@@ -97,7 +98,7 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     for (subgroup in paste("Group",  1:(length(cutpoints) - 1), sep = "")) {
       subCohortData <- cohortData[pixelGroup %in% pixelGroups[groups == subgroup, ]$pixelGroupIndex, ]
       set(subCohortData, NULL, "sumB", 0L)
-      sumBtable <- if (currentTime == lastReg + successionTimestep - 2) {
+      sumBtable <- if (is2YrsBeforeSuccessionTS) {
         subCohortData[age > successionTimestep, .(tempsumB = sum(B, na.rm = TRUE)), by = pixelGroup]
       } else {
         subCohortData[age >= successionTimestep, .(tempsumB = sum(B, na.rm = TRUE)), by = pixelGroup]
@@ -125,7 +126,11 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     cohortData1 <- copy(cohortData)
     old1 <- Sys.time()
     oldKey <- checkAndChangeKey(cohortData1, "pixelGroup")
-    cohortData1[age >= successionTimestep, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+    if (is2YrsBeforeSuccessionTS) {
+      cohortData1[age > successionTimestep, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+    } else {
+      cohortData1[age >= successionTimestep, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+    }
     setorderv(cohortData1, c("sumB"), na.last = TRUE)
     a2 <- cohortData1[, list(sumB2 = sumB[1]), by = "pixelGroup"]
     sumB2 <- a2[cohortData1, on = "pixelGroup"][["sumB2"]]
@@ -151,7 +156,12 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     new1 <- Sys.time()
     oldKeyToDelete <- checkAndChangeKey(cohortData2, "pixelGroup")
     #oldKey <- checkAndChangeKey(cohortData2, "pixelGroup")
-    wh <- which(cohortData2$age >= successionTimestep)
+    if (is2YrsBeforeSuccessionTS) {
+      wh <- which(cohortData2$age > successionTimestep)
+    } else {
+      wh <- which(cohortData2$age >= successionTimestep)
+
+    }
     sumBtmp <- cohortData2[wh, list(N = .N, sumB = sum(B, na.rm = TRUE)), by = "pixelGroup"]
     if ("sumB" %in% names(cohortData)) set(cohortData, NULL, "sumB", NULL)
     # create empty column as there are some cases with wh is length 0
@@ -179,8 +189,10 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
   cohortData <- if (algo == 1) copy(cohortData1) else copy(cohortData2)
 
   if (isTRUE(doAssertion)) {
-    if (!exists("oldAlgoSumB")) mod$oldAlgoSumB <- 0
-    if (!exists("newAlgoSumB")) mod$newAlgoSumB <- 0
+
+    mod <- get("mod")
+    if (!exists("oldAlgoSumB", envir = mod, inherits = FALSE)) mod$oldAlgoSumB <- 0
+    if (!exists("newAlgoSumB", envir = mod, inherits = FALSE)) mod$newAlgoSumB <- 0
     mod$oldAlgoSumB <- mod$oldAlgoSumB + (old2 - old1)
     mod$newAlgoSumB <- mod$newAlgoSumB + (new2 - new1)
 
