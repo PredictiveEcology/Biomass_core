@@ -901,7 +901,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
-  sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L, aNPPAct = 0L)]
+  sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L,
+                                   aNPPAct = 0L, maxANPP, maxB, maxB_eco)]
   simulationOutput <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
                                                                 getValues(sim$ecoregionMap),
                                                                 att = "ecoregionGroup"),
@@ -1137,14 +1138,14 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       #########################################################
       subCohortData <- calculateAgeMortality(cohortData = subCohortData)
 
-      set(subCohortData, NULL, c("longevity", "mortalityshape"), NULL)
+      # set(subCohortData, NULL, c("longevity", "mortalityshape"), NULL)
       subCohortData <- calculateCompetition(cohortData = subCohortData)
       if (!P(sim)$calibrate) {
         set(subCohortData, NULL, "sumB", NULL)
       }
 
       subCohortData <- calculateANPP(cohortData = subCohortData)  ## competition effect on aNPP via bPM
-      set(subCohortData, NULL, "growthcurve", NULL)
+      # set(subCohortData, NULL, "growthcurve", NULL)
 
       # This next line is step one of a double removal of mAge ... see comments a few
       #    lines down to discuss this double counting
@@ -1196,12 +1197,13 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         if (!P(sim)$keepClimateCols) {
           set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
         }
-    }
+      }
 
-    set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
-    if (P(sim)$calibrate) {
-      set(subCohortData, NULL, "deltaB", asInteger(subCohortData$aNPPAct - subCohortData$mortality))
-      set(subCohortData, NULL, "B", subCohortData$B + subCohortData$deltaB)
+      set(subCohortData, NULL, c("mBio", "mAge", # "maxANPP", "maxB", "maxB_eco",
+                                 "bAP", "bPM"), NULL)
+      if (P(sim)$calibrate) {
+        set(subCohortData, NULL, "deltaB", asInteger(subCohortData$aNPPAct - subCohortData$mortality))
+        set(subCohortData, NULL, "B", subCohortData$B + subCohortData$deltaB)
         tempcohortdata <- subCohortData[,.(pixelGroup, Year = time(sim), siteBiomass = sumB, speciesCode,
                                            Age = age, iniBiomass = B - deltaB, ANPP = round(aNPPAct, 1),
                                            Mortality = round(mortality,1), deltaB, finBiomass = B)]
