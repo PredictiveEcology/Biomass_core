@@ -14,14 +14,35 @@
 updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, cohortData) {
   # the following codes were for updating cohortdata using speciesecoregion data at current simulation year
   # to assign maxB, maxANPP and maxB_eco to cohortData
-  specieseco_current <- speciesEcoregionLatestYear(speciesEcoregion, currentTime)
+  colNams <- colnames(cohortData)
+  speciesEcoregionTraitNames <- c("maxB", "maxANPP", "maxB_eco")
 
-  #specieseco_current <- speciesEcoregion[year <= currentTime]
-  specieseco_current <- setkey(specieseco_current[, .(speciesCode, maxANPP, maxB, ecoregionGroup)],
-                               speciesCode, ecoregionGroup)
-  specieseco_current[, maxB_eco := max(maxB), by = ecoregionGroup]
+  # First determine whether cohortData already has all the info it needs.
+  #  There are 3 reasons it doesn't: 1. first time, 2. cohortData table is different, 3. new year of data in speciesEcoregion
+  needJoin <- TRUE
+  if (all(speciesEcoregionTraitNames %in% colNams)) {
+    if (!anyNA(cohortData$maxB)) { # if there is an NA, it means that a cohort has no data
+      if (!any(currentTime %in% unique(speciesEcoregion$year))) # refresh based on speciesEcoregion year
+        needJoin <- FALSE
+    }
+  }
 
-  cohortData <- specieseco_current[cohortData, on = c("speciesCode", "ecoregionGroup"), nomatch = 0]
+  # Second, if needed, then update the cohortData table with the speciesEcoregion traits:
+  #  i.e., "do the join"
+  if (needJoin) {
+    colsToRm <- intersect(speciesEcoregionTraitNames, colNams)
+    if (length(colsToRm))
+      cohortData <- cohortData[, -..colsToRm]
+    specieseco_current <- speciesEcoregionLatestYear(speciesEcoregion, currentTime)
+    specieseco_current <- setkey(specieseco_current[, .(speciesCode, maxANPP, maxB, ecoregionGroup)],
+                                 speciesCode, ecoregionGroup)
+    specieseco_current[, maxB_eco := max(maxB), by = ecoregionGroup]
+
+    # The "update" line
+    cohortData <- specieseco_current[cohortData, on = c("speciesCode", "ecoregionGroup"), nomatch = 0]
+  }
+
+
   return(cohortData)
 }
 
