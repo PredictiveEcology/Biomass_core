@@ -526,7 +526,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ##############################################
   if (is.null(sim$species))
     stop("'species' object must be provided")
-  species <- setDT(sim$species)[, speciesCode := as.factor(species)]
+  species <- as.data.table(sim$species) # The former setDT actually changed the vector
   set(species, NULL, "speciesCode", factor(species$species, levels = unique(species$species))) # supply levels for speed
   LandR::assertColumns(species,
                        c(species = "character", Area = "factor", longevity = "integer",
