@@ -1863,7 +1863,7 @@ pre code {
 <td align="left">end</td>
 <td align="left">NA</td>
 <td align="left">NA</td>
-<td align="left">A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: ‘start’- as before vegetation succession events, i.e. before dispersal, ‘postDisp’ - after dispersal, ‘postRegen’ - after post-disturbance regeneration (currently the same as ‘start’), ‘postGM’ - after growth and mortality, ‘postAging’ - after aging, ‘end’ - at the end of vegetation succesion events, before plotting and saving. The ‘end’ option is always active, being also the default option.</td>
+<td align="left">A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: ‘start’- as before vegetation succession events, i.e. before dispersal, ‘postDisp’ - after dispersal, ‘postRegen’ - after post-disturbance regeneration (currently the same as ‘start’), ‘postGM’ - after growth and mortality, ‘postAging’ - after aging, ‘end’ - at the end of vegetation succesion events, before plotting and saving. The ‘end’ option is always active, being also the default option. If NULL, then will skip all summaryBGM related events</td>
 </tr>
 <tr class="even">
 <td align="left">calibrate</td>
@@ -1975,7 +1975,7 @@ pre code {
 <td align="left">wardDisp….</td>
 <td align="left">NA</td>
 <td align="left">NA</td>
-<td align="left">choose which seeding algorithm will be used among noDispersal, universalDispersal, and wardDispersal (default). Species dispersal distances (in the ‘species’ table) are based on LANDIS-II parameters.</td>
+<td align="left">choose which seeding algorithm will be used among noSeeding (no horizontal, nor vertical seeding), noDispersal (no horizontal disperal), universalDispersal, and wardDispersal (default). Species dispersal distances (in the ‘species’ table) are based on LANDIS-II parameters.</td>
 </tr>
 <tr class="even">
 <td align="left">spinupMortalityfraction</td>
@@ -1999,7 +1999,7 @@ pre code {
 <td align="left">10</td>
 <td align="left">NA</td>
 <td align="left">NA</td>
-<td align="left">defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis.</td>
+<td align="left">defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions</td>
 </tr>
 <tr class="odd">
 <td align="left">vegLeadingProportion</td>
