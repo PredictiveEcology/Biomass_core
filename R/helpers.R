@@ -71,7 +71,9 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
 
   ## use new vs old algorithm based on size of cohortData. new one (2) is faster in most cases.
   ## enable assertions to view timings for each algorithm before deciding which to use.
-  algo <- 2 #ifelse(nrowCohortData > 3.5e6, 1, 2) ## TODO: fix error in algo1
+  ## Eliot update -- Nov 30 2021 -- this no longer seems to be true. Old is faster for large sizes
+  # algo <- 1 + (nrowCohortData < 1e6) #ifelse(nrowCohortData > 3.5e6, 1, 2) ## TODO: fix error in algo1
+  algo <- 2 ## TODO: fix error in algo1
   if (isTRUE(doAssertion)) {
     cohortDataCopy <- data.table::copy(cohortData)
 
@@ -179,16 +181,19 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     setorderv(cohortData2, "origOrd")
     set(cohortData2, NULL, "origOrd", NULL)
     rejoinCols <- setdiff(colnames(cohortData), keepCols)
-    cohortData2 <- data.table(cohortData2, cohortData[, ..rejoinCols])
+    for (rc in rejoinCols)
+      set(cohortData2, NULL, rc, cohortData[[rc]])
+    # cohortData2 <- data.table(cohortData2, cohortData[, ..rejoinCols])
     setcolorder(cohortData2, colnames(cohortData))
     new2 <- Sys.time()
     if (!is.integer(cohortData2[["sumB"]]))
       set(cohortData2, NULL, "sumB", asInteger(cohortData2[["sumB"]]))
   }
 
-  cohortData <- if (algo == 1) copy(cohortData1) else copy(cohortData2)
+  cohortData <- if (algo == 1) cohortData1 else cohortData2
 
   if (isTRUE(doAssertion)) {
+    cohortData <- if (algo == 1) copy(cohortData1) else copy(cohortData2)
 
     mod <- get("mod")
     if (!exists("oldAlgoSumB", envir = mod, inherits = FALSE)) mod$oldAlgoSumB <- 0
