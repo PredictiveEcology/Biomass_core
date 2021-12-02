@@ -921,9 +921,10 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   ## make initial vegTypeMap - this is important when saving outputs at year = 1, with eventPriority = 1
   ## this vegTypeMap will be overwritten later in the same year.
-  sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
-                                        P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
-                                        sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+  if (!is.null(P(sim)$calcSummaryBGM))
+    sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
+                                          P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
+                                          sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
                                         colors = sim$sppColorVect,
                                         doAssertion = getOption("LandR.assertions", TRUE))
 
@@ -1019,9 +1020,10 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
   sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
   setColors(sim$mortalityMap) <- c("light green", "dark green")
 
-  sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
-                                        P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
-                                        sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+  if (!is.null(P(sim)$calcSummaryBGM))
+    sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
+                                          P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
+                                          sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
                                         colors = sim$sppColorVect,
                                         doAssertion = getOption("LandR.assertions", TRUE))
 
