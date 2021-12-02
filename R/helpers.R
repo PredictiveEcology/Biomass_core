@@ -38,9 +38,26 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, coho
 #' @importFrom data.table setkey
 updateSpeciesAttributes <- function(species, cohortData) {
   # to assign longevity, mortalityshape, growthcurve to cohortData
-  species_temp <- setkey(species[, .(speciesCode, longevity, mortalityshape, growthcurve)], speciesCode)
-  setkey(cohortData, speciesCode)
-  cohortData <- cohortData[species_temp, nomatch = 0]
+  colNams <- colnames(cohortData)
+  speciesTraitNames <- c("growthcurve", "longevity", "mortalityshape")
+  needJoin <- TRUE
+  # First determine whether cohortData already has all the info it needs.
+  #  There are 2 reasons it doesn't: 1. first time, 2. cohortData table is different
+  if (all(speciesTraitNames %in% colNams)) {
+    if (!anyNA(cohortData$longevity)) {
+      needJoin <- FALSE
+    }
+  }
+  # Second, if needed, then update the cohortData table with the species traits:
+  #  i.e., "do the join"
+  if (needJoin) {
+    colsToRm <- intersect(speciesTraitNames, colNams)
+    if (length(colsToRm))
+      cohortData <- cohortData[, -..colsToRm]
+    species_temp <- setkey(species[, .(speciesCode, longevity, mortalityshape, growthcurve)], speciesCode)
+    setkey(cohortData, speciesCode)
+    cohortData <- cohortData[species_temp, nomatch = 0]
+  }
   return(cohortData)
 }
 
