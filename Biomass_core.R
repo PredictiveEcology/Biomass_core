@@ -743,8 +743,15 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     LandR::assertUniqueCohortData(sim$cohortData, c("pixelGroup", "ecoregionGroup", "speciesCode"))
   }
 
-  if (!is.null(sim$ecoregionMap) && !is.null(sim$pixelGroupMap) && !is.null(sim$biomassMap)) {
-    compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
+  rasterNamesToCompare <- c("ecoregionMap", "pixelGroupMap")
+  if (!identical(P(sim)$initialBiomassSource, "cohortData")) {
+    rasterNamesToCompare <- c(rasterNamesToCompare, "biomassMap")
+  }
+  haveAllRasters <- all(!unlist(lapply(rasterNamesToCompare, function(rn) is.null(sim[[rn]]))))
+
+  if (haveAllRasters) {
+    rastersToCompare <- mget(rasterNamesToCompare, envir(sim))
+    do.call(compareRaster, append(list(x = sim$rasterToMatch, orig = TRUE), rastersToCompare))
   } else {
     stop("Expecting 3 rasters at this point: sim$biomassMap, sim$ecoregionMap, ",
          "sim$pixelGroupMap and they must match sim$rasterToMatch")
