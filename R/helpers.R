@@ -105,15 +105,16 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
 
   is2YrsBeforeSuccessionTS <- (currentTime == lastReg + successionTimestep - 2)
 
-  algo <- 1 + (nrowCohortData < 1e6) # algo 1 is faster when large
-  if (isTRUE(doAssertion)) {
-    message("LandR::vegTypeMapGenerator: NROW(cohortData) == ", nrowCohortData)
-    algo <- 1:2
-  }
+  # algo <- 1 + (nrowCohortData < 1e6) # algo 1 is faster when large
+  # if (isTRUE(doAssertion)) {
+  #   message("LandR::vegTypeMapGenerator: NROW(cohortData) == ", nrowCohortData)
+  #   algo <- 1:2
+  # }
+  # algo <- 1
 
   ## use new vs old algorithm based on size of cohortData. new one (2) is faster in most cases.
   ## enable assertions to view timings for each algorithm before deciding which to use.
-  ## Eliot update -- Nov 30 2021 -- this no longer seems to be true. Old is faster for large sizes
+  ## Eliot update -- Nov 30 2021 -- this no longer seems to be true. Old is now always faster
 
   if (is2YrsBeforeSuccessionTS) {
     wh <- which(cohortData$age > successionTimestep)
@@ -123,51 +124,53 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
   }
 
   if (NROW(wh)) {
-    if (1 %in% algo) {
-      ## this older version is typically much slower than the newer one below (Eliot June 2, 2019)
-      if (isTRUE(doAssertion)) {
-        old1 <- Sys.time()
-      }
-      cohortData1 <- if (isTRUE(doAssertion)) copy(cohortData) else cohortData
-      cohortData1[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
-
-      if (isTRUE(doAssertion)) {
-        old2 <- Sys.time()
-      }
-    }
-
-    if (2 %in% algo) {
-      # This seems to be a lot faster when small cohortData, and somewhat faster even on the largest sizes tried (40M rows)
-      if (isTRUE(doAssertion))
-        new1 <- Sys.time()
-      cohortData2 <- dtBy(dt = cohortData, rowSubset = wh, sumCol = "B",
-                          by = "pixelGroup", resultColName = "sumB", byFn = sum)
-      if (isTRUE(doAssertion))
-        new2 <- Sys.time()
-    }
-
-    cohortData <- if (1 %in% algo) cohortData1 else cohortData2
-    if (!is.integer(cohortData[["sumB"]]))
-      set(cohortData, NULL, "sumB", asInteger(cohortData[["sumB"]]))
-
-    if (isTRUE(doAssertion)) {
-
-      mod <- get("mod")
-      if (!exists("oldAlgoSumB", envir = mod, inherits = FALSE)) mod$oldAlgoSumB <- 0
-      if (!exists("newAlgoSumB", envir = mod, inherits = FALSE)) mod$newAlgoSumB <- 0
-      mod$oldAlgoSumB <- mod$oldAlgoSumB + (old2 - old1)
-      mod$newAlgoSumB <- mod$newAlgoSumB + (new2 - new1)
-
-      print(paste("Biomass_core:calculateSumB: new algo", mod$newAlgoSumB))
-      print(paste("Biomass_core:calculateSumB: old algo", mod$oldAlgoSumB))
-
-      setkeyv(cohortData1, c("pixelGroup", "speciesCode", "age"))
-      setkeyv(cohortData2, c("pixelGroup", "speciesCode", "age"))
-
-      if (!identical(cohortData1$sumB, cohortData2$sumB)) {
-        stop("calculateSumB: new algorithm differs from old algorithm")
-      }
-    }
+    cohortData[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+    #
+    # if (1 %in% algo) {
+    #   ## this older version is typically much slower than the newer one below (Eliot June 2, 2019)
+    #   if (isTRUE(doAssertion)) {
+    #     old1 <- Sys.time()
+    #   }
+    #   cohortData1 <- if (isTRUE(doAssertion)) copy(cohortData) else cohortData
+    #   cohortData1[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+    #
+    #   if (isTRUE(doAssertion)) {
+    #     old2 <- Sys.time()
+    #   }
+    # }
+    #
+    # if (2 %in% algo) {
+    #   # This seems to be a lot faster when small cohortData, and somewhat faster even on the largest sizes tried (40M rows)
+    #   if (isTRUE(doAssertion))
+    #     new1 <- Sys.time()
+    #   cohortData2 <- dtBy(dt = cohortData, rowSubset = wh, sumCol = "B",
+    #                       by = "pixelGroup", resultColName = "sumB", byFn = sum)
+    #   if (isTRUE(doAssertion))
+    #     new2 <- Sys.time()
+    # }
+    #
+    # cohortData <- if (1 %in% algo) cohortData1 else cohortData2
+    # if (!is.integer(cohortData[["sumB"]]))
+    #   set(cohortData, NULL, "sumB", asInteger(cohortData[["sumB"]]))
+    #
+    # if (isTRUE(doAssertion)) {
+    #
+    #   mod <- get("mod")
+    #   if (!exists("oldAlgoSumB", envir = mod, inherits = FALSE)) mod$oldAlgoSumB <- 0
+    #   if (!exists("newAlgoSumB", envir = mod, inherits = FALSE)) mod$newAlgoSumB <- 0
+    #   mod$oldAlgoSumB <- mod$oldAlgoSumB + (old2 - old1)
+    #   mod$newAlgoSumB <- mod$newAlgoSumB + (new2 - new1)
+    #
+    #   print(paste("Biomass_core:calculateSumB: new algo", mod$newAlgoSumB))
+    #   print(paste("Biomass_core:calculateSumB: old algo", mod$oldAlgoSumB))
+    #
+    #   setkeyv(cohortData1, c("pixelGroup", "speciesCode", "age"))
+    #   setkeyv(cohortData2, c("pixelGroup", "speciesCode", "age"))
+    #
+    #   if (!identical(cohortData1$sumB, cohortData2$sumB)) {
+    #     stop("calculateSumB: new algorithm differs from old algorithm")
+    #   }
+    #}
   } else {
     set(cohortData, NULL, "sumB", 0L)
     message("Skipping sumB calculation because there are no cohorts older than successionTimestep")
