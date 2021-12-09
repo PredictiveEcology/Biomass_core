@@ -324,16 +324,33 @@ checkAndChangeKey <- function(obj, key) {
   returnKey
 }
 
-maxRowsDT <- function(maxLen, maxMem) {
-  am <- suppressWarnings(availableMemory())
-  if (!is.null(am)) {
-    maxMemAdj <- min(as.numeric(availableMemory()) / 1e9, maxMem) ## memory (GB) avail.
-    maxLenAdj <- try(as.integer(log(maxMemAdj + 2)^5 * 1e4), silent = TRUE)
-    if (is.numeric(maxLenAdj))
-      if (maxLenAdj > 1e5)
-        maxLen <- maxLenAdj
+maxRowsDT <- function(maxLen, maxMem, startClockTime, groupSize,
+                      modEnv) {
+
+  updateMaxMemoryTime <- FALSE
+  if (!exists("groupSize", envir = modEnv)) {
+    updateMaxMemoryTime <- TRUE
+  } else {
+    if (startClockTime >= attr(groupSize, "groupSizeTime")) {
+      updateMaxMemoryTime <- TRUE
+    }
   }
-  return(maxLen)
+  if (updateMaxMemoryTime) {
+    am <- suppressWarnings(availableMemory())
+    if (!is.null(am)) {
+      maxMemAdj <- min(as.numeric(am) / 1e9, maxMem) ## memory (GB) avail.
+      maxLenAdj <- try(as.integer(log(maxMemAdj + 2)^5 * 1e4), silent = TRUE)
+      if (is.numeric(maxLenAdj))
+        if (maxLenAdj > 1e5)
+          maxLen <- maxLenAdj
+    }
+    # maxLen <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory, sim)
+    groupSize <- maxLen
+    attr(groupSize, "groupSizeTime") <- Sys.time()
+    # sim$.maxMemoryTime <- Sys.time()
+  }
+
+  return(groupSize)
 }
 
 
