@@ -146,7 +146,7 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
         new2 <- Sys.time()
     }
 
-    cohortData <- if (algo == 1) cohortData1 else cohortData2
+    cohortData <- if (1 %in% algo) cohortData1 else cohortData2
     if (!is.integer(cohortData[["sumB"]]))
       set(cohortData, NULL, "sumB", asInteger(cohortData[["sumB"]]))
 
