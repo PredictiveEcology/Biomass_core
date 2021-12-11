@@ -256,14 +256,8 @@ calculateGrowthMortality <- compiler::cmpfun(function(cohortData, stage = "nonSp
     cohortData[age > 0, mBio := pmin(B, mBio)]
     cohortData[age > 0, mBio := pmin(maxANPP*bPM, mBio)]
   } else {
-    bAPLarge <- cohortData$bAP %>>% 1.0
-    whbAPLarge <- which(bAPLarge)
-    whbAPSmall <- which(!bAPLarge)
-    # whNot <- which(cohortData$bAP %<=% 1.0)
-    set(cohortData, whbAPLarge, "mBio", cohortData$maxANPP*cohortData$bPM)
-    set(cohortData, whbAPSmall, "mBio", cohortData$maxANPP*(2*cohortData$bAP)/(1 + cohortData$bAP)*cohortData$bPM)
-    # cohortData[bAP %>>% 1.0, mBio := maxANPP*bPM]
-    # cohortData[bAP %<=% 1.0, mBio := maxANPP*(2*bAP)/(1 + bAP)*bPM]
+    cohortData[bAP %>>% 1.0, mBio := maxANPP*bPM]
+    cohortData[bAP %<=% 1.0, mBio := maxANPP*(2*bAP)/(1 + bAP)*bPM]
     set(cohortData, NULL, "mBio",
         pmin(cohortData$B, cohortData$mBio))
     set(cohortData, NULL, "mBio",
