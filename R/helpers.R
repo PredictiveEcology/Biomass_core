@@ -16,7 +16,7 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, coho
   # to assign maxB, maxANPP and maxB_eco to cohortData
   colNams <- colnames(cohortData)
   speciesEcoregionTraitNames <- c("maxB", "maxANPP", "maxB_eco")
-  
+
   # First determine whether cohortData already has all the info it needs.
   #  There are 3 reasons it doesn't: 1. first time, 2. cohortData table is different, 3. new year of data in speciesEcoregion
   needJoin <- TRUE
@@ -26,7 +26,7 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, coho
         needJoin <- FALSE
     }
   }
-  
+
   # Second, if needed, then update the cohortData table with the speciesEcoregion traits:
   #  i.e., "do the join"
   if (needJoin) {
@@ -38,12 +38,12 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, coho
     specieseco_current <- setkey(specieseco_current[, .(speciesCode, maxANPP, maxB, ecoregionGroup)],
                                  speciesCode, ecoregionGroup)
     specieseco_current[, maxB_eco := max(maxB), by = ecoregionGroup]
-    
+
     # The "update" line
     cohortData <- specieseco_current[cohortData, on = c("speciesCode", "ecoregionGroup"), nomatch = 0]
   }
-  
-  
+
+
   return(cohortData)
 }
 
@@ -102,26 +102,26 @@ updateSpeciesAttributes <- function(species, cohortData) {
 calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, successionTimestep,
                                            doAssertion = getOption("LandR.assertions", TRUE)) {
   nrowCohortData <- NROW(cohortData)
-  
+
   is2YrsBeforeSuccessionTS <- (currentTime == lastReg + successionTimestep - 2)
-  
+
   # algo <- 1 + (nrowCohortData < 1e6) # algo 1 is faster when large
   # if (isTRUE(doAssertion)) {
   #   message("LandR::vegTypeMapGenerator: NROW(cohortData) == ", nrowCohortData)
   #   algo <- 1:2
   # }
   # algo <- 1
-  
+
   ## use new vs old algorithm based on size of cohortData. new one (2) is faster in most cases.
   ## enable assertions to view timings for each algorithm before deciding which to use.
   ## Eliot update -- Nov 30 2021 -- this no longer seems to be true. Old is now always faster
-  
+
   if (is2YrsBeforeSuccessionTS) {
     wh <- cohortData$age > successionTimestep
   } else {
     wh <- cohortData$age >= successionTimestep
   }
-  
+
   set(cohortData, NULL, "sumB", 0L)
   if (any(wh)) {
     cohortData[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
@@ -226,10 +226,10 @@ calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
     bAPExponentGrowthCurve <- cohortData$bAP^cohortData$growthcurve
     aNPPAct <- cohortData$maxANPP * exp(1) * (bAPExponentGrowthCurve) *
       exp(-(bAPExponentGrowthCurve)) * cohortData$bPM
-    
+
     # aNPPAct <- cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
     #   exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM
-    
+
     set(cohortData, NULL, "aNPPAct",
         pmin(cohortData$maxANPP*cohortData$bPM, aNPPAct))
   }
@@ -291,14 +291,14 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
     set(cohortData, NULL, "bAP", cohortData$B/cohortData$bPot)
     set(cohortData, NULL, "bPot", NULL)
     set(cohortData, NULL, "cMultiplier", pmax(as.numeric(cohortData$B^0.95), 1))
-    
+
     # These 2 lines are 5x slower compared to replacement 6 lines below -- Eliot June 2, 2019
     #  Still faster on Nov 2021 by Eliot, for cohortData of ~800,000 rows
     if (FALSE) {
       cohortData[, cMultTotal := sum(cMultiplier), by = pixelGroup]
       set(cohortData, NULL, "bPM", cohortData$cMultiplier / cohortData$cMultTotal)
     }
-    
+
     # Faster replacement -- 1) sort on pixelGroup, 2) sum by group and .N by group, but don't reassign to full table
     #                       3) rep the sumByGroup each .N times  4) now reassign vector back to data.table
     oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
@@ -307,8 +307,8 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
     set(cohortData, NULL, "bPM", cohortData$cMultiplier / cMultTotal)
     if (!is.null(oldKey))
       setkeyv(cohortData, oldKey)
-    
-    
+
+
     set(cohortData, NULL, c("cMultiplier"), NULL)
   }
   return(cohortData)
@@ -328,7 +328,7 @@ checkAndChangeKey <- function(obj, key) {
 
 maxRowsDT <- function(maxLen, maxMem, startClockTime, groupSize,
                       modEnv) {
-  
+
   updateMaxMemoryTime <- FALSE
   if (!exists("groupSize", envir = modEnv)) {
     updateMaxMemoryTime <- TRUE
@@ -351,14 +351,15 @@ maxRowsDT <- function(maxLen, maxMem, startClockTime, groupSize,
     attr(groupSize, "groupSizeTime") <- Sys.time()
     # sim$.maxMemoryTime <- Sys.time()
   }
-  
+
   return(groupSize)
 }
 
 
-#' A faster alternative to dt[, something:=somefn(somestuff), by = someCol]
+#' A sometimes faster alternative to dt[, something:=somefn(somestuff), by = someCol]
 #'
-#' It is not clear why this is faster, but it is... 
+#' It appears (Dec 2021) that this is no longer faster for any size. This is being kept
+#' in here for posterity until it is clear that it is no longer needed.
 dtBy <- function(dt, rowSubset, sumCol = "B", by = "pixelGroup", resultColName = "sumB", byFn = sum) {
   oldKey <- key(dt)
   keepCols <- union(c(sumCol, by, "age"), oldKey)
