@@ -105,72 +105,25 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
 
   is2YrsBeforeSuccessionTS <- (currentTime == lastReg + successionTimestep - 2)
 
-  # algo <- 1 + (nrowCohortData < 1e6) # algo 1 is faster when large
-  # if (isTRUE(doAssertion)) {
-  #   message("LandR::vegTypeMapGenerator: NROW(cohortData) == ", nrowCohortData)
-  #   algo <- 1:2
-  # }
-  # algo <- 1
-
-  ## use new vs old algorithm based on size of cohortData. new one (2) is faster in most cases.
-  ## enable assertions to view timings for each algorithm before deciding which to use.
-  ## Eliot update -- Nov 30 2021 -- this no longer seems to be true. Old is now always faster
-
   if (is2YrsBeforeSuccessionTS) {
     wh <- cohortData$age > successionTimestep
   } else {
     wh <- cohortData$age >= successionTimestep
   }
 
-  set(cohortData, NULL, "sumB", 0L)
+  set(cohortData, NULL, "sumB", 0L) # this is faster than only doing for !wh
   if (any(wh)) {
-    cohortData[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
-    #
-    # if (1 %in% algo) {
-    #   ## this older version is typically much slower than the newer one below (Eliot June 2, 2019)
-    #   if (isTRUE(doAssertion)) {
-    #     old1 <- Sys.time()
-    #   }
-    #   cohortData1 <- if (isTRUE(doAssertion)) copy(cohortData) else cohortData
-    #   cohortData1[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
-    #
-    #   if (isTRUE(doAssertion)) {
-    #     old2 <- Sys.time()
-    #   }
-    # }
-    #
-    # if (2 %in% algo) {
-    #   # This seems to be a lot faster when small cohortData, and somewhat faster even on the largest sizes tried (40M rows)
-    #   if (isTRUE(doAssertion))
-    #     new1 <- Sys.time()
-    #   cohortData2 <- dtBy(dt = cohortData, rowSubset = wh, sumCol = "B",
-    #                       by = "pixelGroup", resultColName = "sumB", byFn = sum)
-    #   if (isTRUE(doAssertion))
-    #     new2 <- Sys.time()
-    # }
-    #
-    # cohortData <- if (1 %in% algo) cohortData1 else cohortData2
-    # if (!is.integer(cohortData[["sumB"]]))
-    #   set(cohortData, NULL, "sumB", asInteger(cohortData[["sumB"]]))
-    #
-    # if (isTRUE(doAssertion)) {
-    #
-    #   mod <- get("mod")
-    #   if (!exists("oldAlgoSumB", envir = mod, inherits = FALSE)) mod$oldAlgoSumB <- 0
-    #   if (!exists("newAlgoSumB", envir = mod, inherits = FALSE)) mod$newAlgoSumB <- 0
-    #   mod$oldAlgoSumB <- mod$oldAlgoSumB + (old2 - old1)
-    #   mod$newAlgoSumB <- mod$newAlgoSumB + (new2 - new1)
-    #
-    #   print(paste("Biomass_core:calculateSumB: new algo", mod$newAlgoSumB))
-    #   print(paste("Biomass_core:calculateSumB: old algo", mod$oldAlgoSumB))
-    #
-    #   setkeyv(cohortData1, c("pixelGroup", "speciesCode", "age"))
-    #   setkeyv(cohortData2, c("pixelGroup", "speciesCode", "age"))
-    #
-    #   if (!identical(cohortData1$sumB, cohortData2$sumB)) {
-    #     stop("calculateSumB: new algorithm differs from old algorithm")
-    #   }
-    #}
+    if (FALSE) {  # This is the "normal" data.table way. But it is slow, surprisingly
+      cohortData[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
+    } else {
+      # Faster replacement -- 1) sort on pixelGroup, 2) sum by group and .N by group, but don't reassign to full table
+      #                       3) rep the sumByGroup each .N times  4) now reassign vector back to data.table
+      oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
+      tmp <- cohortData[wh, list(N = .N, Sum = sum(B, na.rm = TRUE)), by = "pixelGroup"]
+      set(cohortData, which(wh), "sumB", rep.int(tmp$Sum, tmp$N))
+      if (!is.null(oldKey)) setkeyv(cohortData, oldKey) # marginally faster to avoid
+    }
+
   } else {
     message("Skipping sumB calculation because there are no cohorts older than successionTimestep")
   }
@@ -222,14 +175,9 @@ calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
                  exp(-(bAP^growthcurve)) * bPM]
     cohortData[age > 0, aNPPAct := pmin(maxANPP * bPM, aNPPAct)]
   } else {
-    # if (any(cohortData$pixelGroup == 519359 & cohortData$age > 200)) browser()
     bAPExponentGrowthCurve <- cohortData$bAP^cohortData$growthcurve
     aNPPAct <- cohortData$maxANPP * exp(1) * (bAPExponentGrowthCurve) *
       exp(-(bAPExponentGrowthCurve)) * cohortData$bPM
-
-    # aNPPAct <- cohortData$maxANPP * exp(1) * (cohortData$bAP^cohortData$growthcurve) *
-    #   exp(-(cohortData$bAP^cohortData$growthcurve)) * cohortData$bPM
-
     set(cohortData, NULL, "aNPPAct",
         pmin(cohortData$maxANPP*cohortData$bPM, aNPPAct))
   }
@@ -287,10 +235,13 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
     cohortData[age > 0, bPM := cMultiplier / cMultTotal]
     set(cohortData, NULL, c("cMultiplier", "cMultTotal"), NULL)
   } else {
-    set(cohortData, NULL, "bPot", pmax(1, cohortData$maxB - cohortData$sumB + cohortData$B))  ## differs from manual, follows source code
-    set(cohortData, NULL, "bAP", cohortData$B/cohortData$bPot)
-    set(cohortData, NULL, "bPot", NULL)
-    set(cohortData, NULL, "cMultiplier", pmax(as.numeric(cohortData$B^0.95), 1))
+    # set(cohortData, NULL, "bPot", pmax(1, cohortData$maxB - cohortData$sumB + cohortData$B))  ## differs from manual, follows source code
+    bPot <- pmax(1, cohortData$maxB - cohortData$sumB + cohortData$B)  ## differs from manual, follows source code
+    #set(cohortData, NULL, "bAP", cohortData$B/cohortData$bPot)
+    set(cohortData, NULL, "bAP", cohortData$B/bPot)
+    #set(cohortData, NULL, "bPot", NULL)
+    #set(cohortData, NULL, "cMultiplier", pmax(as.numeric(cohortData$B^0.95), 1))
+    set(cohortData, NULL, "cMultiplier", pmax(cohortData$B^0.95, 1))
 
     # These 2 lines are 5x slower compared to replacement 6 lines below -- Eliot June 2, 2019
     #  Still faster on Nov 2021 by Eliot, for cohortData of ~800,000 rows
@@ -298,16 +249,13 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
       cohortData[, cMultTotal := sum(cMultiplier), by = pixelGroup]
       set(cohortData, NULL, "bPM", cohortData$cMultiplier / cohortData$cMultTotal)
     }
-
     # Faster replacement -- 1) sort on pixelGroup, 2) sum by group and .N by group, but don't reassign to full table
     #                       3) rep the sumByGroup each .N times  4) now reassign vector back to data.table
     oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
     cMultTotalTmp <- cohortData[, list(N = .N, Sum = sum(cMultiplier)), by = pixelGroup]
     cMultTotal <- rep.int(cMultTotalTmp$Sum, cMultTotalTmp$N)
     set(cohortData, NULL, "bPM", cohortData$cMultiplier / cMultTotal)
-    if (!is.null(oldKey))
-      setkeyv(cohortData, oldKey)
-
+    if (!is.null(oldKey)) setkeyv(cohortData, oldKey)
 
     set(cohortData, NULL, c("cMultiplier"), NULL)
   }
@@ -355,46 +303,3 @@ maxRowsDT <- function(maxLen, maxMem, startClockTime, groupSize,
   return(groupSize)
 }
 
-
-#' A sometimes faster alternative to dt[, something:=somefn(somestuff), by = someCol]
-#'
-#' It appears (Dec 2021) that this is no longer faster for any size. This is being kept
-#' in here for posterity until it is clear that it is no longer needed.
-dtBy <- function(dt, rowSubset, sumCol = "B", by = "pixelGroup", resultColName = "sumB", byFn = sum) {
-  oldKey <- key(dt)
-  keepCols <- union(c(sumCol, by, "age"), oldKey)
-  # keepCols <- union(c(sumCol, by, "age"), oldKey)
-  cohortData2 <- copy(dt[, ..keepCols])
-  set(cohortData2, NULL, "origOrd", seq(NROW(dt)))
-  new1 <- Sys.time()
-  oldKeyToDelete <- checkAndChangeKey(cohortData2, by)
-  # if (is2YrsBeforeSuccessionTS) {
-  #   wh <- which(cohortData2$age > successionTimestep)
-  # } else {
-  #   wh <- which(cohortData2$age >= successionTimestep)
-  # }
-  sumBtmp <- cohortData2[rowSubset, list(N = .N, sumB = byFn(B, na.rm = TRUE)), by = by]
-  if ("sumB" %in% names(dt)) set(dt, NULL, "sumB", NULL)
-  # create empty column as there are some cases with rowSubset is length 0
-  if (length(rowSubset) == 0)
-    set(cohortData2, NULL, "sumB", NA_integer_)
-  set(cohortData2, rowSubset, "sumB", rep.int(sumBtmp[["sumB"]], sumBtmp[["N"]]))
-  setorderv(cohortData2, c("sumB"), na.last = TRUE)
-  a <- cohortData2[, list(sumB2 = sumB[1]), by = by]
-  setorderv(cohortData2, c(by, "sumB"), na.last = TRUE)
-  sumB <- a[cohortData2, on = by][["sumB2"]]
-  sumB[is.na(sumB)] <- 0L
-  set(cohortData2, NULL, "sumB", sumB)
-  if (!is.null(oldKey))
-    setkeyv(cohortData2, oldKey)
-  setorderv(cohortData2, "origOrd")
-  set(cohortData2, NULL, "origOrd", NULL)
-  rejoinCols <- setdiff(colnames(dt), keepCols)
-  for (rc in rejoinCols)
-    set(cohortData2, NULL, rc, dt[[rc]])
-  setcolorder(cohortData2, colnames(dt))
-  new2 <- Sys.time()
-  if (!is.integer(cohortData2[["sumB"]]))
-    set(cohortData2, NULL, "sumB", asInteger(cohortData2[["sumB"]]))
-  cohortData2
-}
