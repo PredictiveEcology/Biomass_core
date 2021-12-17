@@ -235,12 +235,9 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
     cohortData[age > 0, bPM := cMultiplier / cMultTotal]
     set(cohortData, NULL, c("cMultiplier", "cMultTotal"), NULL)
   } else {
-    # set(cohortData, NULL, "bPot", pmax(1, cohortData$maxB - cohortData$sumB + cohortData$B))  ## differs from manual, follows source code
+
     bPot <- pmax(1, cohortData$maxB - cohortData$sumB + cohortData$B)  ## differs from manual, follows source code
-    #set(cohortData, NULL, "bAP", cohortData$B/cohortData$bPot)
     set(cohortData, NULL, "bAP", cohortData$B/bPot)
-    #set(cohortData, NULL, "bPot", NULL)
-    #set(cohortData, NULL, "cMultiplier", pmax(as.numeric(cohortData$B^0.95), 1))
     set(cohortData, NULL, "cMultiplier", pmax(cohortData$B^0.95, 1))
 
     # These 2 lines are 5x slower compared to replacement 6 lines below -- Eliot June 2, 2019
