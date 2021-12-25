@@ -158,7 +158,7 @@ defineModule(sim, list(
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness"),
     expectsInput("pixelGroupMap", "RasterLayer",
-                 desc = "initial community map that has mapcodes match initial community table"),
+                 desc = "DESCRIPTION_NEEDED"), ## TODO
     expectsInput("rasterToMatch", "RasterLayer",
                  desc = "a raster of the studyArea in the same resolution and projection as biomassMap"),
     expectsInput("species", "data.table",
