@@ -12,7 +12,7 @@ defineModule(sim, list(
     person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.3.4")),
+  version = list(Biomass_core = numeric_version("1.3.9")),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
@@ -158,7 +158,7 @@ defineModule(sim, list(
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the cut points to classify stand shadeness"),
     expectsInput("pixelGroupMap", "RasterLayer",
-                 desc = "initial community map that has mapcodes match initial community table"),
+                 desc = "DESCRIPTION_NEEDED"), ## TODO
     expectsInput("rasterToMatch", "RasterLayer",
                  desc = "a raster of the studyArea in the same resolution and projection as biomassMap"),
     expectsInput("species", "data.table",
@@ -526,7 +526,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ##############################################
   if (is.null(sim$species))
     stop("'species' object must be provided")
-  species <- setDT(sim$species)[, speciesCode := as.factor(species)]
+  species <- as.data.table(sim$species) # The former setDT actually changed the vector
+  set(species, NULL, "speciesCode", factor(species$species, levels = unique(species$species))) # supply levels for speed
   LandR::assertColumns(species,
                        c(species = "character", Area = "factor", longevity = "integer",
                          sexualmature = "integer", shadetolerance = "numeric",
@@ -742,8 +743,15 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     LandR::assertUniqueCohortData(sim$cohortData, c("pixelGroup", "ecoregionGroup", "speciesCode"))
   }
 
-  if (!is.null(sim$ecoregionMap) && !is.null(sim$pixelGroupMap) && !is.null(sim$biomassMap)) {
-    compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
+  rasterNamesToCompare <- c("ecoregionMap", "pixelGroupMap")
+  if (!identical(P(sim)$initialBiomassSource, "cohortData")) {
+    rasterNamesToCompare <- c(rasterNamesToCompare, "biomassMap")
+  }
+  haveAllRasters <- all(!unlist(lapply(rasterNamesToCompare, function(rn) is.null(sim[[rn]]))))
+
+  if (haveAllRasters) {
+    rastersToCompare <- mget(rasterNamesToCompare, envir(sim))
+    do.call(compareRaster, append(list(x = sim$rasterToMatch, orig = TRUE), rastersToCompare))
   } else {
     stop("Expecting 3 rasters at this point: sim$biomassMap, sim$ecoregionMap, ",
          "sim$pixelGroupMap and they must match sim$rasterToMatch")
@@ -913,11 +921,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   ## make initial vegTypeMap - this is important when saving outputs at year = 1, with eventPriority = 1
   ## this vegTypeMap will be overwritten later in the same year.
-  sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
-                                        P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
-                                        sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
-                                        colors = sim$sppColorVect,
-                                        doAssertion = getOption("LandR.assertions", TRUE))
+  if (!is.null(P(sim)$calcSummaryBGM))
+    sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
+                                          P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
+                                          sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+                                          colors = sim$sppColorVect,
+                                          doAssertion = getOption("LandR.assertions", TRUE))
 
   sim$lastReg <- 0
   speciesEcoregion[, identifier := year > P(sim)$successionTimestep]
@@ -1011,11 +1020,12 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
   sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
   setColors(sim$mortalityMap) <- c("light green", "dark green")
 
-  sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
-                                        P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
-                                        sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
-                                        colors = sim$sppColorVect,
-                                        doAssertion = getOption("LandR.assertions", TRUE))
+  if (!is.null(P(sim)$calcSummaryBGM))
+    sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
+                                          P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
+                                          sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+                                          colors = sim$sppColorVect,
+                                          doAssertion = getOption("LandR.assertions", TRUE))
 
   rm(cutpoints, pixelGroups, tempOutput_All, summaryBGMtable) ## TODO: is this needed? on exit, should free the mem used for these
   return(invisible(sim))
@@ -1042,29 +1052,35 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
     cohortData <- sim$cohortData
     pgs <- unique(cohortData$pixelGroup)
-    groupSize <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory)
-    numGroups <- ceiling(length(pgs) / groupSize)
+
+    # This tests for available memory and tries to scale the groupSize accordingly. It
+    #   is, however, a very expensive operation. It now only does it once per simulation
+    mod$groupSize <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory,
+                               startClockTime = sim$._startClockTime, groupSize = mod$groupSize,
+                               modEnv = mod)
+
+    numGroups <- ceiling(length(pgs) / mod$groupSize)
     groupNames <- paste0("Group", seq(numGroups))
-    if (length(pgs) > groupSize) {
+    if (length(pgs) > mod$groupSize) {
       sim$cohortData <- cohortData[0, ]
       pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
                                 temID = 1:length(unique(cohortData$pixelGroup)))
-      cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
+      cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = mod$groupSize), max(pixelGroups$temID))))
       #cutpoints <- c(1,max(pixelGroups$temID))
       if (length(cutpoints) == 1)
         cutpoints <- c(cutpoints, cutpoints + 1)
 
-      pixelGroups[, groups := rep(groupNames, each = groupSize, length.out = NROW(pixelGroups))]
+      pixelGroups[, groups := rep(groupNames, each = mod$groupSize, length.out = NROW(pixelGroups))]
     }
     for (subgroup in groupNames) {
       if (numGroups == 1) {
         subCohortData <- cohortData
-    } else {
+      } else {
         subCohortData <- cohortData[cohortData$pixelGroup %in% pixelGroups$pixelGroupIndex[pixelGroups$groups == subgroup], ]
-    }
+      }
 
-    subCohortData[age > 1, age := age + 1L]
-    subCohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
+      subCohortData[age > 1, age := age + 1L]
+      subCohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = sim$speciesEcoregion,
                                                         currentTime = round(time(sim)),
                                                         cohortData = subCohortData)
       subCohortData <- updateSpeciesAttributes(species = sim$species, cohortData = subCohortData)
@@ -1079,8 +1095,14 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       # Die from old age or low biomass -- rm from cohortData
       #########################################################
       keep <- (subCohortData$age <= subCohortData$longevity) & (subCohortData$B >=  P(sim)$minCohortBiomass)
-      subCohortPostLongevity <- subCohortData[keep,]
-      diedCohortData <- subCohortData[!keep]
+      if (all(keep)) {
+        subCohortPostLongevity <- subCohortData
+        diedCohortData <- subCohortData[0]
+      } else {
+        subCohortPostLongevity <- subCohortData[keep]
+        diedCohortData <- subCohortData[!keep]
+      }
+
       numCohortsDied <- NROW(diedCohortData)
 
       if (numCohortsDied > 0) {
