@@ -1,6 +1,9 @@
-#' updateSpeciesEcoregionAttributes
+#' Updates the speciesEcoregion used in current year from original speciesEcoregion file
 #'
-#' TODO: description and title needed
+#' A LANDIS-II speciesEcoregion file has a column called "year", which specifies the
+#' year after which the speciesEcoregion values should be used. This function
+#' compares the `currentTime` in the simulation with the `year` column in the speciesEcoregion
+#' file and updates accordingly, if needed.
 #'
 #' @param speciesEcoregion TODO: description needed
 #' @param currentTime TODO: description needed
