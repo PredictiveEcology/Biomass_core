@@ -40,7 +40,7 @@ Ideally, however, the user should supply realistic versions of these data and th
 Below is the full list of input objects that `Biomass_core` expects. Of these, the only input that **must** be provided (i.e. `Biomass_core` does not have a default for) is `studyArea`.
 
 ```{r moduleInputs, eval = TRUE, echo = FALSE, message=FALSE, warning=FALSE}
-df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")
+df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "../..")#, "C:/Eliot/GitHub")
 knitr::kable(df_inputs)
 ```
 
@@ -83,7 +83,7 @@ Other                  |
 
 
 ```{r moduleParams, echo = FALSE, eval = TRUE, message=FALSE, warning=FALSE}
-df_params <- SpaDES.core::moduleParams("Biomass_core", "..")
+df_params <- SpaDES.core::moduleParams("Biomass_core", "../..")
 knitr::kable(df_params)
 ```
 
@@ -142,7 +142,7 @@ Note that should a post-disturbance regeneration module be used, regeneration wi
 library(SpaDES)
 
 moduleName <- c("Biomass_core")  
-spadesModulesDirectory <- ".." # In general, a module code will be controlled at one level above the source code
+spadesModulesDirectory <- "../.." # In general, a module code will be controlled at one level above the source code
 ```
 
 ## Get the module
@@ -227,7 +227,7 @@ The module produces the following outputs:
 - Whatever objects supplied to `outputs` argument in `simInit` (only `cohortData` in the example above)
 
 ```{r moduleOutputs, echo = FALSE, eval = TRUE, message=FALSE, warning=FALSE}
-df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")
+df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "../..")
 knitr::kable(df_outputs)
 ```
 
