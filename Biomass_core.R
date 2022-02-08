@@ -21,7 +21,7 @@ defineModule(sim, list(
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare",
                   "ggplot2", "grid", "parallel", "purrr", "quickPlot",
                   "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>= 1.0.0.9001)",
+                  "PredictiveEcology/LandR@development (>= 1.0.0.9003)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
@@ -66,6 +66,7 @@ defineModule(sim, list(
                                  "(see LandR.CS for climate sensitivity, leave default if none desired)")),
     defineParameter("growthInitialTime", "numeric", start(sim), NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
+    defineParameter("initialB", "numeric", 10, 1, NA, desc = "initial biomass values of new age-1 cohorts"),
     defineParameter("initialBiomassSource", "character", "cohortData", NA, NA,
                     paste("Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. ",
                           "If 'spinUp', it will derive biomass by running spinup derived from Landis-II.",
@@ -1327,6 +1328,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFrom
                              currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
                              cohortDefinitionCols = P(sim)$cohortDefinitionCols,
                              treedFirePixelTableSinceLastDisp = NULL,
+                             initialB = P(sim)$initialB,
                              successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
     sim$pixelGroupMap <- outs$pixelGroupMap
@@ -1399,6 +1401,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
     outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
                              currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
                              treedFirePixelTableSinceLastDisp = NULL,
+                             initialB = P(sim)$initialB,
                              successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
     sim$pixelGroupMap <- outs$pixelGroupMap
@@ -1537,6 +1540,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
                                  pixelGroupMap = sim$pixelGroupMap,
                                  currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
                                  treedFirePixelTableSinceLastDisp = NULL,
+                                 initialB = P(sim)$initialB,
                                  successionTimestep = P(sim)$successionTimestep)
 
         sim$cohortData <- outs$cohortData
