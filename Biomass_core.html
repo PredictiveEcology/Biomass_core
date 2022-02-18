@@ -2649,6 +2649,9 @@ Used only in seed dispersal. If numeric, it will be passed to <code>data.table::
 <h2>Load <code>SpaDES</code></h2>
 <pre class="r"><code>library(SpaDES)
 
+## make sure all necessary packages are installed
+SpaDES.install::makeSureAllPackagesInstalled(modulePath = &quot;../Biomass_core/&quot;)
+
 moduleName &lt;- c(&quot;Biomass_core&quot;)  
 spadesModulesDirectory &lt;- &quot;..&quot; # In general, a module code will be controlled at one level above the source code</code></pre>
 </div>

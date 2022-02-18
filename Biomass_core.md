@@ -1201,6 +1201,9 @@ Note that should a post-disturbance regeneration module be used, regeneration wi
 ```r
 library(SpaDES)
 
+## make sure all necessary packages are installed
+SpaDES.install::makeSureAllPackagesInstalled(modulePath = "../Biomass_core/")
+
 moduleName <- c("Biomass_core")  
 spadesModulesDirectory <- ".." # In general, a module code will be controlled at one level above the source code
 ```
