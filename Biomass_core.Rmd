@@ -85,13 +85,13 @@ knitr::kable(df_params,
 
 Events are scheduled as follows:
 
--   Module initiation
--   Seed dispersal (every `successionTimestep`)
--   Mortality and growth
--   Reclassification of age cohorts (every `successionTimestep`)
--   Summary tables of regeneration (summaryRegen), biomass, age, growth and mortality (summaryBGM\*)
--   Plots of maps (plotMaps) and averages (plotAvgs)
--   Save
+-   Module initiation (`init` event)
+-   Seed dispersal (every `successionTimestep`; `Dispersal` event)
+-   Mortality and growth (`mortalityAndGrowth` event)
+-   Reclassification of age cohorts (every `successionTimestep`; `cohortAgeReclassification` event)
+-   Summary tables of regeneration (`summaryRegen` event), biomass, age, growth and mortality (`summaryBGM\*` event)
+-   Plots of maps (`plotMaps` event) and averages (`plotAvgs` and `plotSummaryBySpecies` events)
+-   Save (`save`)
 
 ## Module outputs
 
