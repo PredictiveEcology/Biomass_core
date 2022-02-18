@@ -37,7 +37,7 @@ if (!require(dplyr)) {
 
 ## Module summary
 
-LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:figBiomassCore)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between Biomass_core and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
+LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:figBiomassCore)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
 
 ```{r figBiomassCore, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "_Biomass_core_ simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)."}
 knitr::include_graphics("figures/Biomass_coreSchematic.png")
@@ -68,7 +68,7 @@ Of the above, we draw particular attention to the the following inputs, which ar
 
 -   Cohort-simulation related: `cohortData`, `pixelGroupMap`
 
-For the beginner user, we suggest running *Biomass_core* without supplying any inputs and inspecting the above mentioned objects to understand their structure and format. The user can later either feed these objects via `simInit`, or make a module that makes them and provides necessary inputs to *Biomass_core* (see e.g. [*Biomass_borealDataPrep*](https://github.com/PredictiveEcology/*Biomass_borealDataPrep*))
+For the beginner user, we suggest running *Biomass_core* without supplying any inputs and inspecting the above mentioned objects to understand their structure and format. The user can later either feed these objects via `simInit`, or make a module that makes them and provides necessary inputs to *Biomass_core* (see e.g. [*Biomass_borealDataPrep*](https://github.com/PredictiveEcology/Biomass_borealDataPrep))
 
 Besides the above mentioned inputs, *Biomass_core* uses several other parameters, which can be changed by the user if need be (Table \@ref(tab:moduleParams)). Please see the [Parameters] section of the manual for a list of the most useful parameters.
 
@@ -105,7 +105,7 @@ All `simList` objects that are changed by *Biomass_core* (*i.e.*, the definition
 ```{r moduleOutputs, echo = FALSE, eval = TRUE, message = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")
 knitr::kable(df_outputs,
-             caption = "List of Biomass_core output objects and their description.") %>%
+             caption = "List of _Biomass_core_ output objects and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down")
 ```
 :::
@@ -152,11 +152,11 @@ Unlike in LBSE, post-disturbance regeneration is not part of *Biomass_core* *per
 
 #### Hashing
 
-Our first strategy to improve simulation efficiency in *\**Biomass_core\* was to use a hashing mechanism [@YangEtAl2011]. Instead of assigning a key to each pixel in a raster and tracking the simulation for each pixel in a lookup table, we indexed pixels using a *pixelGroup* key that contained unique combinations of ecolocation and community, and tracked and stored simulation data for each *pixelGroup* (Fig. \@ref(fig:figLBSEtest3)). Ecolocation (called 'ecoregion' in LBSE and in model objects) is a spatial unit with similar biophysical characteristics. In our applications, we define ecolocation as the combination of land-cover types from the Land Cover Map of Canada 2005 (v1) and ecodistricts from the National Ecological Framework for Canada (<!--add source-->). Hence, these ecolocations contain relatively fine scale land cover information plus coarse scale regional information. In turn, community is the species composition and age structure of a particular pixel. This algorithm was able to ease the computational burden by significantly reducing the size of the lookup table and speeding-up the simulation process. After recruitment and disturbance events, pixels are rehashed into new pixel groups.
+Our first strategy to improve simulation efficiency in *Biomass_core* was to use a hashing mechanism [@YangEtAl2011]. Instead of assigning a key to each pixel in a raster and tracking the simulation for each pixel in a lookup table, we indexed pixels using a *pixelGroup* key that contained unique combinations of ecolocation and community, and tracked and stored simulation data for each *pixelGroup* (Fig. \@ref(fig:figLBSEtest3)). Ecolocation (called 'ecoregion' in LBSE and in model objects) is a spatial unit with similar biophysical characteristics. In our applications, we define ecolocation as the combination of land-cover types from the Land Cover Map of Canada 2005 (v1) and ecodistricts from the National Ecological Framework for Canada (<!--add source-->). Hence, these ecolocations contain relatively fine scale land cover information plus coarse scale regional information. In turn, community is the species composition and age structure of a particular pixel. This algorithm was able to ease the computational burden by significantly reducing the size of the lookup table and speeding-up the simulation process. After recruitment and disturbance events, pixels are rehashed into new pixel groups.
 
 #### Caching
 
-The second strategy aimed at improving model efficacy was the implementation of caching, and data-driven parameterisation and initialisation. Caching automatically archives outputs of a given function to disk (or memory) and reads them back when subsequent calls of this function are given identical inputs. All caching operations were achieved using the `reproducible` R package [@McIntireChubaty2020]. In the current version of *Biomass_core*, the spin-up phase was replaced by data-driven landscape initialisation and many model parameters were derived from data, using "data modules" (e.g., *Biomas_borealDataPrep*). To avoid having to repeat data downloads and treatment, statistical estimation of parameters and landscape initialisation every time the simulation is re-run under the same conditions (*i.e.*, no data or algorithm changes), many of these pre-simulation steps are automatically cached. This means that the pre-simulation phase is significantly faster upon a second call when inputs have not changed (e.g., the input data and parameterization methods), and when inputs do change only directly affected steps are re-run (see main text for examples). When not using data modules, *Biomass_core* still relies on caching for the preparation of its theoretical inputs.
+The second strategy aimed at improving model efficacy was the implementation of caching, and data-driven parametrisation and initialisation. Caching automatically archives outputs of a given function to disk (or memory) and reads them back when subsequent calls of this function are given identical inputs. All caching operations were achieved using the `reproducible` R package [@McIntireChubaty2020]. In the current version of *Biomass_core*, the spin-up phase was replaced by data-driven landscape initialisation and many model parameters were derived from data, using "data modules" (e.g., *Biomass_borealDataPrep*). To avoid having to repeat data downloads and treatment, statistical estimation of parameters and landscape initialisation every time the simulation is re-run under the same conditions (*i.e.*, no data or algorithm changes), many of these pre-simulation steps are automatically cached. This means that the pre-simulation phase is significantly faster upon a second call when inputs have not changed (e.g., the input data and parametrisation methods), and when inputs do change only directly affected steps are re-run (see main text for examples). When not using data modules, *Biomass_core* still relies on caching for the preparation of its theoretical inputs.
 
 #### Testing
 
@@ -168,9 +168,9 @@ Finally, because *Biomass_core* (and all other LandR modules) code is hosted in 
 
 In the recoding of *Biomass_core*, we ensured similar outputs of each demographic process (namely, growth, mortality and recruitment) to the outputs from its counterpart in LBSE, using integration tests. Here, we report the comparisons of the overall simulation (i.e., including all demographic processes) between LBSE and *Biomass_core* using three randomly generated initial communities (Tables \@ref(tab:tableLBSEtest3)-\@ref(tab:tableLBSEtest5)). The remaining input parameters were taken from a LANDIS-II training course (Tables \@ref(tab:tableLBSEtest6)-\@ref(tab:tableLBSEtest9)), and contained species attributes information of 16 common tree species in boreal forests and 2 ecolocations. We ran simulations for 1000 years, with a succession time step of 10 and three repetitions, which were enough to account for the variability produced by stochastic processes. Seed dispersal was set as "ward dispersal".
 
-The results suggested that *Biomass_core* had a good agreement with LBSE using the three randomly generated initial communities (Fig. \@ref(fig:figLBSEtest4)), with very small deviations for LBSE-generated biomasses. Notably, the mean differences between LBSE and Biomass_core were 0.03% (range: -0.01% \~ 0.13%), 0.03% (range: -0.01% \~ 0.11%) and 0.05% (-0.02% \~ 0.15%) for each initial community, respectively (right panels in Fig. \@ref(fig:figLBSEtest4) of this appendix).
+The results suggested that *Biomass_core* had a good agreement with LBSE using the three randomly generated initial communities (Fig. \@ref(fig:figLBSEtest4)), with very small deviations for LBSE-generated biomasses. Notably, the mean differences between LBSE and *Biomass_core* were 0.03% (range: -0.01% \~ 0.13%), 0.03% (range: -0.01% \~ 0.11%) and 0.05% (-0.02% \~ 0.15%) for each initial community, respectively (right panels in Fig. \@ref(fig:figLBSEtest4) of this appendix).
 
-To examine how running time changed with map size, we ran simulations using maps with increasing number of pixels from 22,201 to 638,401. All maps were initialised with a single ecolocation and 7 different communities. Simulations were run for 120 years using a succession time step of 10 and replicated three times. To eliminate the effect of hardware on running time, we used machines that were all purchased at the same time, with equal specifications and running Windows 7. Each simulation ran on 2 CPU threads with a total RAM of 4000 Mb. For both LBSE and *Biomass_core*, the simulation time increased linearly with number of pixels, but the increase rate was smaller for *Biomass_core* (Fig. \@ref(fig:figLBSEtest5)a). This meant that while both models had similar simulation efficiencies in small maps (\< 90,000 pixels), as map size increased Biomass_core was \~2 times faster than LBSE (maps \> 100,000 pixels; Fig. \@ref(fig:figLBSEtest5)a). *Biomass_core* also scaled better with map size, as LBSE speeds fluctuated between 19 to 25 seconds per 1,000 pixels across all map sizes, while *Biomass_core* decreased from 21 to 11 seconds per 1,000 pixels from smaller to larger maps (Fig. \@ref(fig:figLBSEtest5)b).
+To examine how running time changed with map size, we ran simulations using maps with increasing number of pixels from 22,201 to 638,401. All maps were initialised with a single ecolocation and 7 different communities. Simulations were run for 120 years using a succession time step of 10 and replicated three times. To eliminate the effect of hardware on running time, we used machines that were all purchased at the same time, with equal specifications and running Windows 7. Each simulation ran on 2 CPU threads with a total RAM of 4000 Mb. For both LBSE and *Biomass_core*, the simulation time increased linearly with number of pixels, but the increase rate was smaller for *Biomass_core* (Fig. \@ref(fig:figLBSEtest5)a). This meant that while both models had similar simulation efficiencies in small maps (\< 90,000 pixels), as map size increased *Biomass_core* was \~2 times faster than LBSE (maps \> 100,000 pixels; Fig. \@ref(fig:figLBSEtest5)a). *Biomass_core* also scaled better with map size, as LBSE speeds fluctuated between 19 to 25 seconds per 1,000 pixels across all map sizes, while *Biomass_core* decreased from 21 to 11 seconds per 1,000 pixels from smaller to larger maps (Fig. \@ref(fig:figLBSEtest5)b).
 
 ## Initialization, inputs and parameters
 
@@ -180,13 +180,13 @@ To be initialized, *Biomass_core* requires the following input objects and param
 
 ### Input objects
 
-All of *Biomass_core*'s input objects have (theoretical) defaults that are produced automatically by the module (when running the `.inputObjects` function during the `simInit` call, and in the `init` event during the `spades` call -- see `?SpaDES.core::events` and `SpaDES.core::simInit`). We suggest that new users run `Biomass_core` by itself supplying only a `studyArea` object. This will enable them to become familiar with all the input objects before attempting to supply their own, or combine *Biomass_core* with data modules.
+All of *Biomass_core*'s input objects have (theoretical) defaults that are produced automatically by the module (when running the `.inputObjects` function during the `simInit` call, and in the `init` event during the `spades` call -- see `?SpaDES.core::events` and `SpaDES.core::simInit`). We suggest that new users run *Biomass_core* by itself supplying only a `studyArea` object. This will enable them to become familiar with all the input objects before attempting to supply their own, or combine *Biomass_core* with data modules.
 
 ::: fullwidth
 ```{r moduleInputs2, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")
 knitr::kable(df_inputs, 
-             caption = "List of Biomass_core input objects and their description.") %>%
+             caption = "List of _Biomass_core_ input objects and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down")
 ```
 :::
@@ -197,7 +197,7 @@ Of the inputs in Table \@ref(tab:moduleInputs2), the following are particularly 
 
     -   `ecoregionMap` -- a raster layer with ecolocation IDs (note that the term "ecoregion" was inherited from LBSE and kept as is for consistency with original LBSE code). Ecolocations group pixels or similar biophysical conditions using up to two levels of grouping. In many of our applications, we use the Natural Ecoregion classification of Canada as the first grouping level and a land-cover classification as the second level. The raster layer must be defined as a categorical variable, with an associated Raster Attribute Table (RAT; see, e.g., `raster::ratify`). The RAT must contain the columns: `ID` (the value in the raster layer), `ecoregion` (the first level of ecolocation grouping) and `ecoregionGroup` (the full ecolocation "name" written as \<firstlevel_secondlevel>). Note that `ecoregionGroup` usually originated from combining two raster layers and, thus, the grouping level IDs are also integers. For instance, if Natural Ecoregion `2` has land-cover types `1`, `2` and `3`, the RAT will contain `ID = {1,2,3}`, `ecoregion = {2}` and `ecoregionGroup = {2_1, 2_2, 2_3}`. All ecolocations are listed in the `ecoregion` `data.table`.
 
-    -   `rasterToMatch` -- a RasterLayer, with a given resolution and projection determining the pixels (*i.e.*, non NA values) where forest dynamics will be simulated. Needs to match `studyArea`. If not supplied, Biomass_core attempts to produce it, using `biomassMap` as the template for spatial resolution and projection.
+    -   `rasterToMatch` -- a RasterLayer, with a given resolution and projection determining the pixels (*i.e.*, non NA values) where forest dynamics will be simulated. Needs to match `studyArea`. If not supplied, *Biomass_core* attempts to produce it, using `biomassMap` as the template for spatial resolution and projection.
 
     -   `studyArea` -- shapefile. A `SpatialPolygonsDataFrame` with a single polygon determing the where the simulation will take place. This is the only input object that **must be supplied by the user**.
 
@@ -281,7 +281,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
 ```{r moduleParams2, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_core", "..")
 knitr::kable(df_params,
-             caption = "List of Biomass_core parameters and their description.") %>%
+             caption = "List of _Biomass_core_ parameters and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down")
 ```
 :::
@@ -318,7 +318,7 @@ knitr::kable(df_params,
 +------------------------+-------------------------------------------------------------------------------------------------+
 :::
 
-: (#tab:tableUsefulParams) Useful Biomass_core parameters.
+: (#tab:tableUsefulParams) Useful *Biomass_core* parameters.
 
 ## Simulation flow
 
@@ -397,7 +397,7 @@ paths <- getPaths()
 successionTimestep <- 20L
 
 ## keep default values for most parameters 
-## (ommitted from this list)
+## (omitted from this list)
 parameters <- list(
   Biomass_core = list(
     "sppEquivCol" = speciesNameConvention
@@ -647,7 +647,7 @@ mySim <- simInitAndSpades(times = times,
 | 4              | 1   | 1   | 1   | 1   | 0   | 0   |
 | 5              | 0   | 0   | 1   | 1   | 1   | 1   |
 
-: (#tab:tableLBSEtest8) Probability of germination for species shade tolerance and shade level combinations (called *sufficient light* table in LBSE and `sufficientLight` input `data.table` in LandR Biomass_core) used in comparison runs.
+: (#tab:tableLBSEtest8) Probability of germination for species shade tolerance and shade level combinations (called *sufficient light* table in LBSE and `sufficientLight` input `data.table` in LandR *Biomass_core*) used in comparison runs.
 
 | Ecolocation | Species  | SEP  | maxANPP | maxB  |
 |:------------|:---------|:-----|:--------|:------|
