@@ -1930,6 +1930,14 @@ pre code {
 <td align="left">Initial time for the growth event to occur</td>
 </tr>
 <tr class="even">
+<td align="left">initialB</td>
+<td align="left">numeric</td>
+<td align="left">10</td>
+<td align="left">1</td>
+<td align="left">NA</td>
+<td align="left">initial biomass values of new age-1 cohorts</td>
+</tr>
+<tr class="odd">
 <td align="left">initialBiomassSource</td>
 <td align="left">character</td>
 <td align="left">cohortData</td>
@@ -1937,7 +1945,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">Currently, there are three options: ‘spinUp’, ‘cohortData’, ‘biomassMap’. If ‘spinUp’, it will derive biomass by running spinup derived from Landis-II. If ‘cohortData’, it will be taken from the ‘cohortData’ object, i.e., it is already correct, by cohort. If ‘biomassMap’, it will be taken from <code>sim$biomassMap</code>, divided across species using <code>sim$speciesLayers</code> percent cover values <code>spinUp</code> uses <code>sim$standAgeMap</code> as the driver, so biomass is an output. That means it will be unlikely to match any input information about biomass, unless this is set to TRUE, and a <code>sim$rawBiomassMap</code> is supplied.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">keepClimateCols</td>
 <td align="left">logical</td>
 <td align="left">FALSE</td>
@@ -1945,7 +1953,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">include growth and mortality predictions in <code>cohortData</code>?</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">minCohortBiomass</td>
 <td align="left">numeric</td>
 <td align="left">0</td>
@@ -1953,7 +1961,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">cohorts with biomass below this threshold are removed. Not a LANDIS-II BSM param.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">mixedType</td>
 <td align="left">numeric</td>
 <td align="left">2</td>
@@ -1961,7 +1969,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">How to define mixed stands: 1 for any species admixture; 2 for deciduous &gt; conifer. See <code>?vegTypeMapGenerator</code>.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">plotOverstory</td>
 <td align="left">logical</td>
 <td align="left">FALSE</td>
@@ -1969,7 +1977,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">swap max age plot with overstory biomass</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">seedingAlgorithm</td>
 <td align="left">character</td>
 <td align="left">wardDisp….</td>
@@ -1977,7 +1985,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">choose which seeding algorithm will be used among noSeeding (no horizontal, nor vertical seeding), noDispersal (no horizontal disperal), universalDispersal, and wardDispersal (default). Species dispersal distances (in the ‘species’ table) are based on LANDIS-II parameters.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">spinupMortalityfraction</td>
 <td align="left">numeric</td>
 <td align="left">0.001</td>
@@ -1985,7 +1993,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">defines the mortality loss fraction in spin up-stage simulation</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">sppEquivCol</td>
 <td align="left">character</td>
 <td align="left">Boreal</td>
@@ -1993,7 +2001,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">The column in sim$specieEquivalency data.table to use as a naming convention</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">successionTimestep</td>
 <td align="left">numeric</td>
 <td align="left">10</td>
@@ -2001,7 +2009,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">vegLeadingProportion</td>
 <td align="left">numeric</td>
 <td align="left">0.8</td>
@@ -2009,7 +2017,7 @@ pre code {
 <td align="left">1</td>
 <td align="left">a number that define whether a species is leading for a given pixel</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">.maxMemory</td>
 <td align="left">numeric</td>
 <td align="left">5</td>
@@ -2017,7 +2025,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">maximum amount of memory (in GB) to use for dispersal calculations.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">.plotInitialTime</td>
 <td align="left">numeric</td>
 <td align="left">start(sim)</td>
@@ -2025,7 +2033,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">Vector of length = 1, describing the simulation time at which the first plot event should occur. To plotting off completely use .plots.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">.plotInterval</td>
 <td align="left">numeric</td>
 <td align="left">NA</td>
@@ -2033,7 +2041,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">defines the plotting time step. If NA, the default, .plotInterval is set to successionTimestep.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">.plots</td>
 <td align="left">character</td>
 <td align="left">object</td>
@@ -2041,7 +2049,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">Passed to <code>types</code> in Plots (see ?Plots). There are a few plots that are made within this module, if set. Note that plots (or their data) saving will ONLY occur at end(sim). If NA plotting is off completely (this includes saving).</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">.plotMaps</td>
 <td align="left">logical</td>
 <td align="left">TRUE</td>
@@ -2049,7 +2057,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">Controls whether maps should be plotted or not. Set to FALSE if .plots == NA</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">.saveInitialTime</td>
 <td align="left">numeric</td>
 <td align="left">NA</td>
@@ -2057,7 +2065,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">Vector of length = 1, describing the simulation time at which the first save event should occur. Set to NA if no saving is desired. If not NA, then saving will occur at .saveInitialTime with a frequency equal to .saveInterval</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">.saveInterval</td>
 <td align="left">numeric</td>
 <td align="left">NA</td>
@@ -2065,7 +2073,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">defines the saving time step. If NA, the default, .saveInterval is set to successionTimestep.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">.studyAreaName</td>
 <td align="left">character</td>
 <td align="left">NA</td>
@@ -2073,7 +2081,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">Human-readable name for the study area used. If NA, a hash of studyArea will be used.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">.useCache</td>
 <td align="left">character</td>
 <td align="left">.inputOb….</td>
@@ -2081,7 +2089,7 @@ pre code {
 <td align="left">NA</td>
 <td align="left">Internal. Can be names of events or the whole module name; these will be cached by SpaDES</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">.useParallel</td>
 <td align="left">ANY</td>
 <td align="left">2</td>
