@@ -434,13 +434,13 @@ Besides the above mentioned inputs, *Biomass_core* uses several other parameters
 
 Events are scheduled as follows:
 
--   Module initiation
--   Seed dispersal (every `successionTimestep`)
--   Mortality and growth
--   Reclassification of age cohorts (every `successionTimestep`)
--   Summary tables of regeneration (summaryRegen), biomass, age, growth and mortality (summaryBGM\*)
--   Plots of maps (plotMaps) and averages (plotAvgs)
--   Save
+-   Module initiation (`init` event)
+-   Seed dispersal (every `successionTimestep`; `Dispersal` event)
+-   Mortality and growth (`mortalityAndGrowth` event)
+-   Reclassification of age cohorts (every `successionTimestep`; `cohortAgeReclassification` event)
+-   Summary tables of regeneration (`summaryRegen` event), biomass, age, growth and mortality (`summaryBGM\*` event)
+-   Plots of maps (`plotMaps` event) and averages (`plotAvgs` and `plotSummaryBySpecies` events)
+-   Save (`save`)
 
 ## Module outputs
 
@@ -1165,7 +1165,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
 
 ### No disturbances
 
-*Biomass_core* itself does not simulate disturbances, or their effect on vegetation (*i.e.* post-disturbance mortality and regeneration). The general flow of *Biomass_core* processes is:
+*Biomass_core* itself does not simulate disturbances, or their effect on vegetation (*i.e.*, post-disturbance mortality and regeneration). The general flow of *Biomass_core* processes is:
 
 1.  Preparation of necessary objects for the simulation -- either by accessory data prep. modules, or *Biomass_core* itself (using LANDIS-II test parameters and dummy data for stand age, biomass and land cover and ecological zoning)
 2.  Seed dispersal -- see @SchellerDomingo2012 for details
@@ -1184,7 +1184,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
 
 ### With disturbances
 
-Note that should a post-disturbance regeneration module be used, regeneration will occur after the disturbance, but *before* dispersal and background vegetation growth and mortality. Hence, the disturbance should take place either at the very beginning or at the very end of each simulation time step. The general flow of *Biomass_core* processes when disturbances are included (by linking other modules) is:
+Note that should a post-disturbance regeneration module be used (e.g., *Biomass_regeneration*), regeneration will occur after the disturbance, but *before* dispersal and background vegetation growth and mortality. Hence, the disturbance should take place either at the very beginning or at the very end of each simulation time step. The general flow of *Biomass_core* processes when disturbances are included (by linking other modules) is:
 
 1.  Preparation of necessary objects for the simulation -- either by accessory prep. data modules, or *Biomass_core* itself (using LANDIS-II test parameters and dummy data.)
 2.  Disturbances -- simulated by a disturbance module

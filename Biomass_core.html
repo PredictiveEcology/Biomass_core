@@ -1193,13 +1193,13 @@ Used only in seed dispersal. If numeric, it will be passed to <code>data.table::
 <h2>Events</h2>
 <p>Events are scheduled as follows:</p>
 <ul>
-<li>Module initiation</li>
-<li>Seed dispersal (every <code>successionTimestep</code>)</li>
-<li>Mortality and growth</li>
-<li>Reclassification of age cohorts (every <code>successionTimestep</code>)</li>
-<li>Summary tables of regeneration (summaryRegen), biomass, age, growth and mortality (summaryBGM*)</li>
-<li>Plots of maps (plotMaps) and averages (plotAvgs)</li>
-<li>Save</li>
+<li>Module initiation (<code>init</code> event)</li>
+<li>Seed dispersal (every <code>successionTimestep</code>; <code>Dispersal</code> event)</li>
+<li>Mortality and growth (<code>mortalityAndGrowth</code> event)</li>
+<li>Reclassification of age cohorts (every <code>successionTimestep</code>; <code>cohortAgeReclassification</code> event)</li>
+<li>Summary tables of regeneration (<code>summaryRegen</code> event), biomass, age, growth and mortality (<code>summaryBGM\*</code> event)</li>
+<li>Plots of maps (<code>plotMaps</code> event) and averages (<code>plotAvgs</code> and <code>plotSummaryBySpecies</code> events)</li>
+<li>Save (<code>save</code>)</li>
 </ul>
 </div>
 <div id="module-outputs" class="section level2">
@@ -2605,7 +2605,7 @@ Used only in seed dispersal. If numeric, it will be passed to <code>data.table::
 <h2>Simulation flow</h2>
 <div id="no-disturbances" class="section level3">
 <h3>No disturbances</h3>
-<p><em>Biomass_core</em> itself does not simulate disturbances, or their effect on vegetation (<em>i.e.</em> post-disturbance mortality and regeneration). The general flow of <em>Biomass_core</em> processes is:</p>
+<p><em>Biomass_core</em> itself does not simulate disturbances, or their effect on vegetation (<em>i.e.</em>, post-disturbance mortality and regeneration). The general flow of <em>Biomass_core</em> processes is:</p>
 <ol style="list-style-type: decimal">
 <li>Preparation of necessary objects for the simulation – either by accessory data prep. modules, or <em>Biomass_core</em> itself (using LANDIS-II test parameters and dummy data for stand age, biomass and land cover and ecological zoning)</li>
 <li>Seed dispersal – see <span class="citation"><a href="#ref-SchellerDomingo2012" role="doc-biblioref">Scheller &amp; Domingo</a> (<a href="#ref-SchellerDomingo2012" role="doc-biblioref">2012</a>)</span> for details</li>
@@ -2631,7 +2631,7 @@ Used only in seed dispersal. If numeric, it will be passed to <code>data.table::
 </div>
 <div id="with-disturbances" class="section level3">
 <h3>With disturbances</h3>
-<p>Note that should a post-disturbance regeneration module be used, regeneration will occur after the disturbance, but <em>before</em> dispersal and background vegetation growth and mortality. Hence, the disturbance should take place either at the very beginning or at the very end of each simulation time step. The general flow of <em>Biomass_core</em> processes when disturbances are included (by linking other modules) is:</p>
+<p>Note that should a post-disturbance regeneration module be used (e.g., <em>Biomass_regeneration</em>), regeneration will occur after the disturbance, but <em>before</em> dispersal and background vegetation growth and mortality. Hence, the disturbance should take place either at the very beginning or at the very end of each simulation time step. The general flow of <em>Biomass_core</em> processes when disturbances are included (by linking other modules) is:</p>
 <ol style="list-style-type: decimal">
 <li>Preparation of necessary objects for the simulation – either by accessory prep. data modules, or <em>Biomass_core</em> itself (using LANDIS-II test parameters and dummy data.)</li>
 <li>Disturbances – simulated by a disturbance module</li>
