@@ -10,6 +10,9 @@
 *.R.save
 *.swp
 
+Biomass_core_cache/
 cache/
+libs/
 
 CHECKSUMS.txt
+
