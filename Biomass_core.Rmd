@@ -434,6 +434,10 @@ mySim <- simInitAndSpades(times = times,
                           debug = TRUE)
 ```
 
+```{r figBiomassCoreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (right), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (left)."}
+knitr::include_graphics(c("figures/Biomass_coreOutPlots1.png", "figures/Biomass_coreOutPlots2.png"))
+```
+
 # Appendix
 
 ## Tables
