@@ -683,22 +683,26 @@ knitr::include_graphics(c("figures/Biomass_coreOutPlots1.png", "figures/Biomass_
 knitr::include_graphics("figures/figLBSEtest1.png")
 ```
 
-<br/><br/> 
+<br/><br/>
+
 ```{r figLBSEtest2, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Differences in the biomasses assigned to new cohorts, summed for each species across pixels, when using two different input species orders for the same community and when the succession time step is 1. These simulations demonstrate how the different summation of total cohort biomass for a succession time step of 1 and the lack of explicit species ordering affect simulation results when changing the species order in the input file (see Table \\@ref(tab:tableLBSEtest2)). Here, initial cohort ages were also set to 1. We show the initial total biomass attributed to each species at the end of year 1."}
 knitr::include_graphics("figures/figLBSEtest2.png")
 ```
 
-<br/><br/> 
+<br/><br/>
+
 ```{r figLBSEtest3, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Hashing design for _Biomass_core_. In the re-coded _Biomass_core_, the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key."}
 knitr::include_graphics("figures/figLBSEtest3.png")
 ```
 
-<br/><br/> 
+<br/><br/>
+
 ```{r figLBSEtest4, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and _Biomass_core_ were calculated as $\\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$"}
 knitr::include_graphics("figures/figLBSEtest4.png")
 ```
 
-<br/><br/> 
+<br/><br/>
+
 ```{r figLBSEtest5, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Simulation efficiencies of LBSE and _Biomass_core_ with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to _Biomass_core_ running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels."}
 knitr::include_graphics("figures/figLBSEtest5.png")
 ```
