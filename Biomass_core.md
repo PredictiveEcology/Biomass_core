@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-subtitle: "v.1.3.3"
+subtitle: "v.1.3.9"
 author: "Yong Luo <yluo1@lakeheadu.ca> [aut], Eliot J B McIntire <eliot.mcintire@canada.ca> [aut, cre], Jean Marchal <jean.d.marchal@gmail.com> [ctb], Alex M. Chubaty <achubaty@for-cast.ca> [ctb], Ceres Barros <cbarros@mail.ubc.ca> [ctb]"
 date: "Last updated: 2022-02-18"
 output:
@@ -101,7 +101,7 @@ Table \@ref(tab:moduleInputs) shows a full list of input objects that *Biomass_c
   <tr>
    <td style="text-align:left;"> pixelGroupMap </td>
    <td style="text-align:left;"> RasterLayer </td>
-   <td style="text-align:left;"> initial community map that has mapcodes match initial community table </td>
+   <td style="text-align:left;"> DESCRIPTION_NEEDED </td>
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
@@ -200,7 +200,7 @@ Besides the above mentioned inputs, *Biomass_core* uses several other parameters
    <td style="text-align:left;"> end </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: 'start'- as before vegetation succession events, i.e. before dispersal, 'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'), 'postGM' - after growth and mortality, 'postAging' - after aging, 'end' - at the end of vegetation succesion events, before plotting and saving. The 'end' option is always active, being also the default option. </td>
+   <td style="text-align:left;"> A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: 'start'- as before vegetation succession events, i.e. before dispersal, 'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'), 'postGM' - after growth and mortality, 'postAging' - after aging, 'end' - at the end of vegetation succesion events, before plotting and saving. The 'end' option is always active, being also the default option. If NULL, then will skip all summaryBGM related events </td>
   </tr>
   <tr>
    <td style="text-align:left;"> calibrate </td>
@@ -265,6 +265,14 @@ Besides the above mentioned inputs, *Biomass_core* uses several other parameters
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Initial time for the growth event to occur </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> initialB </td>
+   <td style="text-align:left;"> numeric </td>
+   <td style="text-align:left;"> 10 </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> initial biomass values of new age-1 cohorts </td>
   </tr>
   <tr>
    <td style="text-align:left;"> initialBiomassSource </td>
@@ -336,7 +344,7 @@ Besides the above mentioned inputs, *Biomass_core* uses several other parameters
    <td style="text-align:left;"> 10 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. </td>
+   <td style="text-align:left;"> defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions </td>
   </tr>
   <tr>
    <td style="text-align:left;"> vegLeadingProportion </td>
@@ -724,7 +732,7 @@ All of *Biomass_core*'s input objects have (theoretical) defaults that are produ
   <tr>
    <td style="text-align:left;"> pixelGroupMap </td>
    <td style="text-align:left;"> RasterLayer </td>
-   <td style="text-align:left;"> initial community map that has mapcodes match initial community table </td>
+   <td style="text-align:left;"> DESCRIPTION_NEEDED </td>
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
@@ -897,7 +905,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
    <td style="text-align:left;"> end </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: 'start'- as before vegetation succession events, i.e. before dispersal, 'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'), 'postGM' - after growth and mortality, 'postAging' - after aging, 'end' - at the end of vegetation succesion events, before plotting and saving. The 'end' option is always active, being also the default option. </td>
+   <td style="text-align:left;"> A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: 'start'- as before vegetation succession events, i.e. before dispersal, 'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'), 'postGM' - after growth and mortality, 'postAging' - after aging, 'end' - at the end of vegetation succesion events, before plotting and saving. The 'end' option is always active, being also the default option. If NULL, then will skip all summaryBGM related events </td>
   </tr>
   <tr>
    <td style="text-align:left;"> calibrate </td>
@@ -962,6 +970,14 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Initial time for the growth event to occur </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> initialB </td>
+   <td style="text-align:left;"> numeric </td>
+   <td style="text-align:left;"> 10 </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> initial biomass values of new age-1 cohorts </td>
   </tr>
   <tr>
    <td style="text-align:left;"> initialBiomassSource </td>
@@ -1033,7 +1049,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
    <td style="text-align:left;"> 10 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. </td>
+   <td style="text-align:left;"> defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions </td>
   </tr>
   <tr>
    <td style="text-align:left;"> vegLeadingProportion </td>
@@ -1222,7 +1238,7 @@ setPaths(inputPath = file.path(tempDir, "inputs"),
          modulePath = spadesModulesDirectory, 
          outputPath = file.path(tempDir, "outputs"))
 
-times <- list(start = 0, end = 10)
+times <- list(start = 0, end = 30)
 
 studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
 
@@ -1240,7 +1256,7 @@ modules <- as.list(moduleName)
 objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppColorVect)
 paths <- getPaths()
 
-successionTimestep <- 20L
+successionTimestep <- 10L
 
 ## keep default values for most parameters 
 ## (omitted from this list)
@@ -1277,6 +1293,11 @@ mySim <- simInitAndSpades(times = times,
                           outputs = outputs,
                           debug = TRUE)
 ```
+
+<div class="figure">
+<img src="figures/Biomass_coreOutPlots1.png" alt="_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (right), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (left)." width="479" /><img src="figures/Biomass_coreOutPlots2.png" alt="_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (right), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (left)." width="305" />
+<p class="caption">(\#fig:figBiomassCoreOutPlots)_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (right), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (left).</p>
+</div>
 
 # Appendix
 
@@ -1524,25 +1545,29 @@ mySim <- simInitAndSpades(times = times,
 <p class="caption">(\#fig:figLBSEtest1)Differences in total landscape aboveground biomass when using two different input species orders for the same community. These simulations demonstrate how the sequential calculation of the competition index, combined with a lack of explicit species ordering affect the overall landscape aboveground biomass in time when using different input species orders (see Table \@ref(tab:tableLBSEtest1)). In order to prevent differences introduced by cohort recruitment, species’ ages at sexual maturity were changed to the species’ longevity values, and the simulation ran for 75 years to prevent any cohorts from reaching sexual maturity. The bottom panel shows the difference between the two simulations in percentage, calculated as $\frac{Biomass_{order2} - Biomass_{order1}}{Biomass_{order2}} * 100$</p>
 </div>
 
-<br/><br/> 
+<br/><br/>
+
 <div class="figure" style="text-align: center">
 <img src="figures/figLBSEtest2.png" alt="Differences in the biomasses assigned to new cohorts, summed for each species across pixels, when using two different input species orders for the same community and when the succession time step is 1. These simulations demonstrate how the different summation of total cohort biomass for a succession time step of 1 and the lack of explicit species ordering affect simulation results when changing the species order in the input file (see Table \@ref(tab:tableLBSEtest2)). Here, initial cohort ages were also set to 1. We show the initial total biomass attributed to each species at the end of year 1." width="60%" />
 <p class="caption">(\#fig:figLBSEtest2)Differences in the biomasses assigned to new cohorts, summed for each species across pixels, when using two different input species orders for the same community and when the succession time step is 1. These simulations demonstrate how the different summation of total cohort biomass for a succession time step of 1 and the lack of explicit species ordering affect simulation results when changing the species order in the input file (see Table \@ref(tab:tableLBSEtest2)). Here, initial cohort ages were also set to 1. We show the initial total biomass attributed to each species at the end of year 1.</p>
 </div>
 
-<br/><br/> 
+<br/><br/>
+
 <div class="figure" style="text-align: center">
 <img src="figures/figLBSEtest3.png" alt="Hashing design for _Biomass_core_. In the re-coded _Biomass_core_, the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key." width="60%" />
 <p class="caption">(\#fig:figLBSEtest3)Hashing design for _Biomass_core_. In the re-coded _Biomass_core_, the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key.</p>
 </div>
 
-<br/><br/> 
+<br/><br/>
+
 <div class="figure" style="text-align: center">
 <img src="figures/figLBSEtest4.png" alt="Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and _Biomass_core_ were calculated as $\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$" width="60%" />
 <p class="caption">(\#fig:figLBSEtest4)Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and _Biomass_core_ were calculated as $\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$</p>
 </div>
 
-<br/><br/> 
+<br/><br/>
+
 <div class="figure" style="text-align: center">
 <img src="figures/figLBSEtest5.png" alt="Simulation efficiencies of LBSE and _Biomass_core_ with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to _Biomass_core_ running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels." width="60%" />
 <p class="caption">(\#fig:figLBSEtest5)Simulation efficiencies of LBSE and _Biomass_core_ with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to _Biomass_core_ running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels.</p>
