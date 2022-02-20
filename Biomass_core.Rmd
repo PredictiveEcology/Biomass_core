@@ -379,7 +379,7 @@ setPaths(inputPath = file.path(tempDir, "inputs"),
          modulePath = spadesModulesDirectory, 
          outputPath = file.path(tempDir, "outputs"))
 
-times <- list(start = 0, end = 10)
+times <- list(start = 0, end = 30)
 
 studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
 
@@ -397,7 +397,7 @@ modules <- as.list(moduleName)
 objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppColorVect)
 paths <- getPaths()
 
-successionTimestep <- 20L
+successionTimestep <- 10L
 
 ## keep default values for most parameters 
 ## (omitted from this list)
