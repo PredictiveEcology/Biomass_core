@@ -20,6 +20,7 @@ always_allow_html: true
 ---
 
 ```{r setup, include=FALSE}
+## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, warning = FALSE, 
                       cache = 2, cache.rebuild = FALSE, results = "hold", dpi = 300)
 
@@ -263,7 +264,7 @@ Of the inputs in Table \@ref(tab:moduleInputs2), the following are particularly 
 
         -   *aNPPAct* -- integer. Actual aboveground net primary productivity of the current year in g/m^2^. Hence *B* is the result of the previous year's *B* minus *mortality* plus *aNPPAct*. See "1.1.3 Cohort growth and ageing" section of @SchellerMiranda2015.
 
-    -   `pixelGroupMap` -- a raster layer with *pixelGroup* IDs per pixel. Pixels are always grouped based on identical *ecoregionGroup*, *speciesCode*, *age* and *B* composition, even the user supplies other initial groupings (e.g., this is possible in the *Biomass_borealDataPrep* data module).
+    -   `pixelGroupMap` -- a raster layer with *pixelGroup* IDs per pixel. Pixels are always grouped based on identical *ecoregionGroup*, *speciesCode*, *age* and *B* composition, even if the user supplies other initial groupings (e.g., this is possible in the *Biomass_borealDataPrep* data module).
 
 ### Parameters
 

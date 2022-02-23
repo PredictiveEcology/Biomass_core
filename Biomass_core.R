@@ -38,7 +38,7 @@ defineModule(sim, list(
                                  "The 'end' option is always active, being also the default option.",
                                  "If NULL, then will skip all summaryBGM related events")),
     defineParameter("calibrate", "logical", FALSE,
-                    desc = "Do calibration? Defaults to FALSE"),
+                    desc = "Do calibration? Defaults to `FALSE`"),
     defineParameter("cohortDefinitionCols", "character", c("pixelGroup", "speciesCode", "age"), NA, NA,
                     desc = paste("`cohortData` columns that determine what constitutes a cohort",
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
@@ -73,13 +73,13 @@ defineModule(sim, list(
                           "If 'cohortData', it will be taken from the `cohortData` object, i.e., it is already correct, by cohort.",
                           "If 'biomassMap', it will be taken from `sim$biomassMap`,",
                           "divided across species using `sim$speciesLayers` percent cover values",
-                          "`spinUp` uses `sim$standAgeMap` as the driver, so biomass",
-                          "is an output. That means it will be unlikely to match any input information",
-                          "about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied.",
-                          "Only the 'cohortData' option is currently active.")),
+                          "'spinUp' uses `sim$standAgeMap` as the driver, so biomass",
+                          "is an **output**. That means it will be unlikely to match any input information",
+                          "about biomass, unless this is set to 'biomassMap', and a `sim$biomassMap` is supplied.",
+                          "**Only the 'cohortData' option is currently active.**")),
     defineParameter("keepClimateCols", "logical", FALSE, NA, NA, "include growth and mortality predictions in `cohortData`?"),
     defineParameter("minCohortBiomass", "numeric", 0, NA, NA,
-                    desc = "cohorts with biomass below this threshold are removed. Not a LANDIS-II BSE param."),
+                    desc = "cohorts with biomass below this threshold (in g/m^2) are removed. Not a LANDIS-II BSE parameter."),
     defineParameter("mixedType", "numeric", 2,
                     desc = paste("How to define mixed stands: 1 for any species admixture;",
                                  "2 for deciduous > conifer. See `?LandR::vegTypeMapGenerator`.")),
@@ -106,28 +106,28 @@ defineModule(sim, list(
                                  "To plotting off completely use `P(sim)$.plots`.")),
     defineParameter(".plotInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the plotting time step.",
-                                 "If NA, the default, .plotInterval is set to successionTimestep.")),
+                                 "If `NA`, the default, .plotInterval is set to successionTimestep.")),
     defineParameter(".plots", "character", default = "object",
                     desc = paste("Passed to `types` in `Plots` (see `?Plots`). There are a few plots that are made within this module, if set.",
                                  "Note that plots (or their data) saving will ONLY occur at `end(sim)`.",
-                                 "If  NA plotting is off completely (this includes saving).")),
+                                 "If `NA`, plotting is turned off completely (this includes plot saving).")),
     defineParameter(".plotMaps", "logical", TRUE, NA, NA,
-                    desc = "Controls whether maps should be plotted or not. Set to FALSE if `P(sim)$.plots == NA`"),
+                    desc = "Controls whether maps should be plotted or not. Set to `FALSE` if `P(sim)$.plots == NA`"),
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first save event should occur.",
                                  "Set to NA if no saving is desired. If not NA, then saving will occur at",
                                  "`P(sim)$.saveInitialTime` with a frequency equal to `P(sim)$.saveInterval`")),
     defineParameter(".saveInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the saving time step.",
-                                 "If NA, the default, .saveInterval is set to `P(sim)$successionTimestep`.")),
+                                 "If `NA`, the default, .saveInterval is set to `P(sim)$successionTimestep`.")),
     defineParameter(".studyAreaName", "character", NA, NA, NA,
-                    "Human-readable name for the study area used. If NA, a hash of `studyArea` will be used."),
+                    "Human-readable name for the study area used. If `NA`, a hash of `studyArea` will be used."),
     defineParameter(".useCache", "character", c(".inputObjects", "init"), NA, NA,
                     desc = "Internal. Can be names of events or the whole module name; these will be cached by `SpaDES`"),
     defineParameter(".useParallel", "ANY", 2, NA, NA,
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to `data.table::setDTthreads` and should be <= 2;",
-                                 "If TRUE, it will be passed to `parallel::makeCluster`;",
+                                 "If `TRUE`, it will be passed to `parallel::makeCluster`;",
                                  "and if a cluster object, it will be passed to `parallel::parClusterApplyB`."))
   ),
   inputObjects = bindrows(
@@ -161,7 +161,10 @@ defineModule(sim, list(
     expectsInput("minRelativeB", "data.frame",
                  desc = "table defining the relative biomass cut points to classify stand shadeness"),
     expectsInput("pixelGroupMap", "RasterLayer",
-                 desc = "DESCRIPTION_NEEDED"), ## TODO
+                 desc = paste("a raster layer with `pixelGroup` IDs per pixel. Pixels are grouped" ,
+                              "based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition,",
+                              "even if the user supplies other initial groupings (e.g., via the `Biomass_borealDataPrep`",
+                              "module.")),
     expectsInput("rasterToMatch", "RasterLayer",
                  desc = "a raster of the `studyArea` in the same resolution and projection as `biomassMap`"),
     expectsInput("species", "data.table",
@@ -198,7 +201,7 @@ defineModule(sim, list(
     expectsInput("treedFirePixelTableSinceLastDisp", "data.table",
                  desc = paste("3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`.",
                               "Each row represents a forested pixel that was burned up to and including this year,",
-                              "since last dispersal event, with its corresponding pixelGroup and time it occurred"))
+                              "since last dispersal event, with its corresponding `pixelGroup` and time it occurred"))
     # expectsInput("spinUpCache", "logical", ""),
     # expectsInput("speciesEstablishmentProbMap", "RasterBrick", "Species establishment probability as a RasterBrick, one layer for each species")
   ),
@@ -208,17 +211,17 @@ defineModule(sim, list(
     createsOutput("activePixelIndexReporting", "integer",
                   desc = "internal use. Keeps track of which pixels are active in the reporting study area"),
     createsOutput("ANPPMap", "RasterLayer",
-                  desc = "ANPP map at each succession time step"),
+                  desc = "ANPP map at each succession time step (in g /m^2)"),
     createsOutput("cohortData", "data.table",
                   desc = paste("`data.table` with cohort-level information on age, biomass, aboveground primary",
-                               "productivity (year's biomass gain) and mortality (year's biomass loss), by pixelGroup",
+                               "productivity (year's biomass gain) and mortality (year's biomass loss), by `pixelGroup`",
                                "and ecolocation (i.e., `ecoregionGroup`). Contains at least the following columns:",
                                "`pixelGroup` (integer), `ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in g/m^2),",
                                "`age` (integer in years), `mortality` (integer in g/m^2), `aNPPAct` (integer in g/m^2).",
                                "May have other columns depending on additional simulated processes (i.e., cliamte sensitivity;",
                                "see, e.g., `P(sim)$keepClimateCols`).")),
     createsOutput("ecoregionMap", "RasterLayer",
-                  desc = paste("ecoregion map that has mapcodes match `ecoregion` table and `speciesEcoregion` table.",
+                  desc = paste("map with mapcodes match `ecoregion` table and `speciesEcoregion` table.",
                                "Defaults to a dummy map matching rasterToMatch with two regions")),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
@@ -231,20 +234,20 @@ defineModule(sim, list(
     createsOutput("lastReg", "numeric",
                   desc = "an internal counter keeping track of when the last regeneration event occurred"),
     createsOutput("minRelativeB", "data.frame",
-                  desc = "define the cut points to classify stand shade"),
+                  desc = "define the *relative biomass* cut points to classify stand shade"),
     createsOutput("mortalityMap", "RasterLayer",
-                  desc = "Mortality map at each succession time step"),
+                  desc = "map of biomass lost (in g/m^2) at each succession time step"),
     createsOutput("pixelGroupMap", "RasterLayer",
                   desc = "updated community map at each succession time step"),
     createsOutput("regenerationOutput", "data.table",
                   desc = paste("If `P(sim)$calibrate == TRUE`, an summary of seed dispersal and germination",
                                "success (i.e., number of pixels where seeds successfully germinated) per species and year.")),
     createsOutput("reproductionMap", "RasterLayer",
-                  desc = "Regeneration map at each succession time step"),
+                  desc = "Regeneration map (biomass gains in g/m^2) at each succession time step"),
     createsOutput("simulatedBiomassMap", "RasterLayer",
                   desc = "Biomass map at each succession time step (in g/m^2)"),
     createsOutput("simulationOutput", "data.table",
-                  desc = "contains simulation results by ecoregion (main output)"),
+                  desc = "contains simulation results by `ecoregionGroup` (main output)"),
     createsOutput("simulationTreeOutput", "data.table",
                   desc = "Summary of several characteristics about the stands, derived from `cohortData`"),
     createsOutput("species", "data.table",
@@ -253,24 +256,25 @@ defineModule(sim, list(
     createsOutput("speciesEcoregion", "data.table",
                   desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
     createsOutput("speciesLayers", "RasterStack",
-                  desc = "biomass percentage raster layers by species in Canada species map"),
+                  desc = paste("species percent cover raster layers, based on input `speciesLayers` object.",
+                               "Not changed by this module.")),
     # createsOutput("spinUpCache", "logical", desc = ""),
-    createsOutput("spinupOutput", "data.table", desc = "Spin-up output"),
+    createsOutput("spinupOutput", "data.table", desc = "Spin-up output. Currently deactivated."),
     createsOutput("summaryBySpecies", "data.table",
                   desc = paste("The total species biomass (in g/m^2 as in `cohortData`), average age and aNPP (in",
-                  "g/m^2 as in `cohortData`),  across the landscape (used for plotting and reporting).")),
+                               "g/m^2 as in `cohortData`),  across the landscape (used for plotting and reporting).")),
     createsOutput("summaryBySpecies1", "data.table",
                   desc = "No. pixels of each leading vegetation type (used for plotting and reporting)."),
     createsOutput("summaryLandscape", "data.table",
                   desc = paste("The averages of total biomass (in *ton/ha*, not g/m^2 like in `cohortData`), age",
-                  "and aNPP (also in ton/ha) across the landscape (used for plotting and reporting).")),
+                               "and aNPP (also in ton/ha) across the landscape (used for plotting and reporting).")),
     createsOutput("treedFirePixelTableSinceLastDisp", "data.table",
                   desc = paste("3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`.",
                                "Each row represents a forested pixel that was burned up to and including this year,",
-                               "since last dispersal event, with its corresponding pixelGroup and time it occurred")),
+                               "since last dispersal event, with its corresponding `pixelGroup` and time it occurred")),
     createsOutput("vegTypeMap", "RasterLayer",
-                  desc = paste("Map of leading species in each pixel, colored according to `sim$sppColorVect`.
-                  Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)`$mixedType."))
+                  desc = paste("Map of leading species in each pixel, colored according to `sim$sppColorVect`.",
+                               "Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)`$mixedType."))
   )
 ))
 
@@ -1220,12 +1224,12 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         if (!P(sim)$keepClimateCols) {
           set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
         }
-    }
+      }
 
-    set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
-    if (P(sim)$calibrate) {
-      set(subCohortData, NULL, "deltaB", asInteger(subCohortData$aNPPAct - subCohortData$mortality))
-      set(subCohortData, NULL, "B", subCohortData$B + subCohortData$deltaB)
+      set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
+      if (P(sim)$calibrate) {
+        set(subCohortData, NULL, "deltaB", asInteger(subCohortData$aNPPAct - subCohortData$mortality))
+        set(subCohortData, NULL, "B", subCohortData$B + subCohortData$deltaB)
         tempcohortdata <- subCohortData[,.(pixelGroup, Year = time(sim), siteBiomass = sumB, speciesCode,
                                            Age = age, iniBiomass = B - deltaB, ANPP = round(aNPPAct, 1),
                                            Mortality = round(mortality,1), deltaB, finBiomass = B)]
