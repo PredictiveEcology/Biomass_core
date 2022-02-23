@@ -44,129 +44,89 @@ Ideally, however, the user should supply realistic versions of these data and th
 
 Table \@ref(tab:moduleInputs) shows a full list of input objects that *Biomass_core* expects. Of these, the only input that **must** be provided (*i.e.*, *Biomass_core* does not have a default for) is `studyArea`.
 
-::: fullwidth
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>(\#tab:moduleInputs)List of _Biomass_core_  input objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
-   <th style="text-align:left;"> objectClass </th>
    <th style="text-align:left;"> desc </th>
-   <th style="text-align:left;"> sourceURL </th>
   </tr>
  </thead>
 <tbody>
   <tr>
    <td style="text-align:left;"> biomassMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> total biomass raster layer in study area (in g/m2), filtered for pixels covered by cohortData. Only used if `P(sim)$initialBiomassSource == 'biomassMap'`, which is currently deactivated. </td>
-   <td style="text-align:left;">  </td>
   </tr>
   <tr>
    <td style="text-align:left;"> cceArgs </td>
-   <td style="text-align:left;"> list </td>
    <td style="text-align:left;"> a list of quoted objects used by the `growthAndMortalityDriver` `calculateClimateEffect` function </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> cohortData </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> Columns: `B`, `pixelGroup`, `speciesCode`, Indicating several features about ages and current vegetation of stand </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ecoregion </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> ecoregion look up table </td>
-   <td style="text-align:left;"> https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ecoregionMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> ecoregion map that has mapcodes match ecoregion table and `speciesEcoregion` table. Defaults to a dummy map matching `rasterToMatch` with two regions </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> lastReg </td>
-   <td style="text-align:left;"> numeric </td>
    <td style="text-align:left;"> an internal counter keeping track of when the last regeneration event occurred </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> minRelativeB </td>
-   <td style="text-align:left;"> data.frame </td>
    <td style="text-align:left;"> table defining the cut points to classify stand shadeness </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> pixelGroupMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> DESCRIPTION_NEEDED </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> rasterToMatch </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> a raster of the `studyArea` in the same resolution and projection as biomassMap </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> species </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> a table that has species traits such as longevity, shade tolerance, etc. Default is partially based on Dominic Cir and Yan's project </td>
-   <td style="text-align:left;"> https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv </td>
   </tr>
   <tr>
    <td style="text-align:left;"> speciesEcoregion </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time. Defaults to a dummy table based on dummy data os biomass, age, ecoregion and land cover class </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> speciesLayers </td>
-   <td style="text-align:left;"> RasterStack </td>
    <td style="text-align:left;"> cover percentage raster layers by species in Canada species map. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived species cover maps from 2001 using a cover threshold of 10 - see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata </td>
-   <td style="text-align:left;"> http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/ </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sppColorVect </td>
-   <td style="text-align:left;"> character </td>
    <td style="text-align:left;"> A named vector of colors to use for plotting. The names must be in `sim$speciesEquivalency[[sim$sppEquivCol]]`, and should also contain a color for 'Mixed' </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sppEquiv </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> table of species equivalencies. See `LandR::sppEquivalencies_CA`. </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> studyArea </td>
-   <td style="text-align:left;"> SpatialPolygonsDataFrame </td>
    <td style="text-align:left;"> Polygon to use as the study area. Must be provided by the user </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> studyAreaReporting </td>
-   <td style="text-align:left;"> SpatialPolygonsDataFrame </td>
    <td style="text-align:left;"> multipolygon (typically smaller/unbuffered than studyArea) to use for plotting/reporting. Defaults to `studyArea`. </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sufficientLight </td>
-   <td style="text-align:left;"> data.frame </td>
    <td style="text-align:left;"> table defining how the species with different shade tolerance respond to stand shade. Default is based on LANDIS-II Biomass Succession v6.2 parameters </td>
-   <td style="text-align:left;"> https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt </td>
   </tr>
   <tr>
    <td style="text-align:left;"> treedFirePixelTableSinceLastDisp </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> 3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding pixelGroup and time it occurred </td>
-   <td style="text-align:left;"> NA </td>
   </tr>
 </tbody>
 </table>
-:::
 
 Of the above, we draw particular attention to the the following inputs, which are crucial to run *Biomass_core* on a realistic setting (see [Input objects] section of the manual for further detail):
 
@@ -180,263 +140,137 @@ For the beginner user, we suggest running *Biomass_core* without supplying any i
 
 Besides the above mentioned inputs, *Biomass_core* uses several other parameters, which can be changed by the user if need be (Table \@ref(tab:moduleParams)). Please see the [Parameters] section of the manual for a list of the most useful parameters.
 
-::: fullwidth
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>(\#tab:moduleParams)List of _Biomass_core_ parameters and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> paramName </th>
-   <th style="text-align:left;"> paramClass </th>
-   <th style="text-align:left;"> default </th>
-   <th style="text-align:left;"> min </th>
-   <th style="text-align:left;"> max </th>
    <th style="text-align:left;"> paramDesc </th>
   </tr>
  </thead>
 <tbody>
   <tr>
    <td style="text-align:left;"> calcSummaryBGM </td>
-   <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> end </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: 'start'- as before vegetation succession events, i.e. before dispersal, 'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'), 'postGM' - after growth and mortality, 'postAging' - after aging, 'end' - at the end of vegetation succesion events, before plotting and saving. The 'end' option is always active, being also the default option. If NULL, then will skip all summaryBGM related events </td>
   </tr>
   <tr>
    <td style="text-align:left;"> calibrate </td>
-   <td style="text-align:left;"> logical </td>
-   <td style="text-align:left;"> FALSE </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Do calibration? Defaults to FALSE </td>
   </tr>
   <tr>
    <td style="text-align:left;"> cohortDefinitionCols </td>
-   <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> pixelGro.... </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> `cohortData` columns that determine what constitutes a cohort This parameter should only be modified if additional modules are adding columns to cohortData </td>
   </tr>
   <tr>
    <td style="text-align:left;"> cutpoint </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 1e+10 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks </td>
   </tr>
   <tr>
    <td style="text-align:left;"> gmcsGrowthLimits </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 66.66666.... </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> if using `LandR.CS` for climate-sensitive growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small denominators as well as predictions outside the data range used to generate the model </td>
   </tr>
   <tr>
    <td style="text-align:left;"> gmcsMortLimits </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 66.66666.... </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> if using `LandR.CS` for climate-sensitive growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small denominators as well as predictions outside the data range used to generate the model </td>
   </tr>
   <tr>
    <td style="text-align:left;"> gmcsMinAge </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 21 </td>
-   <td style="text-align:left;"> 0 </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> if using `LandR.CS` for climate-sensitive growth and mortality, the minimum age for which to predict climate-sensitive growth and mortality. Young stands (&lt; 30) are poorly represented by the PSP data used to parameterize the model. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> growthAndMortalityDrivers </td>
-   <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> LandR </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> package name where the following functions can be found: `calculateClimateEffect`, `assignClimateEffect` (see `LandR.CS` for climate sensitivity equivalent functions, or leave default if this is not desired) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> growthInitialTime </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> start(sim) </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Initial time for the growth event to occur </td>
   </tr>
   <tr>
    <td style="text-align:left;"> initialB </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 10 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> initial biomass values of new age-1 cohorts </td>
   </tr>
   <tr>
    <td style="text-align:left;"> initialBiomassSource </td>
-   <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> cohortData </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. If 'spinUp', it will derive biomass by running spinup derived from Landis-II. If 'cohortData', it will be taken from the `cohortData` object, i.e., it is already correct, by cohort. If 'biomassMap', it will be taken from `sim$biomassMap`, divided across species using `sim$speciesLayers` percent cover values `spinUp` uses `sim$standAgeMap` as the driver, so biomass is an output. That means it will be unlikely to match any input information about biomass, unless this is set to TRUE, and a `sim$rawBiomassMap` is supplied. Only the 'cohortData' option is currently active. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> keepClimateCols </td>
-   <td style="text-align:left;"> logical </td>
-   <td style="text-align:left;"> FALSE </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> include growth and mortality predictions in `cohortData`? </td>
   </tr>
   <tr>
    <td style="text-align:left;"> minCohortBiomass </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 0 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> cohorts with biomass below this threshold are removed. Not a LANDIS-II BSE param. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> mixedType </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 2 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> How to define mixed stands: 1 for any species admixture; 2 for deciduous &gt; conifer. See `?LandR::vegTypeMapGenerator`. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> plotOverstory </td>
-   <td style="text-align:left;"> logical </td>
-   <td style="text-align:left;"> FALSE </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> swap max age plot with overstory biomass </td>
   </tr>
   <tr>
    <td style="text-align:left;"> seedingAlgorithm </td>
-   <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> wardDisp.... </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> choose which seeding algorithm will be used among 'noDispersal', 'universalDispersal', and 'wardDispersal' (default). See Scheller &amp; Miranda (2015) - Biomass Succession extension, v3.2.1 User Guide </td>
   </tr>
   <tr>
    <td style="text-align:left;"> spinupMortalityfraction </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 0.001 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> defines the mortality loss fraction in spin up-stage simulation. Only used if `P(sim)$initialBiomassSource == 'biomassMap'`, which is currently deactivated. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sppEquivCol </td>
-   <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> Boreal </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> The column in `sim$specieEquivalency` data.table to use as a naming convention </td>
   </tr>
   <tr>
    <td style="text-align:left;"> successionTimestep </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 10 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions </td>
   </tr>
   <tr>
    <td style="text-align:left;"> vegLeadingProportion </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 0.8 </td>
-   <td style="text-align:left;"> 0 </td>
-   <td style="text-align:left;"> 1 </td>
    <td style="text-align:left;"> a number that define whether a species is leading for a given pixel </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .maxMemory </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 5 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> maximum amount of memory (in GB) to use for dispersal calculations. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .plotInitialTime </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> start(sim) </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Vector of length = 1, describing the simulation time at which the first plot event should occur. To plotting off completely use `P(sim)$.plots`. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .plotInterval </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> defines the plotting time step. If NA, the default, .plotInterval is set to successionTimestep. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .plots </td>
-   <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> object </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Passed to `types` in `Plots` (see `?Plots`). There are a few plots that are made within this module, if set. Note that plots (or their data) saving will ONLY occur at `end(sim)`. If NA plotting is off completely (this includes saving). </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .plotMaps </td>
-   <td style="text-align:left;"> logical </td>
-   <td style="text-align:left;"> TRUE </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Controls whether maps should be plotted or not. Set to FALSE if `P(sim)$.plots == NA` </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .saveInitialTime </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Vector of length = 1, describing the simulation time at which the first save event should occur. Set to NA if no saving is desired. If not NA, then saving will occur at `P(sim)$.saveInitialTime` with a frequency equal to `P(sim)$.saveInterval` </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .saveInterval </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> defines the saving time step. If NA, the default, .saveInterval is set to `P(sim)$successionTimestep`. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .studyAreaName </td>
-   <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Human-readable name for the study area used. If NA, a hash of `studyArea` will be used. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .useCache </td>
-   <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> .inputOb.... </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Internal. Can be names of events or the whole module name; these will be cached by `SpaDES` </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .useParallel </td>
-   <td style="text-align:left;"> ANY </td>
-   <td style="text-align:left;"> 2 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Used only in seed dispersal. If numeric, it will be passed to `data.table::setDTthreads` and should be &lt;= 2; If TRUE, it will be passed to `parallel::makeCluster`; and if a cluster object, it will be passed to `parallel::parClusterApplyB`. </td>
   </tr>
 </tbody>
 </table>
-:::
 
 ## Events
 
@@ -458,150 +292,121 @@ The module produces the following outputs types. -- Plotting -- live and/or save
 
 All `simList` objects that are changed by *Biomass_core* (*i.e.*, the definition of a module output) are listed in Table \@ref(tab:moduleOutputs).
 
-::: fullwidth
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>(\#tab:moduleOutputs)List of _Biomass_core_ output objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
-   <th style="text-align:left;"> objectClass </th>
    <th style="text-align:left;"> desc </th>
   </tr>
  </thead>
 <tbody>
   <tr>
    <td style="text-align:left;"> activePixelIndex </td>
-   <td style="text-align:left;"> integer </td>
    <td style="text-align:left;"> internal use. Keeps track of which pixels are active </td>
   </tr>
   <tr>
    <td style="text-align:left;"> activePixelIndexReporting </td>
-   <td style="text-align:left;"> integer </td>
    <td style="text-align:left;"> internal use. Keeps track of which pixels are active in the reporting study area </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ANPPMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> ANPP map at each succession time step </td>
   </tr>
   <tr>
    <td style="text-align:left;"> cohortData </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> age cohort-biomass table hooked to pixel group map by pixelGroup at succession time step </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ecoregionMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table. Defaults to a dummy map matching rasterToMatch with two regions </td>
   </tr>
   <tr>
    <td style="text-align:left;"> inactivePixelIndex </td>
-   <td style="text-align:left;"> logical </td>
    <td style="text-align:left;"> internal use. Keeps track of which pixels are inactive </td>
   </tr>
   <tr>
    <td style="text-align:left;"> inactivePixelIndexReporting </td>
-   <td style="text-align:left;"> integer </td>
    <td style="text-align:left;"> internal use. Keeps track of which pixels are inactive in the reporting study area </td>
   </tr>
   <tr>
    <td style="text-align:left;"> lastFireYear </td>
-   <td style="text-align:left;"> numeric </td>
    <td style="text-align:left;"> Year of the most recent fire year </td>
   </tr>
   <tr>
    <td style="text-align:left;"> lastReg </td>
-   <td style="text-align:left;"> numeric </td>
    <td style="text-align:left;"> an internal counter keeping track of when the last regeneration event occurred </td>
   </tr>
   <tr>
    <td style="text-align:left;"> minRelativeB </td>
-   <td style="text-align:left;"> data.frame </td>
    <td style="text-align:left;"> define the cut points to classify stand shade </td>
   </tr>
   <tr>
    <td style="text-align:left;"> mortalityMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> Mortality map at each succession time step </td>
   </tr>
   <tr>
    <td style="text-align:left;"> pixelGroupMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> updated community map at each succession time step </td>
   </tr>
   <tr>
    <td style="text-align:left;"> regenerationOutput </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> If `P(sim)$calibrate == TRUE`, an summary of seed dispersal and germination success (i.e., number of pixels where seeds successfully germinated) per species and year. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> reproductionMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> Regeneration map at each succession time step </td>
   </tr>
   <tr>
    <td style="text-align:left;"> simulatedBiomassMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> Biomass map at each succession time step </td>
   </tr>
   <tr>
    <td style="text-align:left;"> simulationOutput </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> contains simulation results by ecoregion (main output) </td>
   </tr>
   <tr>
    <td style="text-align:left;"> simulationTreeOutput </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> Summary of several characteristics about the stands, derived from `cohortData` </td>
   </tr>
   <tr>
    <td style="text-align:left;"> species </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> a table that has species traits such as longevity, shade tolerance, etc. Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs </td>
   </tr>
   <tr>
    <td style="text-align:left;"> speciesEcoregion </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> define the maxANPP, maxB and SEP change with both ecoregion and simulation time </td>
   </tr>
   <tr>
    <td style="text-align:left;"> speciesLayers </td>
-   <td style="text-align:left;"> RasterStack </td>
    <td style="text-align:left;"> biomass percentage raster layers by species in Canada species map </td>
   </tr>
   <tr>
    <td style="text-align:left;"> spinupOutput </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> Spin-up output </td>
   </tr>
   <tr>
    <td style="text-align:left;"> summaryBySpecies </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> The total species biomass, average age and aNPP across the landscape (used for plotting and reporting). </td>
   </tr>
   <tr>
    <td style="text-align:left;"> summaryBySpecies1 </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> No. pixels of each leading vegetation type (used for plotting and reporting). </td>
   </tr>
   <tr>
    <td style="text-align:left;"> summaryLandscape </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> The averages of total biomass, age and aNPP across the landscape (used for plotting and reporting). </td>
   </tr>
   <tr>
    <td style="text-align:left;"> treedFirePixelTableSinceLastDisp </td>
-   <td style="text-align:left;"> data.table </td>
    <td style="text-align:left;"> 3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding pixelGroup and time it occurred </td>
   </tr>
   <tr>
    <td style="text-align:left;"> vegTypeMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
    <td style="text-align:left;"> Map of leading species in each pixel, colored according to `sim$sppColorVect` </td>
   </tr>
 </tbody>
 </table>
-:::
 
 ## Links to other modules
 
@@ -675,7 +480,6 @@ To be initialized, *Biomass_core* requires the following input objects and param
 
 All of *Biomass_core*'s input objects have (theoretical) defaults that are produced automatically by the module (when running the `.inputObjects` function during the `simInit` call, and in the `init` event during the `spades` call -- see `?SpaDES.core::events` and `SpaDES.core::simInit`). We suggest that new users run *Biomass_core* by itself supplying only a `studyArea` object. This will enable them to become familiar with all the input objects before attempting to supply their own, or combine *Biomass_core* with data modules.
 
-::: fullwidth
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>(\#tab:moduleInputs2)List of _Biomass_core_ input objects and their description.</caption>
  <thead>
@@ -797,7 +601,6 @@ All of *Biomass_core*'s input objects have (theoretical) defaults that are produ
   </tr>
 </tbody>
 </table>
-:::
 
 Of the inputs in Table \@ref(tab:moduleInputs2), the following are particularly important and deserve special attention:
 
@@ -885,7 +688,6 @@ Of the inputs in Table \@ref(tab:moduleInputs2), the following are particularly 
 
 Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note that a few of these parameters are only relevant when simulating climate effects of cohort growth and mortality, which require also loading the `LandR.CS` R package. Like with input objects, default values are supplied for all parameters and we suggest the user becomes familiarized with them before attempting any changes. We also note that the `"spin-up"` and `"biomassMap"` options for the `initialBiomassSource` are currently deactivated, since *Biomass_core* no longer generates initial cohort biomass conditions using a spin-up based on initial stand age like LANDIS-II (`"spin-up"`), nor does it attempt to fill initial cohort biomasses using `biomassMap` (`"biomassMap"`). A list of useful parameters and their description is shown in Table \@ref(tab:tableUsefulParams).
 
-::: fullwidth
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>(\#tab:moduleParams2)List of _Biomass_core_ parameters and their description.</caption>
  <thead>
@@ -1141,7 +943,6 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
   </tr>
 </tbody>
 </table>
-:::
 
 ::: fullwidth
 +------------------------+-------------------------------------------------------------------------------------------------+
