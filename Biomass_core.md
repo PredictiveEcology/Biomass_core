@@ -211,7 +211,7 @@ Besides the above mentioned inputs, *Biomass_core* uses several other parameters
   </tr>
   <tr>
    <td style="text-align:left;"> seedingAlgorithm </td>
-   <td style="text-align:left;"> choose which seeding algorithm will be used among 'noDispersal', 'universalDispersal', and 'wardDispersal' (default). See Scheller &amp; Miranda (2015) - Biomass Succession extension, v3.2.1 User Guide </td>
+   <td style="text-align:left;"> choose which seeding algorithm will be used among 'noSeeding' (no horizontal, nor vertical seeding - not in LANDIS-II BSE), 'noDispersal' (no horizontal seeding), 'universalDispersal' (seeds disperse to any pixel), and 'wardDispersal' (default; seeds disperse according to distance and dispersal traits). See Scheller &amp; Miranda (2015) - Biomass Succession extension, v3.2.1 User Guide </td>
   </tr>
   <tr>
    <td style="text-align:left;"> spinupMortalityfraction </td>
@@ -251,7 +251,7 @@ Besides the above mentioned inputs, *Biomass_core* uses several other parameters
   </tr>
   <tr>
    <td style="text-align:left;"> .saveInitialTime </td>
-   <td style="text-align:left;"> Vector of length = 1, describing the simulation time at which the first save event should occur. Set to NA if no saving is desired. If not NA, then saving will occur at `P(sim)$.saveInitialTime` with a frequency equal to `P(sim)$.saveInterval` </td>
+   <td style="text-align:left;"> Vector of length = 1, describing the simulation time at which the first save event should occur. Set to `NA` if no saving is desired. If not `NA`, then saving will occur at `P(sim)$.saveInitialTime` with a frequency equal to `P(sim)$.saveInterval` </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .saveInterval </td>
@@ -707,7 +707,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
    <td style="text-align:left;"> end </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: 'start'- as before vegetation succession events, i.e. before dispersal, 'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'), 'postGM' - after growth and mortality, 'postAging' - after aging, 'end' - at the end of vegetation succesion events, before plotting and saving. The 'end' option is always active, being also the default option. </td>
+   <td style="text-align:left;"> A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: 'start'- as before vegetation succession events, i.e. before dispersal, 'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'), 'postGM' - after growth and mortality, 'postAging' - after aging, 'end' - at the end of vegetation succesion events, before plotting and saving. The 'end' option is always active, being also the default option. If NULL, then will skip all summaryBGM related events </td>
   </tr>
   <tr>
    <td style="text-align:left;"> calibrate </td>
@@ -774,6 +774,14 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
    <td style="text-align:left;"> Initial time for the growth event to occur </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> initialB </td>
+   <td style="text-align:left;"> numeric </td>
+   <td style="text-align:left;"> 10 </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> initial biomass values of new age-1 cohorts </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> initialBiomassSource </td>
    <td style="text-align:left;"> character </td>
    <td style="text-align:left;"> cohortData </td>
@@ -819,7 +827,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
    <td style="text-align:left;"> wardDisp.... </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> choose which seeding algorithm will be used among 'noDispersal', 'universalDispersal', and 'wardDispersal' (default). See Scheller &amp; Miranda (2015) - Biomass Succession extension, v3.2.1 User Guide </td>
+   <td style="text-align:left;"> choose which seeding algorithm will be used among 'noSeeding' (no horizontal, nor vertical seeding - not in LANDIS-II BSE), 'noDispersal' (no horizontal seeding), 'universalDispersal' (seeds disperse to any pixel), and 'wardDispersal' (default; seeds disperse according to distance and dispersal traits). See Scheller &amp; Miranda (2015) - Biomass Succession extension, v3.2.1 User Guide </td>
   </tr>
   <tr>
    <td style="text-align:left;"> spinupMortalityfraction </td>
@@ -843,7 +851,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
    <td style="text-align:left;"> 10 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. </td>
+   <td style="text-align:left;"> defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions </td>
   </tr>
   <tr>
    <td style="text-align:left;"> vegLeadingProportion </td>
