@@ -51,14 +51,12 @@ Ideally, however, the user should supply realistic versions of these data and th
 
 Table \@ref(tab:moduleInputs) shows a full list of input objects that *Biomass_core* expects. Of these, the only input that **must** be provided (*i.e.*, *Biomass_core* does not have a default for) is `studyArea`.
 
-::: fullwidth
 ```{r moduleInputs, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")
 knitr::kable(df_inputs,
              caption = "List of _Biomass_core_  input objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down")
+  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
-:::
 
 Of the above, we draw particular attention to the the following inputs, which are crucial to run *Biomass_core* on a realistic setting (see [Input objects] section of the manual for further detail):
 
@@ -72,14 +70,12 @@ For the beginner user, we suggest running *Biomass_core* without supplying any i
 
 Besides the above mentioned inputs, *Biomass_core* uses several other parameters, which can be changed by the user if need be (Table \@ref(tab:moduleParams)). Please see the [Parameters] section of the manual for a list of the most useful parameters.
 
-::: fullwidth
 ```{r moduleParams, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_core", "..")
 knitr::kable(df_params,
              caption = "List of _Biomass_core_ parameters and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down")
+  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
-:::
 
 ## Events
 
@@ -101,14 +97,12 @@ The module produces the following outputs types. -- Plotting -- live and/or save
 
 All `simList` objects that are changed by *Biomass_core* (*i.e.*, the definition of a module output) are listed in Table \@ref(tab:moduleOutputs).
 
-::: fullwidth
 ```{r moduleOutputs, echo = FALSE, eval = TRUE, message = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")
 knitr::kable(df_outputs,
              caption = "List of _Biomass_core_ output objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down")
+  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
-:::
 
 ## Links to other modules
 
@@ -182,14 +176,12 @@ To be initialized, *Biomass_core* requires the following input objects and param
 
 All of *Biomass_core*'s input objects have (theoretical) defaults that are produced automatically by the module (when running the `.inputObjects` function during the `simInit` call, and in the `init` event during the `spades` call -- see `?SpaDES.core::events` and `SpaDES.core::simInit`). We suggest that new users run *Biomass_core* by itself supplying only a `studyArea` object. This will enable them to become familiar with all the input objects before attempting to supply their own, or combine *Biomass_core* with data modules.
 
-::: fullwidth
 ```{r moduleInputs2, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")
 knitr::kable(df_inputs, 
              caption = "List of _Biomass_core_ input objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down")
+  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
-:::
 
 Of the inputs in Table \@ref(tab:moduleInputs2), the following are particularly important and deserve special attention:
 
@@ -277,14 +269,12 @@ Of the inputs in Table \@ref(tab:moduleInputs2), the following are particularly 
 
 Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note that a few of these parameters are only relevant when simulating climate effects of cohort growth and mortality, which require also loading the `LandR.CS` R package. Like with input objects, default values are supplied for all parameters and we suggest the user becomes familiarized with them before attempting any changes. We also note that the `"spin-up"` and `"biomassMap"` options for the `initialBiomassSource` are currently deactivated, since *Biomass_core* no longer generates initial cohort biomass conditions using a spin-up based on initial stand age like LANDIS-II (`"spin-up"`), nor does it attempt to fill initial cohort biomasses using `biomassMap` (`"biomassMap"`). A list of useful parameters and their description is shown in Table \@ref(tab:tableUsefulParams).
 
-::: fullwidth
 ```{r moduleParams2, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_core", "..")
 knitr::kable(df_params,
              caption = "List of _Biomass_core_ parameters and their description.") %>%
-  kableExtra::kable_styling(latex_options = "scale_down")
+  kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
-:::
 
 ::: fullwidth
 +------------------------+-------------------------------------------------------------------------------------------------+
