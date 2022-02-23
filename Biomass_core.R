@@ -115,7 +115,7 @@ defineModule(sim, list(
                     desc = "Controls whether maps should be plotted or not. Set to `FALSE` if `P(sim)$.plots == NA`"),
     defineParameter(".saveInitialTime", "numeric", NA, NA, NA,
                     desc = paste("Vector of length = 1, describing the simulation time at which the first save event should occur.",
-                                 "Set to NA if no saving is desired. If not NA, then saving will occur at",
+                                 "Set to `NA` if no saving is desired. If not `NA`, then saving will occur at",
                                  "`P(sim)$.saveInitialTime` with a frequency equal to `P(sim)$.saveInterval`")),
     defineParameter(".saveInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the saving time step.",
