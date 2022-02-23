@@ -740,6 +740,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     LandR::assertUniqueCohortData(sim$cohortData, c("pixelGroup", "ecoregionGroup", "speciesCode"))
   }
 
+  LandR::assertColumns(sim$cohortData, c(pixelGroup = "integer",
+                                         ecoregionGroup = "factor",
+                                         speciesCode = "factor",
+                                         age = "integer",
+                                         B = "integer"))
+
   if (!is.null(sim$ecoregionMap) && !is.null(sim$pixelGroupMap) && !is.null(sim$biomassMap)) {
     compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
   } else {
