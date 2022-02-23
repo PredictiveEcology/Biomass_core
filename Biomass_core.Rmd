@@ -1,7 +1,7 @@
 ---
 title: "LandR _Biomass_core_ Manual"
 subtitle: "v.`r SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$version`"
-author: "`r SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors`"
+author: "`r paste(unname(vapply(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), function(x) { strsplit(x, split = ' <')[[1]][1] }, character(1))), sep = ', ')`"
 date: "Last updated: `r Sys.Date()`"
 output:
   bookdown::html_document2:

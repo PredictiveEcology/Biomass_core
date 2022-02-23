@@ -1,8 +1,8 @@
 ---
 title: "LandR _Biomass_core_ Manual"
 subtitle: "v.1.3.9"
-author: "Yong Luo <yluo1@lakeheadu.ca> [aut], Eliot J B McIntire <eliot.mcintire@canada.ca> [aut, cre], Jean Marchal <jean.d.marchal@gmail.com> [ctb], Alex M. Chubaty <achubaty@for-cast.ca> [ctb], Ceres Barros <cbarros@mail.ubc.ca> [ctb]"
-date: "Last updated: 2022-02-20"
+author: "Yong Luo, Eliot J B McIntire, Jean Marchal, Alex M. Chubaty, Ceres Barros"
+date: "Last updated: 2022-02-23"
 output:
   bookdown::html_document2:
     toc: true
