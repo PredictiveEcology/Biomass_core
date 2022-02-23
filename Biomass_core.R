@@ -755,6 +755,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     LandR::assertUniqueCohortData(sim$cohortData, c("pixelGroup", "ecoregionGroup", "speciesCode"))
   }
 
+  ## check objects
+  LandR::assertColumns(sim$cohortData, c(pixelGroup = "integer",
+                                         ecoregionGroup = "factor",
+                                         speciesCode = "factor",
+                                         age = "integer",
+                                         B = "integer"))
+
   rasterNamesToCompare <- c("ecoregionMap", "pixelGroupMap")
   if (!identical(P(sim)$initialBiomassSource, "cohortData")) {
     rasterNamesToCompare <- c(rasterNamesToCompare, "biomassMap")
@@ -764,20 +771,11 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   if (haveAllRasters) {
     rastersToCompare <- mget(rasterNamesToCompare, envir(sim))
     do.call(compareRaster, append(list(x = sim$rasterToMatch, orig = TRUE), rastersToCompare))
-  LandR::assertColumns(sim$cohortData, c(pixelGroup = "integer",
-                                         ecoregionGroup = "factor",
-                                         speciesCode = "factor",
-                                         age = "integer",
-                                         B = "integer"))
-
-  if (!is.null(sim$ecoregionMap) && !is.null(sim$pixelGroupMap) && !is.null(sim$biomassMap)) {
-    compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
   } else {
     stop("Expecting 3 rasters at this point: sim$biomassMap, sim$ecoregionMap, ",
          "sim$pixelGroupMap and they must match sim$rasterToMatch")
   }
 
-  ## check objects
   LandR::assertERGs(sim$ecoregionMap, sim$cohortData, sim$speciesEcoregion, sim$minRelativeB)
 
   ##############################################
