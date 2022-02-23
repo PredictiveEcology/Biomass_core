@@ -267,9 +267,9 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">LandR <em>Biomass_core</em> Manual</h1>
-<h3 class="subtitle">v.1.3.9</h3>
+<h3 class="subtitle">v.1.3.3</h3>
 <h4 class="author">Yong Luo <a href="mailto:yluo1@lakeheadu.ca" class="email">yluo1@lakeheadu.ca</a> [aut], Eliot J B McIntire <a href="mailto:eliot.mcintire@canada.ca" class="email">eliot.mcintire@canada.ca</a> [aut, cre], Jean Marchal <a href="mailto:jean.d.marchal@gmail.com" class="email">jean.d.marchal@gmail.com</a> [ctb], Alex M. Chubaty <a href="mailto:achubaty@for-cast.ca" class="email">achubaty@for-cast.ca</a> [ctb], Ceres Barros <a href="mailto:cbarros@mail.ubc.ca" class="email">cbarros@mail.ubc.ca</a> [ctb]</h4>
-<h4 class="date">Last updated: 2022-02-18</h4>
+<h4 class="date">Last updated: 2022-02-23</h4>
 
 </div>
 
@@ -323,7 +323,7 @@ biomassMap
 RasterLayer
 </td>
 <td style="text-align:left;">
-total biomass raster layer in study area (in g/m2), filtered for pixels covered by cohortData. Only used if <code>P(sim)$initialBiomassSource == &#39;biomassMap&#39;</code>, which is currently deactivated.
+total biomass raster layer in study area (in g/m^2), filtered for pixels covered by cohortData. Only used if <code>P(sim)$initialBiomassSource == &#39;biomassMap&#39;</code>, which is currently deactivated.
 </td>
 <td style="text-align:left;">
 </td>
@@ -350,7 +350,7 @@ cohortData
 data.table
 </td>
 <td style="text-align:left;">
-Columns: <code>B</code>, <code>pixelGroup</code>, <code>speciesCode</code>, Indicating several features about ages and current vegetation of stand
+<code>data.table</code> with cohort-level information on age and biomass, by pixelGroup and ecolocation (i.e., <code>ecoregionGroup</code>). If supplied, it must have the following columns: <code>pixelGroup</code> (integer), <code>ecoregionGroup</code> (factor), <code>speciesCode</code> (factor), <code>B</code> (integer in g/m^2), <code>age</code> (integer in years)
 </td>
 <td style="text-align:left;">
 NA
@@ -406,7 +406,7 @@ minRelativeB
 data.frame
 </td>
 <td style="text-align:left;">
-table defining the cut points to classify stand shadeness
+table defining the relative biomass cut points to classify stand shadeness
 </td>
 <td style="text-align:left;">
 NA
@@ -420,7 +420,7 @@ pixelGroupMap
 RasterLayer
 </td>
 <td style="text-align:left;">
-DESCRIPTION_NEEDED
+initial community map that has mapcodes match initial community table
 </td>
 <td style="text-align:left;">
 NA
@@ -434,7 +434,7 @@ rasterToMatch
 RasterLayer
 </td>
 <td style="text-align:left;">
-a raster of the <code>studyArea</code> in the same resolution and projection as biomassMap
+a raster of the <code>studyArea</code> in the same resolution and projection as <code>biomassMap</code>
 </td>
 <td style="text-align:left;">
 NA
@@ -448,7 +448,7 @@ species
 data.table
 </td>
 <td style="text-align:left;">
-a table that has species traits such as longevity, shade tolerance, etc. Default is partially based on Dominic Cir and Yan’s project
+a table that has species traits such as longevity, shade tolerance, etc. Default is partially based on Dominic Cir and Yan Boulanger’s project
 </td>
 <td style="text-align:left;">
 <a href="https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv" class="uri">https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv</a>
@@ -476,7 +476,7 @@ speciesLayers
 RasterStack
 </td>
 <td style="text-align:left;">
-cover percentage raster layers by species in Canada species map. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived species cover maps from 2001 using a cover threshold of 10 - see <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a> for metadata
+percent cover raster layers of tree species in Canada. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived species cover maps from 2001 using a cover threshold of 10 - see <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a> for metadata
 </td>
 <td style="text-align:left;">
 <a href="http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/" class="uri">http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/</a>
@@ -622,7 +622,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: ‘start’- as before vegetation succession events, i.e. before dispersal, ‘postDisp’ - after dispersal, ‘postRegen’ - after post-disturbance regeneration (currently the same as ‘start’), ‘postGM’ - after growth and mortality, ‘postAging’ - after aging, ‘end’ - at the end of vegetation succesion events, before plotting and saving. The ‘end’ option is always active, being also the default option. If NULL, then will skip all summaryBGM related events
+A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: ‘start’- as before vegetation succession events, i.e. before dispersal, ‘postDisp’ - after dispersal, ‘postRegen’ - after post-disturbance regeneration (currently the same as ‘start’), ‘postGM’ - after growth and mortality, ‘postAging’ - after aging, ‘end’ - at the end of vegetation succesion events, before plotting and saving. The ‘end’ option is always active, being also the default option.
 </td>
 </tr>
 <tr>
@@ -642,7 +642,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Do calibration? Defaults to FALSE
+Do calibration? Defaults to <code>FALSE</code>
 </td>
 </tr>
 <tr>
@@ -787,26 +787,6 @@ Initial time for the growth event to occur
 </tr>
 <tr>
 <td style="text-align:left;">
-initialB
-</td>
-<td style="text-align:left;">
-numeric
-</td>
-<td style="text-align:left;">
-10
-</td>
-<td style="text-align:left;">
-1
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-initial biomass values of new age-1 cohorts
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
 initialBiomassSource
 </td>
 <td style="text-align:left;">
@@ -822,7 +802,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Currently, there are three options: ‘spinUp,’ ‘cohortData,’ ‘biomassMap.’ If ‘spinUp,’ it will derive biomass by running spinup derived from Landis-II. If ‘cohortData,’ it will be taken from the <code>cohortData</code> object, i.e., it is already correct, by cohort. If ‘biomassMap,’ it will be taken from <code>sim$biomassMap</code>, divided across species using <code>sim$speciesLayers</code> percent cover values <code>spinUp</code> uses <code>sim$standAgeMap</code> as the driver, so biomass is an output. That means it will be unlikely to match any input information about biomass, unless this is set to TRUE, and a <code>sim$rawBiomassMap</code> is supplied. Only the ‘cohortData’ option is currently active.
+Currently, there are three options: ‘spinUp,’ ‘cohortData,’ ‘biomassMap.’ If ‘spinUp,’ it will derive biomass by running spinup derived from Landis-II. If ‘cohortData,’ it will be taken from the <code>cohortData</code> object, i.e., it is already correct, by cohort. If ‘biomassMap,’ it will be taken from <code>sim$biomassMap</code>, divided across species using <code>sim$speciesLayers</code> percent cover values ‘spinUp’ uses <code>sim$standAgeMap</code> as the driver, so biomass is an output . That means it will be unlikely to match any input information about biomass, unless this is set to ‘biomassMap,’ and a <code>sim$biomassMap</code> is supplied. Only the ‘cohortData’ option is currently active.
 </td>
 </tr>
 <tr>
@@ -862,7 +842,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-cohorts with biomass below this threshold are removed. Not a LANDIS-II BSE param.
+cohorts with biomass below this threshold (g/m^2) are removed. Not a LANDIS-II BSE parameter.
 </td>
 </tr>
 <tr>
@@ -982,7 +962,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions
+defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis.
 </td>
 </tr>
 <tr>
@@ -1062,7 +1042,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-defines the plotting time step. If NA, the default, .plotInterval is set to successionTimestep.
+defines the plotting time step. If <code>NA</code>, the default, .plotInterval is set to successionTimestep.
 </td>
 </tr>
 <tr>
@@ -1082,7 +1062,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Passed to <code>types</code> in <code>Plots</code> (see <code>?Plots</code>). There are a few plots that are made within this module, if set. Note that plots (or their data) saving will ONLY occur at <code>end(sim)</code>. If NA plotting is off completely (this includes saving).
+Passed to <code>types</code> in <code>Plots</code> (see <code>?Plots</code>). There are a few plots that are made within this module, if set. Note that plots (or their data) saving will ONLY occur at <code>end(sim)</code>. If <code>NA</code> plotting is off completely (this includes plot saving).
 </td>
 </tr>
 <tr>
@@ -1102,7 +1082,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Controls whether maps should be plotted or not. Set to FALSE if <code>P(sim)$.plots == NA</code>
+Controls whether maps should be plotted or not. Set to <code>FALSE</code> if <code>P(sim)$.plots == NA</code>
 </td>
 </tr>
 <tr>
@@ -1122,7 +1102,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Vector of length = 1, describing the simulation time at which the first save event should occur. Set to NA if no saving is desired. If not NA, then saving will occur at <code>P(sim)$.saveInitialTime</code> with a frequency equal to <code>P(sim)$.saveInterval</code>
+Vector of length = 1, describing the simulation time at which the first save event should occur. Set to <code>NA</code> if no saving is desired. If not <code>NA</code>, then saving will occur at <code>P(sim)$.saveInitialTime</code> with a frequency equal to <code>P(sim)$.saveInterval</code>
 </td>
 </tr>
 <tr>
@@ -1142,7 +1122,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-defines the saving time step. If NA, the default, .saveInterval is set to <code>P(sim)$successionTimestep</code>.
+defines the saving time step. If <code>NA</code>, the default, .saveInterval is set to <code>P(sim)$successionTimestep</code>.
 </td>
 </tr>
 <tr>
@@ -1162,7 +1142,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Human-readable name for the study area used. If NA, a hash of <code>studyArea</code> will be used.
+Human-readable name for the study area used. If <code>NA</code>, a hash of <code>studyArea</code> will be used.
 </td>
 </tr>
 <tr>
@@ -1202,7 +1182,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Used only in seed dispersal. If numeric, it will be passed to <code>data.table::setDTthreads</code> and should be &lt;= 2; If TRUE, it will be passed to <code>parallel::makeCluster</code>; and if a cluster object, it will be passed to <code>parallel::parClusterApplyB</code>.
+Used only in seed dispersal. If numeric, it will be passed to <code>data.table::setDTthreads</code> and should be &lt;= 2; If <code>TRUE</code>, it will be passed to <code>parallel::makeCluster</code>; and if a cluster object, it will be passed to <code>parallel::parClusterApplyB</code>.
 </td>
 </tr>
 </tbody>
@@ -1287,7 +1267,7 @@ cohortData
 data.table
 </td>
 <td style="text-align:left;">
-age cohort-biomass table hooked to pixel group map by pixelGroup at succession time step
+<code>data.table</code> with cohort-level information on age, biomass, aboveground primary productivity (year’s biomass gain) and mortality (year’s biomass loss), by pixelGroup and ecolocation (i.e., <code>ecoregionGroup</code>). Contains at least the following columns: <code>pixelGroup</code> (integer), <code>ecoregionGroup</code> (factor), <code>speciesCode</code> (factor), <code>B</code> (integer in g/m^2), <code>age</code> (integer in years), <code>mortality</code> (integer in g/m^2), <code>aNPPAct</code> (integer in g/m^2). May have other columns depending on additional simulated processes (i.e., cliamte sensitivity; see, e.g., <code>P(sim)$keepClimateCols</code>).
 </td>
 </tr>
 <tr>
@@ -1298,7 +1278,7 @@ ecoregionMap
 RasterLayer
 </td>
 <td style="text-align:left;">
-ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table. Defaults to a dummy map matching rasterToMatch with two regions
+ecoregion map that has mapcodes match <code>ecoregion</code> table and <code>speciesEcoregion</code> table. Defaults to a dummy map matching rasterToMatch with two regions
 </td>
 </tr>
 <tr>
@@ -1408,7 +1388,7 @@ simulatedBiomassMap
 RasterLayer
 </td>
 <td style="text-align:left;">
-Biomass map at each succession time step
+Biomass map at each succession time step (in g/m^2)
 </td>
 </tr>
 <tr>
@@ -1485,7 +1465,7 @@ summaryBySpecies
 data.table
 </td>
 <td style="text-align:left;">
-The total species biomass, average age and aNPP across the landscape (used for plotting and reporting).
+The total species biomass (in g/m^2 as in <code>cohortData</code>), average age and aNPP (in g/m^2 as in <code>cohortData</code>), across the landscape (used for plotting and reporting).
 </td>
 </tr>
 <tr>
@@ -1507,7 +1487,7 @@ summaryLandscape
 data.table
 </td>
 <td style="text-align:left;">
-The averages of total biomass, age and aNPP across the landscape (used for plotting and reporting).
+The averages of total biomass (in ton/ha , not g/m^2 like in <code>cohortData</code>), age and aNPP (also in ton/ha) across the landscape (used for plotting and reporting).
 </td>
 </tr>
 <tr>
@@ -1529,7 +1509,7 @@ vegTypeMap
 RasterLayer
 </td>
 <td style="text-align:left;">
-Map of leading species in each pixel, colored according to <code>sim$sppColorVect</code>
+Map of leading species in each pixel, colored according to <code>sim$sppColorVect</code>. Species mixtures calculated according to <code>P(sim)$vegLeadingProportion</code> and <code>P(sim)</code>$mixedType.
 </td>
 </tr>
 </tbody>
@@ -1630,7 +1610,7 @@ biomassMap
 RasterLayer
 </td>
 <td style="text-align:left;">
-total biomass raster layer in study area (in g/m2), filtered for pixels covered by cohortData. Only used if <code>P(sim)$initialBiomassSource == &#39;biomassMap&#39;</code>, which is currently deactivated.
+total biomass raster layer in study area (in g/m^2), filtered for pixels covered by cohortData. Only used if <code>P(sim)$initialBiomassSource == &#39;biomassMap&#39;</code>, which is currently deactivated.
 </td>
 <td style="text-align:left;">
 </td>
@@ -1657,7 +1637,7 @@ cohortData
 data.table
 </td>
 <td style="text-align:left;">
-Columns: <code>B</code>, <code>pixelGroup</code>, <code>speciesCode</code>, Indicating several features about ages and current vegetation of stand
+<code>data.table</code> with cohort-level information on age and biomass, by pixelGroup and ecolocation (i.e., <code>ecoregionGroup</code>). If supplied, it must have the following columns: <code>pixelGroup</code> (integer), <code>ecoregionGroup</code> (factor), <code>speciesCode</code> (factor), <code>B</code> (integer in g/m^2), <code>age</code> (integer in years)
 </td>
 <td style="text-align:left;">
 NA
@@ -1713,7 +1693,7 @@ minRelativeB
 data.frame
 </td>
 <td style="text-align:left;">
-table defining the cut points to classify stand shadeness
+table defining the relative biomass cut points to classify stand shadeness
 </td>
 <td style="text-align:left;">
 NA
@@ -1727,7 +1707,7 @@ pixelGroupMap
 RasterLayer
 </td>
 <td style="text-align:left;">
-DESCRIPTION_NEEDED
+initial community map that has mapcodes match initial community table
 </td>
 <td style="text-align:left;">
 NA
@@ -1741,7 +1721,7 @@ rasterToMatch
 RasterLayer
 </td>
 <td style="text-align:left;">
-a raster of the <code>studyArea</code> in the same resolution and projection as biomassMap
+a raster of the <code>studyArea</code> in the same resolution and projection as <code>biomassMap</code>
 </td>
 <td style="text-align:left;">
 NA
@@ -1755,7 +1735,7 @@ species
 data.table
 </td>
 <td style="text-align:left;">
-a table that has species traits such as longevity, shade tolerance, etc. Default is partially based on Dominic Cir and Yan’s project
+a table that has species traits such as longevity, shade tolerance, etc. Default is partially based on Dominic Cir and Yan Boulanger’s project
 </td>
 <td style="text-align:left;">
 <a href="https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv" class="uri">https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv</a>
@@ -1783,7 +1763,7 @@ speciesLayers
 RasterStack
 </td>
 <td style="text-align:left;">
-cover percentage raster layers by species in Canada species map. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived species cover maps from 2001 using a cover threshold of 10 - see <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a> for metadata
+percent cover raster layers of tree species in Canada. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived species cover maps from 2001 using a cover threshold of 10 - see <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a> for metadata
 </td>
 <td style="text-align:left;">
 <a href="http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/" class="uri">http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/</a>
@@ -1984,7 +1964,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: ‘start’- as before vegetation succession events, i.e. before dispersal, ‘postDisp’ - after dispersal, ‘postRegen’ - after post-disturbance regeneration (currently the same as ‘start’), ‘postGM’ - after growth and mortality, ‘postAging’ - after aging, ‘end’ - at the end of vegetation succesion events, before plotting and saving. The ‘end’ option is always active, being also the default option. If NULL, then will skip all summaryBGM related events
+A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: ‘start’- as before vegetation succession events, i.e. before dispersal, ‘postDisp’ - after dispersal, ‘postRegen’ - after post-disturbance regeneration (currently the same as ‘start’), ‘postGM’ - after growth and mortality, ‘postAging’ - after aging, ‘end’ - at the end of vegetation succesion events, before plotting and saving. The ‘end’ option is always active, being also the default option.
 </td>
 </tr>
 <tr>
@@ -2004,7 +1984,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Do calibration? Defaults to FALSE
+Do calibration? Defaults to <code>FALSE</code>
 </td>
 </tr>
 <tr>
@@ -2149,26 +2129,6 @@ Initial time for the growth event to occur
 </tr>
 <tr>
 <td style="text-align:left;">
-initialB
-</td>
-<td style="text-align:left;">
-numeric
-</td>
-<td style="text-align:left;">
-10
-</td>
-<td style="text-align:left;">
-1
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-initial biomass values of new age-1 cohorts
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
 initialBiomassSource
 </td>
 <td style="text-align:left;">
@@ -2184,7 +2144,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Currently, there are three options: ‘spinUp,’ ‘cohortData,’ ‘biomassMap.’ If ‘spinUp,’ it will derive biomass by running spinup derived from Landis-II. If ‘cohortData,’ it will be taken from the <code>cohortData</code> object, i.e., it is already correct, by cohort. If ‘biomassMap,’ it will be taken from <code>sim$biomassMap</code>, divided across species using <code>sim$speciesLayers</code> percent cover values <code>spinUp</code> uses <code>sim$standAgeMap</code> as the driver, so biomass is an output. That means it will be unlikely to match any input information about biomass, unless this is set to TRUE, and a <code>sim$rawBiomassMap</code> is supplied. Only the ‘cohortData’ option is currently active.
+Currently, there are three options: ‘spinUp,’ ‘cohortData,’ ‘biomassMap.’ If ‘spinUp,’ it will derive biomass by running spinup derived from Landis-II. If ‘cohortData,’ it will be taken from the <code>cohortData</code> object, i.e., it is already correct, by cohort. If ‘biomassMap,’ it will be taken from <code>sim$biomassMap</code>, divided across species using <code>sim$speciesLayers</code> percent cover values ‘spinUp’ uses <code>sim$standAgeMap</code> as the driver, so biomass is an output . That means it will be unlikely to match any input information about biomass, unless this is set to ‘biomassMap,’ and a <code>sim$biomassMap</code> is supplied. Only the ‘cohortData’ option is currently active.
 </td>
 </tr>
 <tr>
@@ -2224,7 +2184,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-cohorts with biomass below this threshold are removed. Not a LANDIS-II BSE param.
+cohorts with biomass below this threshold (g/m^2) are removed. Not a LANDIS-II BSE parameter.
 </td>
 </tr>
 <tr>
@@ -2344,7 +2304,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions
+defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis.
 </td>
 </tr>
 <tr>
@@ -2424,7 +2384,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-defines the plotting time step. If NA, the default, .plotInterval is set to successionTimestep.
+defines the plotting time step. If <code>NA</code>, the default, .plotInterval is set to successionTimestep.
 </td>
 </tr>
 <tr>
@@ -2444,7 +2404,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Passed to <code>types</code> in <code>Plots</code> (see <code>?Plots</code>). There are a few plots that are made within this module, if set. Note that plots (or their data) saving will ONLY occur at <code>end(sim)</code>. If NA plotting is off completely (this includes saving).
+Passed to <code>types</code> in <code>Plots</code> (see <code>?Plots</code>). There are a few plots that are made within this module, if set. Note that plots (or their data) saving will ONLY occur at <code>end(sim)</code>. If <code>NA</code> plotting is off completely (this includes plot saving).
 </td>
 </tr>
 <tr>
@@ -2464,7 +2424,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Controls whether maps should be plotted or not. Set to FALSE if <code>P(sim)$.plots == NA</code>
+Controls whether maps should be plotted or not. Set to <code>FALSE</code> if <code>P(sim)$.plots == NA</code>
 </td>
 </tr>
 <tr>
@@ -2484,7 +2444,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Vector of length = 1, describing the simulation time at which the first save event should occur. Set to NA if no saving is desired. If not NA, then saving will occur at <code>P(sim)$.saveInitialTime</code> with a frequency equal to <code>P(sim)$.saveInterval</code>
+Vector of length = 1, describing the simulation time at which the first save event should occur. Set to <code>NA</code> if no saving is desired. If not <code>NA</code>, then saving will occur at <code>P(sim)$.saveInitialTime</code> with a frequency equal to <code>P(sim)$.saveInterval</code>
 </td>
 </tr>
 <tr>
@@ -2504,7 +2464,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-defines the saving time step. If NA, the default, .saveInterval is set to <code>P(sim)$successionTimestep</code>.
+defines the saving time step. If <code>NA</code>, the default, .saveInterval is set to <code>P(sim)$successionTimestep</code>.
 </td>
 </tr>
 <tr>
@@ -2524,7 +2484,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Human-readable name for the study area used. If NA, a hash of <code>studyArea</code> will be used.
+Human-readable name for the study area used. If <code>NA</code>, a hash of <code>studyArea</code> will be used.
 </td>
 </tr>
 <tr>
@@ -2564,7 +2524,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-Used only in seed dispersal. If numeric, it will be passed to <code>data.table::setDTthreads</code> and should be &lt;= 2; If TRUE, it will be passed to <code>parallel::makeCluster</code>; and if a cluster object, it will be passed to <code>parallel::parClusterApplyB</code>.
+Used only in seed dispersal. If numeric, it will be passed to <code>data.table::setDTthreads</code> and should be &lt;= 2; If <code>TRUE</code>, it will be passed to <code>parallel::makeCluster</code>; and if a cluster object, it will be passed to <code>parallel::parClusterApplyB</code>.
 </td>
 </tr>
 </tbody>
