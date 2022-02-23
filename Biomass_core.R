@@ -129,14 +129,16 @@ defineModule(sim, list(
   ),
   inputObjects = bindrows(
     expectsInput("biomassMap", "RasterLayer",
-                 desc = paste("total biomass raster layer in study area (in g/m2),",
+                 desc = paste("total biomass raster layer in study area (in g/m^2),",
                               "filtered for pixels covered by cohortData.",
                               "Only used if `P(sim)$initialBiomassSource == 'biomassMap'`, which is currently deactivated."),
                  sourceURL = ""),
     expectsInput("cceArgs", "list",
                  desc = paste("a list of quoted objects used by the `growthAndMortalityDriver` `calculateClimateEffect` function")),
     expectsInput("cohortData", "data.table",
-                 desc = "Columns: `B`, `pixelGroup`, `speciesCode`, Indicating several features about ages and current vegetation of stand"),
+                 desc = paste("`data.table` with cohort-level information on age and biomass, by pixelGroup and ecolocation",
+                              "(i.e., `ecoregionGroup`). If supplied, it must have the following columns: `pixelGroup` (integer),",
+                              "`ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in g/m^2), `age` (integer in years)")),
     expectsInput("ecoregion", "data.table",
                  desc = "ecoregion look up table",
                  sourceURL = paste0("https://raw.githubusercontent.com/LANDIS-II-Foundation/",
@@ -154,20 +156,20 @@ defineModule(sim, list(
     expectsInput("lastReg", "numeric",
                  desc = "an internal counter keeping track of when the last regeneration event occurred"),
     expectsInput("minRelativeB", "data.frame",
-                 desc = "table defining the cut points to classify stand shadeness"),
+                 desc = "table defining the relative biomass cut points to classify stand shadeness"),
     expectsInput("pixelGroupMap", "RasterLayer",
                  desc = "initial community map that has mapcodes match initial community table"),
     expectsInput("rasterToMatch", "RasterLayer",
-                 desc = "a raster of the `studyArea` in the same resolution and projection as biomassMap"),
+                 desc = "a raster of the `studyArea` in the same resolution and projection as `biomassMap`"),
     expectsInput("species", "data.table",
                  desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
-                              "Default is partially based on Dominic Cir and Yan's project"),
+                              "Default is partially based on Dominic Cir and Yan Boulanger's project"),
                  sourceURL = "https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv"),
     expectsInput("speciesEcoregion", "data.table",
                  desc = paste("table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time.",
                               "Defaults to a dummy table based on dummy data os biomass, age, ecoregion and land cover class")),
     expectsInput("speciesLayers", "RasterStack",
-                 desc = paste("cover percentage raster layers by species in Canada species map.",
+                 desc = paste("percent cover raster layers of tree species in Canada.",
                               "Defaults to the Canadian Forestry Service, National Forest Inventory,",
                               "kNN-derived species cover maps from 2001 using a cover threshold of 10 -",
                               "see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata"),
@@ -180,8 +182,7 @@ defineModule(sim, list(
     expectsInput("sppEquiv", "data.table",
                  desc = "table of species equivalencies. See `LandR::sppEquivalencies_CA`."),
     expectsInput("studyArea", "SpatialPolygonsDataFrame",
-                 desc = paste("Polygon to use as the study area.",
-                              "Must be provided by the user")),
+                 desc = paste("Polygon to use as the study area. Must be provided by the user")),
     expectsInput("studyAreaReporting", "SpatialPolygonsDataFrame",
                  desc = paste("multipolygon (typically smaller/unbuffered than studyArea) to use for plotting/reporting.",
                               "Defaults to `studyArea`.")),
@@ -206,9 +207,15 @@ defineModule(sim, list(
     createsOutput("ANPPMap", "RasterLayer",
                   desc = "ANPP map at each succession time step"),
     createsOutput("cohortData", "data.table",
-                  desc = "age cohort-biomass table hooked to pixel group map by pixelGroup at succession time step"),
+                  desc = paste("`data.table` with cohort-level information on age, biomass, aboveground primary",
+                               "productivity (year's biomass gain) and mortality (year's biomass loss), by pixelGroup",
+                               "and ecolocation (i.e., `ecoregionGroup`). Contains at least the following columns:",
+                               "`pixelGroup` (integer), `ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in g/m^2),",
+                               "`age` (integer in years), `mortality` (integer in g/m^2), `aNPPAct` (integer in g/m^2).",
+                               "May have other columns depending on additional simulated processes (i.e., cliamte sensitivity;",
+                               "see, e.g., `P(sim)$keepClimateCols`).")),
     createsOutput("ecoregionMap", "RasterLayer",
-                  desc = paste("ecoregion map that has mapcodes match ecoregion table and speciesEcoregion table.",
+                  desc = paste("ecoregion map that has mapcodes match `ecoregion` table and `speciesEcoregion` table.",
                                "Defaults to a dummy map matching rasterToMatch with two regions")),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "internal use. Keeps track of which pixels are inactive"),
@@ -228,11 +235,11 @@ defineModule(sim, list(
                   desc = "updated community map at each succession time step"),
     createsOutput("regenerationOutput", "data.table",
                   desc = paste("If `P(sim)$calibrate == TRUE`, an summary of seed dispersal and germination",
-                  "success (i.e., number of pixels where seeds successfully germinated) per species and year.")),
+                               "success (i.e., number of pixels where seeds successfully germinated) per species and year.")),
     createsOutput("reproductionMap", "RasterLayer",
                   desc = "Regeneration map at each succession time step"),
     createsOutput("simulatedBiomassMap", "RasterLayer",
-                  desc = "Biomass map at each succession time step"),
+                  desc = "Biomass map at each succession time step (in g/m^2)"),
     createsOutput("simulationOutput", "data.table",
                   desc = "contains simulation results by ecoregion (main output)"),
     createsOutput("simulationTreeOutput", "data.table",
@@ -247,17 +254,20 @@ defineModule(sim, list(
     # createsOutput("spinUpCache", "logical", desc = ""),
     createsOutput("spinupOutput", "data.table", desc = "Spin-up output"),
     createsOutput("summaryBySpecies", "data.table",
-                  desc = "The total species biomass, average age and aNPP across the landscape (used for plotting and reporting)."),
+                  desc = paste("The total species biomass (in g/m^2 as in `cohortData`), average age and aNPP (in",
+                  "g/m^2 as in `cohortData`),  across the landscape (used for plotting and reporting).")),
     createsOutput("summaryBySpecies1", "data.table",
                   desc = "No. pixels of each leading vegetation type (used for plotting and reporting)."),
     createsOutput("summaryLandscape", "data.table",
-                  desc = "The averages of total biomass, age and aNPP across the landscape (used for plotting and reporting)."),
+                  desc = paste("The averages of total biomass (in *ton/ha*, not g/m^2 like in `cohortData`), age",
+                  "and aNPP (also in ton/ha) across the landscape (used for plotting and reporting).")),
     createsOutput("treedFirePixelTableSinceLastDisp", "data.table",
                   desc = paste("3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`.",
                                "Each row represents a forested pixel that was burned up to and including this year,",
                                "since last dispersal event, with its corresponding pixelGroup and time it occurred")),
     createsOutput("vegTypeMap", "RasterLayer",
-                  desc = "Map of leading species in each pixel, colored according to `sim$sppColorVect`")
+                  desc = paste("Map of leading species in each pixel, colored according to `sim$sppColorVect`.
+                  Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)`$mixedType."))
   )
 ))
 
@@ -852,8 +862,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     maxBiomass <- maxValue(sim$biomassMap)
     if (maxBiomass < 1e3) {
       if (verbose > 0) {
-        message(crayon::green("  Because biomassMap values are all below 1000, assuming that these should be\n",
-                              "    converted to tonnes/ha by multiplying by 100"))
+        message(crayon::green("  Because biomassMap values are all below 1000, assuming that these are on ton/ha.\n",
+                              "    Converting to g/m^2 by multiplying by 100"))
       }
       biomassTable[, `:=`(biomass = biomass * 100)]
     }
@@ -1786,7 +1796,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
                                        sumB = sum(B*noPixels, na.rm = TRUE),
                                        maxAge = asInteger(max(age, na.rm = TRUE)),
                                        sumANPP = asInteger(sum(aNPPAct*noPixels, na.rm = TRUE)))]
-  denominator <- length(sim$pixelGroupMap[!is.na(sim$pixelGroupMap)]) * 100 #to get tonnes/ha
+  denominator <- length(sim$pixelGroupMap[!is.na(sim$pixelGroupMap)]) * 100 # to get tonnes/ha below
   thisPeriod[, sumB := asInteger(sumB/denominator)]
   thisPeriod[, sumANPP := asInteger(sumANPP/denominator)]
 
