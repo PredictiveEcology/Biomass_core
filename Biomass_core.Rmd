@@ -44,7 +44,7 @@ if (!require(dplyr)) {
 
 ## Module summary
 
-LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:figBiomassCore)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
+LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules [see @ChubatyMcIntire2019]. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:figBiomassCore)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
 
 ```{r figBiomassCore, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "_Biomass_core_ simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)."}
 knitr::include_graphics("figures/Biomass_coreSchematic.png")
@@ -431,7 +431,7 @@ mySim <- simInitAndSpades(times = times,
                           debug = TRUE)
 ```
 
-```{r figBiomassCoreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (right), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (left)."}
+```{r figBiomassCoreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
 knitr::include_graphics(c("figures/Biomass_coreOutPlots1.png", "figures/Biomass_coreOutPlots2.png"))
 ```
 
