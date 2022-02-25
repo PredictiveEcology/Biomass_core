@@ -20,6 +20,9 @@ always_allow_html: true
 
 # LandR *Biomass_core* Module
 
+<!-- the following are text references used in captions for LaTeX compatibility -->
+(ref:moduleName) *Biomass_core*
+
 ```{r setup-Biomass-core, include=FALSE}
 ## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, warning = FALSE, 
@@ -37,7 +40,9 @@ if (!require(dplyr)) {
 }
 ```
 
-[![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.svg)](http://commonmark.org) [![Generic badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.svg)](https://github.com/PredictiveEcology/Biomass_core/issues)
+[![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.png)](http://commonmark.org) [![Generic badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
+
+<!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
 **This documentation is work in progress. Potential discrepancies and omissions may exist for the time being. If you find any, do contact us using the link above\^\^**
 
@@ -52,7 +57,7 @@ if (!require(dplyr)) {
 
 LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules [see @ChubatyMcIntire2019]. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:fig-Biomass-core)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
 
-```{r fig-Biomass-core, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "_Biomass_core_ simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)."}
+```{r fig-Biomass-core, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "(ref:moduleName) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)."}
 knitr::include_graphics("figures/Biomass_coreSchematic.png")
 ```
 
@@ -67,7 +72,7 @@ Table \@ref(tab:moduleInputs-Biomass-core) shows a full list of input objects th
 ```{r moduleInputs-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")[, c(1, 3)]  ## name + desc only
 knitr::kable(df_inputs,
-             caption = "List of _Biomass_core_  input objects and their description.") %>%
+             caption = "List of (ref:moduleName) input objects and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
@@ -86,7 +91,7 @@ Besides the above mentioned inputs, *Biomass_core* uses several other parameters
 ```{r moduleParams-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_core", "..")[, c(1, 6)] ## name + desc only
 knitr::kable(df_params,
-             caption = "List of _Biomass_core_ parameters and their description.") %>%
+             caption = "List of (ref:moduleName) parameters and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
@@ -113,7 +118,7 @@ All `simList` objects that are changed by *Biomass_core* (*i.e.*, the definition
 ```{r moduleOutputs-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")[, c(1, 3)] ## name + desc only
 knitr::kable(df_outputs,
-             caption = "List of _Biomass_core_ output objects and their description.") %>%
+             caption = "List of (ref:moduleName) output objects and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
@@ -192,7 +197,7 @@ All of *Biomass_core*'s input objects have (theoretical) defaults that are produ
 ```{r moduleInputs2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")
 knitr::kable(df_inputs, 
-             caption = "List of _Biomass_core_ input objects and their description.") %>%
+             caption = "List of (ref:moduleName) input objects and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
@@ -285,7 +290,7 @@ Table \@ref(tab:moduleParams2-Biomass-core) lists all parameters used in *Biomas
 ```{r moduleParams2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_core", "..")
 knitr::kable(df_params,
-             caption = "List of _Biomass_core_ parameters and their description.") %>%
+             caption = "List of (ref:moduleName) parameters and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
@@ -437,7 +442,7 @@ mySim <- simInitAndSpades(times = times,
                           debug = TRUE)
 ```
 
-```{r fig-Biomass-coreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
+```{r fig-Biomass-coreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "(ref:moduleName) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
 knitr::include_graphics(c("figures/Biomass_coreOutPlots1.png", "figures/Biomass_coreOutPlots2.png"))
 ```
 
@@ -694,19 +699,19 @@ knitr::include_graphics("figures/figLBSEtest2.png")
 
 <br/><br/>
 
-```{r figLBSEtest3, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Hashing design for _Biomass_core_. In the re-coded _Biomass_core_, the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key."}
+```{r figLBSEtest3, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Hashing design for (ref:moduleName). In the re-coded (ref:moduleName), the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key."}
 knitr::include_graphics("figures/figLBSEtest3.png")
 ```
 
 <br/><br/>
 
-```{r figLBSEtest4, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and _Biomass_core_ were calculated as $\\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$"}
+```{r figLBSEtest4, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and (ref:moduleName) were calculated as $\\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$"}
 knitr::include_graphics("figures/figLBSEtest4.png")
 ```
 
 <br/><br/>
 
-```{r figLBSEtest5, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Simulation efficiencies of LBSE and _Biomass_core_ with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to _Biomass_core_ running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels."}
+```{r figLBSEtest5, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Simulation efficiencies of LBSE and (ref:moduleName) with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to (ref:moduleName) running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels."}
 knitr::include_graphics("figures/figLBSEtest5.png")
 ```
 
