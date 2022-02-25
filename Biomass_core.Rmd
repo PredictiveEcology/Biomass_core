@@ -1,7 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
 subtitle: "v.`r SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$version`"
-author: "`r paste(unname(vapply(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), function(x) { strsplit(x, split = ' <')[[1]][1] }, character(1))), sep = ', ')`"
 date: "Last updated: `r Sys.Date()`"
 output:
   bookdown::html_document2:
@@ -41,6 +40,11 @@ if (!require(dplyr)) {
 [![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.svg)](http://commonmark.org) [![Generic badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.svg)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
 **This documentation is work in progress. Potential discrepancies and omissions may exist for the time being. If you find any, do contact us using the link above\^\^**
+
+#### Authors:
+
+`r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), sep = ', ')`
+<!-- ideally separate authors with new lines, '\n' not working -->
 
 ## Module Overview
 
