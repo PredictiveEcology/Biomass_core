@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-subtitle: "v.1.3.9"
+subtitle: "v.1.3.3"
 author: "Yong Luo, Eliot J B McIntire, Jean Marchal, Alex M. Chubaty, Ceres Barros"
 date: "Last updated: 2022-02-24"
 output:
