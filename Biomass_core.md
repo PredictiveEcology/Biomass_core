@@ -1,8 +1,8 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-subtitle: "v.1.3.3"
-author: "Yong Luo <yluo1@lakeheadu.ca> [aut], Eliot J B McIntire <eliot.mcintire@canada.ca> [aut, cre], Jean Marchal <jean.d.marchal@gmail.com> [ctb], Alex M. Chubaty <achubaty@for-cast.ca> [ctb], Ceres Barros <cbarros@mail.ubc.ca> [ctb]"
-date: "Last updated: 2022-02-23"
+subtitle: "v.1.3.9"
+author: "Yong Luo, Eliot J B McIntire, Jean Marchal, Alex M. Chubaty, Ceres Barros"
+date: "Last updated: 2022-02-24"
 output:
   bookdown::html_document2:
     toc: true
@@ -29,7 +29,7 @@ always_allow_html: true
 
 ## Module summary
 
-LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:figBiomassCore)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
+LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules [see @ChubatyMcIntire2019]. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:figBiomassCore)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
 
 <div class="figure" style="text-align: center">
 <img src="figures/Biomass_coreSchematic.png" alt="_Biomass_core_ simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)." width="60%" />
@@ -1279,8 +1279,8 @@ mySim <- simInitAndSpades(times = times,
 ```
 
 <div class="figure">
-<img src="figures/Biomass_coreOutPlots1.png" alt="_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (right), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (left)." width="479" /><img src="figures/Biomass_coreOutPlots2.png" alt="_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (right), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (left)." width="305" />
-<p class="caption">(\#fig:figBiomassCoreOutPlots)_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (right), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (left).</p>
+<img src="figures/Biomass_coreOutPlots1.png" alt="_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)." width="479" /><img src="figures/Biomass_coreOutPlots2.png" alt="_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)." width="305" />
+<p class="caption">(\#fig:figBiomassCoreOutPlots)_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below).</p>
 </div>
 
 # Appendix
