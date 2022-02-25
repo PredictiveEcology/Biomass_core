@@ -1,7 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
 subtitle: "v.`r SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$version`"
-author: "`r paste(unname(vapply(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), function(x) { strsplit(x, split = ' <')[[1]][1] }, character(1))), sep = ', ')`"
 date: "Last updated: `r Sys.Date()`"
 output:
   bookdown::html_document2:
@@ -21,7 +20,7 @@ always_allow_html: true
 
 # LandR *Biomass_core* Module
 
-```{r setupBiomassCore, include=FALSE}
+```{r setup-Biomass-core, include=FALSE}
 ## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, warning = FALSE, 
                       cache = 2, cache.rebuild = FALSE, results = "hold", dpi = 300)
@@ -42,13 +41,18 @@ if (!require(dplyr)) {
 
 **This documentation is work in progress. Potential discrepancies and omissions may exist for the time being. If you find any, do contact us using the link above\^\^**
 
+#### Authors:
+
+`r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), sep = ', ')`
+<!-- ideally separate authors with new lines, '\n' not working -->
+
 ## Module Overview
 
 ### Module summary
 
-LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules [see @ChubatyMcIntire2019]. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:figBiomassCore)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
+LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules [see @ChubatyMcIntire2019]. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:fig-Biomass-core)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
 
-```{r figBiomassCore, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "_Biomass_core_ simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)."}
+```{r fig-Biomass-core, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "_Biomass_core_ simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)."}
 knitr::include_graphics("figures/Biomass_coreSchematic.png")
 ```
 
@@ -58,9 +62,9 @@ knitr::include_graphics("figures/Biomass_coreSchematic.png")
 
 Ideally, however, the user should supply realistic versions of these data and the essential initialization objects that *Biomass_core* requires to run.
 
-Table \@ref(tab:moduleInputsBiomassCore) shows a full list of input objects that *Biomass_core* expects. Of these, the only input that **must** be provided (*i.e.*, *Biomass_core* does not have a default for) is `studyArea`.
+Table \@ref(tab:moduleInputs-Biomass-core) shows a full list of input objects that *Biomass_core* expects. Of these, the only input that **must** be provided (*i.e.*, *Biomass_core* does not have a default for) is `studyArea`.
 
-```{r moduleInputsBiomassCore, echo = FALSE, eval = TRUE, message = FALSE}
+```{r moduleInputs-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")[, c(1, 3)]  ## name + desc only
 knitr::kable(df_inputs,
              caption = "List of _Biomass_core_  input objects and their description.") %>%
@@ -77,9 +81,9 @@ Of the above, we draw particular attention to the the following inputs, which ar
 
 For the beginner user, we suggest running *Biomass_core* without supplying any inputs and inspecting the above mentioned objects to understand their structure and format. The user can later either feed these objects via `simInit`, or make a module that makes them and provides necessary inputs to *Biomass_core* (see e.g. [*Biomass_borealDataPrep*](https://github.com/PredictiveEcology/Biomass_borealDataPrep))
 
-Besides the above mentioned inputs, *Biomass_core* uses several other parameters, which can be changed by the user if need be (Table \@ref(tab:moduleParamsBiomassCore)). Please see the [Parameters] section of the manual for a list of the most useful parameters.
+Besides the above mentioned inputs, *Biomass_core* uses several other parameters, which can be changed by the user if need be (Table \@ref(tab:moduleParams-Biomass-core)). Please see the [Parameters] section of the manual for a list of the most useful parameters.
 
-```{r moduleParamsBiomassCore, echo = FALSE, eval = TRUE, message = FALSE}
+```{r moduleParams-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_core", "..")[, c(1, 6)] ## name + desc only
 knitr::kable(df_params,
              caption = "List of _Biomass_core_ parameters and their description.") %>%
@@ -104,9 +108,9 @@ The module produces the following outputs types. -- Plotting -- live and/or save
 
 -- Saved biomass, mortality, leading vegetation raster layers -- Whatever objects supplied to `outputs` argument in `simInit`, that are within the `simList` object.
 
-All `simList` objects that are changed by *Biomass_core* (*i.e.*, the definition of a module output) are listed in Table \@ref(tab:moduleOutputsBiomassCore).
+All `simList` objects that are changed by *Biomass_core* (*i.e.*, the definition of a module output) are listed in Table \@ref(tab:moduleOutputs-Biomass-core).
 
-```{r moduleOutputsBiomassCore, echo = FALSE, eval = TRUE, message = FALSE}
+```{r moduleOutputs-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")[, c(1, 3)] ## name + desc only
 knitr::kable(df_outputs,
              caption = "List of _Biomass_core_ output objects and their description.") %>%
@@ -125,7 +129,7 @@ Intended to be used with other landscape modules, such as *LandMine*, *fireSense
 
 ### Introduction
 
-LandR *Biomass_core* (hereafter *Biomass_core*) a forest landscape model based on the LANDIS-II Biomass Succession Extension v.3.2.1 model [LBSE; @SchellerMiranda2015]. It is the core forest succession model of the LandR ecosystem of `SpaDES` modules. Similarly to the LBSE, *Biomass_core* simulates changes in tree cohort aboveground biomass (g/m^2^.) by calculating growth, mortality and recruitment as functions of pixel and species characteristics, competition and disturbances (Fig. \@ref(fig:figBiomassCore)). Specifically, growth is driven by both invariant (`growthcurve`) and spatially varying species growth traits (maximum biomass, `maxB`, and maximum annual net primary productivity, `maxANPP`), while mortality depends only on invariant species traits (`age`, `longevity` and `mortalityshape`). Disturbances (e.g., fire) can also cause cohort mortality, but are simulated in separate modules (e.g., *Biomass_regeneration* simulates the death of all cohorts immediately after a fire). The parameters `growthcurve` and `mortalityshape` directly influence the shape of species growth curves, by determining how fast they grow and how soon age mortality starts with respect to longevity. Cohort recruitment is determined by available "space" (*i.e.*, pixel shade), invariant species traits (regeneration mode, age at maturity, shade tolerance) and spatially varying traits (species establishment probability, `SEP`). The available "growing space" is calculated as species `maxB` minus the occupied biomass (summed across other cohorts and species). If there is "space", a cohort can establish from one of three recruitment modes: serotiny, resprouting and germinating. Serotiny and resprouting occur only in response to fire and are simulated in two separate, but interchangeable modules, *Biomass_regeneration* and *Biomass_regenerationPM*. Germination occurs if seeds are made available from local sources (the pixel), or via seed dispersal. Seed dispersal can be of three modes: 'no dispersal', 'universal dispersal' (only interesting for dummy case studies) or 'ward dispersal' [@SchellerMiranda2015]. The 'ward dispersal' algorithm describes a flexible kernel that calculates the probability of a species colonising a neighbour pixel as a function of distance from the source and dispersal-related (and invariant) species traits, and is used by default. We refer the reader to @SchellerMiranda2015, @SchellerDomingo2011 and @SchellerDomingo2012 for further details with respect to the mechanisms implemented in the module.
+LandR *Biomass_core* (hereafter *Biomass_core*) a forest landscape model based on the LANDIS-II Biomass Succession Extension v.3.2.1 model [LBSE; @SchellerMiranda2015]. It is the core forest succession model of the LandR ecosystem of `SpaDES` modules. Similarly to the LBSE, *Biomass_core* simulates changes in tree cohort aboveground biomass (g/m^2^.) by calculating growth, mortality and recruitment as functions of pixel and species characteristics, competition and disturbances (Fig. \@ref(fig:fig-Biomass-core)). Specifically, growth is driven by both invariant (`growthcurve`) and spatially varying species growth traits (maximum biomass, `maxB`, and maximum annual net primary productivity, `maxANPP`), while mortality depends only on invariant species traits (`age`, `longevity` and `mortalityshape`). Disturbances (e.g., fire) can also cause cohort mortality, but are simulated in separate modules (e.g., *Biomass_regeneration* simulates the death of all cohorts immediately after a fire). The parameters `growthcurve` and `mortalityshape` directly influence the shape of species growth curves, by determining how fast they grow and how soon age mortality starts with respect to longevity. Cohort recruitment is determined by available "space" (*i.e.*, pixel shade), invariant species traits (regeneration mode, age at maturity, shade tolerance) and spatially varying traits (species establishment probability, `SEP`). The available "growing space" is calculated as species `maxB` minus the occupied biomass (summed across other cohorts and species). If there is "space", a cohort can establish from one of three recruitment modes: serotiny, resprouting and germinating. Serotiny and resprouting occur only in response to fire and are simulated in two separate, but interchangeable modules, *Biomass_regeneration* and *Biomass_regenerationPM*. Germination occurs if seeds are made available from local sources (the pixel), or via seed dispersal. Seed dispersal can be of three modes: 'no dispersal', 'universal dispersal' (only interesting for dummy case studies) or 'ward dispersal' [@SchellerMiranda2015]. The 'ward dispersal' algorithm describes a flexible kernel that calculates the probability of a species colonising a neighbour pixel as a function of distance from the source and dispersal-related (and invariant) species traits, and is used by default. We refer the reader to @SchellerMiranda2015, @SchellerDomingo2011 and @SchellerDomingo2012 for further details with respect to the mechanisms implemented in the module.
 
 ### Differences between *Biomass_core* and LBSE
 
@@ -185,14 +189,14 @@ To be initialized, *Biomass_core* requires the following input objects and param
 
 All of *Biomass_core*'s input objects have (theoretical) defaults that are produced automatically by the module (when running the `.inputObjects` function during the `simInit` call, and in the `init` event during the `spades` call -- see `?SpaDES.core::events` and `SpaDES.core::simInit`). We suggest that new users run *Biomass_core* by itself supplying only a `studyArea` object. This will enable them to become familiar with all the input objects before attempting to supply their own, or combine *Biomass_core* with data modules.
 
-```{r moduleInputs2BiomassCore, echo = FALSE, eval = TRUE, message = FALSE}
+```{r moduleInputs2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")
 knitr::kable(df_inputs, 
              caption = "List of _Biomass_core_ input objects and their description.") %>%
   kableExtra::kable_styling(latex_options = "scale_down", full_width = TRUE)
 ```
 
-Of the inputs in Table \@ref(tab:moduleInputs2BiomassCore), the following are particularly important and deserve special attention:
+Of the inputs in Table \@ref(tab:moduleInputs2-Biomass-core), the following are particularly important and deserve special attention:
 
 -   **Spatial layers**
 
@@ -276,9 +280,9 @@ Of the inputs in Table \@ref(tab:moduleInputs2BiomassCore), the following are pa
 
 #### Parameters
 
-Table \@ref(tab:moduleParams2BiomassCore) lists all parameters used in *Biomass_core*. Note that a few of these parameters are only relevant when simulating climate effects of cohort growth and mortality, which require also loading the `LandR.CS` R package. Like with input objects, default values are supplied for all parameters and we suggest the user becomes familiarized with them before attempting any changes. We also note that the `"spin-up"` and `"biomassMap"` options for the `initialBiomassSource` are currently deactivated, since *Biomass_core* no longer generates initial cohort biomass conditions using a spin-up based on initial stand age like LANDIS-II (`"spin-up"`), nor does it attempt to fill initial cohort biomasses using `biomassMap` (`"biomassMap"`). A list of useful parameters and their description is shown in Table \@ref(tab:tableUsefulParams).
+Table \@ref(tab:moduleParams2-Biomass-core) lists all parameters used in *Biomass_core*. Note that a few of these parameters are only relevant when simulating climate effects of cohort growth and mortality, which require also loading the `LandR.CS` R package. Like with input objects, default values are supplied for all parameters and we suggest the user becomes familiarized with them before attempting any changes. We also note that the `"spin-up"` and `"biomassMap"` options for the `initialBiomassSource` are currently deactivated, since *Biomass_core* no longer generates initial cohort biomass conditions using a spin-up based on initial stand age like LANDIS-II (`"spin-up"`), nor does it attempt to fill initial cohort biomasses using `biomassMap` (`"biomassMap"`). A list of useful parameters and their description is shown in Table \@ref(tab:tableUsefulParams).
 
-```{r moduleParams2BiomassCore, echo = FALSE, eval = TRUE, message = FALSE}
+```{r moduleParams2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_core", "..")
 knitr::kable(df_params,
              caption = "List of _Biomass_core_ parameters and their description.") %>%
@@ -355,7 +359,7 @@ Note that should a post-disturbance regeneration module be used (e.g., *Biomass_
 
 ### Load `SpaDES`
 
-```{r load-SpaDESBiomassCore, eval=FALSE}
+```{r load-SpaDES-Biomass-core, eval=FALSE}
 library(SpaDES)
 
 ## make sure all necessary packages are installed
@@ -371,7 +375,7 @@ See [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modu
 
 ### Setup simulation
 
-```{r module usage example setup BiomassCore, eval=FALSE}
+```{r module usage example setup -Biomass-core, eval=FALSE}
 tempDir <- tempdir()
 setPaths(inputPath = file.path(tempDir, "inputs"), 
          cachePath = file.path(tempDir, "cache"), 
@@ -423,7 +427,7 @@ graphics.off()
 
 ### Run simulation
 
-```{r module usage example run BiomassCore, eval=FALSE}
+```{r module usage example run -Biomass-core, eval=FALSE}
 mySim <- simInitAndSpades(times = times,
                           params = parameters, 
                           modules = modules, 
@@ -433,7 +437,7 @@ mySim <- simInitAndSpades(times = times,
                           debug = TRUE)
 ```
 
-```{r figBiomassCoreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
+```{r fig-Biomass-coreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
 knitr::include_graphics(c("figures/Biomass_coreOutPlots1.png", "figures/Biomass_coreOutPlots2.png"))
 ```
 
