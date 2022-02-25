@@ -163,7 +163,7 @@ defineModule(sim, list(
                  desc = "a raster of the `studyArea` in the same resolution and projection as `biomassMap`"),
     expectsInput("species", "data.table",
                  desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
-                              "Default is partially based on Dominic Cir and Yan Boulanger's project"),
+                              "Default is partially based on Dominic Cyr and Yan Boulanger's project"),
                  sourceURL = "https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv"),
     expectsInput("speciesEcoregion", "data.table",
                  desc = paste("table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time.",
@@ -259,8 +259,8 @@ defineModule(sim, list(
     createsOutput("summaryBySpecies1", "data.table",
                   desc = "No. pixels of each leading vegetation type (used for plotting and reporting)."),
     createsOutput("summaryLandscape", "data.table",
-                  desc = paste("The averages of total biomass (in *ton/ha*, not g/m^2 like in `cohortData`), age",
-                  "and aNPP (also in ton/ha) across the landscape (used for plotting and reporting).")),
+                  desc = paste("The averages of total biomass (in *tonnes/ha*, not g/m^2 like in `cohortData`), age",
+                               "and aNPP (also in tonnes/ha) across the landscape (used for plotting and reporting).")),
     createsOutput("treedFirePixelTableSinceLastDisp", "data.table",
                   desc = paste("3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`.",
                                "Each row represents a forested pixel that was burned up to and including this year,",
@@ -868,7 +868,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     maxBiomass <- maxValue(sim$biomassMap)
     if (maxBiomass < 1e3) {
       if (verbose > 0) {
-        message(crayon::green("  Because biomassMap values are all below 1000, assuming that these are on ton/ha.\n",
+        message(crayon::green("  Because biomassMap values are all below 1000, assuming that these are on tonnes/ha.\n",
                               "    Converting to g/m^2 by multiplying by 100"))
       }
       biomassTable[, `:=`(biomass = biomass * 100)]
