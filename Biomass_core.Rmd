@@ -20,6 +20,8 @@ always_allow_html: true
 ---
 
 ```{r setup, include=FALSE}
+```{r setupBiomassCore, include=FALSE}
+## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, warning = FALSE, 
                       cache = 2, cache.rebuild = FALSE, results = "hold", dpi = 300)
 
@@ -368,7 +370,7 @@ See [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modu
 
 ## Setup simulation
 
-```{r module usage example setup, eval=FALSE}
+```{r module usage example setup BiomassCore, eval=FALSE}
 tempDir <- tempdir()
 setPaths(inputPath = file.path(tempDir, "inputs"), 
          cachePath = file.path(tempDir, "cache"), 
@@ -420,7 +422,7 @@ graphics.off()
 
 ## Run simulation
 
-```{r module usage example run, eval=FALSE}
+```{r module usage example run BiomassCore, eval=FALSE}
 mySim <- simInitAndSpades(times = times,
                           params = parameters, 
                           modules = modules, 
