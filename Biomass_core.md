@@ -20,15 +20,21 @@ always_allow_html: true
 
 # LandR *Biomass_core* Module
 
+<!-- the following are text references used in captions for LaTeX compatibility -->
+(ref:moduleName) *Biomass_core*
 
 
-[![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.svg)](http://commonmark.org) [![Generic badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.svg)](https://github.com/PredictiveEcology/Biomass_core/issues)
+
+[![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.png)](http://commonmark.org) [![Generic badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
+
+<!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
 **This documentation is work in progress. Potential discrepancies and omissions may exist for the time being. If you find any, do contact us using the link above\^\^**
 
 #### Authors:
 
 Yong Luo <yluo1@lakeheadu.ca> [aut], Eliot J B McIntire <eliot.mcintire@canada.ca> [aut, cre], Jean Marchal <jean.d.marchal@gmail.com> [ctb], Alex M. Chubaty <achubaty@for-cast.ca> [ctb], Ceres Barros <cbarros@mail.ubc.ca> [ctb]
+<!-- ideally separate authors with new lines, '\n' not working -->
 
 ## Module Overview
 
@@ -37,8 +43,8 @@ Yong Luo <yluo1@lakeheadu.ca> [aut], Eliot J B McIntire <eliot.mcintire@canada.c
 LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules [see @ChubatyMcIntire2019]. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:fig-Biomass-core)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
 
 <div class="figure" style="text-align: center">
-<img src="figures/Biomass_coreSchematic.png" alt="_Biomass_core_ simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)." width="60%" />
-<p class="caption">(\#fig:fig-Biomass-core)_Biomass_core_ simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules).</p>
+<img src="figures/Biomass_coreSchematic.png" alt="(ref:moduleName) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)." width="60%" />
+<p class="caption">(\#fig:fig-Biomass-core)(ref:moduleName) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules).</p>
 </div>
 
 ### Module inputs and parameters
@@ -50,7 +56,7 @@ Ideally, however, the user should supply realistic versions of these data and th
 Table \@ref(tab:moduleInputs-Biomass-core) shows a full list of input objects that *Biomass_core* expects. Of these, the only input that **must** be provided (*i.e.*, *Biomass_core* does not have a default for) is `studyArea`.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleInputs-Biomass-core)List of _Biomass_core_  input objects and their description.</caption>
+<caption>(\#tab:moduleInputs-Biomass-core)List of (ref:moduleName) input objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -146,7 +152,7 @@ For the beginner user, we suggest running *Biomass_core* without supplying any i
 Besides the above mentioned inputs, *Biomass_core* uses several other parameters, which can be changed by the user if need be (Table \@ref(tab:moduleParams-Biomass-core)). Please see the [Parameters] section of the manual for a list of the most useful parameters.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleParams-Biomass-core)List of _Biomass_core_ parameters and their description.</caption>
+<caption>(\#tab:moduleParams-Biomass-core)List of (ref:moduleName) parameters and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> paramName </th>
@@ -294,7 +300,7 @@ The module produces the following outputs types. -- Plotting -- live and/or save
 All `simList` objects that are changed by *Biomass_core* (*i.e.*, the definition of a module output) are listed in Table \@ref(tab:moduleOutputs-Biomass-core).
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleOutputs-Biomass-core)List of _Biomass_core_ output objects and their description.</caption>
+<caption>(\#tab:moduleOutputs-Biomass-core)List of (ref:moduleName) output objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -482,7 +488,7 @@ To be initialized, *Biomass_core* requires the following input objects and param
 All of *Biomass_core*'s input objects have (theoretical) defaults that are produced automatically by the module (when running the `.inputObjects` function during the `simInit` call, and in the `init` event during the `spades` call -- see `?SpaDES.core::events` and `SpaDES.core::simInit`). We suggest that new users run *Biomass_core* by itself supplying only a `studyArea` object. This will enable them to become familiar with all the input objects before attempting to supply their own, or combine *Biomass_core* with data modules.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleInputs2-Biomass-core)List of _Biomass_core_ input objects and their description.</caption>
+<caption>(\#tab:moduleInputs2-Biomass-core)List of (ref:moduleName) input objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -690,7 +696,7 @@ Of the inputs in Table \@ref(tab:moduleInputs2-Biomass-core), the following are 
 Table \@ref(tab:moduleParams2-Biomass-core) lists all parameters used in *Biomass_core*. Note that a few of these parameters are only relevant when simulating climate effects of cohort growth and mortality, which require also loading the `LandR.CS` R package. Like with input objects, default values are supplied for all parameters and we suggest the user becomes familiarized with them before attempting any changes. We also note that the `"spin-up"` and `"biomassMap"` options for the `initialBiomassSource` are currently deactivated, since *Biomass_core* no longer generates initial cohort biomass conditions using a spin-up based on initial stand age like LANDIS-II (`"spin-up"`), nor does it attempt to fill initial cohort biomasses using `biomassMap` (`"biomassMap"`). A list of useful parameters and their description is shown in Table \@ref(tab:tableUsefulParams).
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleParams2-Biomass-core)List of _Biomass_core_ parameters and their description.</caption>
+<caption>(\#tab:moduleParams2-Biomass-core)List of (ref:moduleName) parameters and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> paramName </th>
@@ -1089,8 +1095,8 @@ mySim <- simInitAndSpades(times = times,
 ```
 
 <div class="figure">
-<img src="figures/Biomass_coreOutPlots1.png" alt="_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)." width="479" /><img src="figures/Biomass_coreOutPlots2.png" alt="_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)." width="305" />
-<p class="caption">(\#fig:fig-Biomass-coreOutPlots)_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below).</p>
+<img src="figures/Biomass_coreOutPlots1.png" alt="(ref:moduleName) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)." width="479" /><img src="figures/Biomass_coreOutPlots2.png" alt="(ref:moduleName) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)." width="305" />
+<p class="caption">(\#fig:fig-Biomass-coreOutPlots)(ref:moduleName) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below).</p>
 </div>
 
 ## Appendix
@@ -1349,22 +1355,22 @@ mySim <- simInitAndSpades(times = times,
 <br/><br/>
 
 <div class="figure" style="text-align: center">
-<img src="figures/figLBSEtest3.png" alt="Hashing design for _Biomass_core_. In the re-coded _Biomass_core_, the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key." width="60%" />
-<p class="caption">(\#fig:figLBSEtest3)Hashing design for _Biomass_core_. In the re-coded _Biomass_core_, the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key.</p>
+<img src="figures/figLBSEtest3.png" alt="Hashing design for (ref:moduleName). In the re-coded (ref:moduleName), the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key." width="60%" />
+<p class="caption">(\#fig:figLBSEtest3)Hashing design for (ref:moduleName). In the re-coded (ref:moduleName), the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key.</p>
 </div>
 
 <br/><br/>
 
 <div class="figure" style="text-align: center">
-<img src="figures/figLBSEtest4.png" alt="Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and _Biomass_core_ were calculated as $\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$" width="60%" />
-<p class="caption">(\#fig:figLBSEtest4)Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and _Biomass_core_ were calculated as $\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$</p>
+<img src="figures/figLBSEtest4.png" alt="Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and (ref:moduleName) were calculated as $\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$" width="60%" />
+<p class="caption">(\#fig:figLBSEtest4)Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and (ref:moduleName) were calculated as $\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$</p>
 </div>
 
 <br/><br/>
 
 <div class="figure" style="text-align: center">
-<img src="figures/figLBSEtest5.png" alt="Simulation efficiencies of LBSE and _Biomass_core_ with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to _Biomass_core_ running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels." width="60%" />
-<p class="caption">(\#fig:figLBSEtest5)Simulation efficiencies of LBSE and _Biomass_core_ with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to _Biomass_core_ running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels.</p>
+<img src="figures/figLBSEtest5.png" alt="Simulation efficiencies of LBSE and (ref:moduleName) with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to (ref:moduleName) running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels." width="60%" />
+<p class="caption">(\#fig:figLBSEtest5)Simulation efficiencies of LBSE and (ref:moduleName) with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to (ref:moduleName) running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels.</p>
 </div>
 
 ## References
