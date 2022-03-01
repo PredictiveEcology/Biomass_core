@@ -21,6 +21,7 @@ always_allow_html: true
 # LandR *Biomass_core* Module
 
 <!-- the following are text references used in captions for LaTeX compatibility -->
+
 (ref:Biomass-core) *Biomass_core*
 
 ```{r setup-Biomass-core, include=FALSE}
@@ -48,8 +49,7 @@ if (!require(dplyr)) {
 
 #### Authors:
 
-`r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), sep = ', ')`
-<!-- ideally separate authors with new lines, '\n' not working -->
+`r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), sep = ', ')` <!-- ideally separate authors with new lines, '\n' not working -->
 
 ## Module Overview
 
@@ -67,7 +67,7 @@ knitr::include_graphics("figures/Biomass_coreSchematic.png")
 
 Ideally, however, the user should supply realistic versions of these data and the essential initialization objects that *Biomass_core* requires to run.
 
-Table \@ref(tab:moduleInputs-Biomass-core) shows a full list of input objects that *Biomass_core* expects. Of these, the only input that **must** be provided (*i.e.*, *Biomass_core* does not have a default for) is `studyArea`.
+Table \@ref(tab:moduleInputs-Biomass-core) shows a full list of input objects that *Biomass_core* expects. Of these, the only input that **must** be provided (*i.e.*, *Biomass_core* does not have a default for) is `studyArea`. All other input objects and parameters have internal defaults (see Tables \@ref(tab:moduleInputs2-Biomass-core) and \@ref(tab:moduleParams2-Biomass-core).
 
 ```{r moduleInputs-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")[, c(1, 3)]  ## name + desc only
@@ -124,7 +124,7 @@ knitr::kable(df_outputs,
 
 ### Links to other modules
 
-Intended to be used with other landscape modules, such as *LandMine*, *fireSense*, *Biomass_borealDataPrep*, *Biomass_regeneration* and possibly many others. You can see all *potential* module linkages within the LandR ecosystem [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem). Select *Biomass_core* from the dropdown menu to see linkages with *Biomass_core*.
+Intended to be used with other landscape modules, such as *LandMine*, *fireSense*, *Biomass_borealDataPrep*, *Biomass_regeneration* and possibly many others. You can see all *potential* module linkages within the LandR ecosystem [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem). Select *Biomass_core* from the drop-down menu to see linkages.
 
 ### Getting help
 
