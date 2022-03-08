@@ -902,7 +902,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
-  sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L, aNPPAct = 0L)]
+  colsToKeep <- c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B")
+  sim$cohortData <- cohortData[, .SD, .SDcol = colsToKeep]
+  sim$cohortData[, c("mortality", "aNPPAct") := 0L]
+  # sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L, aNPPAct = 0L)]
+  #the above breaks with non-default cohortDefinitionCols
+  sim$cohortData <- setcolorder(sim$cohortData, neworder = c("pixelGroup", "ecoregionGroup", "speciesCode", "age", "B",
+                                                             "mortality", "aNPPAct"))
   simulationOutput <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
                                                                 getValues(sim$ecoregionMap),
                                                                 att = "ecoregionGroup"),
