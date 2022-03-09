@@ -1231,6 +1231,10 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
         if (!P(sim)$keepClimateCols) {
           set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
+          if (!is.null(subCohortData$HTp_pred)){
+            subCohortData[, HTp_pred := NULL] #when running LandRCSAM.
+            #TODO: talk with LandR group about long-term solution.
+          }
         }
       }
 
