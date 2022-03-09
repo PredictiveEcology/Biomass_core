@@ -1192,6 +1192,11 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         if (!is.null(subCohortData$growthPred)) {
           set(subCohortData, NULL, c('growthPred', 'mortPred'), NULL)
         }
+        if (!is.null(subCohortData$HTp_pred)){
+          subCohortData[, HTp_pred := NULL] #when running LandRCSAM.
+          #TODO: talk with LandR group about long-term solution.
+        }
+
         #get arguments from sim environment - this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
         #as long as the function is called 'calculateClimateEffect', represents a multiplier, and uses growth, mortality and age limits
         cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
@@ -1231,10 +1236,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
         if (!P(sim)$keepClimateCols) {
           set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
-          if (!is.null(subCohortData$HTp_pred)){
-            subCohortData[, HTp_pred := NULL] #when running LandRCSAM.
-            #TODO: talk with LandR group about long-term solution.
-          }
         }
       }
 
