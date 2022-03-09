@@ -6,7 +6,7 @@ defineModule(sim, list(
   keywords = c("forest succession", "LANDIS II", "Biomass"),
   authors = c(
     person("Yong", "Luo", email = "yluo1@lakeheadu.ca", role = "aut"),
-    person(c("Eliot", "J", "B"), "McIntire", email = "eliot.mcintire@canada.ca", role = c("aut", "cre")),
+    person(c("Eliot", "J", "B"), "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut", "cre")),
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb"),
     person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = "ctb"),
     person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = "ctb")
