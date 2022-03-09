@@ -1,11 +1,12 @@
-ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep, stage, byGroups = c('pixelGroup', 'speciesCode', 'age')) {
+ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep, stage,
+                                                 byGroups = c("pixelGroup", "speciesCode", "age")) {
 
-  byGroupsNoAge <- byGroups[!byGroups %in% 'age'] #age is what will be lumped
+  byGroupsNoAge <- byGroups[!byGroups %in% "age"] # age is what will be lumped
   #byGroups default added for backwards compatibility
   # Slight faster to check only, if not needed, than always convert
-  if (!is.integer(successionTimestep))
+  if (!is.integer(successionTimestep)) {
     successionTimestep <- asInteger(successionTimestep)
-
+  }
   successionTimestepPlusOne <- successionTimestep + 1L
 
   if (stage == "spinup") {
@@ -23,9 +24,9 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
     cdColNames <- colnames(cohortData)
     message("  Setting all ages <= ", successionTimestep, " to ", successionTimestepPlusOne)
     if (any(anyDuplicates)) {
-
-      # pull out only duplicated types -- note "which = TRUE" gives only the indices of the joined rows -- will use the inverse below
-      tdDuplicates <- targetData[targetData[anyDuplicates], nomatch = NULL,
+      # pull out only duplicated types. NOTE "which = TRUE" gives only the indices of the joined rows;
+      # will use the inverse below
+      tdDuplicates <- targetData[unique(targetData[anyDuplicates]), nomatch = NULL,
                                  on = byGroupsNoAge, which = TRUE]
 
       td <- targetData[tdDuplicates]
@@ -49,7 +50,6 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
 
     cohortData <- cohortData[age > successionTimestepPlusOne]
     cohortData <- rbindlist(list(cohortData, targetData), fill = TRUE)
-
   }
   if (isTRUE(getOption("LandR.assertions"))) {
     if (!identical(NROW(cohortData), NROW(unique(cohortData, by = byGroups)))) {
