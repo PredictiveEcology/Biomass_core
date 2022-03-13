@@ -1430,6 +1430,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
     outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
                              currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
                              treedFirePixelTableSinceLastDisp = NULL,
+                             cohortDefinitionCols = P(sim)$cohortDefinitionCols,
                              initialB = P(sim)$initialB,
                              successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
@@ -1572,6 +1573,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
         outs <- updateCohortData(seedingData, cohortData = sim$cohortData,
                                  pixelGroupMap = sim$pixelGroupMap,
                                  currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
+                                 cohortDefinitionCols = P(sim)$cohortDefinitionCols,
                                  treedFirePixelTableSinceLastDisp = NULL,
                                  initialB = P(sim)$initialB,
                                  successionTimestep = P(sim)$successionTimestep)
