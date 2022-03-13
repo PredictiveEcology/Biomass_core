@@ -6,7 +6,7 @@ defineModule(sim, list(
   keywords = c("forest succession", "LANDIS II", "Biomass"),
   authors = c(
     person("Yong", "Luo", email = "yluo1@lakeheadu.ca", role = "aut"),
-    person(c("Eliot", "J", "B"), "McIntire", email = "eliot.mcintire@canada.ca", role = c("aut", "cre")),
+    person(c("Eliot", "J", "B"), "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut", "cre")),
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb"),
     person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = "ctb"),
     person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = "ctb")
@@ -21,7 +21,7 @@ defineModule(sim, list(
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare",
                   "ggplot2", "grid", "parallel", "purrr", "quickPlot",
                   "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>= 1.0.7.9003)",
+                  "PredictiveEcology/LandR@development (>= 1.0.7.9010)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
@@ -925,7 +925,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
-  sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L, aNPPAct = 0L)]
+  colsToKeep <- c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B")
+  sim$cohortData <- cohortData[, .SD, .SDcol = colsToKeep]
+  sim$cohortData[, c("mortality", "aNPPAct") := 0L]
+  # sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L, aNPPAct = 0L)]
+  #the above breaks with non-default cohortDefinitionCols
+  sim$cohortData <- setcolorder(sim$cohortData, neworder = c("pixelGroup", "ecoregionGroup", "speciesCode", "age", "B",
+                                                             "mortality", "aNPPAct"))
   simulationOutput <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
                                                                 getValues(sim$ecoregionMap),
                                                                 att = "ecoregionGroup"),
@@ -1449,8 +1455,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
   ## Seed source cells:
   ## 1. Select only sexually mature cohorts, then
   ## 2. collapse to pixelGroup by species, i.e,. doesn't matter that there is >1 cohort of same species
-  sim$cohortData <- sim$species[, c("speciesCode", "sexualmature")][sim$cohortData,
-                                                                    on = "speciesCode"]
+  sim$cohortData <- sim$species[, c("speciesCode", "sexualmature")][sim$cohortData, on = "speciesCode"]
   # sim$cohortData <- setkey(sim$cohortData, speciesCode)[setkey(sim$species[, .(speciesCode, sexualmature)],
   #                                                              speciesCode),
   #                                                       nomatch = 0]
@@ -1501,16 +1506,20 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
       reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
     }
 
-    seedingData <- LANDISDisp(dtRcv = seedReceive, plot.it = FALSE,
+    seedingData <- LANDISDisp(dtRcv = seedReceive,
                               dtSrc = seedSource,
                               speciesTable = sim$species,
                               pixelGroupMap = reducedPixelGroupMap,
+                              plot.it = FALSE,
                               successionTimestep = P(sim)$successionTimestep,
                               verbose = getOption("LandR.verbose", TRUE) > 0)
 
     if (getOption("LandR.verbose", TRUE) > 0) {
       emptyForestPixels <- sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]
-      seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
+      # unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
+      seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
+                                               on = "pixelIndex", nomatch = 0], by = "pixelIndex")
+
       message(blue("Of", NROW(emptyForestPixels),
                    "burned and empty pixels: Num pixels where seeds arrived:",
                    NROW(seedsArrivedPixels)))
@@ -1540,8 +1549,9 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
 
       seedingData <- seedingData[runif(nrow(seedingData)) <= establishprob, ]
       if (getOption("LandR.verbose", TRUE) > 0) {
-        seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0],
-                                     by = "pixelIndex")
+        # seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
+        seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
+                                                 on = "pixelIndex", nomatch = 0], by = "pixelIndex")
         message(blue("Of", NROW(emptyForestPixels),
                      "burned and empty pixels: Num pixels where seedlings established:",
                      NROW(seedsArrivedPixels)))
@@ -1928,10 +1938,8 @@ CohortAgeReclassification <- function(sim) {
                                           successionTimestep = P(sim)$successionTimestep,
                                           stage = "mainSimulation",
                                           byGroups = P(sim)$cohortDefinitionCols)
-    return(invisible(sim))
-  } else {
-    return(invisible(sim))
   }
+  return(invisible(sim))
 }
 
 .inputObjects <- compiler::cmpfun(function(sim) {
