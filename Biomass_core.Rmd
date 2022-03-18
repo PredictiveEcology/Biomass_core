@@ -41,7 +41,19 @@ if (!require(dplyr)) {
 }
 ```
 
-[![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.png)](http://commonmark.org) [![Generic badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
+```{r badgeFigs-Biomass-core, include=FALSE, eval = TRUE, cache = FALSE}
+dir.create("figures", showWarnings = FALSE)
+
+download.file(url = "https://img.shields.io/badge/Made%20with-Markdown-1f425f.png",
+              destfile = "figures/markdownBadge.png",
+              mode = 'wb')
+download.file(url = "https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.png",
+              destfile = "figures/genericBadge.png",
+              mode = 'wb')
+```
+
+[![made-with-Markdown](figures/markdownBadge.png)](http://commonmark.org)
+[![Generic badge](figures/genericBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
@@ -58,7 +70,9 @@ if (!require(dplyr)) {
 LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules [see @ChubatyMcIntire2019]. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:fig-Biomass-core)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
 
 ```{r fig-Biomass-core, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "(ref:Biomass-core) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)."}
-knitr::include_graphics("figures/Biomass_coreSchematic.png")
+## make sure all include_graphics have wd attached to figure path
+## this is necessary to knit to pdf using child Rmds - see https://stackoverflow.com/questions/61065560/cant-compile-rmarkdown-pdf-with-image-in-child-rmd-latex-error-image-file
+knitr::include_graphics(normalizePath("figures/Biomass_coreSchematic.png", winslash = "/"))
 ```
 
 ### Module inputs and parameters
@@ -443,7 +457,8 @@ mySim <- simInitAndSpades(times = times,
 ```
 
 ```{r fig-Biomass-coreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "(ref:Biomass-core) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
-knitr::include_graphics(c("figures/Biomass_coreOutPlots1.png", "figures/Biomass_coreOutPlots2.png"))
+knitr::include_graphics(normalizePath(c("figures/Biomass_coreOutPlots1.png", 
+                                        "figures/Biomass_coreOutPlots2.png"), winslash = "/"))
 ```
 
 ## Appendix
@@ -688,31 +703,31 @@ knitr::include_graphics(c("figures/Biomass_coreOutPlots1.png", "figures/Biomass_
 ### Figures
 
 ```{r figLBSEtest1, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Differences in total landscape aboveground biomass when using two different input species orders for the same community. These simulations demonstrate how the sequential calculation of the competition index, combined with a lack of explicit species ordering affect the overall landscape aboveground biomass in time when using different input species orders (see Table \\@ref(tab:tableLBSEtest1)). In order to prevent differences introduced by cohort recruitment, species’ ages at sexual maturity were changed to the species’ longevity values, and the simulation ran for 75 years to prevent any cohorts from reaching sexual maturity. The bottom panel shows the difference between the two simulations in percentage, calculated as $\\frac{Biomass_{order2} - Biomass_{order1}}{Biomass_{order2}} * 100$"}
-knitr::include_graphics("figures/figLBSEtest1.png")
+knitr::include_graphics(normalizePath("figures/figLBSEtest1.png", winslash = "/"))
 ```
 
 <br/><br/>
 
 ```{r figLBSEtest2, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Differences in the biomasses assigned to new cohorts, summed for each species across pixels, when using two different input species orders for the same community and when the succession time step is 1. These simulations demonstrate how the different summation of total cohort biomass for a succession time step of 1 and the lack of explicit species ordering affect simulation results when changing the species order in the input file (see Table \\@ref(tab:tableLBSEtest2)). Here, initial cohort ages were also set to 1. We show the initial total biomass attributed to each species at the end of year 1."}
-knitr::include_graphics("figures/figLBSEtest2.png")
+knitr::include_graphics(normalizePath("figures/figLBSEtest2.png", winslash = "/"))
 ```
 
 <br/><br/>
 
 ```{r figLBSEtest3, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Hashing design for (ref:Biomass-core). In the re-coded (ref:Biomass-core), the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key."}
-knitr::include_graphics("figures/figLBSEtest3.png")
+knitr::include_graphics(normalizePath("figures/figLBSEtest3.png", winslash = "/"))
 ```
 
 <br/><br/>
 
 ```{r figLBSEtest4, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and (ref:Biomass-core) were calculated as $\\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$"}
-knitr::include_graphics("figures/figLBSEtest4.png")
+knitr::include_graphics(normalizePath("figures/figLBSEtest4.png", winslash = "/"))
 ```
 
 <br/><br/>
 
 ```{r figLBSEtest5, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Simulation efficiencies of LBSE and (ref:Biomass-core) with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to (ref:Biomass-core) running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels."}
-knitr::include_graphics("figures/figLBSEtest5.png")
+knitr::include_graphics(normalizePath("figures/figLBSEtest5.png", winslash = "/"))
 ```
 
 ## References
