@@ -23,6 +23,7 @@ always_allow_html: true
 <!-- the following are text references used in captions for LaTeX compatibility -->
 
 (ref:Biomass-core) *Biomass_core*
+(ref:percent) %
 
 ```{r setup-Biomass-core, include=FALSE}
 ## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
@@ -194,7 +195,7 @@ Finally, because *Biomass_core* (and all other LandR modules) code is hosted in 
 
 In the recoding of *Biomass_core*, we ensured similar outputs of each demographic process (namely, growth, mortality and recruitment) to the outputs from its counterpart in LBSE, using integration tests. Here, we report the comparisons of the overall simulation (i.e., including all demographic processes) between LBSE and *Biomass_core* using three randomly generated initial communities (Tables \@ref(tab:tableLBSEtest3)-\@ref(tab:tableLBSEtest5)). The remaining input parameters were taken from a LANDIS-II training course (Tables \@ref(tab:tableLBSEtest6)-\@ref(tab:tableLBSEtest9)), and contained species attributes information of 16 common tree species in boreal forests and 2 ecolocations. We ran simulations for 1000 years, with a succession time step of 10 and three repetitions, which were enough to account for the variability produced by stochastic processes. Seed dispersal was set as "ward dispersal".
 
-The results suggested that *Biomass_core* had a good agreement with LBSE using the three randomly generated initial communities (Fig. \@ref(fig:figLBSEtest4)), with very small deviations for LBSE-generated biomasses. Notably, the mean differences between LBSE and *Biomass_core* were 0.03% (range: -0.01% \~ 0.13%), 0.03% (range: -0.01% \~ 0.11%) and 0.05% (-0.02% \~ 0.15%) for each initial community, respectively (right panels in Fig. \@ref(fig:figLBSEtest4) of this appendix).
+The results suggested that *Biomass_core* had a good agreement with LBSE using the three randomly generated initial communities (Fig. \@ref(fig:figLBSEtest4)), with very small deviations for LBSE-generated biomasses. Notably, the mean differences between LBSE and *Biomass_core* were 0.03(ref:percent) (range: -0.01(ref:percent) \~ 0.13(ref:percent)), 0.03(ref:percent) (range: -0.01(ref:percent) \~ 0.11(ref:percent)) and 0.05(ref:percent) (-0.02(ref:percent) \~ 0.15(ref:percent)) for each initial community, respectively (right panels in Fig. \@ref(fig:figLBSEtest4) of this appendix).
 
 To examine how running time changed with map size, we ran simulations using maps with increasing number of pixels from 22,201 to 638,401. All maps were initialised with a single ecolocation and 7 different communities. Simulations were run for 120 years using a succession time step of 10 and replicated three times. To eliminate the effect of hardware on running time, we used machines that were all purchased at the same time, with equal specifications and running Windows 7. Each simulation ran on 2 CPU threads with a total RAM of 4000 Mb. For both LBSE and *Biomass_core*, the simulation time increased linearly with number of pixels, but the increase rate was smaller for *Biomass_core* (Fig. \@ref(fig:figLBSEtest5)a). This meant that while both models had similar simulation efficiencies in small maps (\< 90,000 pixels), as map size increased *Biomass_core* was \~2 times faster than LBSE (maps \> 100,000 pixels; Fig. \@ref(fig:figLBSEtest5)a). *Biomass_core* also scaled better with map size, as LBSE speeds fluctuated between 19 to 25 seconds per 1,000 pixels across all map sizes, while *Biomass_core* decreased from 21 to 11 seconds per 1,000 pixels from smaller to larger maps (Fig. \@ref(fig:figLBSEtest5)b).
 
@@ -376,31 +377,46 @@ Note that should a post-disturbance regeneration module be used (e.g., *Biomass_
 
 ## Usage example
 
-### Load `SpaDES`
+### Set up R libraries
 
-```{r load-SpaDES-Biomass-core, eval=FALSE}
-library(SpaDES)
+```{r load-Rlibs-Biomass-core, eval=FALSE}
+if (!require(Require)) {
+  install.packages("Require")
+  library(Require)
+}
 
-## make sure all necessary packages are installed
-SpaDES.install::makeSureAllPackagesInstalled(modulePath = "../Biomass_core/")
+Require(c("PredictiveEcology/SpaDES.install",
+          "SpaDES", "PredictiveEcology/SpaDES.core@development",
+          "PredictiveEcology/LandR"), 
+        install_githubArgs = list(dependencies = TRUE))# In general, a module code will be controlled at one level above the source code
 
-moduleName <- c("Biomass_core")  
-spadesModulesDirectory <- ".." # In general, a module code will be controlled at one level above the source code
+tempDir <- tempdir()
+spadesModulesDirectory <- file.path(tempDir, "modules")
+
+paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
+              cachePath = normPath(file.path(tempDir, "cache")), 
+              modulePath = normPath(spadesModulesDirectory), 
+              outputPath = normPath(file.path(tempDir, "outputs")))
 ```
 
-### Get the module
+### Get the module and module dependencies
+We can use the `SpaDES.install::getModule` function to download the module to the module folder specified above.
+Alternatively, see [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other `SpaDES` modules, or fork/clone from its [GitHub repository](https://github.com/PredictiveEcology/Biomass_core/) directly.
 
-See [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other `SpaDES` modules. Alternatively, it can be forked or cloned from its [GitHub repository](https://github.com/PredictiveEcology/Biomass_core/) directly.
+After downloading the module, it is important to make sure all module R  package dependencies are installed in their correct version. `SpaDES.install::makeSureAllPackagesInstalled` takes care of this for this and any other module in the `spadesModulesDirectory`.
+
+```{r getModule-Biomass-core, eval=FALSE}
+SpaDES.install::getModule("PredictiveEcology/Biomass_core", 
+                          modulePath = spadesModulesDirectory, overwrite = TRUE)
+
+## make sure all necessary packages are installed:
+SpaDES.install::makeSureAllPackagesInstalled(spadesModulesDirectory)
+```
+
 
 ### Setup simulation
 
 ```{r module usage example setup -Biomass-core, eval=FALSE}
-tempDir <- tempdir()
-setPaths(inputPath = file.path(tempDir, "inputs"), 
-         cachePath = file.path(tempDir, "cache"), 
-         modulePath = spadesModulesDirectory, 
-         outputPath = file.path(tempDir, "outputs"))
-
 times <- list(start = 0, end = 30)
 
 studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
@@ -417,7 +433,6 @@ sppColorVect <- LandR::sppColors(sppEquiv, speciesNameConvention,
 ## Usage example
 modules <- as.list(moduleName)
 objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppColorVect)
-paths <- getPaths()
 
 successionTimestep <- 10L
 
@@ -720,7 +735,7 @@ knitr::include_graphics(normalizePath("figures/figLBSEtest3.png", winslash = "/"
 
 <br/><br/>
 
-```{r figLBSEtest4, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and (ref:Biomass-core) were calculated as $\\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$"}
+```{r figLBSEtest4, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The (ref:percent) difference between LBSE and (ref:Biomass-core) were calculated as $\\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$"}
 knitr::include_graphics(normalizePath("figures/figLBSEtest4.png", winslash = "/"))
 ```
 
