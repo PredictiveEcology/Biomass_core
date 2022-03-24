@@ -377,9 +377,9 @@ Note that should a post-disturbance regeneration module be used (e.g., *Biomass_
 
 ## Usage example
 
-### Load `SpaDES`
+### Set up R libraries
 
-```{r load-SpaDES-Biomass-core, eval=FALSE}
+```{r load-Rlibs-Biomass-core, eval=FALSE}
 if (!require(Require)) {
   install.packages("Require")
   library(Require)
@@ -397,17 +397,22 @@ paths <- list(inputPath = normPath(file.path(tempDir, "inputs")),
               cachePath = normPath(file.path(tempDir, "cache")), 
               modulePath = normPath(spadesModulesDirectory), 
               outputPath = normPath(file.path(tempDir, "outputs")))
-
-getModule("PredictiveEcology/Biomass_core", 
-                       modulePath = spadesModulesDirectory, overwrite = TRUE)
-
-## make sure all necessary packages are installed:
-makeSureAllPackagesInstalled(spadesModulesDirectory)
 ```
 
-### Get the module
+### Get the module and module dependencies
+We can use the `SpaDES.install::getModule` function to download the module to the module folder specified above.
+Alternatively, see [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other `SpaDES` modules, or fork/clone from its [GitHub repository](https://github.com/PredictiveEcology/Biomass_core/) directly.
 
-See [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other `SpaDES` modules. Alternatively, it can be forked or cloned from its [GitHub repository](https://github.com/PredictiveEcology/Biomass_core/) directly.
+After downloading the module, it is important to make sure all module R  package dependencies are installed in their correct version. `SpaDES.install::makeSureAllPackagesInstalled` takes care of this for this and any other module in the `spadesModulesDirectory`.
+
+```{r getModule-Biomass-core, eval=FALSE}
+SpaDES.install::getModule("PredictiveEcology/Biomass_core", 
+                          modulePath = spadesModulesDirectory, overwrite = TRUE)
+
+## make sure all necessary packages are installed:
+SpaDES.install::makeSureAllPackagesInstalled(spadesModulesDirectory)
+```
+
 
 ### Setup simulation
 
