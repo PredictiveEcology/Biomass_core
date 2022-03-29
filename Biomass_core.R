@@ -44,6 +44,10 @@ defineModule(sim, list(
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
                     desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
+    defineParameter("initialB", "numeric", 10, 1, NA,
+                    desc = paste("initial biomass values of new age-1 cohorts.",
+                                 "If `NA` or `NULL`, initial biomass will be calculated as in LANDIS-II Biomass Suc. Extension",
+                                 "(see Scheller and Miranda, 2015 or `?LandR::.initiateNewCohorts`)")),
     defineParameter("gmcsGrowthLimits", "numeric", c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
                     paste("if using `LandR.CS` for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
@@ -66,7 +70,6 @@ defineModule(sim, list(
                                  "(see `LandR.CS` for climate sensitivity equivalent functions, or leave default if this is not desired)")),
     defineParameter("growthInitialTime", "numeric", start(sim), NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
-    defineParameter("initialB", "numeric", 10, 1, NA, desc = "initial biomass values of new age-1 cohorts"),
     defineParameter("initialBiomassSource", "character", "cohortData", NA, NA,
                     paste("Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. ",
                           "If 'spinUp', it will derive biomass by running spinup derived from Landis-II.",
@@ -542,6 +545,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
             "Only trees that are older than successionTimestep are included in the ",
             "calculation of sumB, i.e., trees younger than this do not contribute ",
             "to competitive interactions")
+
+  paramCheckOtherMods(sim, "initialB", ifSetButDifferent = "warning")
+
   ##############################################
   ## Prepare individual objects
   ##############################################
