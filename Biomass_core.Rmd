@@ -391,11 +391,9 @@ Require(c("PredictiveEcology/SpaDES.install",
         install_githubArgs = list(dependencies = TRUE))# In general, a module code will be controlled at one level above the source code
 
 tempDir <- tempdir()
-spadesModulesDirectory <- file.path(tempDir, "modules")
-
 paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
               cachePath = normPath(file.path(tempDir, "cache")), 
-              modulePath = normPath(spadesModulesDirectory), 
+              modulePath = normPath(file.path(tempDir, "modules")), 
               outputPath = normPath(file.path(tempDir, "outputs")))
 ```
 
@@ -403,14 +401,14 @@ paths <- list(inputPath = normPath(file.path(tempDir, "inputs")),
 We can use the `SpaDES.install::getModule` function to download the module to the module folder specified above.
 Alternatively, see [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other `SpaDES` modules, or fork/clone from its [GitHub repository](https://github.com/PredictiveEcology/Biomass_core/) directly.
 
-After downloading the module, it is important to make sure all module R  package dependencies are installed in their correct version. `SpaDES.install::makeSureAllPackagesInstalled` takes care of this for this and any other module in the `spadesModulesDirectory`.
+After downloading the module, it is important to make sure all module R  package dependencies are installed in their correct version. `SpaDES.install::makeSureAllPackagesInstalled` takes care of this for this and any other module in the `paths$modulePath`.
 
 ```{r getModule-Biomass-core, eval=FALSE}
 SpaDES.install::getModule("PredictiveEcology/Biomass_core", 
-                          modulePath = spadesModulesDirectory, overwrite = TRUE)
+                          modulePath = paths$modulePath, overwrite = TRUE)
 
 ## make sure all necessary packages are installed:
-SpaDES.install::makeSureAllPackagesInstalled(spadesModulesDirectory)
+SpaDES.install::makeSureAllPackagesInstalled(paths$modulePath)
 ```
 
 
