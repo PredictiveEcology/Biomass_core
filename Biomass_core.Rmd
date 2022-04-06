@@ -28,7 +28,7 @@ always_allow_html: true
 ```{r setup-Biomass-core, include=FALSE}
 ## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
 knitr::opts_chunk$set(echo = TRUE, eval = FALSE, warning = FALSE, 
-                      cache = 2, cache.rebuild = FALSE, results = "hold", dpi = 300)
+                      cache = TRUE, cache.rebuild = FALSE, results = "hold", dpi = 300)
 
 ## get citation style
 if (!file.exists("citations/ecology-letters.csl")) {
