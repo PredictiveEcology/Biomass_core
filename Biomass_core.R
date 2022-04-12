@@ -634,6 +634,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     sim$sppColorVect <- tempObjs$sppColorVect
     rm(tempObjs)
 
+    assertSppVectors(sppEquiv = sim$species, sppEquivCol = "speciesCode",
+                     sppColorVect = sim$sppColorVect)
+
     pixelTable <- makePixelTable(speciesLayers = sim$speciesLayers, #species = sim$species,
                                  standAgeMap = standAgeMap, ecoregionFiles = ecoregionFiles,
                                  biomassMap = rawBiomassMap, rasterToMatch = sim$rasterToMatch,
@@ -1617,6 +1620,8 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
+  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = sim$sppEquivCol,
+                   sppColorVect = cols2)
 
   checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
 
@@ -1765,6 +1770,8 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
 plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
+  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = sim$sppEquivCol,
+                   sppColorVect = sim$sppColorVect)
 
   ## these plots are not saved.
   plotTypes <- "screen"
