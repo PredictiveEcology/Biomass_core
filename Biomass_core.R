@@ -2082,13 +2082,14 @@ CohortAgeReclassification <- function(sim) {
   P(sim)$sppEquivCol <- sppOuts$sppEquivCol
   sim$sppColorVect <- sppOuts$sppColorVect
 
-  ## check spp column to use
+  ## make empty treedFirePixelTableSinceLastDisp
   if (!suppliedElsewhere("treedFirePixelTableSinceLastDisp", sim)) {
     sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(),
                                                        pixelGroup = integer(),
                                                        burnTime = numeric())
   }
 
+  ## get default species layers
   if (!suppliedElsewhere("speciesLayers", sim)) {
     message("No RasterStack map of biomass X species is provided; using KNN")
     url <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
@@ -2117,6 +2118,7 @@ CohortAgeReclassification <- function(sim) {
                                     sppEquivCol = P(sim)$sppEquivCol)
   }
 
+  ## if not using LandR growth/mortality drivers... (assumes LandR.CS)
   if (P(sim)$growthAndMortalityDrivers != 'LandR') {
     if (!suppliedElsewhere("cceArgs", sim)) {
       sim$cceArgs <- list(quote(CMI),
