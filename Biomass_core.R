@@ -21,7 +21,7 @@ defineModule(sim, list(
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare",
                   "ggplot2", "grid", "parallel", "purrr", "quickPlot",
                   "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>= 1.0.7.9010)",
+                  "PredictiveEcology/LandR@development (>= 1.0.7.9015)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
@@ -189,6 +189,11 @@ defineModule(sim, list(
                               "and should also contain a color for 'Mixed'")),
     expectsInput("sppEquiv", "data.table",
                  desc = "table of species equivalencies. See `LandR::sppEquivalencies_CA`."),
+    expectsInput("sppNameVector", "character",
+                 desc = paste("an optional vector of species names to be pulled from `sppEquiv`. Species names must match",
+                              "`P(sim)$sppEquivCol` column in `sppEquiv`. If not provided, then species will be taken from",
+                              "the entire `P(sim)$sppEquivCol` column in `sppEquiv`.",
+                              "See `LandR::sppEquivalencies_CA`.")),
     expectsInput("studyArea", "SpatialPolygonsDataFrame",
                  desc = paste("Polygon to use as the study area. Must be provided by the user")),
     expectsInput("studyAreaReporting", "SpatialPolygonsDataFrame",
@@ -925,7 +930,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
-  colsToKeep <- c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B")
+  colsToKeep <- unique(c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B"))
   sim$cohortData <- cohortData[, .SD, .SDcol = colsToKeep]
   sim$cohortData[, c("mortality", "aNPPAct") := 0L]
   # sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L, aNPPAct = 0L)]
@@ -2061,60 +2066,30 @@ CohortAgeReclassification <- function(sim) {
     sim$sufficientLight <- data.frame(sufficientLight, stringsAsFactors = FALSE)
   }
 
-  if (!suppliedElsewhere("sppEquiv", sim)) {
-    if (!is.null(sim$sppColorVect))
-      stop("If you provide sppColorVect, you MUST also provide sppEquiv")
+  ## make sppEquiv table and associated columns, vectors
+  ## do not use suppliedElsewhere here as we need the tables to exist (or not)
+  ## already (rather than potentially being supplied by a downstream module)
+  ## the function checks whether the tables exist internally.
+  ## check parameter consistency across modules
+  paramCheckOtherMods(sim, "sppEquivCol", ifSetButDifferent = "error")
+  paramCheckOtherMods(sim, "vegLeadingProportion", ifSetButDifferent = "error")
 
-    data("sppEquivalencies_CA", package = "LandR", envir = environment())
-    sim$sppEquiv <- as.data.table(sppEquivalencies_CA)
-    ## By default, Abies_las is renamed to Abies_sp
-    sim$sppEquiv[KNN == "Abie_Las", LandR := "Abie_sp"]
+  sppOuts <- sppHarmonize(sim$sppEquiv, sim$sppNameVector, P(sim)$sppEquivCol,
+                          sim$sppColorVect, P(sim)$vegLeadingProportion)
+  ## the following may, or may not change inputs
+  sim$sppEquiv <- sppOuts$sppEquiv
+  sim$sppNameVector <- sppOuts$sppNameVector
+  P(sim)$sppEquivCol <- sppOuts$sppEquivCol
+  sim$sppColorVect <- sppOuts$sppColorVect
 
-    ## check spp column to use
-    if (P(sim)$sppEquivCol == "Boreal") {
-      message(paste("There is no 'sppEquiv' table supplied;",
-                    "will attempt to use species listed under 'Boreal'",
-                    "in the 'LandR::sppEquivalencies_CA' table"))
-    } else {
-      if (grepl(P(sim)$sppEquivCol, names(sim$sppEquiv))) {
-        message(paste("There is no 'sppEquiv' table supplied,",
-                      "will attempt to use species listed under", P(sim)$sppEquivCol,
-                      "in the 'LandR::sppEquivalencies_CA' table"))
-      } else {
-        stop("You changed 'sppEquivCol' without providing 'sppEquiv',",
-             "and the column name can't be found in the default table ('LandR::sppEquivalencies_CA').",
-             "Please provide conforming 'sppEquivCol', 'sppEquiv' and 'sppColorVect'")
-      }
-    }
-
-    ## remove empty lines/NAs
-    sim$sppEquiv <- sim$sppEquiv[!"", on = P(sim)$sppEquivCol]
-    sim$sppEquiv <- na.omit(sim$sppEquiv, P(sim)$sppEquivCol)
-
-    ## add default colors for species used in model
-    sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
-                                  newVals = "Mixed", palette = "Accent")
-  } else {
-    if (is.null(sim$sppColorVect)) {
-      message("'sppEquiv' is provided without a 'sppColorVect'. Running:
-              LandR::sppColors with column ", P(sim)$sppEquivCol)
-      sim$sppColorVect <- sppColors(sim$sppEquiv, P(sim)$sppEquivCol,
-                                    newVals = "Mixed", palette = "Accent")
-    }
-  }
-
-  if (P(sim)$vegLeadingProportion > 0 & is.na(sim$sppColorVect['Mixed'])) {
-    stop("vegLeadingProportion  is > 0 but there is no 'Mixed' color in sim$sppColorVect. ",
-         "Please supply sim$sppColorVect with a 'Mixed' color or set vegLeadingProportion to zero.")
-  }
-
-
+  ## make empty treedFirePixelTableSinceLastDisp
   if (!suppliedElsewhere("treedFirePixelTableSinceLastDisp", sim)) {
     sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(),
                                                        pixelGroup = integer(),
                                                        burnTime = numeric())
   }
 
+  ## get default species layers
   if (!suppliedElsewhere("speciesLayers", sim)) {
     message("No RasterStack map of biomass X species is provided; using KNN")
     url <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
@@ -2143,6 +2118,7 @@ CohortAgeReclassification <- function(sim) {
                                     sppEquivCol = P(sim)$sppEquivCol)
   }
 
+  ## if not using LandR growth/mortality drivers... (assumes LandR.CS)
   if (P(sim)$growthAndMortalityDrivers != 'LandR') {
     if (!suppliedElsewhere("cceArgs", sim)) {
       sim$cceArgs <- list(quote(CMI),
