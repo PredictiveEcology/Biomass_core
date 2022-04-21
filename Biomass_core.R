@@ -21,6 +21,7 @@ defineModule(sim, list(
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare",
                   "ggplot2", "grid", "parallel", "purrr", "quickPlot",
                   "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
+                  "RandomFields",
                   "CeresBarros/LandR@LANDISinitialB (>= 1.0.7.9017)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
@@ -646,6 +647,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     sim$speciesLayers <- tempObjs$speciesLayers
     sim$sppColorVect <- tempObjs$sppColorVect
     rm(tempObjs)
+
+    assertSppVectors(sppEquiv = sim$species, sppEquivCol = "speciesCode",
+                     sppColorVect = sim$sppColorVect)
 
     pixelTable <- makePixelTable(speciesLayers = sim$speciesLayers, #species = sim$species,
                                  standAgeMap = standAgeMap, ecoregionFiles = ecoregionFiles,
@@ -1632,6 +1636,8 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
+  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+                   sppColorVect = cols2)
 
   checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
 
@@ -1780,6 +1786,8 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
 plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
+  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+                   sppColorVect = sim$sppColorVect)
 
   ## these plots are not saved.
   plotTypes <- "screen"
