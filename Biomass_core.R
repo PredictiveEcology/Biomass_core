@@ -2087,7 +2087,7 @@ CohortAgeReclassification <- function(sim) {
   ## the following may, or may not change inputs
   sim$sppEquiv <- sppOuts$sppEquiv
   sim$sppNameVector <- sppOuts$sppNameVector
-  P(sim)$sppEquivCol <- sppOuts$sppEquivCol
+  P(sim, module = currentModule(sim))$sppEquivCol <- sppOuts$sppEquivCol
   sim$sppColorVect <- sppOuts$sppColorVect
 
   ## make empty treedFirePixelTableSinceLastDisp
