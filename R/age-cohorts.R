@@ -31,12 +31,26 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
 
       td <- targetData[tdDuplicates]
 
+      #this is another reason for the RIA Branch - likely not permanent
+      if (!is.null(cohortData$HTp_pred)) {
+
       td <- td[, .(ecoregionGroup = unique(ecoregionGroup),
                    age = successionTimestepPlusOne,
                    B = sum(B, na.rm = TRUE),
                    mortality = sum(mortality, na.rm = TRUE),
-                   aNPPAct = sum(aNPPAct, na.rm = TRUE)),
+                   aNPPAct = sum(aNPPAct, na.rm = TRUE),
+                   growthPred = sum(B * growthPred)/sum(B),
+                   mortPred = sum(B * mortPred)/sum(B),
+                   HTp_pred = sum(B * HTp_pred)/sum(B)),
                by = byGroupsNoAge]
+      } else {
+        td <- td[, .(ecoregionGroup = unique(ecoregionGroup),
+                     age = successionTimestepPlusOne,
+                     B = sum(B, na.rm = TRUE),
+                     mortality = sum(mortality, na.rm = TRUE),
+                     aNPPAct = sum(aNPPAct, na.rm = TRUE)),
+                 by = byGroupsNoAge]
+      }
       cdColNames <- intersect(colnames(cohortData), colnames(td))
       td <- td[, ..cdColNames] # keep only the columns, in the correct order, as cohortData
       tdNonDups <- targetData[-tdDuplicates]
