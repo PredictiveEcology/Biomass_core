@@ -151,7 +151,7 @@ Intended to be used with other landscape modules, such as *LandMine*, *fireSense
 
 LandR *Biomass_core* (hereafter *Biomass_core*) a forest landscape model based on the LANDIS-II Biomass Succession Extension v.3.2.1 model [LBSE; @SchellerMiranda2015]. It is the core forest succession model of the LandR ecosystem of `SpaDES` modules. Similarly to the LBSE, *Biomass_core* simulates changes in tree cohort aboveground biomass (g/m^2^.) by calculating growth, mortality and recruitment as functions of pixel and species characteristics, competition and disturbances (Fig. \@ref(fig:fig-Biomass-core)). Specifically, growth is driven by both invariant (`growthcurve`) and spatially varying species growth traits (maximum biomass, `maxB`, and maximum annual net primary productivity, `maxANPP`), while mortality depends only on invariant species traits (`age`, `longevity` and `mortalityshape`). Disturbances (e.g., fire) can also cause cohort mortality, but are simulated in separate modules (e.g., *Biomass_regeneration* simulates the death of all cohorts immediately after a fire). The parameters `growthcurve` and `mortalityshape` directly influence the shape of species growth curves, by determining how fast they grow and how soon age mortality starts with respect to longevity. Cohort recruitment is determined by available "space" (*i.e.*, pixel shade), invariant species traits (regeneration mode, age at maturity, shade tolerance) and spatially varying traits (species establishment probability, `SEP`). The available "growing space" is calculated as species `maxB` minus the occupied biomass (summed across other cohorts and species). If there is "space", a cohort can establish from one of three recruitment modes: serotiny, resprouting and germinating. Serotiny and resprouting occur only in response to fire and are simulated in two separate, but interchangeable modules, *Biomass_regeneration* and *Biomass_regenerationPM*. Germination occurs if seeds are made available from local sources (the pixel), or via seed dispersal. Seed dispersal can be of three modes: 'no dispersal', 'universal dispersal' (only interesting for dummy case studies) or 'ward dispersal' [@SchellerMiranda2015]. The 'ward dispersal' algorithm describes a flexible kernel that calculates the probability of a species colonising a neighbour pixel as a function of distance from the source and dispersal-related (and invariant) species traits, and is used by default. We refer the reader to @SchellerMiranda2015, @SchellerDomingo2011 and @SchellerDomingo2012 for further details with respect to the mechanisms implemented in the module.
 
-### Differences between *Biomass_core* and LBSE
+### Differences between *Biomass_core* and the LANDIS-II Biomass Succession Extension (LBSE)
 
 #### Algorithm changes
 
@@ -391,11 +391,9 @@ Require(c("PredictiveEcology/SpaDES.install",
         install_githubArgs = list(dependencies = TRUE))# In general, a module code will be controlled at one level above the source code
 
 tempDir <- tempdir()
-spadesModulesDirectory <- file.path(tempDir, "modules")
-
 paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
               cachePath = normPath(file.path(tempDir, "cache")), 
-              modulePath = normPath(spadesModulesDirectory), 
+              modulePath = normPath(file.path(tempDir, "modules")), 
               outputPath = normPath(file.path(tempDir, "outputs")))
 ```
 
@@ -403,14 +401,14 @@ paths <- list(inputPath = normPath(file.path(tempDir, "inputs")),
 We can use the `SpaDES.install::getModule` function to download the module to the module folder specified above.
 Alternatively, see [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other `SpaDES` modules, or fork/clone from its [GitHub repository](https://github.com/PredictiveEcology/Biomass_core/) directly.
 
-After downloading the module, it is important to make sure all module R  package dependencies are installed in their correct version. `SpaDES.install::makeSureAllPackagesInstalled` takes care of this for this and any other module in the `spadesModulesDirectory`.
+After downloading the module, it is important to make sure all module R  package dependencies are installed in their correct version. `SpaDES.install::makeSureAllPackagesInstalled` takes care of this for this and any other module in the `paths$modulePath`.
 
 ```{r getModule-Biomass-core, eval=FALSE}
 SpaDES.install::getModule("PredictiveEcology/Biomass_core", 
-                          modulePath = spadesModulesDirectory, overwrite = TRUE)
+                          modulePath = paths$modulePath, overwrite = TRUE)
 
 ## make sure all necessary packages are installed:
-SpaDES.install::makeSureAllPackagesInstalled(spadesModulesDirectory)
+SpaDES.install::makeSureAllPackagesInstalled(paths$modulePath)
 ```
 
 
@@ -471,7 +469,7 @@ mySim <- simInitAndSpades(times = times,
                           debug = TRUE)
 ```
 
-```{r fig-Biomass-coreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "(ref:Biomass-core) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
+```{r fig-Biomass-coreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "50%", fig.cap = "(ref:Biomass-core) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
 knitr::include_graphics(normalizePath(c("figures/Biomass_coreOutPlots1.png", 
                                         "figures/Biomass_coreOutPlots2.png"), winslash = "/"))
 ```
