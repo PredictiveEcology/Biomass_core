@@ -431,8 +431,9 @@ mySim <- simInitAndSpades(times = times,
                           debug = TRUE)
 ```
 
-```{r figBiomassCoreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', fig.cap = "_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
-knitr::include_graphics(c("figures/Biomass_coreOutPlots1.png", "figures/Biomass_coreOutPlots2.png"))
+```{r fig-Biomass-coreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "50%", fig.cap = "(ref:Biomass-core) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
+knitr::include_graphics(normalizePath(c("figures/Biomass_coreOutPlots1.png", 
+                                        "figures/Biomass_coreOutPlots2.png"), winslash = "/"))
 ```
 
 # Appendix
