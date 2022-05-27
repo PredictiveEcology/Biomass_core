@@ -6,6 +6,7 @@ output:
   bookdown::html_document2:
     toc: true
     toc_float: true
+    toc_depth: 4
     theme: sandstone
     number_sections: false
     df_print: paged
@@ -17,8 +18,6 @@ citation-style: citations/ecology-letters.csl
 link-citations: true
 always_allow_html: true
 ---
-
-# LandR *Biomass_core* Module
 
 <!-- the following are text references used in captions for LaTeX compatibility -->
 
