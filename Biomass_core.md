@@ -28,7 +28,8 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](figures/moduleVersionBadge.png)]() <!-- it would be nice to be able to link the badge to the version commit automatically--> [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
+<!-- it would be nice to be able to link the badge to the version commit automatically-->
+[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/CeresBarros/Biomass_core/commit/665d6db36f5f12d3c5068aa3e5ecc874e84f51f0)  [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
@@ -91,7 +92,7 @@ LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession si
 
 ### General functioning {#general-functioning}
 
-LandR *Biomass_core* (hereafter *Biomass_core*) is a forest landscape model based on the LANDIS-II Biomass Succession Extension v.3.2.1 model [LBSE, @SchellerMiranda2015]. It is the core forest succession model of the LandR ecosystem of `SpaDES` modules. Similarly to LBSE, *Biomass_core* simulates changes in tree cohort aboveground biomass ($g/m^2$) by calculating growth, mortality and recruitment as functions of pixel and species characteristics, competition and disturbances (Fig. \@ref(fig:fig-Biomass-core)). Note that, by default, cohorts are unique combinations of species and age, but this can be changed via the `cohortDefinitionCols` parameter (see [List of parameters]).
+LandR *Biomass_core* (hereafter *Biomass_core*) is a forest landscape model based on the LANDIS-II Biomass Succession Extension v.3.2.1 model [LBSE, @SchellerMiranda2015]. It is the core forest succession model of the LandR ecosystem of `SpaDES` modules. Similarly to LBSE, *Biomass_core* simulates changes in tree cohort aboveground biomass ($g/m^2$) by calculating growth, mortality and recruitment as functions of pixel and species characteristics, competition and disturbances (Fig. \@ref(fig:fig-Biomass-core)). Note that, by default, cohorts are unique combinations of species and age, but this can be changed via the `cohortDefinitionCols` parameter (see [List of parameters](#params-list)).
 
 Specifically, cohort growth is driven by both invariant (growth shape parameter, `growthcurve`) and spatio-temporally varying species traits (maximum biomass, `maxB`, and maximum annual net primary productivity, `maxANPP`), while background mortality (i.e., not caused by disturbances) depends only on invariant species traits (`longevity` and mortality shape parameter, `mortalityshape`). All five traits directly influence the realised shape of species growth curves, by determining how fast they grow (`growthcurve` and `maxANPP`), how soon age mortality starts with respect to longevity (`mortalityshape`) and the biomass a cohort can potentially achieve (`maxB`).
 
@@ -404,7 +405,7 @@ A list of useful parameters and their description is shown in Table \@ref(tab:ta
 
 ::: fullwidth
 | Required inputs        | Description                                                                                     |
-|:------------------------|:-----------------------------------------------|
+|:------------------------|:----------------------------------------------|
 | Plotting & saving      |                                                                                                 |
 | `.plots`               | activates/deactivates plotting and defines type fo plotting (see `?Plots`)                      |
 | `.plotInitialTime`     | defines when plotting starts                                                                    |
