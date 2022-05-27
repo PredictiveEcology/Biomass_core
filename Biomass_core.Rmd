@@ -62,7 +62,7 @@ download.file(url = paste0("https://img.shields.io/badge/Biomass_core-", paste("
               mode = 'wb')
 ```
 
-[![module-version-Badge](figures/moduleVersionBadge.png)]() <!-- it would be nice to be able to link the badge to the version commit automatically--> [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
+[![module-version-Badge](figures/moduleVersionBadge.png)](gitkraken://repolink/a48641ae0d889e8a343894ebfbd1c1b752270d00/commit/fd1ba86ef69b68025c54a365a3f13851d06d19f7?url=git%40github.com%3ACeresBarros%2FBiomass_core.git) <!-- it would be nice to be able to link the badge to the version commit automatically--> [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
