@@ -56,7 +56,7 @@ if (!file.exists("figures/issuesBadge.png")) {
 }
 
 modversion <- paste(unlist(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$version), collapse = ".")
-download.file(url = paste0("https://img.shields.io/badge/Biomass_core-", paste("v.", modversion),
+download.file(url = paste0("https://img.shields.io/badge/Biomass_core-", paste0("v.%20", modversion),
                            "-%3CCOLOR%3E.png"),
               destfile = "figures/moduleVersionBadge.png",
               mode = 'wb')
