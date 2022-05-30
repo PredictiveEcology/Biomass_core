@@ -162,7 +162,7 @@ defineModule(sim, list(
     expectsInput("lastReg", "numeric",
                  desc = "an internal counter keeping track of when the last regeneration event occurred"),
     expectsInput("minRelativeB", "data.frame",
-                 desc = "table defining the relative biomass cut points to classify stand shadeness"),
+                 desc = "table defining the relative biomass cut points to classify stand shadeness."),
     expectsInput("pixelGroupMap", "RasterLayer",
                  desc = paste("a raster layer with `pixelGroup` IDs per pixel. Pixels are grouped" ,
                               "based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition,",
@@ -284,7 +284,7 @@ defineModule(sim, list(
                                "since last dispersal event, with its corresponding `pixelGroup` and time it occurred")),
     createsOutput("vegTypeMap", "RasterLayer",
                   desc = paste("Map of leading species in each pixel, colored according to `sim$sppColorVect`.",
-                               "Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)`$mixedType."))
+                               "Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)$mixedType`."))
   )
 ))
 
