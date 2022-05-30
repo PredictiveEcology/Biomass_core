@@ -63,7 +63,9 @@ download.file(url = paste0("https://img.shields.io/badge/Biomass_core-", paste("
 ```
 
 <!-- it would be nice to be able to link the badge to the version commit automatically-->
-[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/CeresBarros/Biomass_core/commit/665d6db36f5f12d3c5068aa3e5ecc874e84f51f0)  [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
+[![module-version-Badge](`r normalizePath('figures/moduleVersionBadge.png')`)](https://github.com/CeresBarros/Biomass_core/commit/665d6db36f5f12d3c5068aa3e5ecc874e84f51f0) 
+
+[![Issues-badge](`r normalizePath('figures/issuesBadge.png')`)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
 <!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
 
@@ -99,13 +101,18 @@ knitr::include_graphics(normalizePath("figures/Biomass_coreSchematic.png", winsl
 
 ### Links to other modules {#links-modules}
 
-*Biomass_core* is intended to be used with data/calibration modules, disturbance modules and validation modules, amongst others. The following is a list of the modules most commonly used with *Biomass_core*. Not all are in the [LandR Manual](https://landr-manual.predictiveecology.org/), but click the links to their repository URLs where documentation can be found (`.Rmd` file). See [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem) for all available modules and select *Biomass_core* from the drop-down menu to see linkages.
+*Biomass_core* is intended to be used with data/calibration modules, disturbance modules and validation modules, amongst others. The following is a list of the modules most commonly used with *Biomass_core*. Not all are in the [LandR Manual](https://landr-manual.predictiveecology.org/), but see each module's documentation (`.Rmd` file) available in its repository. 
+
+See [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem) for all available modules and select *Biomass_core* from the drop-down menu to see linkages.
 
 **Data and calibration modules:**
 
 -   [*Biomass_speciesData*](https://github.com/PredictiveEcology/Biomass_speciesData): grabs and merges several sources of species cover data, making species percent cover ((ref:percent) cover) layers used by other LandR Biomass modules. Default source data spans the entire Canadian territory;
--   [*Biomass_borealDataPrep*](https://github.com/PredictiveEcology/Biomass_borealDataPrep): prepares all parameters and inputs (including initial landscape conditions) that *Biomass_core* needs to run a realistic simulation. By default, the values/inputs produced are relevant for boreal forests of Western Canada;
--   [*Biomass_speciesParameters*](https://github.com/PredictiveEcology/Biomass_speciesParameters): calibrates four-species level traits using permanent sample plot data across Western Canada.
+
+-   [*Biomass_borealDataPrep*](https://github.com/PredictiveEcology/Biomass_borealDataPrep): prepares all parameters and inputs (including initial landscape conditions) that *Biomass_core* needs to run a realistic simulation. Default values/inputs produced are relevant for boreal forests of Western Canada;
+
+-   [*Biomass_speciesParameters*](https://github.com/PredictiveEcology/Biomass_speciesParameters): calibrates four-species level traits using permanent sample plot data (i.e., 
+repeated tree biomass measurements) across Western Canada.
 
 **Disturbance-related modules:**
 
@@ -127,19 +134,19 @@ knitr::include_graphics(normalizePath("figures/Biomass_coreSchematic.png", winsl
 
 ### General functioning {#general-functioning}
 
-LandR *Biomass_core* (hereafter *Biomass_core*) is a forest landscape model based on the LANDIS-II Biomass Succession Extension v.3.2.1 model [LBSE, @SchellerMiranda2015]. It is the core forest succession model of the LandR ecosystem of `SpaDES` modules. Similarly to LBSE, *Biomass_core* simulates changes in tree cohort aboveground biomass ($g/m^2$) by calculating growth, mortality and recruitment as functions of pixel and species characteristics, competition and disturbances (Fig. \@ref(fig:fig-Biomass-core)). Note that, by default, cohorts are unique combinations of species and age, but this can be changed via the `cohortDefinitionCols` parameter (see [List of parameters](#params-list)).
+*Biomass_core* is a forest landscape model based on the LANDIS-II Biomass Succession Extension v.3.2.1 model [LBSE, @SchellerMiranda2015]. It is the core forest succession model of the LandR ecosystem of `SpaDES` modules. Similarly to LBSE, *Biomass_core* simulates changes in tree cohort aboveground biomass ($g/m^2$) by calculating growth, mortality and recruitment as functions of pixel and species characteristics, competition and disturbances (Fig. \@ref(fig:fig-Biomass-core)). Note that, by default, cohorts are unique combinations of species and age, but this can be changed via the `cohortDefinitionCols` parameter (see [List of parameters](#params-list)).
 
-Specifically, cohort growth is driven by both invariant (growth shape parameter, `growthcurve`) and spatio-temporally varying species traits (maximum biomass, `maxB`, and maximum annual net primary productivity, `maxANPP`), while background mortality (i.e., not caused by disturbances) depends only on invariant species traits (`longevity` and mortality shape parameter, `mortalityshape`). All five traits directly influence the realised shape of species growth curves, by determining how fast they grow (`growthcurve` and `maxANPP`), how soon age mortality starts with respect to longevity (`mortalityshape`) and the biomass a cohort can potentially achieve (`maxB`).
+Specifically, cohort growth is driven by both invariant (growth shape parameter, `growthcurve`) and spatio-temporally varying species traits (maximum biomass, `maxB`, and maximum annual net primary productivity, `maxANPP`), while background mortality (i.e., not caused by disturbances) depends only on invariant species traits (`longevity` and mortality shape parameter, `mortalityshape`). All these five traits directly influence the realised shape of species growth curves, by determining how fast they grow (`growthcurve` and `maxANPP`), how soon age mortality starts with respect to longevity (`mortalityshape`) and the biomass a cohort can potentially achieve (`maxB`).
 
-Cohort recruitment is determined by available "space" (i.e., pixel shade), invariant species traits (regeneration mode, `postfireregen`, age at maturity, `sexualmature`, shade tolerance, `shadetolerance`) and spatio-temporally varying traits (species establishment probability, `establishprob`, called SEP hereafter). The available "growing space" is calculated as the species `maxB` minus the occupied biomass (summed across other cohorts and species). If there is "space", a cohort can establish from one of three recruitment modes: serotiny, resprouting and germination. While `maxB`, `maxANPP` and SEP vary both spatio-temporally and by species ([spatio-temporally varying species traits](#varying-traits)), `growthcurve`, `mortalityshape` and `longevity` vary only between species ([invariant species traits](#invariant-traits))
+Cohort recruitment is determined by available "space" (i.e., pixel shade), invariant species traits (regeneration mode, `postfireregen`, age at maturity, `sexualmature`, shade tolerance, `shadetolerance`) and a third spatio-temporally varying trait (species establishment probability, `establishprob`, called SEP hereafter). The available "growing space" is calculated as the species' `maxB` minus the occupied biomass (summed across other cohorts in the pixel). If there is "space", a cohort can establish from one of three recruitment modes: serotiny, resprouting and germination.
 
-Disturbances (e.g., fire) can cause cohort mortality and trigger post-disturbance regeneration. Two processes of post-disturbance regeneration have been implemented, following LBSE mechanisms: serotiny and resprouting [@SchellerMiranda2015]. These two processes (post-disturbance mortality and regeneration) only occur in response to fire and are simulated in two separate, but interchangeable modules, *Biomass_regeneration* and *Biomass_regenerationPM* that differ with respect to the level of post-fire mortality they simulate (complete or partial mortality, respectively).
+Disturbances (e.g., fire) can cause cohort mortality and trigger post-disturbance regeneration. Two  post-disturbance regeneration mechanisms have been implemented, following LBSE: serotiny and resprouting [@SchellerMiranda2015]. Post-disturbance mortality and regeneration only occur in response to fire and are simulated in two separate, but interchangeable modules, *Biomass_regeneration* and *Biomass_regenerationPM* that differ with respect to the level of post-fire mortality they simulate (complete or partial mortality, respectively).
 
-Cohort germination (also called cohort establishment) occurs if seeds are available from local sources (the pixel), or via seed dispersal. Seed dispersal can be of three modes: 'no dispersal', 'universal dispersal' (only interesting for dummy case studies) or 'ward dispersal' [@SchellerMiranda2015]. The 'ward dispersal' algorithm describes a flexible kernel that calculates the probability of a species colonising a neighbour pixel as a function of distance from the source and dispersal-related (and invariant) species traits, and is used by default.
+Cohort germination (also called cohort establishment) occurs if seeds are available from local sources (the pixel), or via seed dispersal. Seed dispersal can be of three modes: 'no dispersal', 'universal dispersal' (arguably, only interesting for dummy case studies) or 'ward dispersal' [@SchellerMiranda2015]. Briefly, the 'ward dispersal' algorithm describes a flexible kernel that calculates the probability of a species colonising a neighbour pixel as a function of distance from the source and dispersal-related (and invariant) species traits, and is used by default.
 
-Both germination and regeneration success depend on the species' probability of germination in a given pixel ([probabilities of germination](#prob-germ)).
+Finally, both germination and regeneration success depend on the species' probability of germination in a given pixel ([probabilities of germination](#prob-germ)).
 
-We refer the reader to @SchellerMiranda2015, @SchellerDomingo2011 and @SchellerDomingo2012 for further details with respect to the above mentioned mechanisms implemented in *Biomass_core*. Existing [differences between *Biomass_core* and LBSE](#biomass-core-vs-lbse) are detailed below, together with [comparisons between the two modules](#biomass-core-vs-lbse-comparisons).
+We refer the reader to @SchellerMiranda2015, @SchellerDomingo2011 and @SchellerDomingo2012 for further details with respect to the above mentioned mechanisms implemented in *Biomass_core*. In a later section of this manual, we highlight existing [differences between *Biomass_core* and LBSE](#biomass-core-vs-lbse), together with [comparisons between the two modules](#biomass-core-vs-lbse-comparisons).
 
 ### Initialisation, inputs and parameters {#init-inputs-params}
 
@@ -153,9 +160,9 @@ To initialise and simulate forest dynamics in any given landscape, *Biomass_core
 
 -   [location- (ecolocation-) specific parameters](#ecolocation-traits);
 
--   [probabilities of germination](#prob-germ) given a species' shade tolerance and site shade.
+-   and the [probabilities of germination](#prob-germ) given a species' shade tolerance and site shade.
 
-These are detailed below and in the full [list of input objects](#inputs-list). The *Biomass_borealDataPrep* module manual also provides information about how many of these inputs are derived from available data, or adjusted using published values or our best knowledge of boreal forest dynamics in Western Canada.
+These are detailed below and in the [full list of input objects](#inputs-list). The *Biomass_borealDataPrep* module manual also provides information about the estimation of many of these traits/inputs from available data, or their adjustment using published values or our best knowledge of boreal forest dynamics in Western Canada.
 
 Unlike the initialisation in LBSE[^biomass_core1], *Biomass_core* initialises the simulation using data-derived initial cohort biomass and age. This information is ideally supplied by data and calibration modules like *Biomass_borealDataPrep* ([Links to other modules](#links-modules)), but *Biomass_core* can also initialise itself using theoretical data.
 
