@@ -35,13 +35,16 @@ if (!file.exists("citations/ecology-letters.csl")) {
   download.file("https://www.zotero.org/styles/ecology-letters", destfile = "citations/ecology-letters.csl")
 }
 
-if (!require(dplyr)) {
-  install.packages("dplyr")
-  library(dplyr)
+if (!require(Require)) {
+  install.packages("Require")
+  library(Require)
 }
+Require(c("SpaDES.core", "git2r", "kableExtra"),
+                 require = FALSE)
+Require("dplyr")
 ```
 
-```{r badgeFigs-Biomass-core, include=FALSE, eval = TRUE, cache = FALSE}
+```{r badgeFigs-Biomass-core, include = FALSE, eval = TRUE, cache = FALSE}
 dir.create("figures", showWarnings = FALSE)
 
 if (!file.exists("figures/markdownBadge.png")) {
@@ -62,18 +65,41 @@ download.file(url = paste0("https://img.shields.io/badge/Biomass_core-", paste0(
               mode = 'wb')
 ```
 
-<!-- it would be nice to be able to link the badge to the version commit automatically-->
-[![module-version-Badge](`r normalizePath('figures/moduleVersionBadge.png')`)](https://github.com/CeresBarros/Biomass_core/commit/665d6db36f5f12d3c5068aa3e5ecc874e84f51f0) 
+``` {r moduleBadge-Biomass-core, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
+## try to automatically get the commit URL and the path to the badge image
+badgeURL <-  if (!git2r::is_detached()){
+commitSHA <- git2r::sha(git2r::revparse_single(".", "HEAD"))
+  repo <- sub(".*github.com:", "https://github.com/",
+      git2r::branch_remote_url(git2r::branch_get_upstream(git2r::repository_head("."))))
+  repo <- sub(".git$", "/commit/", repo)
+  paste0(repo, commitSHA)
+} else {
+  ## if detached point to the first remote
+  badgeURL <- git2r::remote_url()[1]
+}
 
-[![Issues-badge](`r normalizePath('figures/issuesBadge.png')`)](https://github.com/PredictiveEcology/Biomass_core/issues)
+badgePath <- normalizePath("figures/moduleVersionBadge.png", winslash = "/")
 
-<!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
+## make string of markdown code to be executed as-is
+paste0("[![module-version-Badge](", badgePath, ")](", badgeURL,")")
+```
+
+``` {r issuesBadge-Biomass-core, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
+badgeURL <- "https://github.com/PredictiveEcology/Biomass_core/issues"
+badgePath <- normalizePath("figures/issuesBadge.png", winslash = "/")
+
+## make string of markdown code to be executed as-is
+paste0("[![Issues-badge](", badgePath, ")](", badgeURL,")")
+```
 
 #### Authors:
 
-`r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), sep = ', ')` <!-- ideally separate authors with new lines, '\n' not working -->
+`r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), sep = ', ')`
+<!-- ideally separate authors with new lines, '\n' not working -->
 
-**This documentation is work in progress. Potential discrepancies and omissions may exist for the time being. If you find any, contact us using the "Get help" link above\^\^**
+**This documentation is work in progress. Potential discrepancies and omissions
+may exist for the time being. If you find any, contact us using the "Get help"
+link above\^\^**
 
 ## Module Overview
 
