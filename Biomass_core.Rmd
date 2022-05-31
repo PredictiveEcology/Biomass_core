@@ -28,17 +28,17 @@ always_allow_html: true
 
 (ref:sufficient-light) *sufficient light*
 
-(ref:Abie-sp) *Abies sp.*
+(ref:Abie-sp) *Abies sp.* (Abie_sp)
 
-(ref:Pinu-sp) *Pinus sp.*
+(ref:Pinu-sp) *Pinus sp.* (Pinu_sp)
 
-(ref:Pice-eng) *Picea engelmannii* 
+(ref:Pice-eng) *Picea engelmannii* (Pice_eng)
 
-(ref:Pice-gla) *Picea glauca*
+(ref:Pice-gla) *Picea glauca* (Pice_gla)
 
-(ref:Popu-sp) *Populus sp.*
+(ref:Popu-sp) *Populus sp.* (Popu_sp)
 
-(ref:Pseud-men) *Pseudotsuga menziesii*
+(ref:Pseud-men) *Pseudotsuga menziesii* (Pseu_men)
 
 ```{r setup-Biomass-core, include = FALSE}
 ## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
@@ -55,8 +55,7 @@ if (!require(Require)) {
   install.packages("Require")
   library(Require)
 }
-Require(c("SpaDES.core", "git2r", "kableExtra", "openxlsx"),
-        require = FALSE)
+Require(c("SpaDES.core", "git2r", "kableExtra", "openxlsx"), require = FALSE)
 Require("dplyr")
 ```
 
@@ -83,29 +82,21 @@ download.file(url = paste0("https://img.shields.io/badge/Biomass_core-", paste0(
 
 ``` {r moduleBadge-Biomass-core, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
 ## try to automatically get the commit URL and the path to the badge image
-badgeURL <-  if (!git2r::is_detached()){
+badgeURL <- if (!git2r::is_detached()) {
   commitSHA <- git2r::sha(git2r::revparse_single(".", "HEAD"))
-  repo <- sub(".*github.com:", "https://github.com/",
+  repo <- sub("[.]git$", "/commit/",
               git2r::branch_remote_url(git2r::branch_get_upstream(git2r::repository_head("."))))
-  repo <- sub(".git$", "/commit/", repo)
   paste0(repo, commitSHA)
 } else {
   ## if detached point to the first remote
-  badgeURL <- git2r::remote_url()[1]
+  git2r::remote_url()[1]
 }
+badgeURL <- sub(".*github[.]com:", "https://github.com/", badgeURL)
 
 badgePath <- normPath("figures/moduleVersionBadge.png")
 
 ## make string of markdown code to be executed as-is
-cat(paste0("[![module-version-Badge](", badgePath, ")](", badgeURL,")"))
-```
-
-``` {r issuesBadge-Biomass-core, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
-badgeURL <- "https://github.com/PredictiveEcology/Biomass_core/issues"
-badgePath <- normPath("figures/issuesBadge.png")
-
-## make string of markdown code to be executed as-is
-cat(paste0("[![Issues-badge](", badgePath, ")](", badgeURL,")"))
+cat(paste0("[![module-version-Badge](", badgePath, ")](", badgeURL, ")"))
 ```
 
 #### Authors:
@@ -399,12 +390,11 @@ that these are theoretical values.
 tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
                            colNames = TRUE, sep.names = " ")
 caption <- paste("Example of an invariant species traits table (the",
-                 "`species` table object in the module), with species (ref:Abie-sp) (Abie_sp),",
-                 "(ref:Pice-eng) (Pice_eng), (ref:Pice-gla) (Pice_gla), (ref:Pinu-sp),",
-                 "(Pinu_sp), (ref:Popu-sp) (Popu_sp) and (ref:Pseud-men) (Pseu_men). Note",
-                 "that these are theoretical values.")
+                 "`species` table object in the module), with species (ref:Abie-sp),",
+                 "(ref:Pice-eng), (ref:Pice-gla), (ref:Pinu-sp), (ref:Popu-sp) and (ref:Pseud-men).",
+                 " Note that these are theoretical values.")
 knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 #### Spatio-temporally varying species traits {#varying-traits}
@@ -450,7 +440,7 @@ table (the `speciesEcoregion` table object in the module), with two ecolocations
 engelmannii* (Pice_eng), *Picea glauca* (Pice_gla), *Pinus sp.* (Pinu_sp),
 *Populus sp.* (Popu_sp) and *Pseudotsuga menziesii* (Pseu_men). If a simulation
 runs for 10 year using this table, trait values from year 2 would be used during
-simulation years 2-10.
+simulation years 2 through 10.
 -->
 
 ```{r varyingSpptraits, echo = FALSE, eval = TRUE, message = FALSE}
@@ -459,14 +449,12 @@ tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "spatially_varyi
 names(tab)[grep("X", names(tab))] <- ""
 caption <- paste("Example of a spatio-temporally varying species traits",
                  "table (the `speciesEcoregion` table object in the module), with two ecolocations",
-                 "(called `ecoregionGroups`) and species (ref:Abie-sp) (Abie_sp),",
-                 "(ref:Pice-eng) (Pice_eng), (ref:Pice-gla) (Pice_gla), (ref:Pinu-sp),",
-                 "(Pinu_sp), (ref:Popu-sp) (Popu_sp) and (ref:Pseud-men) (Pseu_men). If a simulation",
-                 "runs for 10 year using this table, trait values from year 2 would be used during",
-                 "simulation years 2-10.")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+                 "(called `ecoregionGroups`) and species (ref:Abie-sp),",
+                 "(ref:Pice-eng), (ref:Pice-gla), (ref:Pinu-sp), (ref:Popu-sp) and (ref:Pseud-men).",
+                 "If a simulation runs for 10 year using this table, trait values from",
+                 "year 2 would be used during simulation years 2-10.")
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 #### Ecolocation-specific parameters -- minimum relative biomass {#ecolocation-traits}
@@ -510,9 +498,8 @@ names(tab)[grep("X", names(tab))] <- ""
 caption <- paste("Example of a minimum relative biomass table (the `minRelativeB`",
                  "table object in the module), with two ecolocations (`ecoregionGroups`) sharing",
                  "the same values")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 #### Probabilities of germination {#prob-germ}
@@ -548,9 +535,8 @@ caption <- paste("Default species probability of germination values used by",
                  "(ref:Biomass-core) and (ref:Biomass-borealdataPrep). Columns X0-X5 are different site",
                  "shade levels and each line has the probability of germination for each site",
                  "shade and species shade tolerance combination.")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 #### Other module inputs {#other-inputs}
@@ -685,9 +671,9 @@ and `B` composition, even if the user supplies other initial groupings
 
 ```{r moduleInputs2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")
-knitr::kable(df_inputs, 
-             caption = "List of (ref:Biomass-core) input objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+caption <- "List of (ref:Biomass-core) input objects and their description."
+knitr::kable(df_inputs, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 [^biomass_core-2]: usually, default inputs are made when running the
@@ -744,9 +730,9 @@ event (growth and mortality are always yearly);
 
 ```{r moduleParams2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_params <- SpaDES.core::moduleParams("Biomass_core", "..")
-knitr::kable(df_params,
-             caption = "List of (ref:Biomass-core) parameters and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+caption <- "List of (ref:Biomass-core) parameters and their description."
+knitr::kable(df_params, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 [^biomass_core-3]: in `SpaDES` lingo parameters are "small" objects, such as an
@@ -769,9 +755,9 @@ in `simInit`[^biomass_core-5].
 
 ```{r moduleOutputs-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")
-knitr::kable(df_outputs,
-             caption = "List of (ref:Biomass-core) output objects and their description.") %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+caption <- "List of (ref:Biomass-core) output objects and their description."
+knitr::kable(df_outputs, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 [^biomass_core-5]: see `?SpaDES.core::outputs`
@@ -1229,9 +1215,8 @@ caption <- paste("Input order and processing order (as determined by",
                  "the order used in the simulation, which was obtained from",
                  "`Landis-log.txt` when `CalibrateMode` was set to 'yes'.",
                  "Species starting ages are also shown.")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 <!--
@@ -1277,9 +1262,8 @@ caption <- paste("Input order and processing order (as determined by LBSE) for",
                  "was the order used in the simulation, which was obtained from",
                  "`Landis-log.txt` when `CalibrateMode` was set to 'yes'.",
                  "Species starting ages are also shown.")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 <!--
@@ -1326,9 +1310,8 @@ tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "T
                            colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 1 used in the",
                  "recruitment comparison runs.")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 <!--
@@ -1418,9 +1401,8 @@ tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "T
                            colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 3 used in the",
                  "recruitment comparison runs.")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 <!--
@@ -1467,9 +1449,8 @@ knitr::kable(tab,
 tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table6_Appendix1", 
                            colNames = TRUE, sep.names = " ")
 caption <- paste("Invariant species traits table used in comparison runs.")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 <!--
@@ -1486,11 +1467,9 @@ tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "T
 caption <- paste("Minimum relative biomass table used in comparison runs. X0-5",
                  "represent site shade classes from no-shade (0) to maximum",
                  "shade (5). All ecolocations shared the same values.")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
-
 
 <!--
 | Shadetolerance | 0   | 1   | 2   | 3   | 4   | 5   |
@@ -1511,9 +1490,8 @@ caption <- paste("Probability of germination for species shade tolerance and",
                  "shade level combinations (called (ref:sufficient-light) table in",
                  "LBSE and `sufficientLight` input `data.table` in LandR",
                  "(ref:Biomass-core)) used in comparison runs.")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 <!--
@@ -1547,9 +1525,8 @@ caption <- paste("Species ecolocation table used in comparison runs. `SEP`",
                  "maximum biomass and `maxANPP` for maximum aboveground net",
                  "primary productivity. Values were held constant throughout",
                  "the simulation.")
-knitr::kable(tab,
-             caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+knitr::kable(tab, caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
 
 ## References {#refs}
