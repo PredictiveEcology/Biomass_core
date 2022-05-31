@@ -86,12 +86,12 @@ badgeURL <- if (!git2r::is_detached()) {
   commitSHA <- git2r::sha(git2r::revparse_single(".", "HEAD"))
   repo <- sub("[.]git$", "/commit/",
               git2r::branch_remote_url(git2r::branch_get_upstream(git2r::repository_head("."))))
-  paste0(repo, commitSHA)
+  paste0(repo, "/tree/", commitSHA)
 } else {
   ## if detached point to the first remote
   git2r::remote_url()[1]
 }
-badgeURL <- sub(".*github[.]com:", "https://github.com/", badgeURL)
+badgeURL <- sub(".*github[.]com", "https://github.com", badgeURL)
 
 badgePath <- normPath("figures/moduleVersionBadge.png")
 
@@ -106,7 +106,7 @@ cat(paste0("[![module-version-Badge](", badgePath, ")](", badgeURL, ")"))
 
 **This documentation is work in progress. Potential discrepancies and omissions
 may exist for the time being. If you find any, contact us using the "Get help"
-link above\^\^**
+link above.**
 
 ## Module Overview
 
