@@ -398,7 +398,6 @@ that these are theoretical values.
 ```{r invariantSpptraits, echo = FALSE, eval = TRUE, message = FALSE}
 tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
                            colNames = TRUE, sep.names = " ")
-names(tab)[grep("X", names(tab))] <- ""
 caption <- paste("Example of an invariant species traits table (the",
                  "`species` table object in the module), with species (ref:Abie-sp) (Abie_sp),",
                  "(ref:Pice-eng) (Pice_eng), (ref:Pice-gla) (Pice_gla), (ref:Pinu-sp),",
