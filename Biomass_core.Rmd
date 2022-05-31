@@ -81,7 +81,7 @@ commitSHA <- git2r::sha(git2r::revparse_single(".", "HEAD"))
 badgePath <- normalizePath("figures/moduleVersionBadge.png", winslash = "/")
 
 ## make string of markdown code to be executed as-is
-paste0("[![module-version-Badge](", badgePath, ")](", badgeURL,")")
+cat(paste0("[![module-version-Badge](", badgePath, ")](", badgeURL,")"))
 ```
 
 ``` {r issuesBadge-Biomass-core, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
@@ -89,7 +89,7 @@ badgeURL <- "https://github.com/PredictiveEcology/Biomass_core/issues"
 badgePath <- normalizePath("figures/issuesBadge.png", winslash = "/")
 
 ## make string of markdown code to be executed as-is
-paste0("[![Issues-badge](", badgePath, ")](", badgeURL,")")
+cat(paste0("[![Issues-badge](", badgePath, ")](", badgeURL,")"))
 ```
 
 #### Authors:
@@ -535,7 +535,7 @@ following are particularly important and deserve special attention:
 
 -   `studyArea` -- a `SpatialPolygonsDataFrame` with a single polygon
     determining the where the simulation will take place. This is the only input
-    object that **must be supplied by the user**.
+    object that **must be supplied by the user or another module**.
 
 **Species traits and other parameter tables**
 
