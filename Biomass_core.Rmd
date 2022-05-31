@@ -55,7 +55,7 @@ if (!require(Require)) {
   install.packages("Require")
   library(Require)
 }
-Require(c("SpaDES.core", "git2r", "kableExtra"),
+Require(c("SpaDES.core", "git2r", "kableExtra", "openxlsx"),
         require = FALSE)
 Require("dplyr")
 ```
