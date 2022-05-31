@@ -403,8 +403,7 @@ caption <- paste("Example of an invariant species traits table (the",
                  "(ref:Pice-eng) (Pice_eng), (ref:Pice-gla) (Pice_gla), (ref:Pinu-sp),",
                  "(Pinu_sp), (ref:Popu-sp) (Popu_sp) and (ref:Pseud-men) (Pseu_men). Note",
                  "that these are theoretical values.")
-knitr::kable(tab,
-             caption = caption) %>%
+knitr::kable(tab, caption = caption) %>%
   kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
 ```
 
