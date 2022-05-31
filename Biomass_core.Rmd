@@ -22,7 +22,23 @@ always_allow_html: true
 
 (ref:Biomass-core) *Biomass_core*
 
+(ref:Biomass-borealdataPrep) *Biomass_borealDataPrep*
+
 (ref:percent) %
+
+(ref:sufficient-light) *sufficient light*
+
+(ref:Abie-sp) *Abies sp.*
+
+(ref:Pinu-sp) *Pinus sp.*
+
+(ref:Pice-eng) *Picea engelmannii* 
+
+(ref:Pice-gla) *Picea glauca*
+
+(ref:Popu-sp) *Populus sp.*
+
+(ref:Pseud-men) *Pseudotsuga menziesii*
 
 ```{r setup-Biomass-core, include = FALSE}
 ## set cache.rebuild = TRUE whenever there are changes to the module code/metadata
@@ -360,9 +376,10 @@ species traits. Note that *Biomass_core* (alone) requires all the columns Table
 Please see @SchellerDomingo2011 [p.18] and @SchellerMiranda2015 [p.16] for
 further detail.
 
+<!--
 ::: fullwidth
 | speciesCode | longevity | sexualmature | shadetolerance | firetolerance | postfireregen | resproutprob | resproutage_min | resproutage_max | seeddistance_eff | seeddistance_max | mortalityshape | growthcurve |
-|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
+|:-------|:------|:------|:------|:------|:------|:------|:------|:------|:------|:------|:------|:------|
 | Abie_sp     | 200       | 20           | 2.3            | 1             | none          | 0            | 0               | 0               | 25               | 100              | 15             | 0           |
 | Pice_eng    | 460       | 30           | 2.1            | 2             | none          | 0            | 0               | 0               | 30               | 250              | 15             | 1.0         |
 | Pice_gla    | 400       | 30           | 1.6            | 2             | none          | 0            | 0               | 0               | 100              | 303              | 15             | 1.0         |
@@ -376,6 +393,21 @@ further detail.
 (Pinu_sp), *Populus sp.* (Popu_sp) and *Pseudotsuga menziesii* (Pseu_men). Note
 that these are theoretical values.
 :::
+-->
+
+```{r invariantSpptraits, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
+                           colNames = TRUE, sep.names = " ")
+names(tab)[grep("X", names(tab))] <- ""
+caption <- paste("Example of an invariant species traits table (the",
+                 "`species` table object in the module), with species (ref:Abie-sp) (Abie_sp),",
+                 "(ref:Pice-eng) (Pice_eng), (ref:Pice-gla) (Pice_gla), (ref:Pinu-sp),",
+                 "(Pinu_sp), (ref:Popu-sp) (Popu_sp) and (ref:Pseud-men) (Pseu_men). Note",
+                 "that these are theoretical values.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
 
 #### Spatio-temporally varying species traits {#varying-traits}
 
@@ -392,8 +424,9 @@ further calibrates `maxB` and `maxANPP` by estimating two additional invariant
 species traits (`inflationFactor` and `mANPPproportion`; also for Western
 Canadian forests). See Table \@ref(tab:varyingSpptraits) for an example.
 
+<!--
 | ecoregionGroup | speciesCode | establishprob | maxB  | maxANPP | year |
-|----------------|-------------|---------------|-------|---------|------|
+|:---------------|:------------|:--------------|:------|:--------|:-----|
 | 1_03           | Abie_sp     | 1.000         | 8567  | 285     | 1    |
 | 1_03           | Pice_eng    | 0.983         | 10156 | 305     | 1    |
 | 1_03           | Popu_sp     | 0.737         | 8794  | 293     | 1    |
@@ -420,6 +453,23 @@ engelmannii* (Pice_eng), *Picea glauca* (Pice_gla), *Pinus sp.* (Pinu_sp),
 *Populus sp.* (Popu_sp) and *Pseudotsuga menziesii* (Pseu_men). If a simulation
 runs for 10 year using this table, trait values from year 2 would be used during
 simulation years 2-10.
+-->
+
+```{r varyingSpptraits, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "spatially_varyingTraits", 
+                           colNames = TRUE, sep.names = " ")
+names(tab)[grep("X", names(tab))] <- ""
+caption <- paste("Example of a spatio-temporally varying species traits",
+                 "table (the `speciesEcoregion` table object in the module), with two ecolocations",
+                 "(called `ecoregionGroups`) and species (ref:Abie-sp) (Abie_sp),",
+                 "(ref:Pice-eng) (Pice_eng), (ref:Pice-gla) (Pice_gla), (ref:Pinu-sp),",
+                 "(Pinu_sp), (ref:Popu-sp) (Popu_sp) and (ref:Pseud-men) (Pseu_men). If a simulation",
+                 "runs for 10 year using this table, trait values from year 2 would be used during",
+                 "simulation years 2-10.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
 
 #### Ecolocation-specific parameters -- minimum relative biomass {#ecolocation-traits}
 
@@ -444,14 +494,28 @@ Western Canada boreal forest dynamics (see Table \@ref(tab:minRelB)).
 inputs, these values can be adjusted by using other modules or by passing
 user-defined tables.
 
+<!--
 | ecoregionGroup | X1   | X2   | X3  | X4   | X5   |
-|----------------|------|------|-----|------|------|
+|:---------------|:-----|:-----|:----|:-----|:-----|
 | 1_03           | 0.15 | 0.25 | 0.5 | 0.75 | 0.85 |
 | 1_09           | 0.15 | 0.25 | 0.5 | 0.75 | 0.85 |
 
 : (#tab:minRelB) Example of a minimum relative biomass table (the `minRelativeB`
 table object in the module), with two ecolocations (`ecoregionGroups`) sharing
 the same values.
+-->
+
+```{r minRelB, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "minRelativeB", 
+                           colNames = TRUE, sep.names = " ")
+names(tab)[grep("X", names(tab))] <- ""
+caption <- paste("Example of a minimum relative biomass table (the `minRelativeB`",
+                 "table object in the module), with two ecolocations (`ecoregionGroups`) sharing",
+                 "the same values")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
 
 #### Probabilities of germination {#prob-germ}
 
@@ -463,8 +527,9 @@ parameter](#ecolocation-traits) and @SchellerMiranda2015,p.14]. By default, both
 *Biomass_core* and *Biomass_borealDataPrep* use a publicly available LANDIS-II
 table (called `sufficientLight` in the module; Table \@ref(tab:suffLight)).
 
+<!--
 | species shade tolerance | X0  | X1  | X2  | X3  | X4  | X5  |
-|-------------------------|-----|-----|-----|-----|-----|-----|
+|:------------------------|:----|:----|:----|:----|:----|:----|
 | 1                       | 1   | 0   | 0   | 0   | 0   | 0   |
 | 2                       | 1   | 1   | 0   | 0   | 0   | 0   |
 | 3                       | 1   | 1   | 1   | 0   | 0   | 0   |
@@ -475,6 +540,20 @@ table (called `sufficientLight` in the module; Table \@ref(tab:suffLight)).
 *Biomass_core* and *Biomass_borealDataPrep*. Columns X0-X5 are different site
 shade levels and each line has the probability of germination for each site
 shade and species shade tolerance combination.
+-->
+
+```{r suffLight, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "probGerm", 
+                           colNames = TRUE, sep.names = " ")
+names(tab)[grep("X", names(tab))] <- ""
+caption <- paste("Default species probability of germination values used by",
+                 "(ref:Biomass-core) and (ref:Biomass-borealdataPrep). Columns X0-X5 are different site",
+                 "shade levels and each line has the probability of germination for each site",
+                 "shade and species shade tolerance combination.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
 
 #### Other module inputs {#other-inputs}
 
@@ -1102,13 +1181,13 @@ mySim <- simInitAndSpades(times = times,
 
 ```{r fig-Biomass-coreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "50%", fig.cap = "(ref:Biomass-core) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
 knitr::include_graphics(normPath(c("figures/Biomass_coreOutPlots1.png", 
-                                        "figures/Biomass_coreOutPlots2.png")))
+                                   "figures/Biomass_coreOutPlots2.png")))
 ```
 
 ## Appendix {#appendix}
 
 ### Tables {#appendix-tables}
-
+<!--
 | Input order 1 |          |     |            | Input order 2 |          |     |            |
 |:--------------|:---------|:----|:-----------|:--------------|:---------|:----|:-----------|
 | Community     | Input    | Age | Processing | Community     | Input    | Age | Processing |
@@ -1137,7 +1216,27 @@ input order was the order of species in the initial communities table input
 file. The processing order was the order used in the simulation, which was
 obtained from `Landis-log.txt` when `CalibrateMode` was set to 'yes'. Species
 starting ages are also shown.
+-->
 
+```{r tableLBSEtest1, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table1_Appendix1", 
+                           colNames = TRUE, sep.names = " ")
+names(tab)[grep("X", names(tab))] <- ""
+caption <- paste("Input order and processing order (as determined by",
+                 "LBSE) for the same community used to assess the impact",
+                 "of sequential calculation of the competition index,",
+                 "combined with a lack of explicit species ordering. The",
+                 "input order was the order of species in the initial",
+                 "communities table input file. The processing order was",
+                 "the order used in the simulation, which was obtained from",
+                 "`Landis-log.txt` when `CalibrateMode` was set to 'yes'.",
+                 "Species starting ages are also shown.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
+
+<!--
 | Input order 1 |          |     |            | Input order 2 |          |     |            |
 |:--------------|:---------|:----|:-----------|:--------------|:---------|:----|:-----------|
 | Community     | Input    | Age | Processing | Community     | Input    | Age | Processing |
@@ -1166,7 +1265,26 @@ was the order of species in the initial communities table input file. The
 processing order was the order used in the simulation, which was obtained from
 `Landis-log.txt` when `CalibrateMode` was set to 'yes'. Species starting ages
 are also shown.
+-->
 
+```{r tableLBSEtest2, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table2_Appendix1", 
+                           colNames = TRUE, sep.names = " ")
+names(tab)[grep("X", names(tab))] <- ""
+caption <- paste("Input order and processing order (as determined by LBSE) for",
+                 "the same community used to assess the impact of setting the",
+                 "succession time step to 1, combined with a lack of explicit",
+                 "species ordering. The input order was the order of species in",
+                 "the initial communities table input file. The processing order",
+                 "was the order used in the simulation, which was obtained from",
+                 "`Landis-log.txt` when `CalibrateMode` was set to 'yes'.",
+                 "Species starting ages are also shown.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
+
+<!--
 | Community | Species  | Age 1 | Age 2 | Age 3 | Age 4 | Age 5 | Age 6 | Age 7 |
 |:----------|:---------|:------|:------|:------|:------|:------|:------|:------|
 | 0         | betupapy | 1     | 37    | 45    | 46    | 85    | NA    | NA    |
@@ -1203,7 +1321,19 @@ are also shown.
 
 : (#tab:tableLBSEtest3) Randomly generated community combination no. 1 used in
 the recruitment comparison runs.
+-->
 
+```{r tableLBSEtest3, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table3_Appendix1", 
+                           colNames = TRUE, sep.names = " ")
+caption <- paste("Randomly generated community combination no. 1 used in the",
+                 "recruitment comparison runs.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
+
+<!--
 | Community | Species  | Age 1 | Age 2 | Age 3 | Age 4 | Age 5 | Age 6 | Age 7 |
 |:----------|:---------|:------|:------|:------|:------|:------|:------|:------|
 | 0         | acerrubr | 22    | 26    | 30    | 40    | 47    | 145   | 146   |
@@ -1245,7 +1375,8 @@ the recruitment comparison runs.
 
 : (#tab:tableLBSEtest4) Randomly generated community combination no. 2 used in
 the recruitment comparison runs.
-
+-->
+<!--
 | Community | Species  | Age 1 | Age 2 | Age 3 | Age 4 | Age 5 | Age 6 | Age 7 |
 |:----------|:---------|:------|:------|:------|:------|:------|:------|:------|
 | 0         | pinubank | 7     | 26    | 32    | 37    | 48    | 85    | 90    |
@@ -1281,38 +1412,89 @@ the recruitment comparison runs.
 | 6         | querrubr | 84    | 86    | 113   | 185   | 193   | 223   | 228   |
 | 6         | tiliamer | 13    | 106   | 181   | 199   | 246   | NA    | NA    |
 
-: (#tab:tableLBSEtest5) Randomly generated community combination no. 3 used in
-the recruitment comparison runs.
+: (#tab:tableLBSEtest5) Randomly generated community combination no. 3 used in the recruitment comparison runs.
+-->
 
+```{r tableLBSEtest5, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table5_Appendix1", 
+                           colNames = TRUE, sep.names = " ")
+caption <- paste("Randomly generated community combination no. 3 used in the",
+                 "recruitment comparison runs.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
+
+<!--
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | Species  | Longevity | Sexualmature | Shadetolerance | Seeddistance_eff | Seeddistance_max | Mortalityshape | Growthcurve |
-|----------|----------|----------|----------|----------|----------|----------|----------|
++==========+===========+==============+================+==================+==================+================+=============+
 | abiebals | 200       | 25           | 5              | 30               | 160              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | acerrubr | 150       | 10           | 4              | 100              | 200              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | acersacc | 300       | 40           | 5              | 100              | 200              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | betualle | 300       | 40           | 4              | 100              | 400              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | betupapy | 100       | 30           | 2              | 200              | 5000             | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | fraxamer | 300       | 30           | 4              | 70               | 140              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | piceglau | 300       | 25           | 3              | 30               | 200              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | pinubank | 100       | 15           | 1              | 20               | 100              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | pinuresi | 200       | 35           | 2              | 20               | 275              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | pinustro | 400       | 40           | 3              | 60               | 210              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | poputrem | 100       | 20           | 1              | 1000             | 5000             | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | querelli | 300       | 35           | 2              | 30               | 3000             | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | querrubr | 250       | 25           | 3              | 30               | 3000             | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | thujocci | 400       | 30           | 2              | 45               | 60               | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | tiliamer | 250       | 30           | 4              | 30               | 120              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | tsugcana | 500       | 30           | 5              | 30               | 100              | 10             | 0.25        |
++----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 
 : (#tab:tableLBSEtest6) Invariant species traits table used in comparison runs.
+-->
 
+```{r tableLBSEtest6, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table6_Appendix1", 
+                           colNames = TRUE, sep.names = " ")
+caption <- paste("Invariant species traits table used in comparison runs.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
+
+<!--
 | Ecolocation | X0  | X1   | X2   | X3  | X4  | X5   |
 |:------------|:----|:-----|:-----|:----|:----|:-----|
 | All         | 0   | 0.15 | 0.25 | 0.5 | 0.8 | 0.95 |
 
-: (#tab:tableLBSEtest7) Minimum relative biomass table used in comparison runs.
-X0-5 represent site shade classes from no-shade (0) to maximum shade (5). All
-ecolocations shared the same values.
+: (#tab:tableLBSEtest7) Minimum relative biomass table used in comparison runs. X0-5 represent site shade classes from no-shade (0) to maximum shade (5). All ecolocations shared the same values.
+-->
 
+```{r tableLBSEtest7, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table7_Appendix1", 
+                           colNames = TRUE, sep.names = " ")
+caption <- paste("Minimum relative biomass table used in comparison runs. X0-5",
+                 "represent site shade classes from no-shade (0) to maximum",
+                 "shade (5). All ecolocations shared the same values.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
+
+
+<!--
 | Shadetolerance | 0   | 1   | 2   | 3   | 4   | 5   |
 |:---------------|:----|:----|:----|:----|:----|:----|
 | 1              | 1   | 0   | 0   | 0   | 0   | 0   |
@@ -1321,11 +1503,22 @@ ecolocations shared the same values.
 | 4              | 1   | 1   | 1   | 1   | 0   | 0   |
 | 5              | 0   | 0   | 1   | 1   | 1   | 1   |
 
-: (#tab:tableLBSEtest8) Probability of germination for species shade tolerance
-and shade level combinations (called *sufficient light* table in LBSE and
-`sufficientLight` input `data.table` in LandR *Biomass_core*) used in comparison
-runs.
+: (#tab:tableLBSEtest8) Probability of germination for species shade tolerance and shade level combinations (called *sufficient light* table in LBSE and `sufficientLight` input `data.table` in LandR *Biomass_core*) used in comparison runs.
+-->
 
+```{r tableLBSEtest8, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table8_Appendix1", 
+                           colNames = TRUE, sep.names = " ")
+caption <- paste("Probability of germination for species shade tolerance and",
+                 "shade level combinations (called (ref:sufficient-light) table in",
+                 "LBSE and `sufficientLight` input `data.table` in LandR",
+                 "(ref:Biomass-core)) used in comparison runs.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
+
+<!--
 | Ecolocation | Species  | SEP  | maxANPP | maxB  |
 |:------------|:---------|:-----|:--------|:------|
 | 1           | abiebals | 0.9  | 886     | 26580 |
@@ -1345,9 +1538,20 @@ runs.
 | 1           | tiliamer | 0.54 | 1078    | 32340 |
 | 1           | tsugcana | 0.22 | 1096    | 32880 |
 
-: (#tab:tableLBSEtest9) species ecolocation table used in comparison runs. SEP
-stands for species establishment probability, `maxB` for maximum biomass and
-`maxANPP` for maximum aboveground net primary productivity. Values were held
-constant throughout the simulation.
+: (#tab:tableLBSEtest9) Species ecolocation table used in comparison runs. `SEP` stands for species establishment probability, `maxB` for maximum biomass and `maxANPP` for maximum aboveground net primary productivity. Values were held constant throughout the simulation.
+-->
+
+```{r tableLBSEtest9, echo = FALSE, eval = TRUE, message = FALSE}
+tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table9_Appendix1", 
+                           colNames = TRUE, sep.names = " ")
+caption <- paste("Species ecolocation table used in comparison runs. `SEP`",
+                 "stands for species establishment probability, `maxB` for",
+                 "maximum biomass and `maxANPP` for maximum aboveground net",
+                 "primary productivity. Values were held constant throughout",
+                 "the simulation.")
+knitr::kable(tab,
+             caption = caption) %>%
+  kableExtra::kable_styling(latex_options = c("scale_down", "repeat_header"), full_width = TRUE)
+```
 
 ## References {#refs}
