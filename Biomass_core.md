@@ -1,487 +1,280 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-subtitle: "v.1.3.9"
-author: "Yong Luo, Eliot J B McIntire, Jean Marchal, Alex M. Chubaty, Ceres Barros"
-date: "Last updated: 2022-02-24"
+date: "Last updated: 2022-05-27"
 output:
   bookdown::html_document2:
     toc: true
     toc_float: true
+    toc_depth: 4
     theme: sandstone
     number_sections: false
     df_print: paged
     keep_md: yes
 editor_options:
   chunk_output_type: console
-bibliography: citations/references.bib
+bibliography: citations/references_Biomass_core.bib
 citation-style: citations/ecology-letters.csl
 link-citations: true
 always_allow_html: true
 ---
 
+<!-- the following are text references used in captions for LaTeX compatibility -->
+
+(ref:Biomass-core) *Biomass_core*
+
+(ref:percent) %
 
 
-[![made-with-Markdown](https://img.shields.io/badge/Made%20with-Markdown-1f425f.svg)](http://commonmark.org) [![Generic badge](https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.svg)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
-**This documentation is work in progress. Potential discrepancies and omissions may exist for the time being. If you find any, do contact us using the link above\^\^**
 
-# Module Overview
 
-## Module summary
+<!-- it would be nice to be able to link the badge to the version commit automatically-->
+[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/CeresBarros/Biomass_core/commit/665d6db36f5f12d3c5068aa3e5ecc874e84f51f0)  [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
-LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules [see @ChubatyMcIntire2019]. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:figBiomassCore)), in a spatially explicit manner and using a yearly time steps. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE; @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE]). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LANDIS-II BSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
+<!-- if knitting to pdf remember to add the pandoc_args: ["--extract-media", "."] option to yml in order to get the badge images -->
+
+#### Authors:
+
+Yong Luo <yluo1@lakeheadu.ca> [aut], Eliot J B McIntire <eliot.mcintire@nrcan-rncan.gc.ca> [aut, cre], Jean Marchal <jean.d.marchal@gmail.com> [ctb], Alex M. Chubaty <achubaty@for-cast.ca> [ctb], Ceres Barros <cbarros@mail.ubc.ca> [ctb] <!-- ideally separate authors with new lines, '\n' not working -->
+
+**This documentation is work in progress. Potential discrepancies and omissions may exist for the time being. If you find any, contact us using the "Get help" link above\^\^**
+
+## Module Overview
+
+### Quick links
+
+-   [General functioning](#general-functioning)
+
+-   [List of input objects](#inputs-list)
+
+-   [List of parameters](#params-list)
+
+-   [List of outputs](#outputs-list)
+
+-   [Simulation flow and module events](#sim-flow)
+
+### Summary
+
+LandR *Biomass_core* (hereafter *Biomass_core*) is the core forest succession simulation module of the LandR ecosystem of `SpaDES` modules [see @ChubatyMcIntire2019]. It simulates tree cohort ageing, growth, mortality and competition for light resources, as well as seed dispersal (Fig. \@ref(fig:fig-Biomass-core)), in a spatially explicit manner and using a yearly time step. The model is based on the LANDIS-II Biomass Succession Extension v.3.2.1 [LBSE, @SchellerMiranda2015], with a few changes (see [Differences between *Biomass_core* and LBSE](#biomass-core-vs-lbse)). Nonetheless, the essential functioning of the succession model still largely follows its LANDIS-II counterpart, and we refer the reader to the corresponding LBSE manual [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in the model.
 
 <div class="figure" style="text-align: center">
-<img src="figures/Biomass_coreSchematic.png" alt="_Biomass_core_ simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)." width="60%" />
-<p class="caption">(\#fig:figBiomassCore)_Biomass_core_ simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules).</p>
+<img src="D:/GitHub/Biomass_core/figures/Biomass_coreSchematic.png" alt="(ref:Biomass-core) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)." width="60%" />
+<p class="caption">(\#fig:fig-Biomass-core)(ref:Biomass-core) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules).</p>
 </div>
 
-## Module inputs and parameters
+### Links to other modules {#links-modules}
 
-*Biomass_core* is capable of running on dummy datasets from which it estimates parameters linked to vegetation growth and seed germination (such as the maximum biomass per species, per pixel, and the probability of seed germination -- *i.e.*, species establishment probability not due to resprouting), but also builds and initializes forest communities (based on biomass, age, species composition, land cover and ecological zones like ecodistricts.
+*Biomass_core* is intended to be used with data/calibration modules, disturbance modules and validation modules, amongst others. The following is a list of the modules most commonly used with *Biomass_core*. Not all are in the [LandR Manual](https://landr-manual.predictiveecology.org/), but click the links to their repository URLs where documentation can be found (`.Rmd` file). See [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem) for all available modules and select *Biomass_core* from the drop-down menu to see linkages.
 
-Ideally, however, the user should supply realistic versions of these data and the essential initialization objects that *Biomass_core* requires to run.
+**Data and calibration modules:**
 
-Table \@ref(tab:moduleInputs) shows a full list of input objects that *Biomass_core* expects. Of these, the only input that **must** be provided (*i.e.*, *Biomass_core* does not have a default for) is `studyArea`.
+-   [*Biomass_speciesData*](https://github.com/PredictiveEcology/Biomass_speciesData): grabs and merges several sources of species cover data, making species percent cover ((ref:percent) cover) layers used by other LandR Biomass modules. Default source data spans the entire Canadian territory;
+-   [*Biomass_borealDataPrep*](https://github.com/PredictiveEcology/Biomass_borealDataPrep): prepares all parameters and inputs (including initial landscape conditions) that *Biomass_core* needs to run a realistic simulation. By default, the values/inputs produced are relevant for boreal forests of Western Canada;
+-   [*Biomass_speciesParameters*](https://github.com/PredictiveEcology/Biomass_speciesParameters): calibrates four-species level traits using permanent sample plot data across Western Canada.
 
-<table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleInputs)List of _Biomass_core_  input objects and their description.</caption>
- <thead>
-  <tr>
-   <th style="text-align:left;"> objectName </th>
-   <th style="text-align:left;"> desc </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> biomassMap </td>
-   <td style="text-align:left;"> total biomass raster layer in study area (in g/m^2), filtered for pixels covered by cohortData. Only used if `P(sim)$initialBiomassSource == 'biomassMap'`, which is currently deactivated. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> cceArgs </td>
-   <td style="text-align:left;"> a list of quoted objects used by the `growthAndMortalityDriver` `calculateClimateEffect` function </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> cohortData </td>
-   <td style="text-align:left;"> `data.table` with cohort-level information on age and biomass, by pixelGroup and ecolocation (i.e., `ecoregionGroup`). If supplied, it must have the following columns: `pixelGroup` (integer), `ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in g/m^2), `age` (integer in years) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> ecoregion </td>
-   <td style="text-align:left;"> ecoregion look up table </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> ecoregionMap </td>
-   <td style="text-align:left;"> ecoregion map that has mapcodes match ecoregion table and `speciesEcoregion` table. Defaults to a dummy map matching `rasterToMatch` with two regions </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> lastReg </td>
-   <td style="text-align:left;"> an internal counter keeping track of when the last regeneration event occurred </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> minRelativeB </td>
-   <td style="text-align:left;"> table defining the relative biomass cut points to classify stand shadeness </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> pixelGroupMap </td>
-   <td style="text-align:left;"> a raster layer with `pixelGroup` IDs per pixel. Pixels are grouped based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition, even if the user supplies other initial groupings (e.g., via the `Biomass_borealDataPrep` module. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> rasterToMatch </td>
-   <td style="text-align:left;"> a raster of the `studyArea` in the same resolution and projection as `biomassMap` </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> species </td>
-   <td style="text-align:left;"> a table that has species traits such as longevity, shade tolerance, etc. Default is partially based on Dominic Cir and Yan Boulanger's project </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> speciesEcoregion </td>
-   <td style="text-align:left;"> table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time. Defaults to a dummy table based on dummy data os biomass, age, ecoregion and land cover class </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> speciesLayers </td>
-   <td style="text-align:left;"> percent cover raster layers of tree species in Canada. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived species cover maps from 2001 using a cover threshold of 10 - see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> sppColorVect </td>
-   <td style="text-align:left;"> A named vector of colors to use for plotting. The names must be in `sim$speciesEquivalency[[sim$sppEquivCol]]`, and should also contain a color for 'Mixed' </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> sppEquiv </td>
-   <td style="text-align:left;"> table of species equivalencies. See `LandR::sppEquivalencies_CA`. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> studyArea </td>
-   <td style="text-align:left;"> Polygon to use as the study area. Must be provided by the user </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> studyAreaReporting </td>
-   <td style="text-align:left;"> multipolygon (typically smaller/unbuffered than studyArea) to use for plotting/reporting. Defaults to `studyArea`. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> sufficientLight </td>
-   <td style="text-align:left;"> table defining how the species with different shade tolerance respond to stand shade. Default is based on LANDIS-II Biomass Succession v6.2 parameters </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> treedFirePixelTableSinceLastDisp </td>
-   <td style="text-align:left;"> 3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding `pixelGroup` and time it occurred </td>
-  </tr>
-</tbody>
-</table>
+**Disturbance-related modules:**
 
-Of the above, we draw particular attention to the the following inputs, which are crucial to run *Biomass_core* on a realistic setting (see [Input objects] section of the manual for further detail):
+-   [*Biomass_regeneration*](https://github.com/PredictiveEcology/Biomass_regeneration): simulates cohort biomass responses to stand-replacing fires (as in LBSE), including cohort mortality and regeneration through resprouting and/or serotiny;
 
--   Spatial layers: `ecoregionMap`, `studyArea`
+-   [*Biomass_regenerationPM*](https://github.com/PredictiveEcology/Biomass_regenerationPM): like *Biomass_regeneration*, but allowing partial mortality. Based on the LANDIS-II Dynamic Fuels & Fire System extension [@SturtevantEtAl2018];
 
--   Trait and parameter tables: `ecoregion`, `minRelativeB`, `species`, `speciesEcoregion`, `sufficientLight`, `sppEquiv`, `sppColorVect`
+-   *fireSense*: climate- and land-cover-sensitive fire model simulating fire ignition, escape and spread processes as a function of climate and land-cover. Includes built-in parameterisation of these processes using climate, land-cover, fire occurrence and fire perimeter data. Requires using *Biomass_regeneration* or *Biomass_regenerationPM*. See modules prefixed "*fireSense\_*" at <https://github.com/PredictiveEcology/>;
 
--   Cohort-simulation related: `cohortData`, `pixelGroupMap`
+-   [*LandMine*](https://github.com/PredictiveEcology/LandMine): wildfire ignition and cover-sensitive wildfire spread model based on a fire return interval input. Requires using *Biomass_regeneration* or *Biomass_regenerationPM*;
 
-For the beginner user, we suggest running *Biomass_core* without supplying any inputs and inspecting the above mentioned objects to understand their structure and format. The user can later either feed these objects via `simInit`, or make a module that makes them and provides necessary inputs to *Biomass_core* (see e.g. [*Biomass_borealDataPrep*](https://github.com/PredictiveEcology/Biomass_borealDataPrep))
+-   [*scfm*](https://github.com/PredictiveEcology/scfm): spatially explicit fire spread module parameterised and modelled as a stochastic three-part process of ignition, escape, and spread. Requires using *Biomass_regeneration* or *Biomass_regenerationPM*.
 
-Besides the above mentioned inputs, *Biomass_core* uses several other parameters, which can be changed by the user if need be (Table \@ref(tab:moduleParams)). Please see the [Parameters] section of the manual for a list of the most useful parameters.
+**Validation modules:**
 
-<table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleParams)List of _Biomass_core_ parameters and their description.</caption>
- <thead>
-  <tr>
-   <th style="text-align:left;"> paramName </th>
-   <th style="text-align:left;"> paramDesc </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> calcSummaryBGM </td>
-   <td style="text-align:left;"> A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: 'start'- as before vegetation succession events, i.e. before dispersal, 'postDisp' - after dispersal, 'postRegen' - after post-disturbance regeneration (currently the same as 'start'), 'postGM' - after growth and mortality, 'postAging' - after aging, 'end' - at the end of vegetation succesion events, before plotting and saving. The 'end' option is always active, being also the default option. If NULL, then will skip all summaryBGM related events </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> calibrate </td>
-   <td style="text-align:left;"> Do calibration? Defaults to `FALSE` </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> cohortDefinitionCols </td>
-   <td style="text-align:left;"> `cohortData` columns that determine what constitutes a cohort This parameter should only be modified if additional modules are adding columns to cohortData </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> cutpoint </td>
-   <td style="text-align:left;"> A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> gmcsGrowthLimits </td>
-   <td style="text-align:left;"> if using `LandR.CS` for climate-sensitive growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small denominators as well as predictions outside the data range used to generate the model </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> gmcsMortLimits </td>
-   <td style="text-align:left;"> if using `LandR.CS` for climate-sensitive growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small denominators as well as predictions outside the data range used to generate the model </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> gmcsMinAge </td>
-   <td style="text-align:left;"> if using `LandR.CS` for climate-sensitive growth and mortality, the minimum age for which to predict climate-sensitive growth and mortality. Young stands (&lt; 30) are poorly represented by the PSP data used to parameterize the model. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> growthAndMortalityDrivers </td>
-   <td style="text-align:left;"> package name where the following functions can be found: `calculateClimateEffect`, `assignClimateEffect` (see `LandR.CS` for climate sensitivity equivalent functions, or leave default if this is not desired) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> growthInitialTime </td>
-   <td style="text-align:left;"> Initial time for the growth event to occur </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> initialB </td>
-   <td style="text-align:left;"> initial biomass values of new age-1 cohorts </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> initialBiomassSource </td>
-   <td style="text-align:left;"> Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. If 'spinUp', it will derive biomass by running spinup derived from Landis-II. If 'cohortData', it will be taken from the `cohortData` object, i.e., it is already correct, by cohort. If 'biomassMap', it will be taken from `sim$biomassMap`, divided across species using `sim$speciesLayers` percent cover values 'spinUp' uses `sim$standAgeMap` as the driver, so biomass is an output . That means it will be unlikely to match any input information about biomass, unless this is set to 'biomassMap', and a `sim$biomassMap` is supplied. Only the 'cohortData' option is currently active. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> keepClimateCols </td>
-   <td style="text-align:left;"> include growth and mortality predictions in `cohortData`? </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> minCohortBiomass </td>
-   <td style="text-align:left;"> cohorts with biomass below this threshold (in g/m^2) are removed. Not a LANDIS-II BSE parameter. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> mixedType </td>
-   <td style="text-align:left;"> How to define mixed stands: 1 for any species admixture; 2 for deciduous &gt; conifer. See `?LandR::vegTypeMapGenerator`. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> plotOverstory </td>
-   <td style="text-align:left;"> swap max age plot with overstory biomass </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> seedingAlgorithm </td>
-   <td style="text-align:left;"> choose which seeding algorithm will be used among 'noSeeding' (no horizontal, nor vertical seeding - not in LANDIS-II BSE), 'noDispersal' (no horizontal seeding), 'universalDispersal' (seeds disperse to any pixel), and 'wardDispersal' (default; seeds disperse according to distance and dispersal traits). See Scheller &amp; Miranda (2015) - Biomass Succession extension, v3.2.1 User Guide </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> spinupMortalityfraction </td>
-   <td style="text-align:left;"> defines the mortality loss fraction in spin up-stage simulation. Only used if `P(sim)$initialBiomassSource == 'biomassMap'`, which is currently deactivated. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> sppEquivCol </td>
-   <td style="text-align:left;"> The column in `sim$specieEquivalency` data.table to use as a naming convention </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> successionTimestep </td>
-   <td style="text-align:left;"> defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> vegLeadingProportion </td>
-   <td style="text-align:left;"> a number that define whether a species is leading for a given pixel </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> .maxMemory </td>
-   <td style="text-align:left;"> maximum amount of memory (in GB) to use for dispersal calculations. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> .plotInitialTime </td>
-   <td style="text-align:left;"> Vector of length = 1, describing the simulation time at which the first plot event should occur. To plotting off completely use `P(sim)$.plots`. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> .plotInterval </td>
-   <td style="text-align:left;"> defines the plotting time step. If `NA`, the default, .plotInterval is set to successionTimestep. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> .plots </td>
-   <td style="text-align:left;"> Passed to `types` in `Plots` (see `?Plots`). There are a few plots that are made within this module, if set. Note that plots (or their data) saving will ONLY occur at `end(sim)`. If `NA`, plotting is turned off completely (this includes plot saving). </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> .plotMaps </td>
-   <td style="text-align:left;"> Controls whether maps should be plotted or not. Set to `FALSE` if `P(sim)$.plots == NA` </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> .saveInitialTime </td>
-   <td style="text-align:left;"> Vector of length = 1, describing the simulation time at which the first save event should occur. Set to `NA` if no saving is desired. If not `NA`, then saving will occur at `P(sim)$.saveInitialTime` with a frequency equal to `P(sim)$.saveInterval` </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> .saveInterval </td>
-   <td style="text-align:left;"> defines the saving time step. If `NA`, the default, .saveInterval is set to `P(sim)$successionTimestep`. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> .studyAreaName </td>
-   <td style="text-align:left;"> Human-readable name for the study area used. If `NA`, a hash of `studyArea` will be used. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> .useCache </td>
-   <td style="text-align:left;"> Internal. Can be names of events or the whole module name; these will be cached by `SpaDES` </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> .useParallel </td>
-   <td style="text-align:left;"> Used only in seed dispersal. If numeric, it will be passed to `data.table::setDTthreads` and should be &lt;= 2; If `TRUE`, it will be passed to `parallel::makeCluster`; and if a cluster object, it will be passed to `parallel::parClusterApplyB`. </td>
-  </tr>
-</tbody>
-</table>
+-   [*Biomass_validationKNN*](https://github.com/PredictiveEcology/Biomass_validationKNN): calculates two validation metrics (mean absolute deviation and sum of negative log-likelihoods) on species presences/absences and biomass-related properties across the simulated landscape. By default, it uses an independent dataset of species (ref:percent) cover and stand biomass for 2011, assuming that this is a second snapshot of the landscape.
 
-## Events
+## Module manual
 
-Events are scheduled as follows:
+### General functioning {#general-functioning}
 
--   Module initiation (`init` event)
--   Seed dispersal (every `successionTimestep`; `Dispersal` event)
--   Mortality and growth (`mortalityAndGrowth` event)
--   Reclassification of age cohorts (every `successionTimestep`; `cohortAgeReclassification` event)
--   Summary tables of regeneration (`summaryRegen` event), biomass, age, growth and mortality (`summaryBGM\*` event)
--   Plots of maps (`plotMaps` event) and averages (`plotAvgs` and `plotSummaryBySpecies` events)
--   Save (`save`)
+LandR *Biomass_core* (hereafter *Biomass_core*) is a forest landscape model based on the LANDIS-II Biomass Succession Extension v.3.2.1 model [LBSE, @SchellerMiranda2015]. It is the core forest succession model of the LandR ecosystem of `SpaDES` modules. Similarly to LBSE, *Biomass_core* simulates changes in tree cohort aboveground biomass ($g/m^2$) by calculating growth, mortality and recruitment as functions of pixel and species characteristics, competition and disturbances (Fig. \@ref(fig:fig-Biomass-core)). Note that, by default, cohorts are unique combinations of species and age, but this can be changed via the `cohortDefinitionCols` parameter (see [List of parameters](#params-list)).
 
-## Module outputs
+Specifically, cohort growth is driven by both invariant (growth shape parameter, `growthcurve`) and spatio-temporally varying species traits (maximum biomass, `maxB`, and maximum annual net primary productivity, `maxANPP`), while background mortality (i.e., not caused by disturbances) depends only on invariant species traits (`longevity` and mortality shape parameter, `mortalityshape`). All five traits directly influence the realised shape of species growth curves, by determining how fast they grow (`growthcurve` and `maxANPP`), how soon age mortality starts with respect to longevity (`mortalityshape`) and the biomass a cohort can potentially achieve (`maxB`).
 
-The module produces the following outputs types. -- Plotting -- live and/or saved plot objects/images (depending on `.plots`)
+Cohort recruitment is determined by available "space" (i.e., pixel shade), invariant species traits (regeneration mode, `postfireregen`, age at maturity, `sexualmature`, shade tolerance, `shadetolerance`) and spatio-temporally varying traits (species establishment probability, `establishprob`, called SEP hereafter). The available "growing space" is calculated as the species `maxB` minus the occupied biomass (summed across other cohorts and species). If there is "space", a cohort can establish from one of three recruitment modes: serotiny, resprouting and germination. While `maxB`, `maxANPP` and SEP vary both spatio-temporally and by species ([spatio-temporally varying species traits](#varying-traits)), `growthcurve`, `mortalityshape` and `longevity` vary only between species ([invariant species traits](#invariant-traits))
 
--- Saved biomass, mortality, leading vegetation raster layers -- Whatever objects supplied to `outputs` argument in `simInit`, that are within the `simList` object.
+Disturbances (e.g., fire) can cause cohort mortality and trigger post-disturbance regeneration. Two processes of post-disturbance regeneration have been implemented, following LBSE mechanisms: serotiny and resprouting [@SchellerMiranda2015]. These two processes (post-disturbance mortality and regeneration) only occur in response to fire and are simulated in two separate, but interchangeable modules, *Biomass_regeneration* and *Biomass_regenerationPM* that differ with respect to the level of post-fire mortality they simulate (complete or partial mortality, respectively).
 
-All `simList` objects that are changed by *Biomass_core* (*i.e.*, the definition of a module output) are listed in Table \@ref(tab:moduleOutputs).
+Cohort germination (also called cohort establishment) occurs if seeds are available from local sources (the pixel), or via seed dispersal. Seed dispersal can be of three modes: 'no dispersal', 'universal dispersal' (only interesting for dummy case studies) or 'ward dispersal' [@SchellerMiranda2015]. The 'ward dispersal' algorithm describes a flexible kernel that calculates the probability of a species colonising a neighbour pixel as a function of distance from the source and dispersal-related (and invariant) species traits, and is used by default.
+
+Both germination and regeneration success depend on the species' probability of germination in a given pixel ([probabilities of germination](#prob-germ)).
+
+We refer the reader to @SchellerMiranda2015, @SchellerDomingo2011 and @SchellerDomingo2012 for further details with respect to the above mentioned mechanisms implemented in *Biomass_core*. Existing [differences between *Biomass_core* and LBSE](#biomass-core-vs-lbse) are detailed below, together with [comparisons between the two modules](#biomass-core-vs-lbse-comparisons).
+
+### Initialization, inputs and parameters {#init-inputs-params}
+
+To initialise and simulate forest dynamics in any given landscape, *Biomass_core* requires a number of inputs and parameters namely:
+
+-   [initial cohort biomass and age](#initial-objs) values across the landscape;
+
+-   [invariant species traits](#invariant-traits) values;
+
+-   [spatio-temporally varying species traits](#varying-traits) values (or just spatially-varying);
+
+-   [location- (ecolocation-) specific parameters](#ecolocation-traits);
+
+-   [probabilities of germination](#prob-germ) given a species' shade tolerance and site shade.
+
+These are detailed below and in the full [list of input objects](#inputs-list). The *Biomass_borealDataPrep* module manual also provides information about how many of these inputs are derived from available data, or adjusted using published values or our best knowledge of boreal forest dynamics in Western Canada.
+
+Unlike the initialisation in LBSE[^1], *Biomass_core* initialises the simulation using data-derived initial cohort biomass and age. This information is ideally supplied by data and calibration modules like *Biomass_borealDataPrep* ([Links to other modules](#links-modules)), but *Biomass_core* can also initialise itself using theoretical data.
+
+[^1]: In LBSE the initialisation consists in "iterat[ing] the number of time steps equal to the maximum cohort age for each site", beginning at 0 minus *t* (*t =* oldest cohort age) and adding cohorts at the appropriate time until the initial simulation time is reached (0) [@SchellerMiranda2015].
+
+Similarly, although *Biomass_core* can create all necessary traits and parameters using theoretical values, for realistic simulations these should be provided by data and calibration modules, like *Biomass_borealDataPrep* and *Biomass_speciesParameters*. We advise future users and developers to become familiar with these data modules and then try to create their own modules (or modify existing ones) for their purpose.
+
+#### Initial cohort biomass and age {#initial-objs}
+
+Initial cohort biomass and age are derived from stand biomass (`biomassMap` raster layer), stand age (`standAgeMap` raster layer) and species (ref:percent) cover (`speciesLayers` raster layers) data (see Table \@ref(tab:moduleInputs2-Biomass-core)) and formatted into the `cohortData` object, a table that reflects the current year's cohort biomass, age, mortality (lost biomass) and aboveground net primary productivity (ANPP) per species and pixel group (`pixelGroup`). At the start of the simulation, `cohortData` will not have any values of cohort mortality or ANPP.
+
+Each `pixelGroup` is a collection of pixels that share the same ecolocation (by default, a combination of land-cover and ecological zonation, coded in the `ecoregionMap` raster layer) and the same cohort composition (i.e., species, age and biomass composition). The `cohortData` table is therefore always associated with the current year's `pixelGroupMap` raster layer, which provides the spatial location of all `pixelGroups` and allows "spatialising" cohort information and dynamics (e.g., dispersal) on a pixel by pixel basis (see also [Hashing](#biomass-core-vs-lbse-enhan2)).
+
+The user, or another module, may provide initial `cohortData` and `pixelGroupMap` objects to start the simulation, or the input objects necessary to produce them: a study area polygon (`studyArea`), the `biomassMap`, `standAgeMap`, `speciesLayers` and `ecoregionMap` raster layers (see the [list of input objects](#inputs-list) for more detail).
+
+#### Invariant species traits {#invariant-traits}
+
+These are spatio-temporally constant traits that mostly influence population dynamics (e.g., growth, mortality, dispersal) and responses to fire (fire tolerance and regeneration).
+
+By default, *Biomass_core* obtains trait values from available LANDIS-II tables (see Table \@ref(tab:moduleInputs2-Biomass-core)), but traits can be adjusted/supplied by the user or by other modules. For instance, using *Biomass_borealDataPrep* will adjust some trait values for Western Canadian boreal forests [e.g., longevity values are adjusted following @BurtonCumming1995], while using *Biomass_speciesParameters* calibrates the `growthcurve` and `mortalityshape` parameters and estimates two additional species traits (`inflactionFactor` and `mANPPproportion`) to calibrate `maxB` and `maxANPP` (respectively).
+
+Table \@ref(tab:invariantSpptraits) shows an example of a table of invariant species traits. Note that *Biomass_core* (alone) requires all the columns Table \@ref(tab:invariantSpptraits) in to be present, with the exception of `firetolerance`, `postfireregen`, `resproutprob`, `resproutage_min` and `resproutage_max`, which are used by the post-fire regeneration modules (*Biomass_regeneration* and *Biomass_regenerationPM*).
+
+Please see @SchellerDomingo2011 [p.18] and @SchellerMiranda2015 [p.16] for further detail.
+
+::: fullwidth
+| speciesCode | longevity | sexualmature | shadetolerance | firetolerance | postfireregen | resproutprob | resproutage_min | resproutage_max | seeddistance_eff | seeddistance_max | mortalityshape | growthcurve |
+|------|------|------|------|------|------|------|------|------|------|------|------|------|
+| Abie_sp     | 200       | 20           | 2.3            | 1             | none          | 0            | 0               | 0               | 25               | 100              | 15             | 0           |
+| Pice_eng    | 460       | 30           | 2.1            | 2             | none          | 0            | 0               | 0               | 30               | 250              | 15             | 1.0         |
+| Pice_gla    | 400       | 30           | 1.6            | 2             | none          | 0            | 0               | 0               | 100              | 303              | 15             | 1.0         |
+| Pinu_sp     | 150       | 15           | 1              | 2             | serotiny      | 0            | 0               | 0               | 30               | 100              | 15             | 0           |
+| Popu_sp     | 140       | 20           | 1              | 1             | resprout      | 0.5          | 10              | 70              | 200              | 5000             | 25             | 0           |
+| Pseu_men    | 525       | 25           | 2              | 3             | none          | 0            | 0               | 0               | 100              | 500              | 15             | 1.0         |
+:::
+
+: (#tab:invariantSpptraits) Example of an invariant species traits table (the `species` table object in the module), with species *Abies sp.* (Abie_sp), *Picea engelmannii* (Pice_eng), *Picea glauca* (Pice_gla), *Pinus sp.* (Pinu_sp), *Populus sp.* (Popu_sp) and *Pseudotsuga menziesii* (Pseu_men). Note that these are theoretical values.
+
+#### Spatio-temporally varying species traits {#varying-traits}
+
+These traits vary between species, by ecolocation and, potentially, by year if the `year` column is not omitted and several years exist (in which case last year's values up to the current simulation year are always used). They are maximum biomass, `maxB`, maximum above-ground net primary productivity, `maxANPP`, and species establishment probability, SEP (called `establishprob` in the module). By default, *Biomass_core* assigns theoretical values to these traits, and thus we recommend using *Biomass_borealDataPrep* to obtain realistic trait values derived from data (by default, pertinent for Canadian boreal forest applications) or passing a custom table directly. *Biomass_speciesParameters* further calibrates `maxB` and `maxANPP` by estimating two additional invariant species traits (`inflactionFactor` and `mANPPproportion`; also for Western Canadian forests). See Table \@ref(tab:varyingSpptraits) for an example.
+
+| ecoregionGroup | speciesCode | establishprob | maxB  | maxANPP | year |
+|----------------|-------------|---------------|-------|---------|------|
+| 1_03           | Abie_sp     | 1.000         | 8567  | 285     | 1    |
+| 1_03           | Pice_eng    | 0.983         | 10156 | 305     | 1    |
+| 1_03           | Popu_sp     | 0.737         | 8794  | 293     | 1    |
+| 1_03           | Pseu_men    | 1.000         | 17534 | 132     | 1    |
+| 1_09           | Abie_sp     | 0.112         | 1499  | 50      | 1    |
+| 1_09           | Pice_gla    | 0.302         | 3143  | 102     | 1    |
+| 1_09           | Pinu_sp     | 0.714         | 2569  | 86      | 1    |
+| 1_09           | Popu_sp     | 0.607         | 3292  | 110     | 1    |
+| 1_09           | Pseu_men    | 0.997         | 6020  | 45      | 1    |
+| 1_03           | Abie_sp     | 0.989         | 8943  | 225     | 2    |
+| 1_03           | Pice_eng    | 0.985         | 9000  | 315     | 2    |
+| 1_03           | Popu_sp     | 0.600         | 8600  | 273     | 2    |
+| 1_03           | Pseu_men    | 1.000         | 13534 | 142     | 2    |
+| 1_09           | Abie_sp     | 0.293         | 2099  | 45      | 2    |
+| 1_09           | Pice_gla    | 0.745         | 3643  | 90      | 2    |
+| 1_09           | Pinu_sp     | 0.500         | 2569  | 80      | 2    |
+| 1_09           | Popu_sp     | 0.670         | 3262  | 111     | 2    |
+| 1_09           | Pseu_men    | 1.000         | 6300  | 43      | 2    |
+
+: (#tab:varyingSpptraits) Example of a spatio-temporally varying species traits table (the `speciesEcoregion` table object in the module), with two ecolocations (called `ecoregionGroups`) and species *Abies sp.* (Abie_sp), *Picea engelmannii* (Pice_eng), *Picea glauca* (Pice_gla), *Pinus sp.* (Pinu_sp), *Populus sp.* (Popu_sp) and *Pseudotsuga menziesii* (Pseu_men). If the simulation runs for 10 years, values from year 2 would be use for years 2-10. Note that these are theoretical values.
+
+#### Ecolocation-specific parameters -- minimum relative biomass {#ecolocation-traits}
+
+Minimum relative biomass (`minRelativeB`) is the only the only ecolocation-specific parameter used in *Biomass_core*. It is used to determine the shade level in each pixel (i.e., site shade) with respect to the total potential maximum biomass for that pixel (i.e., the sum of all `maxB` values in the pixel's ecolocation). If relative biomass in the stand (with regards to the total potential maximum biomass) is above one of the minimum relative biomass thresholds, the pixel is assigned that threshold's site shade value [@SchellerMiranda2015].
+
+The shade level then influences the germination and regeneration of new cohorts, depending on their shade tolerance (see [Probabilities of germination](#prob-germ)).
+
+Site shade varies from 0 (no shade) to 5 (maximum shade). By default, *Biomass_core* uses relative biomass thresholds from available LANDIS-II tables, which are held constant across all ecolocations (see an example in Table \@ref(tab:minRelB)). Yet, these values can be adjusted by using other modules or passing user-defined tables (e.g., *Biomass_borealDataPrep* adjusts these values for applications in Western Canadian forests)
+
+| ecoregionGroup | X1   | X2   | X3  | X4   | X5   |
+|----------------|------|------|-----|------|------|
+| 1_03           | 0.15 | 0.25 | 0.5 | 0.80 | 0.90 |
+| 1_09           | 0.15 | 0.25 | 0.5 | 0.80 | 0.90 |
+
+: (#tab:minRelB) Example of a minimum relative biomass table (the `minRelativeB` table object in the module), with two ecolocations (`ecoregionGroups`) sharing the same values. Note that the relative biomass values were taken from
+
+#### Probabilities of germination {#prob-germ}
+
+A species' probability of germination results from the combination of its shade tolerance level (an invariant species trait in the `species` table) and the site shade [defined by the amount of biomass in the pixel -- see [minimum relative biomass parameter](#ecolocation-traits) and @SchellerMiranda2015,p.14]. By default, both *Biomass_core* and *Biomass_borealDataPrep* use a publicly available LANDIS-II table (called `sufficientLight` in the module; Table \@ref(tab:suffLight)).
+
+| species shade tolerance | X0  | X1  | X2  | X3  | X4  | X5  |
+|-------------------------|-----|-----|-----|-----|-----|-----|
+| 1                       | 1   | 0   | 0   | 0   | 0   | 0   |
+| 2                       | 1   | 1   | 0   | 0   | 0   | 0   |
+| 3                       | 1   | 1   | 1   | 0   | 0   | 0   |
+| 4                       | 1   | 1   | 1   | 1   | 0   | 0   |
+| 5                       | 0   | 0   | 1   | 1   | 1   | 1   |
+
+: (#tab:suffLight) Default species probability of germination values used by *Biomass_core* and *Biomass_borealDataPrep*. Columns X0-X5 are different site shade levels and each line has the probability of germination for each site shade and species shade tolerance combination
+
+#### Other module inputs {#other-inputs}
+
+The remaining module input objects either do not directly influence the basic mechanisms implemented in *Biomass_core* (e.g., `sppColorVect` and `studyAreaReporting` are only used for plotting purposes), are objects that keep track of a property/process in the module (e.g., `lastReg` is a counter of the last year when regeneration occurred), or define the study area for the simulation (e.g., `studyArea` and `rasterToMatch`).
+
+The next section provides a complete list of all input objects, including those already mentioned above.
+
+#### List of input objects {#inputs-list}
+
+All of *Biomass_core*'s input objects have (theoretical) defaults that are produced automatically by the module[^2]. We suggest that new users run *Biomass_core* by itself supplying only a `studyArea` object, before attempting to supply their own, or combining *Biomass_core* with data modules. This will enable them to become familiar with all the input objects in a theoretical setting.
+
+[^2]: usually, default inputs are made when running the `.inputObjects` function (inside the module R script) during the `simInit` call and in the `init` event during the `spades` call -- see `?SpaDES.core::events` and `SpaDES.core::simInit`
+
+Of the inputs in Table \@ref(tab:moduleInputs2-Biomass-core), the following are particularly important and deserve special attention:
+
+**Spatial layers**
+
+-   `ecoregionMap` -- a raster layer with ecolocation IDs (note that the term "ecoregion" was inherited from LBSE and kept for consistency with original LBSE code). Ecolocations group pixels with similar biophysical conditions. By default, we use two levels of grouping in our applications: the first level being an ecological classification (in ) such as the the Natural Ecoregion classification of Canada, and the second level a land-cover classification. Hence, these ecolocations contain relatively fine scale land cover information plus coarse scale regional information. The `ecoregionMap` layer must be defined as a categorical raster, with an associated Raster Attribute Table (RAT; see, e.g., `raster::ratify`). The RAT must contain the columns: `ID` (the value in the raster layer), `ecoregion` (the first level of grouping) and `ecoregionGroup` (the full ecolocation "name" written as \<firstlevel_secondlevel\>). Note that if creating `ecoregionGroup`s from combining two raster layers whose values are numeric (as in *Biomass_borealDataPrep*, the group label should be a character combination of two grouping levels. For instance, if Natural Ecoregion `2` has land-cover types `1`, `2` and `3`, the RAT will contain `ID = {1,2,3}`, `ecoregion = {2}` and `ecoregionGroup = {2_1, 2_2, 2_3}`. However, the user is free to use any groupings they wish. Finally, note that all ecolocations are should be listed in the `ecoregion` table.
+
+-   `rasterToMatch` -- a RasterLayer, with a given resolution and projection determining the pixels (i.e., non-NA values) where forest dynamics will be simulated. Needs to match `studyArea`. If not supplied, *Biomass_core* attempts to produce it from `studyArea`, using `biomassMap` as the template for spatial resolution and projection.
+
+-   `studyArea` -- a shapefile. A `SpatialPolygonsDataFrame` with a single polygon determining the where the simulation will take place. This is the only input object that **must be supplied by the user**.
+
+**Species traits and other parameter tables**
+
+-   `ecoregion` -- `data.table` listing all ecolocation "names" (*ecoregionGroup* column; see `ecoregionMap` above for details) and their state (active -- `yes` -- or inactive -- `no`)
+
+-   `minRelativeB` -- `data.table` of minimum relative biomass values. See [Ecolocation-specific parameters -- minimum relative biomass](#ecolocation-traits).
+
+-   `species` -- a `data.table` of invariant species traits. See [Invariant species traits](#invariant-traits).
+
+-   `speciesEcoregion` -- a `data.table` of spatio-temporally varying species traits. See [Spatio-temporally varying species traits](#varying-traits).
+
+-   `sufficientLight` -- a `data.table` defining the probability of germination for a species, given its `shadetolerance` level (see `species` above) and the shade level in the pixel (see `minRelativeB` above). See [Probabilities of germination](#prob-germ).
+
+-   `sppEquiv` -- a `data.table` of species name equivalences between various conventions. It must contain the columns *LandR* (species IDs in the LandR format), *EN_generic_short* (short generic species names in English -- or any other language -- used for plotting), *Type* (type of species, *Conifer* or *Deciduous*, as in "broadleaf") and *Leading* (same as *EN_generic_short* but with "leading" appended -- e.g., "Poplar leading") <!-- we should add an assertion that checks whether these columns are present early on!!! -->. See `?LandR::sppEquivalencies_CA` for more information.
+
+-   `sppColorVect` -- character. A named vector of colours used to plot species dynamics. Should contain one colour per species in the `species` table and, potentially a colour for species mixtures (named "Mixed"). Vector names must follow `species$speciesCode`.
+
+**Cohort-simulation-related objects**
+
+-   `cohortData` -- a `data.table` containing initial cohort information per `pixelGroup` (see `pixelGroupMap` below). This table is updated during the simulation as cohort dynamics are simulated. Must contain the following columns:
+
+    -   *pixelGroup* -- integer. *pixelGroup* ID. See [Hashing](#biomass-core-vs-lbse-enhan2).
+
+    -   *ecoregionGroup* -- character. Ecolocation names. See `ecoregionMap` and `ecoregion` objects above.
+
+    -   *speciesCode* -- character. Species ID.
+
+    -   *age* -- integer. Cohort age.
+
+    -   *B* -- integer. Cohort biomass in $g/m^2$.
+
+    -   *mortality* -- integer. Cohort dead biomass in the current year in $g/m^2$. Usually filled with 0s in initial conditions.
+
+    -   *aNPPAct* -- integer. Actual aboveground net primary productivity of the current year in $g/m^2$. Hence `B` is the result of the previous year's `B` minus `mortality` plus `aNPPAct`. Usually filled with 0s in initial conditions. See "1.1.3 Cohort growth and ageing" section of @SchellerMiranda2015.
+
+-   `pixelGroupMap` -- a raster layer with `pixelGroup` IDs per pixel. Pixels are always grouped based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition, even if the user supplies other initial groupings (e.g., this is possible in the *Biomass_borealDataPrep* data module). <!-- may be revised in following versions-->
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleOutputs)List of _Biomass_core_ output objects and their description.</caption>
- <thead>
-  <tr>
-   <th style="text-align:left;"> objectName </th>
-   <th style="text-align:left;"> desc </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> activePixelIndex </td>
-   <td style="text-align:left;"> internal use. Keeps track of which pixels are active </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> activePixelIndexReporting </td>
-   <td style="text-align:left;"> internal use. Keeps track of which pixels are active in the reporting study area </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> ANPPMap </td>
-   <td style="text-align:left;"> ANPP map at each succession time step (in g /m^2) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> cohortData </td>
-   <td style="text-align:left;"> `data.table` with cohort-level information on age, biomass, aboveground primary productivity (year's biomass gain) and mortality (year's biomass loss), by `pixelGroup` and ecolocation (i.e., `ecoregionGroup`). Contains at least the following columns: `pixelGroup` (integer), `ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in g/m^2), `age` (integer in years), `mortality` (integer in g/m^2), `aNPPAct` (integer in g/m^2). May have other columns depending on additional simulated processes (i.e., cliamte sensitivity; see, e.g., `P(sim)$keepClimateCols`). </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> ecoregionMap </td>
-   <td style="text-align:left;"> map with mapcodes match `ecoregion` table and `speciesEcoregion` table. Defaults to a dummy map matching rasterToMatch with two regions </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> inactivePixelIndex </td>
-   <td style="text-align:left;"> internal use. Keeps track of which pixels are inactive </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> inactivePixelIndexReporting </td>
-   <td style="text-align:left;"> internal use. Keeps track of which pixels are inactive in the reporting study area </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> lastFireYear </td>
-   <td style="text-align:left;"> Year of the most recent fire year </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> lastReg </td>
-   <td style="text-align:left;"> an internal counter keeping track of when the last regeneration event occurred </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> minRelativeB </td>
-   <td style="text-align:left;"> define the relative biomass cut points to classify stand shade </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> mortalityMap </td>
-   <td style="text-align:left;"> map of biomass lost (in g/m^2) at each succession time step </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> pixelGroupMap </td>
-   <td style="text-align:left;"> updated community map at each succession time step </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> regenerationOutput </td>
-   <td style="text-align:left;"> If `P(sim)$calibrate == TRUE`, an summary of seed dispersal and germination success (i.e., number of pixels where seeds successfully germinated) per species and year. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> reproductionMap </td>
-   <td style="text-align:left;"> Regeneration map (biomass gains in g/m^2) at each succession time step </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> simulatedBiomassMap </td>
-   <td style="text-align:left;"> Biomass map at each succession time step (in g/m^2) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> simulationOutput </td>
-   <td style="text-align:left;"> contains simulation results by `ecoregionGroup` (main output) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> simulationTreeOutput </td>
-   <td style="text-align:left;"> Summary of several characteristics about the stands, derived from `cohortData` </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> species </td>
-   <td style="text-align:left;"> a table that has species traits such as longevity, shade tolerance, etc. Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> speciesEcoregion </td>
-   <td style="text-align:left;"> define the maxANPP, maxB and SEP change with both ecoregion and simulation time </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> speciesLayers </td>
-   <td style="text-align:left;"> species percent cover raster layers, based on input `speciesLayers` object. Not changed by this module. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> spinupOutput </td>
-   <td style="text-align:left;"> Spin-up output. Currently deactivated. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> summaryBySpecies </td>
-   <td style="text-align:left;"> The total species biomass (in g/m^2 as in `cohortData`), average age and aNPP (in g/m^2 as in `cohortData`), across the landscape (used for plotting and reporting). </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> summaryBySpecies1 </td>
-   <td style="text-align:left;"> No. pixels of each leading vegetation type (used for plotting and reporting). </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> summaryLandscape </td>
-   <td style="text-align:left;"> The averages of total biomass (in ton/ha , not g/m^2 like in `cohortData`), age and aNPP (also in ton/ha) across the landscape (used for plotting and reporting). </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> treedFirePixelTableSinceLastDisp </td>
-   <td style="text-align:left;"> 3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding `pixelGroup` and time it occurred </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> vegTypeMap </td>
-   <td style="text-align:left;"> Map of leading species in each pixel, colored according to `sim$sppColorVect`. Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)`$mixedType. </td>
-  </tr>
-</tbody>
-</table>
-
-## Links to other modules
-
-Intended to be used with other landscape modules, such as *LandMine*, *fireSense*, *Biomass_borealDataPrep*, *Biomass_regeneration* and possibly many others. You can see all *potential* module linkages within the LandR ecosystem [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem). Select *Biomass_core* from the dropdown menu to see linkages with *Biomass_core*.
-
-## Getting help
-
--   <https://github.com/PredictiveEcology/Biomass_core/issues>
-
-# Module manual
-
-## Introduction
-
-LandR *Biomass_core* (hereafter *Biomass_core*) a forest landscape model based on the LANDIS-II Biomass Succession Extension v.3.2.1 model [LBSE; @SchellerMiranda2015]. It is the core forest succession model of the LandR ecosystem of `SpaDES` modules. Similarly to the LBSE, *Biomass_core* simulates changes in tree cohort aboveground biomass (g/m^2^.) by calculating growth, mortality and recruitment as functions of pixel and species characteristics, competition and disturbances (Fig. \@ref(fig:figBiomassCore)). Specifically, growth is driven by both invariant (`growthcurve`) and spatially varying species growth traits (maximum biomass, `maxB`, and maximum annual net primary productivity, `maxANPP`), while mortality depends only on invariant species traits (`age`, `longevity` and `mortalityshape`). Disturbances (e.g., fire) can also cause cohort mortality, but are simulated in separate modules (e.g., *Biomass_regeneration* simulates the death of all cohorts immediately after a fire). The parameters `growthcurve` and `mortalityshape` directly influence the shape of species growth curves, by determining how fast they grow and how soon age mortality starts with respect to longevity. Cohort recruitment is determined by available "space" (*i.e.*, pixel shade), invariant species traits (regeneration mode, age at maturity, shade tolerance) and spatially varying traits (species establishment probability, `SEP`). The available "growing space" is calculated as species `maxB` minus the occupied biomass (summed across other cohorts and species). If there is "space", a cohort can establish from one of three recruitment modes: serotiny, resprouting and germinating. Serotiny and resprouting occur only in response to fire and are simulated in two separate, but interchangeable modules, *Biomass_regeneration* and *Biomass_regeneration*PM. Germination occurs if seeds are made available from local sources (the pixel), or via seed dispersal. Seed dispersal can be of three modes: 'no dispersal', 'universal dispersal' (only interesting for dummy case studies) or 'ward dispersal' [@SchellerMiranda2015]. The 'ward dispersal' algorithm describes a flexible kernel that calculates the probability of a species colonising a neighbour pixel as a function of distance from the source and dispersal-related (and invariant) species traits, and is used by default. We refer the reader to @SchellerMiranda2015, @SchellerDomingo2011 and @SchellerDomingo2012 for further details with respect to the mechanisms implemented in the module.
-
-## Differences between *Biomass_core* and LBSE
-
-### Algorithm changes
-
-Upon porting LBSE into R, we made six minor modifications to the original model's algorithms to better reflect ecological processes. This did not result in dramatic changes in simulation outputs and we note that these changes might also have been implemented in more recent versions of LBSE.
-
-First, for each year and community (*i.e.*, 'pixel group' in *Biomass_core*, see below), LBSE calculates the competition index for a cohort sequentially (*i.e.*, one cohort at a time) after updating the growth and mortality (*i.e.*, the biomass gain and loss, respectively) of other cohorts, and with the calculation sequence following cohort age in descending order, but no explicit order of species. This sorting of growth and mortality calculations from oldest to youngest cohorts in LBSE was aimed at capturing size-asymmetric competition between cohorts, under the assumption that older cohorts have priority for growing space given their greater height (Scheller pers. comm.). We felt that sequential, within-year growth, death and recruitment may be not ecologically accurate, and that the size-asymmetric competition was being accounted for twice, as the calculation of the competition index already considers the competitive advantage of older cohorts [as shown in the User's Guide; @SchellerMiranda2015]. Hence, in *Biomass_core* growth, mortality and the competition index are calculated at the same time across all cohorts and species.
-
-Second, the unknown species-level sorting mechanism contained within LBSE (which changed depending on the species order in the input species list file), led to different simulation results depending on the input species list file (e.g., Table \@ref(tab:tableLBSEtest1) and Fig. \@ref(fig:figLBSEtest1)). The calculation of competition, growth and mortality for all cohorts at the same time also circumvented this issue.
-
-Third, in LBSE the calculation of total pixel biomass for the purpose of calculating the initial biomass of a new cohort included the (previously calculated) biomass of other new cohorts when succession time step = 1, but not when time step was \> 1. This does not reflect the documentation in the User's Guide, which stated that "Bsum [total pixel biomass] is the current total biomass for the site (not including other new cohorts)" [@SchellerMiranda2015, pp. 4], when the succession time step was set to 1. Additionally, together with the lack of explicit ordering, it generated different results in terms of the biomass assigned to each new cohort (e.g. Table \@ref(tab:tableLBSEtest2) and Fig. \@ref(fig:figLBSEtest2)). In *Biomass_core* the initial biomass of new cohorts is no longer calculated sequentially (as with competition, growth and mortality), and thus the biomass of new cohorts is never included in the calculation of total pixel biomass.
-
-Fourth, in LBSE, serotiny and resprouting could not occur in the same pixel following a fire, with serotiny taking precedence if activated. We understand that this provides an advantage to serotinous species, which could perhaps be disadvantaged with respect to fast-growing resprouters. However, we feel that it is ecologically more realistic that serotinous and resprouter species be able to both regenerate in a given community following a fire and allow the competition between serotinous and resprouting species to arise from species traits. **Note that this change was implemented in the *Biomass_regeneration* and *Biomass_regeneration*PM modules.**
-
-Fifth, in *Biomass_core*, species shade tolerance values can have decimal values to allow for finer adjustments of between-species competition.
-
-Sixth, we added a new parameter called `minCohortBiomass`, that allows the user to control cohort removal bellow a certain threshold of biomass. In some simulation set-ups, we noticed that *Biomass_core* (and LBSE) were able to generate many very small cohorts in the understory that, due to cohort competition, were not able to gain biomass and grow. However, because competition does not increase mortality, only decreases growth, these cohorts survived at very low biomass levels until they reached sufficient age to suffer age-related mortality. We felt this is unlikely to be realistic in many cases. By default, this parameter is left at 0 to follow LBSE behaviour (*i.e.*, no cohorts removal based on minimum biomass).
-
-### Other enhancements
-
-In addition to the five minor changes in growth, mortality and regeneration, we separated the components that govern vegetation responses to disturbances -- only fire at the moment -- into two independent modules, used interchangeably, and implemented hashing, caching and testing to improve the model's computational efficiency and insure its performance.
-
-#### Modularity
-
-Unlike in LBSE, post-disturbance regeneration is not part of *Biomass_core* *per se*, but belongs to two separate modules, used interchangeably ([*Biomass_regeneration*](https://github.com/PredictiveEcology/Biomass_regeneration/blob/master/Biomass_regeneration.Rmd) and [*Biomass_regenerationPM*](https://github.com/PredictiveEcology/Biomass_regenerationPM/blob/master/Biomass_regenerationPM.Rmd)). These need to be loaded and added to the "modules folder" of the project in case the user wants to simulate forest responses to disturbances (only fire disturbances at the moment). Again, this enables higher flexibility when swapping between different approaches to regeneration. For instance, default (*i.e.*, not climate sensitive) growth and mortality functions are part of the `LandR` R package, which needs to be loaded prior to running *Biomass_core*. Should the user wish to change the growth/mortality algorithms, they would need to provide compatible functions (with the same names) to the simulation via `simInit` -- user-provided functions will replace those loaded with a package <!-- we should have an example of this-->. Note that the `LandR` package provides other supporting functions and objects to the simulation, and still needs to be loaded prior to running *Biomass_core*.
-
-#### Hashing
-
-Our first strategy to improve simulation efficiency in *Biomass_core* was to use a hashing mechanism [@YangEtAl2011]. Instead of assigning a key to each pixel in a raster and tracking the simulation for each pixel in a lookup table, we indexed pixels using a *pixelGroup* key that contained unique combinations of ecolocation and community, and tracked and stored simulation data for each *pixelGroup* (Fig. \@ref(fig:figLBSEtest3)). Ecolocation (called 'ecoregion' in LBSE and in model objects) is a spatial unit with similar biophysical characteristics. In our applications, we define ecolocation as the combination of land-cover types from the Land Cover Map of Canada 2005 (v1) and ecodistricts from the National Ecological Framework for Canada (<!--add source-->). Hence, these ecolocations contain relatively fine scale land cover information plus coarse scale regional information. In turn, community is the species composition and age structure of a particular pixel. This algorithm was able to ease the computational burden by significantly reducing the size of the lookup table and speeding-up the simulation process. After recruitment and disturbance events, pixels are rehashed into new pixel groups.
-
-#### Caching
-
-The second strategy aimed at improving model efficacy was the implementation of caching, and data-driven parametrisation and initialisation. Caching automatically archives outputs of a given function to disk (or memory) and reads them back when subsequent calls of this function are given identical inputs. All caching operations were achieved using the `reproducible` R package [@McIntireChubaty2020]. In the current version of *Biomass_core*, the spin-up phase was replaced by data-driven landscape initialisation and many model parameters were derived from data, using "data modules" (e.g., *Biomass_borealDataPrep*). To avoid having to repeat data downloads and treatment, statistical estimation of parameters and landscape initialisation every time the simulation is re-run under the same conditions (*i.e.*, no data or algorithm changes), many of these pre-simulation steps are automatically cached. This means that the pre-simulation phase is significantly faster upon a second call when inputs have not changed (e.g., the input data and parametrisation methods), and when inputs do change only directly affected steps are re-run (see main text for examples). When not using data modules, *Biomass_core* still relies on caching for the preparation of its theoretical inputs.
-
-#### Testing
-
-Finally, we implemented code testing, to facilitate bug detection by comparing the outputs of functions [etc.] to expected outputs [@Wickham2011]. We built and integrated code tests in *Biomass_core* and across all LandR modules and the `LandR` R package <!-- package name may change --> and the in the form of assertions and integration tests. Assertions are run automatically during simulations (but can be turned off), while integration are be run manually. Tests were also implemented in R package dependencies of *Biomass_core*, such as the `LandR` R package <!-- package name may change --> and `SpaDES`, which are routinely tested using GitHub Actions continuous integration (CI) or automated checks on CRAN. For the `LandR` R package, we use GitHub Actions CI to automatically test for installation and execution errors.
-
-Finally, because *Biomass_core* (and all other LandR modules) code is hosted in public GitHub repositories, there is a potentially high number of users that can identify issues and contribute to improve module code.
-
-### Performance and accuracy of *Biomass_core* with respect to LBSE {data-link="Algorithm changes"}
-
-In the recoding of *Biomass_core*, we ensured similar outputs of each demographic process (namely, growth, mortality and recruitment) to the outputs from its counterpart in LBSE, using integration tests. Here, we report the comparisons of the overall simulation (i.e., including all demographic processes) between LBSE and *Biomass_core* using three randomly generated initial communities (Tables \@ref(tab:tableLBSEtest3)-\@ref(tab:tableLBSEtest5)). The remaining input parameters were taken from a LANDIS-II training course (Tables \@ref(tab:tableLBSEtest6)-\@ref(tab:tableLBSEtest9)), and contained species attributes information of 16 common tree species in boreal forests and 2 ecolocations. We ran simulations for 1000 years, with a succession time step of 10 and three repetitions, which were enough to account for the variability produced by stochastic processes. Seed dispersal was set as "ward dispersal".
-
-The results suggested that *Biomass_core* had a good agreement with LBSE using the three randomly generated initial communities (Fig. \@ref(fig:figLBSEtest4)), with very small deviations for LBSE-generated biomasses. Notably, the mean differences between LBSE and *Biomass_core* were 0.03% (range: -0.01% \~ 0.13%), 0.03% (range: -0.01% \~ 0.11%) and 0.05% (-0.02% \~ 0.15%) for each initial community, respectively (right panels in Fig. \@ref(fig:figLBSEtest4) of this appendix).
-
-To examine how running time changed with map size, we ran simulations using maps with increasing number of pixels from 22,201 to 638,401. All maps were initialised with a single ecolocation and 7 different communities. Simulations were run for 120 years using a succession time step of 10 and replicated three times. To eliminate the effect of hardware on running time, we used machines that were all purchased at the same time, with equal specifications and running Windows 7. Each simulation ran on 2 CPU threads with a total RAM of 4000 Mb. For both LBSE and *Biomass_core*, the simulation time increased linearly with number of pixels, but the increase rate was smaller for *Biomass_core* (Fig. \@ref(fig:figLBSEtest5)a). This meant that while both models had similar simulation efficiencies in small maps (\< 90,000 pixels), as map size increased *Biomass_core* was \~2 times faster than LBSE (maps \> 100,000 pixels; Fig. \@ref(fig:figLBSEtest5)a). *Biomass_core* also scaled better with map size, as LBSE speeds fluctuated between 19 to 25 seconds per 1,000 pixels across all map sizes, while *Biomass_core* decreased from 21 to 11 seconds per 1,000 pixels from smaller to larger maps (Fig. \@ref(fig:figLBSEtest5)b).
-
-## Initialization, inputs and parameters
-
-Unlike the initialization in LBSE, which "iterates the number of time steps equal to the maximum cohort age for each site", beginning at *t* -- oldest cohort age and adding cohorts at the appropriate time [@SchellerMiranda2015], *Biomass_core* initializes the simulation by deriving initial biomasses from available data, using data modules. If data modules are not available, *Biomass_core* initializes itself with theoretical data.
-
-To be initialized, *Biomass_core* requires the following input objects and parameters:
-
-### Input objects
-
-All of *Biomass_core*'s input objects have (theoretical) defaults that are produced automatically by the module (when running the `.inputObjects` function during the `simInit` call, and in the `init` event during the `spades` call -- see `?SpaDES.core::events` and `SpaDES.core::simInit`). We suggest that new users run *Biomass_core* by itself supplying only a `studyArea` object. This will enable them to become familiar with all the input objects before attempting to supply their own, or combine *Biomass_core* with data modules.
-
-<table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleInputs2)List of _Biomass_core_ input objects and their description.</caption>
+<caption>(\#tab:moduleInputs2-Biomass-core)List of (ref:Biomass-core) input objects and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> objectName </th>
@@ -548,13 +341,13 @@ All of *Biomass_core*'s input objects have (theoretical) defaults that are produ
   <tr>
    <td style="text-align:left;"> species </td>
    <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> a table that has species traits such as longevity, shade tolerance, etc. Default is partially based on Dominic Cir and Yan Boulanger's project </td>
+   <td style="text-align:left;"> a table of invariant species traits with the following trait colums: 'species', 'Area', 'longevity', 'sexualmature', 'shadetolerance', 'firetolerance', 'seeddistance_eff', 'seeddistance_max', 'resproutprob', 'mortalityshape', 'growthcurve', 'resproutage_min', 'resproutage_max', 'postfireregen', 'wooddecayrate', 'leaflongevity' 'leafLignin', 'hardsoft'. The last seven traits are not used in Biomass_core , and may be ommited. However, this may result in downstream issues with other modules. Default is from Dominic Cyr and Yan Boulanger's project </td>
    <td style="text-align:left;"> https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv </td>
   </tr>
   <tr>
    <td style="text-align:left;"> speciesEcoregion </td>
    <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time. Defaults to a dummy table based on dummy data os biomass, age, ecoregion and land cover class </td>
+   <td style="text-align:left;"> table of spatially-varying species traits (`maxB`, `maxANPP`, `establishprob`), defined by species and `ecoregionGroup`) Defaults to a dummy table based on dummy data os biomass, age, ecoregion and land cover class </td>
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
@@ -566,7 +359,7 @@ All of *Biomass_core*'s input objects have (theoretical) defaults that are produ
   <tr>
    <td style="text-align:left;"> sppColorVect </td>
    <td style="text-align:left;"> character </td>
-   <td style="text-align:left;"> A named vector of colors to use for plotting. The names must be in `sim$speciesEquivalency[[sim$sppEquivCol]]`, and should also contain a color for 'Mixed' </td>
+   <td style="text-align:left;"> A named vector of colors to use for plotting. The names must be in `sim$sppEquiv[[sim$sppEquivCol]]`, and should also contain a color for 'Mixed' </td>
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
@@ -602,94 +395,36 @@ All of *Biomass_core*'s input objects have (theoretical) defaults that are produ
 </tbody>
 </table>
 
-Of the inputs in Table \@ref(tab:moduleInputs2), the following are particularly important and deserve special attention:
+#### List of parameters {#params-list}
 
--   **Spatial layers**
+In addition to the above inputs objects, *Biomass_core* uses several parameters[^3] that control aspects like the simulation length, the "succession" time step, plotting and saving intervals, amongst others. Note that a few of these parameters are only relevant when simulating climate effects of cohort growth and mortality, which require also loading the `LandR.CS` R package. These are not discussed in detail here, since climate effects are calculated externally to *Biomass_core* by the `LandR.CS` package and thus documented there.
 
-    -   `ecoregionMap` -- a raster layer with ecolocation IDs (note that the term "ecoregion" was inherited from LBSE and kept as is for consistency with original LBSE code). Ecolocations group pixels or similar biophysical conditions using up to two levels of grouping. In many of our applications, we use the Natural Ecoregion classification of Canada as the first grouping level and a land-cover classification as the second level. The raster layer must be defined as a categorical variable, with an associated Raster Attribute Table (RAT; see, e.g., `raster::ratify`). The RAT must contain the columns: `ID` (the value in the raster layer), `ecoregion` (the first level of ecolocation grouping) and `ecoregionGroup` (the full ecolocation "name" written as \<firstlevel_secondlevel>). Note that `ecoregionGroup` usually originated from combining two raster layers and, thus, the grouping level IDs are also integers. For instance, if Natural Ecoregion `2` has land-cover types `1`, `2` and `3`, the RAT will contain `ID = {1,2,3}`, `ecoregion = {2}` and `ecoregionGroup = {2_1, 2_2, 2_3}`. All ecolocations are listed in the `ecoregion` `data.table`.
+[^3]: in `SpaDES` lingo parameters are "small" objects, such as an integer or boolean, that can be controlled via the `parameters` argument in `simInit`
 
-    -   `rasterToMatch` -- a RasterLayer, with a given resolution and projection determining the pixels (*i.e.*, non NA values) where forest dynamics will be simulated. Needs to match `studyArea`. If not supplied, *Biomass_core* attempts to produce it, using `biomassMap` as the template for spatial resolution and projection.
+A list of useful parameters and their description is shown in Table \@ref(tab:tableUsefulParams), while the full set of parameters is in Table \@ref(tab:moduleParams2-Biomass-core). Like with input objects, default values are supplied for all parameters and we suggest the user becomes familiarized with them before attempting any changes. We also note that the `"spin-up"` and `"biomassMap"` options for the `initialBiomassSource` are currently deactivated, since *Biomass_core* no longer generates initial cohort biomass conditions using a spin-up based on initial stand age like LANDIS-II (`"spin-up"`), nor does it attempt to fill initial cohort biomasses using `biomassMap` (`"biomassMap"`).
 
-    -   `studyArea` -- shapefile. A `SpatialPolygonsDataFrame` with a single polygon determing the where the simulation will take place. This is the only input object that **must be supplied by the user**.
+::: fullwidth
+| Required inputs        | Description                                                                                     |
+|:------------------------|:----------------------------------------------|
+| Plotting & saving      |                                                                                                 |
+| `.plots`               | activates/deactivates plotting and defines type fo plotting (see `?Plots`)                      |
+| `.plotInitialTime`     | defines when plotting starts                                                                    |
+| `.plotInterval`        | defines plotting frequency                                                                      |
+| `.plotMaps`            | activates/deactivates map plotting                                                              |
+| `.saveInitialTime`     | defines when saving starts                                                                      |
+| `.saveInterval`        | defines saving frequency                                                                        |
+| Simulation             |                                                                                                 |
+| `seedingAlgorithm`     | dispersal type (see above)                                                                      |
+| `successionTimestep`   | defines frequency of dispersal/local recruitment event (growth and mortality are always yearly) |
+| Other                  |                                                                                                 |
+| `mixedType`            | how mixed forest stands are defined                                                             |
+| `vegLeadingProportion` | relative biomass threshold to consider a species "leading" (i.e., dominant)                     |
+:::
 
--   **Species traits and other parameter tables**
-
-    -   `ecoregion` -- `data.table` listing all ecolocation "names" (*ecoregionGroup* column; see `ecoregionMap` above for details) and their state (active -- `yes` -- or inactive -- `no`)
-
-    -   `minRelativeB` -- `data.table` of minimum relative biomass values. This is a spatially variant trait used to determine the shade level in each pixel [see @SchellerMiranda2015, pp. 14], yet in our applications we often keep values constant across ecolocations. The table must contain the following columns:
-
-        -   *ecoregionGroup --* character. Ecolocation names. See `ecoregionMap` and `ecoregion` objects above.
-
-        -   *X0-X5* -- six numeric columns, one per shade class (no-shade, 0, to maximum shade, 5), with 0 to 1 values determining the minimum threshold of biomass (relative to the species/ecolocation `maxB`) necessary to reach a given shade-level. This means that shade-levels are determined on a species by species basis [see @SchellerMiranda2015, pp. 14]
-
-    -   `species` -- `data.table` of *invariant species traits*. There are species traits that do no vary spatially, nor temporally (e.g., longevity). The table must contain the following trait values (*i.e.*, columns) in order to run *Biomass_core* (note that columns should follow the data type indicated):
-
-        -   *speciesCode --* character. Species ID.
-
-        -   *longevity --* integer. Maximum age in years [see @SchellerDomingo2011, pp. 18].
-
-        -   *sexualmature --* integer. Age at sexual maturity in years [see @SchellerDomingo2011, pp. 18].
-
-        -   *shadetolerance --* integer OR numeric. *Relative* shade tolerance (see [Algorithm changes]).
-
-        -   *seeddistance_eff --* integer. Eeffective seed distance in meters. [see @SchellerDomingo2011, pp. 18]
-
-        -   *seeddistance_max --* integer. Maximum seed distance in meters. Note that is the pixel size is larger than the maximum seed distance, the species will not be able to disperse to neighbouring pixels [see @SchellerDomingo2011, pp. 18].
-
-        -   *mortalityshape --* integer. Shape of growth curve determining how quickly mortality begins [see @SchellerMiranda2015, pp. 15].
-
-        -   *growthcurve --* numeric. Shape of growth curve determining ANPP reaches its maximum [see @SchellerMiranda2015, pp. 16].
-
-    -   `speciesEcoregion` -- `data.table` of *spatiotemporally-varying species traits*. There are species traits vary spatially and, potentially, temporally. The table must contain the following columns in order to run *Biomass_core*:
-
-        -   *ecoregionGroup* -- character. Ecolocation names. See `ecoregionMap` and `ecoregion` objects above.
-
-        -   *speciesCode* -- character. Species ID.
-
-        -   *establishprob* -- numeric. Species establishment probability (`SEP`) for a given species in an ecolocation and, potentially year. SEP influences the success of incoming seed germination, given pixel biophysical characteristics (note that *actual* success is determined by both SEP and light conditions in the pixel) [see @SchellerMiranda2015, pp. 18].
-
-        -   *maxB* -- integer. Maximum biomass for a given species in an ecolocation in units of g biomass / m^2^. Note that the actual maximum biomass reached by a species in a pixel may exceed `maxB` because `maxB` is applied at the cohort level an species may have several cohorts in a given pixel [see @SchellerMiranda2015, pp. 18].
-
-        -   *maxANPP* -- numeric. Maximum aboveground net primary productivity in units of g biomass / m^2^ / year, by default it is calculated as 1/30 of `maxB` [see @SchellerMiranda2015, pp. 18]
-
-        -   *year* -- integer. Used when varying `SEP`, `maxB` and `maxANPP` values in time. Otherwise, use fill all lines with `0`.
-
-    -   `sufficientLight` -- `data.table` defining the probability of germination for a species, given its `shadetolerance` level (see `species` above) and the shade level in the pixel (see `minRelativeB` above). Must contain columns:
-
-        -   *speciesshadetolerance* -- integer. Species shade tolerance levels, from 1-5 (all levels must be present in this table).
-
-        -   *X0-X5* -- six integer columns, one per shade class (no-shade, 0, to maximum shade, 5), filled with 0s OR 1s values determining the probability of germination (or resprouting) for a species given a shade-level[see @SchellerMiranda2015, pp. 14]. Unlike LBSE, species `shadetolerance` values can take decimal values between 1-5, in which case the resulting probability of germination in a given pixel is interpolated between the corresponding lower and upper shade tolerance values.
-
-    -   `sppEquiv` -- a `data.table` of species name equivalencies between various conventions. It must contain the columns *LandR* (species IDs following in LandR format) *EN_generic_short* (short generic species names in English -- or any other language; used for plotting), *Type* (type of species, *Conifer* or *Deciduous*, as in "broadleaf") and *Leading* (same as *EN_generic_short* but with "leading" appended -- e.g., "Poplar leading") <!-- we should add an assertion that checks whether these columns are present early on!!! -->. See `?LandR::sppEquivalencies_CA` for more information.
-
-    -   `sppColorVect` -- character. A named vector of colours used to plot species dynamics. Should contain one colour per species in the `species` table and, potentially a colour for species mixtures (named "Mixed"). Vector names must follow `species$speciesCode`.
-
--   **Cohort-simulation-related objects**
-
-    -   `cohortData` -- a `data.table` containing initial cohort information per *pixelGroup* (see `pixelGroupMap` below). This table is updated during the simulation as cohort dynamics are simulated. Must contain the following columns
-
-        -   *pixelGroup* -- integer. *pixelGroup* ID. See [Hashing].
-
-        -   *ecoregionGroup* -- character. Ecolocation names. See `ecoregionMap` and `ecoregion` objects above.
-
-        -   *speciesCode* -- character. Species ID.
-
-        -   *age* -- integer. Cohort age.
-
-        -   *B* -- integer. cohort biomass in g/m^2^.
-
-        -   *mortality* -- integer. cohort dead biomass in the current year in g/m^2^. Should be filled with 0s in initial conditions.
-
-        -   *aNPPAct* -- integer. Actual aboveground net primary productivity of the current year in g/m^2^. Hence *B* is the result of the previous year's *B* minus *mortality* plus *aNPPAct*. See "1.1.3 Cohort growth and ageing" section of @SchellerMiranda2015.
-
-    -   `pixelGroupMap` -- a raster layer with *pixelGroup* IDs per pixel. Pixels are always grouped based on identical *ecoregionGroup*, *speciesCode*, *age* and *B* composition, even if the user supplies other initial groupings (e.g., this is possible in the *Biomass_borealDataPrep* data module).
-
-### Parameters
-
-Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note that a few of these parameters are only relevant when simulating climate effects of cohort growth and mortality, which require also loading the `LandR.CS` R package. Like with input objects, default values are supplied for all parameters and we suggest the user becomes familiarized with them before attempting any changes. We also note that the `"spin-up"` and `"biomassMap"` options for the `initialBiomassSource` are currently deactivated, since *Biomass_core* no longer generates initial cohort biomass conditions using a spin-up based on initial stand age like LANDIS-II (`"spin-up"`), nor does it attempt to fill initial cohort biomasses using `biomassMap` (`"biomassMap"`). A list of useful parameters and their description is shown in Table \@ref(tab:tableUsefulParams).
+: (#tab:tableUsefulParams) Useful *Biomass_core* parameters.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleParams2)List of _Biomass_core_ parameters and their description.</caption>
+<caption>(\#tab:moduleParams2-Biomass-core)List of (ref:Biomass-core) parameters and their description.</caption>
  <thead>
   <tr>
    <th style="text-align:left;"> paramName </th>
@@ -843,7 +578,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
    <td style="text-align:left;"> Boreal </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> The column in `sim$specieEquivalency` data.table to use as a naming convention </td>
+   <td style="text-align:left;"> The column in `sim$sppEquiv` data.table to use as a naming convention </td>
   </tr>
   <tr>
    <td style="text-align:left;"> successionTimestep </td>
@@ -859,7 +594,7 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
    <td style="text-align:left;"> 0.8 </td>
    <td style="text-align:left;"> 0 </td>
    <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> a number that define whether a species is leading for a given pixel </td>
+   <td style="text-align:left;"> a number that defines whether a species is leading for a given pixel </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .maxMemory </td>
@@ -944,101 +679,287 @@ Table \@ref(tab:moduleParams2) lists all parameters used in *Biomass_core*. Note
 </tbody>
 </table>
 
-::: fullwidth
-+------------------------+-------------------------------------------------------------------------------------------------+
-| Required inputs        | Description                                                                                     |
-+:=======================+:================================================================================================+
-| Plotting & saving      |                                                                                                 |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| `.plots`               | activates/deactivates plotting and defines type fo plotting (see `?Plots`)                      |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| `.plotInitialTime`     | defines when plotting starts                                                                    |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| `.plotInterval`        | defines plotting frequency                                                                      |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| `.plotMaps`            | activates/deactivates map plotting                                                              |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| `.saveInitialTime`     | defines when saving starts                                                                      |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| `.saveInterval`        | defines saving frequency                                                                        |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| Simulation             |                                                                                                 |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| `seedingAlgorithm`     | dispersal type (see above)                                                                      |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| `successionTimestep`   | defines frequency of dispersal/local recruitment event (growth and mortality are always yearly) |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| Other                  |                                                                                                 |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| `mixedType`            | how mixed forest stands are defined                                                             |
-+------------------------+-------------------------------------------------------------------------------------------------+
-| `vegLeadingProportion` | relative biomass threshold to consider a species "leading" (*i.e.*, dominant)                   |
-+------------------------+-------------------------------------------------------------------------------------------------+
-:::
+#### List of outputs {#outputs-list}
 
-: (#tab:tableUsefulParams) Useful *Biomass_core* parameters.
+The main outputs of *Biomass_core* are the `cohortData` and `pixelGroupMap` containing cohort information per year (note that they are not saved by default), visual outputs of species level biomass, age and dominance across the landscape and the simulation length, and several maps of stand biomass, mortality and reproductive success (new biomass) or a yearly basis.
 
-## Simulation flow
+However, any of the objects changed/output by *Biomass_core* listed below (Table \@ref(tab:moduleOutputs-Biomass-core).) can be saved via the `outputs` argument in `simInit`[^4].
 
-### No disturbances
+[^4]: see `?SpaDES.core::outputs`
 
-*Biomass_core* itself does not simulate disturbances, or their effect on vegetation (*i.e.*, post-disturbance mortality and regeneration). The general flow of *Biomass_core* processes is:
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>(\#tab:moduleOutputs-Biomass-core)List of (ref:Biomass-core) output objects and their description.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> objectName </th>
+   <th style="text-align:left;"> desc </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> activePixelIndex </td>
+   <td style="text-align:left;"> internal use. Keeps track of which pixels are active </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> activePixelIndexReporting </td>
+   <td style="text-align:left;"> internal use. Keeps track of which pixels are active in the reporting study area </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ANPPMap </td>
+   <td style="text-align:left;"> ANPP map at each succession time step (in g /m^2) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> cohortData </td>
+   <td style="text-align:left;"> `data.table` with cohort-level information on age, biomass, aboveground primary productivity (year's biomass gain) and mortality (year's biomass loss), by `pixelGroup` and ecolocation (i.e., `ecoregionGroup`). Contains at least the following columns: `pixelGroup` (integer), `ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in g/m^2), `age` (integer in years), `mortality` (integer in g/m^2), `aNPPAct` (integer in g/m^2). May have other columns depending on additional simulated processes (i.e., cliamte sensitivity; see, e.g., `P(sim)$keepClimateCols`). </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ecoregionMap </td>
+   <td style="text-align:left;"> map with mapcodes match `ecoregion` table and `speciesEcoregion` table. Defaults to a dummy map matching rasterToMatch with two regions </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> inactivePixelIndex </td>
+   <td style="text-align:left;"> internal use. Keeps track of which pixels are inactive </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> inactivePixelIndexReporting </td>
+   <td style="text-align:left;"> internal use. Keeps track of which pixels are inactive in the reporting study area </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> lastFireYear </td>
+   <td style="text-align:left;"> Year of the most recent fire year </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> lastReg </td>
+   <td style="text-align:left;"> an internal counter keeping track of when the last regeneration event occurred </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> minRelativeB </td>
+   <td style="text-align:left;"> define the relative biomass cut points to classify stand shade </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> mortalityMap </td>
+   <td style="text-align:left;"> map of biomass lost (in g/m^2) at each succession time step </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> pixelGroupMap </td>
+   <td style="text-align:left;"> updated community map at each succession time step </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> regenerationOutput </td>
+   <td style="text-align:left;"> If `P(sim)$calibrate == TRUE`, an summary of seed dispersal and germination success (i.e., number of pixels where seeds successfully germinated) per species and year. </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> reproductionMap </td>
+   <td style="text-align:left;"> Regeneration map (biomass gains in g/m^2) at each succession time step </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> simulatedBiomassMap </td>
+   <td style="text-align:left;"> Biomass map at each succession time step (in g/m^2) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> simulationOutput </td>
+   <td style="text-align:left;"> contains simulation results by `ecoregionGroup` (main output) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> simulationTreeOutput </td>
+   <td style="text-align:left;"> Summary of several characteristics about the stands, derived from `cohortData` </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> species </td>
+   <td style="text-align:left;"> a table that has species traits such as longevity, shade tolerance, etc. Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> speciesEcoregion </td>
+   <td style="text-align:left;"> define the maxANPP, maxB and SEP change with both ecoregion and simulation time </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> speciesLayers </td>
+   <td style="text-align:left;"> species percent cover raster layers, based on input `speciesLayers` object. Not changed by this module. </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> spinupOutput </td>
+   <td style="text-align:left;"> Spin-up output. Currently deactivated. </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> summaryBySpecies </td>
+   <td style="text-align:left;"> The total species biomass (in g/m^2 as in `cohortData`), average age and aNPP (in g/m^2 as in `cohortData`), across the landscape (used for plotting and reporting). </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> summaryBySpecies1 </td>
+   <td style="text-align:left;"> No. pixels of each leading vegetation type (used for plotting and reporting). </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> summaryLandscape </td>
+   <td style="text-align:left;"> The averages of total biomass (in tonnes/ha , not g/m^2 like in `cohortData`), age and aNPP (also in tonnes/ha) across the landscape (used for plotting and reporting). </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> treedFirePixelTableSinceLastDisp </td>
+   <td style="text-align:left;"> 3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding `pixelGroup` and time it occurred </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> vegTypeMap </td>
+   <td style="text-align:left;"> Map of leading species in each pixel, colored according to `sim$sppColorVect`. Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)`$mixedType. </td>
+  </tr>
+</tbody>
+</table>
 
-1.  Preparation of necessary objects for the simulation -- either by accessory data prep. modules, or *Biomass_core* itself (using LANDIS-II test parameters and dummy data for stand age, biomass and land cover and ecological zoning)
-2.  Seed dispersal -- see @SchellerDomingo2012 for details
+### Simulation flow and module events {#sim-flow}
 
--   Seed dispersal can be a slow process and has been adapted to occur every 10 years. The user can set it to occur more often, but this should not make much of a difference to model outputs, because age classes are meant to be collapsed to tens.
+*Biomass_core* itself does not simulate disturbances, or their effect on vegetation (i.e., post-disturbance mortality and regeneration). Should disturbance module and post-disturbance mortality/regeneration modules be used (e.g., *LandMine* and *Biomass_regeneration*), regeneration should occur after the disturbance, but **before** dispersal and background vegetation growth and mortality. Hence, the disturbance itself should take place either at the very beginning or at the very end of each simulation time step.
 
-3.  Growth and mortality -- based on @SchellerMladenoff2004
+The general flow of *Biomass_core* processes with and without disturbances is:
 
--   unlike dispersal, growth and mortality should occur every year
+1.  Preparation of necessary objects for the simulation -- either by data and calibration modules or by *Biomass_core* itself (`init` event);
 
-4.  Ageing -- based on @SchellerMiranda2015
+2.  Disturbances (OPTIONAL) -- simulated by a disturbance module (e.g., *LandMine*);
 
--   follows the same frequency as dispersal, collapsing ages to classes with resolution = to this frequency
+3.  Post-disturbance mortality/regeneration (OPTIONAL) -- simulated by a regeneration module (e.g., *Biomass_regeneration*);
 
-5.  Preparation of visual/saved outputs ... (repeat 2-4) ...
+4.  Seed dispersal (every `successionTimestep`; `Dispersal` event) -- see @SchellerDomingo2012 for details
 
-### With disturbances
+    -   Seed dispersal can be a slow process and has been adapted to occur every 10 years (default `successionTimestep`). The user can set it to occur more/less often, with the caveat that if using *Biomass_borealDataPrep* to estimate species establishment probabilities, these values are integrated over 10 years.
 
-Note that should a post-disturbance regeneration module be used (e.g., *Biomass_regeneration*), regeneration will occur after the disturbance, but *before* dispersal and background vegetation growth and mortality. Hence, the disturbance should take place either at the very beginning or at the very end of each simulation time step. The general flow of *Biomass_core* processes when disturbances are included (by linking other modules) is:
+5.  Growth and mortality (`mortalityAndGrowth` event) -- see @SchellerMladenoff2004
 
-1.  Preparation of necessary objects for the simulation -- either by accessory prep. data modules, or *Biomass_core* itself (using LANDIS-II test parameters and dummy data.)
-2.  Disturbances -- simulated by a disturbance module
-3.  Post-disturbance regeneration -- simulated by a regeneration module (*Biomass_regeneration* is an optional download)
-4.  Seed dispersal -- see @SchellerDomingo2012 for details
-5.  Growth, ageing and mortality -- based on @SchellerMiranda2015
-6.  Preparation of visual/saved outputs ... (repeat 2-6) ...
+    -   unlike dispersal, growth and mortality always occur time step (year).
 
-# Usage example
+6.  Cohort age binning (every `successionTimestep`; `cohortAgeReclassification` event) -- see @SchellerMiranda2015
 
-## Load `SpaDES`
+    -   follows the same frequency as dispersal, collapsing cohorts (i.e., summing their biomass/mortality/aNPP) to ages classes with resolution equal to `successionTimestep`.
+
+7.  Summary tables of regeneration (`summaryRegen` event), biomass, age, growth and mortality (`summaryBGM` event)
+
+8.  Plots of maps (`plotMaps` event) and averages (`plotAvgs` and `plotSummaryBySpecies` events)
+
+9.  Save outputs (`save` events)
+
+... (repeat 2-9) ...
+
+### Differences between *Biomass_core* and the LANDIS-II Biomass Succession Extension model (LBSE) {#biomass-core-vs-lbse}
+
+#### Algorithm changes {#biomass-core-vs-lbse-algo}
+
+Upon porting LBSE into R, we made six minor modifications to the original model's algorithms to better reflect ecological processes. This did not result in dramatic changes in simulation outputs and we note that these changes might also have been implemented in more recent versions of LBSE.
+
+First, for each year and community (i.e., 'pixel group' in *Biomass_core*, see below), LBSE calculates the competition index for a cohort sequentially (i.e., one cohort at a time) after updating the growth and mortality (i.e., the biomass gain and loss, respectively) of other cohorts, and with the calculation sequence following cohort age in descending order, but no explicit order of species. This sorting of growth and mortality calculations from oldest to youngest cohorts in LBSE was aimed at capturing size-asymmetric competition between cohorts, under the assumption that older cohorts have priority for growing space given their greater height (Scheller pers. comm.). We felt that within-year sequential growth, death and recruitment may be not ecologically accurate, and that the size-asymmetric competition was being accounted for twice, as the calculation of the competition index already considers the competitive advantage of older cohorts [as shown in the User's Guide, @SchellerMiranda2015]. Hence, in *Biomass_core* growth, mortality, recruitment and the competition index are calculated at the same time across all cohorts and species.
+
+Second, the unknown species-level sorting mechanism contained within LBSE (which changed depending on the species order in the input species list file), led to different simulation results depending on the input species list file (e.g., Table \@ref(tab:tableLBSEtest1) and Fig. \@ref(fig:figLBSEtest1)). The calculation of competition, growth and mortality for all cohorts at the same time also circumvented this issue.
+
+<div class="figure" style="text-align: center">
+<img src="D:/GitHub/Biomass_core/figures/figLBSEtest1.png" alt="Differences in total landscape aboveground biomass when using two different input species orders for the same community. These simulations demonstrate how the sequential calculation of the competition index, combined with a lack of explicit species ordering affect the overall landscape aboveground biomass in time when using different input species orders (see Table \@ref(tab:tableLBSEtest1)). In order to prevent differences introduced by cohort recruitment, species’ ages at sexual maturity were changed to the species’ longevity values, and the simulation ran for 75 years to prevent any cohorts from reaching sexual maturity. The bottom panel shows the difference between the two simulations in percentage, calculated as $\frac{Biomass_{order2} - Biomass_{order1}}{Biomass_{order2}} * 100$" width="60%" />
+<p class="caption">(\#fig:figLBSEtest1)Differences in total landscape aboveground biomass when using two different input species orders for the same community. These simulations demonstrate how the sequential calculation of the competition index, combined with a lack of explicit species ordering affect the overall landscape aboveground biomass in time when using different input species orders (see Table \@ref(tab:tableLBSEtest1)). In order to prevent differences introduced by cohort recruitment, species’ ages at sexual maturity were changed to the species’ longevity values, and the simulation ran for 75 years to prevent any cohorts from reaching sexual maturity. The bottom panel shows the difference between the two simulations in percentage, calculated as $\frac{Biomass_{order2} - Biomass_{order1}}{Biomass_{order2}} * 100$</p>
+</div>
+
+Third, in LBSE the calculation of total pixel biomass for the purpose of calculating the initial biomass of a new cohort included the (previously calculated) biomass of other new cohorts when succession time step = 1, but not when time step was \> 1. This does not reflect the documentation in the User's Guide, which stated that "Bsum [total pixel biomass] is the current total biomass for the site (not including other new cohorts)" [@SchellerMiranda2015,p. 4], when the succession time step was set to 1. Additionally, together with the lack of explicit ordering, this generated different results in terms of the biomass assigned to each new cohort (e.g. Table \@ref(tab:tableLBSEtest2) and Fig. \@ref(fig:figLBSEtest2)). In *Biomass_core* the initial biomass of new cohorts is no longer calculated sequentially (as with competition, growth and mortality), and thus the biomass of new cohorts is never included in the calculation of total pixel biomass.
+
+<div class="figure" style="text-align: center">
+<img src="D:/GitHub/Biomass_core/figures/figLBSEtest2.png" alt="Differences in the biomasses assigned to new cohorts, summed for each species across pixels, when using two different input species orders for the same community and when the succession time step is 1. These simulations demonstrate how the different summation of total cohort biomass for a succession time step of 1 and the lack of explicit species ordering affect simulation results when changing the species order in the input file (see Table \@ref(tab:tableLBSEtest2)). Here, initial cohort ages were also set to 1. We show the initial total biomass attributed to each species at the end of year 1." width="60%" />
+<p class="caption">(\#fig:figLBSEtest2)Differences in the biomasses assigned to new cohorts, summed for each species across pixels, when using two different input species orders for the same community and when the succession time step is 1. These simulations demonstrate how the different summation of total cohort biomass for a succession time step of 1 and the lack of explicit species ordering affect simulation results when changing the species order in the input file (see Table \@ref(tab:tableLBSEtest2)). Here, initial cohort ages were also set to 1. We show the initial total biomass attributed to each species at the end of year 1.</p>
+</div>
+
+Fourth, in LBSE, serotiny and resprouting could not occur in the same pixel following a fire, with serotiny taking precedence if activated. We understand that this provides an advantage to serotinous species, which could perhaps be disadvantaged with respect to fast-growing resprouters. However, we feel that it is ecologically more realistic that serotinous and resprouter species be able to both regenerate in a given community following a fire and allow the competition between serotinous and resprouting species to arise from species traits. **This change was implemented in the *Biomass_regeneration* and *Biomass_regenerationPM* modules** .
+
+Fifth, in *Biomass_core*, species shade tolerance values can have decimal values to allow for finer adjustments of between-species competition.
+
+Sixth, we added a new parameter called `minCohortBiomass`, that allows the user to control cohort removal bellow a certain threshold of biomass. In some simulation set-ups, we noticed that *Biomass_core* (and LBSE) were able to generate many very small cohorts in the understory that, due to cohort competition, were not able to gain biomass and grow. However, because competition does not increase mortality, only decreases growth, these cohorts survived at very low biomass levels until they reached sufficient age to suffer age-related mortality. We felt this is unlikely to be realistic in many cases. By default, this parameter is left at 0 to follow LBSE behaviour (i.e., no cohorts removal based on minimum biomass).
+
+#### Other enhancements {#biomass-core-vs-lbse-enhan}
+
+In addition to the five minor changes in growth, mortality and regeneration, we separated the components that govern vegetation responses to disturbances -- only fire at the moment -- into two independent modules used interchangeably (Biomass_regeneration and *Biomass_regenerationPM*, and implemented hashing, caching and testing to improve the model's computational efficiency and insure its performance.
+
+##### Modularity {#biomass-core-vs-lbse-enhan1}
+
+Unlike in LBSE, post-disturbance regeneration is not part of *Biomass_core* *per se*, but belongs to two separate modules, used interchangeably ([*Biomass_regeneration*](https://github.com/PredictiveEcology/Biomass_regeneration/blob/master/Biomass_regeneration.Rmd) and [*Biomass_regenerationPM*](https://github.com/PredictiveEcology/Biomass_regenerationPM/blob/master/Biomass_regenerationPM.Rmd)). These need to be loaded and added to the "modules folder" of the project in case the user wants to simulate forest responses to disturbances (only fire disturbances at the moment). Again, this enables higher flexibility when swapping between different approaches to regeneration.
+
+Climate effects on growth and mortality were also implemented a modular way. The effects of climate on biomass increase (growth) and loss (mortality) were written in functions grouped in two packages. The `LandR` R package contains default, no climate effect functions, while the `LandR.CS` R package contains the functions that simulate climate effects (CS stands for "climate sensitive"). Note that these functions do not simulate actual growth/mortality processes, but rather modifiers that increase/decrease cohort biomass on top of background growth/mortality.
+
+*Biomass_core* uses the `LandR` functions by default (see `growthAndMortalityDrivers` parameter in the [full parameters list](#params-list)). Should the user wish to change how climate effects on growth/mortality are calculated, they can provide new compatible functions (i.e., with the same names, inouts and outputs) via another R package.
+
+##### Hashing {#biomass-core-vs-lbse-enhan2}
+
+Our first strategy to improve simulation efficiency in *Biomass_core* was to use a hashing mechanism [@YangEtAl2011]. Instead of assigning a key to each pixel in a raster and tracking the simulation for each pixel in a lookup table, we indexed pixels using a *pixelGroup* key that contained unique combinations of ecolocation and community composition (i.e., species, age and biomass composition), and tracked and stored simulation data for each *pixelGroup* (Fig. \@ref(fig:figLBSEtest3)). This algorithm was able to ease the computational burden by significantly reducing the size of the lookup table and speeding-up the simulation process. After recruitment and disturbance events, pixels are rehashed into new pixel groups.
+
+<div class="figure" style="text-align: center">
+<img src="D:/GitHub/Biomass_core/figures/figLBSEtest3.png" alt="Hashing design for (ref:Biomass-core). In the re-coded (ref:Biomass-core), the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key." width="60%" />
+<p class="caption">(\#fig:figLBSEtest3)Hashing design for (ref:Biomass-core). In the re-coded (ref:Biomass-core), the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key.</p>
+</div>
+
+##### Caching {#biomass-core-vs-lbse-enhan3}
+
+The second strategy aimed at improving model efficacy was the implementation of caching during data-driven parametrisation and initialisation. Caching automatically archives outputs of a given function to disk (or memory) and reads them back when subsequent calls of this function are given identical inputs. All caching operations were achieved using the `reproducible` R package [@McIntireChubaty2020].
+
+In the current version of *Biomass_core*, the spin-up phase was replaced by data-driven landscape initialisation and many model parameters were derived from data, using data and calibration modules (e.g., *Biomass_borealDataPrep*). To avoid having to repeat data downloads and treatment, statistical estimation of parameters and landscape initialisation every time the simulation is re-run under the same conditions, many of these pre-simulation steps are automatically cached. This means that the pre-simulation phase is significantly faster upon a second call when inputs have not changed (e.g., the input data and parametrisation methods), and when inputs do change only directly affected steps are re-run (see main text for examples). When not using data modules, *Biomass_core* still relies on caching for the preparation of its theoretical inputs.
+
+##### Testing {#biomass-core-vs-lbse-enhan4}
+
+Finally, we implemented code testing, to facilitate bug detection by comparing the outputs of functions (etc.) to expected outputs [@Wickham2011]. We built and integrated code tests in *Biomass_core* and across all LandR modules and the `LandR` R package <!-- package name may change --> in the form of assertions, unit tests and integration tests. Assertions and unit tests are run automatically during simulations (but can be turned off) and evaluate individual code components (e.g., one function or an object's class). Integration tests evaluate if several coded processes are integrated correctly. Integration tests are usually run manually. However, because we embedded assertions within the module code, R package dependencies of *Biomass_core*, such as the `LandR` R package <!-- package name may change --> and `SpaDES`, they also provide a means to test module integration. We also implemented GitHub Actions continuous integration (CI), which routinely test GitHub hosted packages (e.g., `LandR`). CRAN-hosted packages (e.g., `SpaDES`) are also automatically tested and checked on CRAN.
+
+Finally, because *Biomass_core* (and all other LandR modules) code is hosted in public GitHub repositories, the module code is subject to the scrutiny of of many users, who can identify issues and contribute to improve module code.
+
+#### Performance and accuracy of *Biomass_core* with respect to LBSE {#biomass-core-vs-lbse-comparisons}
+
+In the recoding of *Biomass_core*, we ensured similar outputs of each demographic process (namely, growth, mortality and recruitment) to the outputs from its counterpart in LBSE, using integration tests. Here, we report the comparisons of the overall simulation (i.e., including all demographic processes) between LBSE and *Biomass_core* using three randomly generated initial communities (Tables \@ref(tab:tableLBSEtest3)-\@ref(tab:tableLBSEtest5)). The remaining input parameters were taken from a LANDIS-II training course (Tables \@ref(tab:tableLBSEtest6)-\@ref(tab:tableLBSEtest9)), and contained species attributes information of 16 common tree species in boreal forests and 2 ecolocations. We ran simulations for 1000 years, with a succession time step of 10 and three repetitions, which were enough to account for the variability produced by stochastic processes. Seed dispersal was set as "ward dispersal".
+
+The results suggested that *Biomass_core* had a good agreement with LBSE using the three randomly generated initial communities (Fig. \@ref(fig:figLBSEtest4)), with very small deviations for LBSE-generated biomasses. Notably, the mean differences between LBSE and *Biomass_core* were 0.03(ref:percent) (range: -0.01(ref:percent) \~ 0.13(ref:percent)), 0.03(ref:percent) (range: -0.01(ref:percent) \~ 0.11(ref:percent)) and 0.05(ref:percent) (-0.02(ref:percent) \~ 0.15(ref:percent)) for each initial community, respectively (right panels in Fig. \@ref(fig:figLBSEtest4) of this appendix).
+
+<div class="figure" style="text-align: center">
+<img src="D:/GitHub/Biomass_core/figures/figLBSEtest4.png" alt="Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The (ref:percent) difference between LBSE and (ref:Biomass-core) were calculated as $\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$" width="60%" />
+<p class="caption">(\#fig:figLBSEtest4)Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The (ref:percent) difference between LBSE and (ref:Biomass-core) were calculated as $\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$</p>
+</div>
+
+To examine how running time changed with map size, we ran simulations using maps with increasing number of pixels from 22,201 to 638,401 pixels. All maps were initialised with a single ecolocation and 7 different communities. Simulations were run for 120 years using a succession time step of 10 and replicated three times. To eliminate the effect of hardware on running time, we used machines that were all purchased at the same time, with equal specifications and running Windows 7. Each simulation ran on 2 CPU threads with a total RAM of 4000 Mb. For both LBSE and *Biomass_core*, the simulation time increased linearly with number of pixels, but the increase rate was smaller for *Biomass_core* (Fig. \@ref(fig:figLBSEtest5)a). This meant that while both models had similar simulation efficiencies in small maps (\< 90,000 pixels), as map size increased *Biomass_core* was \~2 times faster than LBSE (maps \> 100,000 pixels; Fig. \@ref(fig:figLBSEtest5)a). *Biomass_core* also scaled better with map size, as LBSE speeds fluctuated between 19 to 25 seconds per 1,000 pixels across all map sizes, while *Biomass_core* decreased from 21 to 11 seconds per 1,000 pixels from smaller to larger maps (Fig. \@ref(fig:figLBSEtest5)b).
+
+<div class="figure" style="text-align: center">
+<img src="D:/GitHub/Biomass_core/figures/figLBSEtest5.png" alt="Simulation efficiencies of LBSE and (ref:Biomass-core) with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to (ref:Biomass-core) running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels." width="60%" />
+<p class="caption">(\#fig:figLBSEtest5)Simulation efficiencies of LBSE and (ref:Biomass-core) with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to (ref:Biomass-core) running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels.</p>
+</div>
+
+## Usage example {#example}
+
+### Set up R libraries {#example-libs}
 
 
 ```r
-library(SpaDES)
+if (!require(Require)) {
+  install.packages("Require")
+  library(Require)
+}
 
-## make sure all necessary packages are installed
-SpaDES.install::makeSureAllPackagesInstalled(modulePath = "../Biomass_core/")
+Require(c("PredictiveEcology/SpaDES.install",
+          "SpaDES", "PredictiveEcology/SpaDES.core@development",
+          "PredictiveEcology/LandR"), 
+        install_githubArgs = list(dependencies = TRUE))# In general, a module code will be controlled at one level above the source code
 
-moduleName <- c("Biomass_core")  
-spadesModulesDirectory <- ".." # In general, a module code will be controlled at one level above the source code
+tempDir <- tempdir()
+paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
+              cachePath = normPath(file.path(tempDir, "cache")), 
+              modulePath = normPath(file.path(tempDir, "modules")), 
+              outputPath = normPath(file.path(tempDir, "outputs")))
 ```
 
-## Get the module
+### Get the module and module dependencies {#example-pkg-mods}
 
-See [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other `SpaDES` modules. Alternatively, it can be forked or cloned from its [GitHub repository](https://github.com/PredictiveEcology/Biomass_core/) directly.
+We can use the `SpaDES.install::getModule` function to download the module to the module folder specified above. Alternatively, see [SpaDES-modules repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to download this and other `SpaDES` modules, or fork/clone from its [GitHub repository](https://github.com/PredictiveEcology/Biomass_core/) directly.
 
-## Setup simulation
+After downloading the module, it is important to make sure all module R package dependencies are installed in their correct version. `SpaDES.install::makeSureAllPackagesInstalled` takes care of this for any module in the `paths$modulePath`.
 
 
 ```r
-tempDir <- tempdir()
-setPaths(inputPath = file.path(tempDir, "inputs"), 
-         cachePath = file.path(tempDir, "cache"), 
-         modulePath = spadesModulesDirectory, 
-         outputPath = file.path(tempDir, "outputs"))
+SpaDES.install::getModule("PredictiveEcology/Biomass_core", 
+                          modulePath = paths$modulePath, overwrite = TRUE)
 
+## make sure all necessary packages are installed:
+SpaDES.install::makeSureAllPackagesInstalled(paths$modulePath)
+```
+
+### Setup simulation {#example-setupSim}
+
+Here we setup a simulation in a random study area, using any species within the `LandR::sppEquivalencies_CA` table that can be found there (*Biomass_core* will retrieve species (ref:percent) cover maps and filter present species). We also define the colour coding used for plotting, the type of plots we what to produce and choose to output `cohortData` tables every year -- note that these are not pixel-based and to spatialise results *a posteriori* the `pixelBroupMap` must also be saved.
+
+Please see the lists of [input objects](#inputs-list), [parameters](#params-list) and [outputs](#outputs-list) for more information.
+
+
+```r
 times <- list(start = 0, end = 30)
 
 studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
@@ -1055,7 +976,6 @@ sppColorVect <- LandR::sppColors(sppEquiv, speciesNameConvention,
 ## Usage example
 modules <- as.list(moduleName)
 objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppColorVect)
-paths <- getPaths()
 
 successionTimestep <- 10L
 
@@ -1082,7 +1002,9 @@ outputs <- data.frame(expand.grid(objectName = "cohortData",
 graphics.off()
 ```
 
-## Run simulation
+### Run simulation {#example-runSim}
+
+`simInitAndSpades` is a wrapper function that runs both `simInit` (which prepares the simulation) and `spades` (which initialises and runs the simulation), to which pass all the necessary setup objects created above.
 
 
 ```r
@@ -1096,16 +1018,16 @@ mySim <- simInitAndSpades(times = times,
 ```
 
 <div class="figure">
-<img src="figures/Biomass_coreOutPlots1.png" alt="_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)." width="479" /><img src="figures/Biomass_coreOutPlots2.png" alt="_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)." width="305" />
-<p class="caption">(\#fig:figBiomassCoreOutPlots)_Biomass_core_ automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below).</p>
+<img src="D:/GitHub/Biomass_core/figures/Biomass_coreOutPlots1.png" alt="(ref:Biomass-core) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)." width="50%" /><img src="D:/GitHub/Biomass_core/figures/Biomass_coreOutPlots2.png" alt="(ref:Biomass-core) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)." width="50%" />
+<p class="caption">(\#fig:fig-Biomass-coreOutPlots)(ref:Biomass-core) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below).</p>
 </div>
 
-# Appendix
+## Appendix {#appendix}
 
-## Tables
+### Tables {#appendix-tables}
 
 | Input order 1 |          |     |            | Input order 2 |          |     |            |
-|:--------------|:---------|:----|:-----------|:--------------|:---------|:----|:-----------|
+|:--------|:--------|:--------|:--------|:--------|:--------|:--------|:--------|
 | Community     | Input    | Age | Processing | Community     | Input    | Age | Processing |
 |               | order    |     | order      |               | order    |     | order      |
 | 1             | abiebals | 20  | poputrem   | 1             | pinustro | 20  | thujocci   |
@@ -1128,7 +1050,7 @@ mySim <- simInitAndSpades(times = times,
 : (#tab:tableLBSEtest1) Input order and processing order (as determined by LBSE) for the same community used to assess the impact of sequential calculation of the competition index, combined with a lack of explicit species ordering. The input order was the order of species in the initial communities table input file. The processing order was the order used in the simulation, which was obtained from `Landis-log.txt` when `CalibrateMode` was set to 'yes'. Species starting ages are also shown.
 
 | Input order 1 |          |     |            | Input order 2 |          |     |            |
-|:--------------|:---------|:----|:-----------|:--------------|:---------|:----|:-----------|
+|:--------|:--------|:--------|:--------|:--------|:--------|:--------|:--------|
 | Community     | Input    | Age | Processing | Community     | Input    | Age | Processing |
 |               | order    |     | order      |               | order    |     | order      |
 | 1             | abiebals | 1   | poputrem   | 1             | pinustro | 1   | thujocci   |
@@ -1264,41 +1186,24 @@ mySim <- simInitAndSpades(times = times,
 
 : (#tab:tableLBSEtest5) Randomly generated community combination no. 3 used in the recruitment comparison runs.
 
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | Species  | Longevity | Sexualmature | Shadetolerance | Seeddistance_eff | Seeddistance_max | Mortalityshape | Growthcurve |
-+==========+===========+==============+================+==================+==================+================+=============+
+|---------|---------|---------|---------|---------|---------|---------|---------|
 | abiebals | 200       | 25           | 5              | 30               | 160              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | acerrubr | 150       | 10           | 4              | 100              | 200              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | acersacc | 300       | 40           | 5              | 100              | 200              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | betualle | 300       | 40           | 4              | 100              | 400              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | betupapy | 100       | 30           | 2              | 200              | 5000             | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | fraxamer | 300       | 30           | 4              | 70               | 140              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | piceglau | 300       | 25           | 3              | 30               | 200              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | pinubank | 100       | 15           | 1              | 20               | 100              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | pinuresi | 200       | 35           | 2              | 20               | 275              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | pinustro | 400       | 40           | 3              | 60               | 210              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | poputrem | 100       | 20           | 1              | 1000             | 5000             | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | querelli | 300       | 35           | 2              | 30               | 3000             | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | querrubr | 250       | 25           | 3              | 30               | 3000             | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | thujocci | 400       | 30           | 2              | 45               | 60               | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | tiliamer | 250       | 30           | 4              | 30               | 120              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 | tsugcana | 500       | 30           | 5              | 30               | 100              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
 
 : (#tab:tableLBSEtest6) Invariant species traits table used in comparison runs.
 
@@ -1337,41 +1242,6 @@ mySim <- simInitAndSpades(times = times,
 | 1           | tiliamer | 0.54 | 1078    | 32340 |
 | 1           | tsugcana | 0.22 | 1096    | 32880 |
 
-: (#tab:tableLBSEtest9) Species ecolocation table used in comparison runs. `SEP` stands for species establishment probability, `maxB` for maximum biomass and `maxANPP` for maximum aboveground net primary productivity. Values were held constant throughout the simulation.
+: (#tab:tableLBSEtest9) Species ecolocation table used in comparison runs. SEP stands for species establishment probability, `maxB` for maximum biomass and `maxANPP` for maximum aboveground net primary productivity. Values were held constant throughout the simulation.
 
-## Figures
-
-<div class="figure" style="text-align: center">
-<img src="figures/figLBSEtest1.png" alt="Differences in total landscape aboveground biomass when using two different input species orders for the same community. These simulations demonstrate how the sequential calculation of the competition index, combined with a lack of explicit species ordering affect the overall landscape aboveground biomass in time when using different input species orders (see Table \@ref(tab:tableLBSEtest1)). In order to prevent differences introduced by cohort recruitment, species’ ages at sexual maturity were changed to the species’ longevity values, and the simulation ran for 75 years to prevent any cohorts from reaching sexual maturity. The bottom panel shows the difference between the two simulations in percentage, calculated as $\frac{Biomass_{order2} - Biomass_{order1}}{Biomass_{order2}} * 100$" width="60%" />
-<p class="caption">(\#fig:figLBSEtest1)Differences in total landscape aboveground biomass when using two different input species orders for the same community. These simulations demonstrate how the sequential calculation of the competition index, combined with a lack of explicit species ordering affect the overall landscape aboveground biomass in time when using different input species orders (see Table \@ref(tab:tableLBSEtest1)). In order to prevent differences introduced by cohort recruitment, species’ ages at sexual maturity were changed to the species’ longevity values, and the simulation ran for 75 years to prevent any cohorts from reaching sexual maturity. The bottom panel shows the difference between the two simulations in percentage, calculated as $\frac{Biomass_{order2} - Biomass_{order1}}{Biomass_{order2}} * 100$</p>
-</div>
-
-<br/><br/>
-
-<div class="figure" style="text-align: center">
-<img src="figures/figLBSEtest2.png" alt="Differences in the biomasses assigned to new cohorts, summed for each species across pixels, when using two different input species orders for the same community and when the succession time step is 1. These simulations demonstrate how the different summation of total cohort biomass for a succession time step of 1 and the lack of explicit species ordering affect simulation results when changing the species order in the input file (see Table \@ref(tab:tableLBSEtest2)). Here, initial cohort ages were also set to 1. We show the initial total biomass attributed to each species at the end of year 1." width="60%" />
-<p class="caption">(\#fig:figLBSEtest2)Differences in the biomasses assigned to new cohorts, summed for each species across pixels, when using two different input species orders for the same community and when the succession time step is 1. These simulations demonstrate how the different summation of total cohort biomass for a succession time step of 1 and the lack of explicit species ordering affect simulation results when changing the species order in the input file (see Table \@ref(tab:tableLBSEtest2)). Here, initial cohort ages were also set to 1. We show the initial total biomass attributed to each species at the end of year 1.</p>
-</div>
-
-<br/><br/>
-
-<div class="figure" style="text-align: center">
-<img src="figures/figLBSEtest3.png" alt="Hashing design for _Biomass_core_. In the re-coded _Biomass_core_, the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key." width="60%" />
-<p class="caption">(\#fig:figLBSEtest3)Hashing design for _Biomass_core_. In the re-coded _Biomass_core_, the pixel group map was hashed based on the unique combination of species composition (i.e., community map) and ecolocation map, and associated with a lookup table. The subfigure in the right upper corner was the original design that linked the map to the lookup table by pixel key.</p>
-</div>
-
-<br/><br/>
-
-<div class="figure" style="text-align: center">
-<img src="figures/figLBSEtest4.png" alt="Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and _Biomass_core_ were calculated as $\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$" width="60%" />
-<p class="caption">(\#fig:figLBSEtest4)Visual comparison of simulation outputs for three randomly generated initial communities (left panels) and difference between those outputs (right panels). The % difference between LBSE and _Biomass_core_ were calculated as $\frac{Biomass_{LBSE} - Biomass_{Biomass_core}}{Biomass_{LBSE}} * 100$</p>
-</div>
-
-<br/><br/>
-
-<div class="figure" style="text-align: center">
-<img src="figures/figLBSEtest5.png" alt="Simulation efficiencies of LBSE and _Biomass_core_ with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to _Biomass_core_ running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels." width="60%" />
-<p class="caption">(\#fig:figLBSEtest5)Simulation efficiencies of LBSE and _Biomass_core_ with increasing map size, in terms of a) mean running time across repetitions (left y-axis) and the ratio LBSE to _Biomass_core_ running times (right y-axis and blue line), and b) running time scalability as the mean running time per 1000 pixels.</p>
-</div>
-
-# References
+## References {#refs}

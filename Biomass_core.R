@@ -7,9 +7,10 @@ defineModule(sim, list(
   authors = c(
     person("Yong", "Luo", email = "yluo1@lakeheadu.ca", role = "aut"),
     person(c("Eliot", "J", "B"), "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut", "cre")),
-    person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb"),
-    person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = "ctb"),
-    person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = "ctb")
+    person("Ceres", "Barros", email = "ceres.barros@ubc.ca", role = "aut"),
+    person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = "aut"),
+    person("Ian", "Eddy", email = "ian.eddy@nrcan-rncan.gc.ca", role = c("ctb")),
+    person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
   version = list(Biomass_core = numeric_version("1.3.9")),
@@ -95,13 +96,13 @@ defineModule(sim, list(
                     desc = paste("defines the mortality loss fraction in spin up-stage simulation.",
                                  "Only used if `P(sim)$initialBiomassSource == 'biomassMap'`, which is currently deactivated.")),
     defineParameter("sppEquivCol", "character", "Boreal", NA, NA,
-                    "The column in `sim$specieEquivalency` data.table to use as a naming convention"),
+                    "The column in `sim$sppEquiv` data.table to use as a naming convention"),
     defineParameter("successionTimestep", "numeric", 10, NA, NA,
                     paste("defines the simulation time step, default is 10 years.",
                           "Note that growth and mortality always happen on a yearly basis.",
                           "Cohorts younger than this age will not be included in competitive interactions")),
     defineParameter("vegLeadingProportion", "numeric", 0.8, 0, 1,
-                    desc = "a number that define whether a species is leading for a given pixel"),
+                    desc = "a number that defines whether a species is leading for a given pixel"),
     defineParameter(".maxMemory", "numeric", 5, NA, NA,
                     desc = "maximum amount of memory (in GB) to use for dispersal calculations."),
     defineParameter(".plotInitialTime", "numeric", start(sim), NA, NA,
@@ -162,7 +163,7 @@ defineModule(sim, list(
     expectsInput("lastReg", "numeric",
                  desc = "an internal counter keeping track of when the last regeneration event occurred"),
     expectsInput("minRelativeB", "data.frame",
-                 desc = "table defining the relative biomass cut points to classify stand shadeness"),
+                 desc = "table defining the relative biomass cut points to classify stand shadeness."),
     expectsInput("pixelGroupMap", "RasterLayer",
                  desc = paste("a raster layer with `pixelGroup` IDs per pixel. Pixels are grouped" ,
                               "based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition,",
@@ -171,11 +172,18 @@ defineModule(sim, list(
     expectsInput("rasterToMatch", "RasterLayer",
                  desc = "a raster of the `studyArea` in the same resolution and projection as `biomassMap`"),
     expectsInput("species", "data.table",
-                 desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
-                              "Default is partially based on Dominic Cyr and Yan Boulanger's project"),
+                 desc = paste("a table of invariant species traits with the following trait colums:",
+                              "'species', 'Area', 'longevity', 'sexualmature', 'shadetolerance',",
+                              "'firetolerance', 'seeddistance_eff', 'seeddistance_max', 'resproutprob',",
+                              "'mortalityshape', 'growthcurve', 'resproutage_min', 'resproutage_max',",
+                              "'postfireregen', 'wooddecayrate', 'leaflongevity' 'leafLignin',",
+                              "'hardsoft'. The last seven traits are not used in *Biomass_core*,",
+                              "and may be ommited. However, this may result in downstream issues with",
+                              "other modules. Default is from Dominic Cyr and Yan Boulanger's project"),
                  sourceURL = "https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv"),
     expectsInput("speciesEcoregion", "data.table",
-                 desc = paste("table defining the maxANPP, maxB and SEP, which can change with both ecoregion and simulation time.",
+                 desc = paste("table of spatially-varying species traits (`maxB`, `maxANPP`,",
+                              "`establishprob`), defined by species and `ecoregionGroup`)",
                               "Defaults to a dummy table based on dummy data os biomass, age, ecoregion and land cover class")),
     expectsInput("speciesLayers", "RasterStack",
                  desc = paste("percent cover raster layers of tree species in Canada.",
@@ -186,7 +194,7 @@ defineModule(sim, list(
                                     "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")),
     expectsInput("sppColorVect", "character",
                  desc = paste("A named vector of colors to use for plotting.",
-                              "The names must be in `sim$speciesEquivalency[[sim$sppEquivCol]]`,",
+                              "The names must be in `sim$sppEquiv[[sim$sppEquivCol]]`,",
                               "and should also contain a color for 'Mixed'")),
     expectsInput("sppEquiv", "data.table",
                  desc = "table of species equivalencies. See `LandR::sppEquivalencies_CA`."),
@@ -282,7 +290,7 @@ defineModule(sim, list(
                                "since last dispersal event, with its corresponding `pixelGroup` and time it occurred")),
     createsOutput("vegTypeMap", "RasterLayer",
                   desc = paste("Map of leading species in each pixel, colored according to `sim$sppColorVect`.",
-                               "Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)`$mixedType."))
+                               "Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)$mixedType`."))
   )
 ))
 
@@ -1439,6 +1447,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
     outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
                              currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
                              treedFirePixelTableSinceLastDisp = NULL,
+                             cohortDefinitionCols = P(sim)$cohortDefinitionCols,
                              initialB = P(sim)$initialB,
                              successionTimestep = P(sim)$successionTimestep)
     sim$cohortData <- outs$cohortData
@@ -1581,6 +1590,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
         outs <- updateCohortData(seedingData, cohortData = sim$cohortData,
                                  pixelGroupMap = sim$pixelGroupMap,
                                  currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
+                                 cohortDefinitionCols = P(sim)$cohortDefinitionCols,
                                  treedFirePixelTableSinceLastDisp = NULL,
                                  initialB = P(sim)$initialB,
                                  successionTimestep = P(sim)$successionTimestep)
