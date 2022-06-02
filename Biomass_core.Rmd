@@ -561,26 +561,26 @@ follow `species$speciesCode`.
 simulation as cohort dynamics are simulated. It must contain the following
 columns:
 
--   *pixelGroup* -- integer. *pixelGroup* ID. See
-[Hashing](#biomass-core-vs-lbse-enhan2).
+    -   *pixelGroup* -- integer. *pixelGroup* ID. See
+    [Hashing](#biomass-core-vs-lbse-enhan2).
+    
+    -   *ecoregionGroup* -- character. Ecolocation names. See `ecoregionMap` and
+    `ecoregion` objects above.
+    
+    -   *speciesCode* -- character. Species ID.
+    
+    -   *age* -- integer. Cohort age.
+    
+    -   *B* -- integer. Cohort biomass of the current year in $g/m^2$.
+    
+    -   *mortality* -- integer. Cohort dead biomass of the current year in
+    $g/m^2$. Usually filled with 0s in initial conditions.
 
--   *ecoregionGroup* -- character. Ecolocation names. See `ecoregionMap` and
-`ecoregion` objects above.
-
--   *speciesCode* -- character. Species ID.
-
--   *age* -- integer. Cohort age.
-
--   *B* -- integer. Cohort biomass of the current year in $g/m^2$.
-
--   *mortality* -- integer. Cohort dead biomass of the current year in
-$g/m^2$. Usually filled with 0s in initial conditions.
-
--   *aNPPAct* -- integer. Actual aboveground net primary productivity of the
-current year in $g/m^2$. `B` is the result of the previous year's `B`
-minus the current year's `mortality` plus `aNPPAct`. Usually filled with
-0s in initial conditions. See "*1.1.3 Cohort growth and ageing*" section
-of @SchellerMiranda2015.
+    -   *aNPPAct* -- integer. Actual aboveground net primary productivity of the
+    current year in $g/m^2$. `B` is the result of the previous year's `B`
+    minus the current year's `mortality` plus `aNPPAct`. Usually filled with
+    0s in initial conditions. See "*1.1.3 Cohort growth and ageing*" section
+    of @SchellerMiranda2015.
 
 -   `pixelGroupMap` -- a raster layer with `pixelGroup` IDs per pixel. Pixels
 are always grouped based on identical `ecoregionGroup`, `speciesCode`, `age`
