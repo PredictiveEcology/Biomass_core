@@ -367,34 +367,15 @@ species traits. Note that *Biomass_core* (alone) requires all the columns Table
 Please see @SchellerDomingo2011 [p.18] and @SchellerMiranda2015 [p.16] for
 further detail.
 
-<!--
-::: fullwidth
-| speciesCode | longevity | sexualmature | shadetolerance | firetolerance | postfireregen | resproutprob | resproutage_min | resproutage_max | seeddistance_eff | seeddistance_max | mortalityshape | growthcurve |
-|:-------|:------|:------|:------|:------|:------|:------|:------|:------|:------|:------|:------|:------|
-| Abie_sp     | 200       | 20           | 2.3            | 1             | none          | 0            | 0               | 0               | 25               | 100              | 15             | 0           |
-| Pice_eng    | 460       | 30           | 2.1            | 2             | none          | 0            | 0               | 0               | 30               | 250              | 15             | 1.0         |
-| Pice_gla    | 400       | 30           | 1.6            | 2             | none          | 0            | 0               | 0               | 100              | 303              | 15             | 1.0         |
-| Pinu_sp     | 150       | 15           | 1              | 2             | serotiny      | 0            | 0               | 0               | 30               | 100              | 15             | 0           |
-| Popu_sp     | 140       | 20           | 1              | 1             | resprout      | 0.5          | 10              | 70              | 200              | 5000             | 25             | 0           |
-| Pseu_men    | 525       | 25           | 2              | 3             | none          | 0            | 0               | 0               | 100              | 500              | 15             | 1.0         |
-
-: (#tab:invariantSpptraits) Example of an invariant species traits table (the
-`species` table object in the module), with species *Abies sp.* (Abie_sp),
-*Picea engelmannii* (Pice_eng), *Picea glauca* (Pice_gla), *Pinus sp.*
-(Pinu_sp), *Populus sp.* (Popu_sp) and *Pseudotsuga menziesii* (Pseu_men). Note
-that these are theoretical values.
-:::
--->
-
 ```{r invariantSpptraits, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
-                           colNames = TRUE, sep.names = " ")
+tab <- read.csv(normPath("tables/invariantTraits_example.csv"))
 caption <- paste("Example of an invariant species traits table (the",
                  "`species` table object in the module), with species (ref:Abie-sp),",
                  "(ref:Pice-eng), (ref:Pice-gla), (ref:Pinu-sp), (ref:Popu-sp) and (ref:Pseud-men).",
                  " Note that these are theoretical values.")
 knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+  kableExtra::kable_styling(latex_options = c("repeat_header", "scale_down")) %>%
+  kableExtra::landscape(.)
 ```
 
 #### Spatio-temporally varying species traits {#varying-traits}
@@ -412,41 +393,8 @@ further calibrates `maxB` and `maxANPP` by estimating two additional invariant
 species traits (`inflationFactor` and `mANPPproportion`; also for Western
 Canadian forests). See Table \@ref(tab:varyingSpptraits) for an example.
 
-<!--
-| ecoregionGroup | speciesCode | establishprob | maxB  | maxANPP | year |
-|:---------------|:------------|:--------------|:------|:--------|:-----|
-| 1_03           | Abie_sp     | 1.000         | 8567  | 285     | 1    |
-| 1_03           | Pice_eng    | 0.983         | 10156 | 305     | 1    |
-| 1_03           | Popu_sp     | 0.737         | 8794  | 293     | 1    |
-| 1_03           | Pseu_men    | 1.000         | 17534 | 132     | 1    |
-| 1_09           | Abie_sp     | 0.112         | 1499  | 50      | 1    |
-| 1_09           | Pice_gla    | 0.302         | 3143  | 102     | 1    |
-| 1_09           | Pinu_sp     | 0.714         | 2569  | 86      | 1    |
-| 1_09           | Popu_sp     | 0.607         | 3292  | 110     | 1    |
-| 1_09           | Pseu_men    | 0.997         | 6020  | 45      | 1    |
-| 1_03           | Abie_sp     | 0.989         | 8943  | 225     | 2    |
-| 1_03           | Pice_eng    | 0.985         | 9000  | 315     | 2    |
-| 1_03           | Popu_sp     | 0.600         | 8600  | 273     | 2    |
-| 1_03           | Pseu_men    | 1.000         | 13534 | 142     | 2    |
-| 1_09           | Abie_sp     | 0.293         | 2099  | 45      | 2    |
-| 1_09           | Pice_gla    | 0.745         | 3643  | 90      | 2    |
-| 1_09           | Pinu_sp     | 0.500         | 2569  | 80      | 2    |
-| 1_09           | Popu_sp     | 0.670         | 3262  | 111     | 2    |
-| 1_09           | Pseu_men    | 1.000         | 6300  | 43      | 2    |
-
-: (#tab:varyingSpptraits) Example of a spatio-temporally varying species traits
-table (the `speciesEcoregion` table object in the module), with two ecolocations
-(called `ecoregionGroups`) and species *Abies sp.* (Abie_sp), *Picea
-engelmannii* (Pice_eng), *Picea glauca* (Pice_gla), *Pinus sp.* (Pinu_sp),
-*Populus sp.* (Popu_sp) and *Pseudotsuga menziesii* (Pseu_men). If a simulation
-runs for 10 year using this table, trait values from year 2 would be used during
-simulation years 2 through 10.
--->
-
 ```{r varyingSpptraits, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "spatially_varyingTraits", 
-                           colNames = TRUE, sep.names = " ")
-names(tab)[grep("X", names(tab))] <- ""
+tab <- read.csv(normPath("tables/spatiallyVaryingTraits_example.csv"))
 caption <- paste("Example of a spatio-temporally varying species traits",
                  "table (the `speciesEcoregion` table object in the module), with two ecolocations",
                  "(called `ecoregionGroups`) and species (ref:Abie-sp),",
@@ -454,7 +402,7 @@ caption <- paste("Example of a spatio-temporally varying species traits",
                  "If a simulation runs for 10 year using this table, trait values from",
                  "year 2 would be used during simulation years 2-10.")
 knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+  kableExtra::kable_styling(latex_options = c("repeat_header", "scale_down"))
 ```
 
 #### Ecolocation-specific parameters -- minimum relative biomass {#ecolocation-traits}
@@ -480,21 +428,8 @@ Western Canada boreal forest dynamics (see Table \@ref(tab:minRelB)).
 inputs, these values can be adjusted by using other modules or by passing
 user-defined tables.
 
-<!--
-| ecoregionGroup | X1   | X2   | X3  | X4   | X5   |
-|:---------------|:-----|:-----|:----|:-----|:-----|
-| 1_03           | 0.15 | 0.25 | 0.5 | 0.75 | 0.85 |
-| 1_09           | 0.15 | 0.25 | 0.5 | 0.75 | 0.85 |
-
-: (#tab:minRelB) Example of a minimum relative biomass table (the `minRelativeB`
-table object in the module), with two ecolocations (`ecoregionGroups`) sharing
-the same values.
--->
-
 ```{r minRelB, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "minRelativeB", 
-                           colNames = TRUE, sep.names = " ")
-names(tab)[grep("X", names(tab))] <- ""
+tab <- read.csv(normPath("tables/minRelativeB_example.csv"))
 caption <- paste("Example of a minimum relative biomass table (the `minRelativeB`",
                  "table object in the module), with two ecolocations (`ecoregionGroups`) sharing",
                  "the same values")
@@ -506,35 +441,19 @@ knitr::kable(tab, caption = caption) %>%
 
 A species' probability of germination results from the combination of its shade
 tolerance level (an invariant species trait in the `species` table; Table
-\ref\@(tab:invariantSpptraits)) and the site shade [defined by the amount of
+\ref@(tab:invariantSpptraits)) and the site shade [defined by the amount of
 biomass in the pixel -- see [minimum relative biomass
 parameter](#ecolocation-traits) and @SchellerMiranda2015,p.14]. By default, both
 *Biomass_core* and *Biomass_borealDataPrep* use a publicly available LANDIS-II
 table (called `sufficientLight` in the module; Table \@ref(tab:suffLight)).
 
-<!--
-| species shade tolerance | X0  | X1  | X2  | X3  | X4  | X5  |
-|:------------------------|:----|:----|:----|:----|:----|:----|
-| 1                       | 1   | 0   | 0   | 0   | 0   | 0   |
-| 2                       | 1   | 1   | 0   | 0   | 0   | 0   |
-| 3                       | 1   | 1   | 1   | 0   | 0   | 0   |
-| 4                       | 1   | 1   | 1   | 1   | 0   | 0   |
-| 5                       | 0   | 0   | 1   | 1   | 1   | 1   |
-
-: (#tab:suffLight) Default species probability of germination values used by
-*Biomass_core* and *Biomass_borealDataPrep*. Columns X0-X5 are different site
-shade levels and each line has the probability of germination for each site
-shade and species shade tolerance combination.
--->
-
 ```{r suffLight, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "probGerm", 
-                           colNames = TRUE, sep.names = " ")
-names(tab)[grep("X", names(tab))] <- ""
+tab <- read.csv(normPath("tables/probGerm_example.csv"))
 caption <- paste("Default species probability of germination values used by",
                  "(ref:Biomass-core) and (ref:Biomass-borealdataPrep). Columns X0-X5 are different site",
                  "shade levels and each line has the probability of germination for each site",
                  "shade and species shade tolerance combination.")
+tab$species.shade.tolerance <- as.character(tab$species.shade.tolerance) ## to ensure left-alignment
 knitr::kable(tab, caption = caption) %>%
   kableExtra::kable_styling(latex_options = c("repeat_header"))
 ```
