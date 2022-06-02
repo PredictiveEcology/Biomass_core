@@ -588,6 +588,13 @@ and `B` composition, even if the user supplies other initial groupings
 (e.g., this is possible in the *Biomass_borealDataPrep* data module).
 <!-- may be revised in following versions-->
 
+-   `sppNameVector` -- (OPTIONAL) a character vector of species to be simulated.
+If provided, *Biomass_core* uses this vector to (attempt to) obtain `speciesLayers`
+for the listed species. If not provided, the user (or another module) can pass a filtered `sppEquiv` table
+(i.e., containing only the species that are to be simulated). If neither is provided,
+then *Biomass_core* attempts to use any species for which if finds available species
+(ref:percent) cover data in the study area.
+
 ```{r moduleInputs2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
 df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")
 caption <- "List of (ref:Biomass-core) input objects and their description."
