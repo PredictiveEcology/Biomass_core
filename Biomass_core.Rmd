@@ -386,7 +386,7 @@ further detail.
 \newpage
 \blandscape
 
-```{r invariantSpptraits, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis', }
+```{r invariantSpptraits, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
                            colNames = TRUE, sep.names = " ")
 caption <- paste("Example of an invariant species traits table (the",
