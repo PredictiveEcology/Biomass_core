@@ -1308,6 +1308,7 @@ pander(tab, caption = addLabel(caption), justify = justCols)
 ```{r tableLBSEtest8, echo = FALSE, eval = TRUE, message = FALSE}
 tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table8_Appendix1", 
                            colNames = TRUE, sep.names = " ")
+tab[,1] <- as.character(tab[,1])
 caption <- paste("Probability of germination for species shade tolerance and",
                  "shade level combinations (called (ref:sufficient-light) table in",
                  "LBSE and `sufficientLight` input `data.table` in LandR",
@@ -1322,6 +1323,7 @@ pander(tab, caption = addLabel(caption), justify = justCols)
 ```{r tableLBSEtest9, echo = FALSE, eval = TRUE, message = FALSE}
 tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table9_Appendix1", 
                            colNames = TRUE, sep.names = " ")
+tab[,1] <- as.character(tab[,1])
 caption <- paste("Species ecolocation table used in comparison runs. `SEP`",
                  "stands for species establishment probability, `maxB` for",
                  "maximum biomass and `maxANPP` for maximum aboveground net",
