@@ -1186,7 +1186,10 @@ knitr::include_graphics(normPath(c("figures/Biomass_coreOutPlots1.png",
 
 ### Tables {#appendix-tables}
 
-```{r tableLBSEtest1, echo = FALSE, eval = TRUE, message = FALSE}
+\newpage
+\blandscape
+
+```{r tableLBSEtest1, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table1_Appendix1", 
                            colNames = TRUE, sep.names = " ")
 names(tab)[grep("X", names(tab))] <- ""
@@ -1202,12 +1205,14 @@ caption <- paste("Input order and processing order (as determined by",
 # knitr::kable(tab, caption = caption) %>%
 #   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
+opts <- panderOptions("knitr.auto.asis", FALSE)   ## to make landscape and escape special characters 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
 pander(tab, caption = addLabel(caption), justify = justCols)
+options(opts)
 ```
 
 
-```{r tableLBSEtest2, echo = FALSE, eval = TRUE, message = FALSE}
+```{r tableLBSEtest2, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table2_Appendix1", 
                            colNames = TRUE, sep.names = " ")
 names(tab)[grep("X", names(tab))] <- ""
@@ -1222,9 +1227,13 @@ caption <- paste("Input order and processing order (as determined by LBSE) for",
 # knitr::kable(tab, caption = caption) %>%
 #   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
+opts <- panderOptions("knitr.auto.asis", FALSE)   ## to make landscape and escape special characters 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
 pander(tab, caption = addLabel(caption), justify = justCols)
+options(opts)
 ```
+
+\elandscape
 
 
 ```{r tableLBSEtest3, echo = FALSE, eval = TRUE, message = FALSE}
@@ -1252,7 +1261,10 @@ justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
 pander(tab, caption = addLabel(caption), justify = justCols)
 ```
 
-```{r tableLBSEtest5, echo = FALSE, eval = TRUE, message = FALSE}
+\newpage
+\blandscape
+
+```{r tableLBSEtest5, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table5_Appendix1", 
                            colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 3 used in the",
@@ -1260,9 +1272,13 @@ caption <- paste("Randomly generated community combination no. 3 used in the",
 # knitr::kable(tab, caption = caption) %>%
 #   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
+opts <- panderOptions("knitr.auto.asis", FALSE)   ## to make landscape and escape special characters 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
 pander(tab, caption = addLabel(caption), justify = justCols)
+options(opts)
 ```
+
+\elandscape
 
 ```{r tableLBSEtest6, echo = FALSE, eval = TRUE, message = FALSE}
 tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table6_Appendix1", 
@@ -1274,6 +1290,7 @@ caption <- paste("Invariant species traits table used in comparison runs.")
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
 pander(tab, caption = addLabel(caption), justify = justCols)
 ```
+
 
 ```{r tableLBSEtest7, echo = FALSE, eval = TRUE, message = FALSE}
 tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table7_Appendix1", 
