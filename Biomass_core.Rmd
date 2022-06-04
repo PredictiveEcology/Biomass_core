@@ -71,7 +71,13 @@ wrapStrFun <- function(x, size, breakChar = "\n") {
 
 ## TODO: move to package
 addLabel <- function(caption = "", tag = "tab") {
-  paste0("\\label{", tag, ":", knitr::opts_current$get("label"), "}", caption)
+  chunkLabel <- knitr::opts_current$get("label")
+  pretag <- if (knitr::is_latex_output()) {
+    paste0("\\label{", tag, ":",chunkLabel , "}")
+  } else {
+      paste0("(\\#", tag, ":", chunkLabel, ")")
+    }
+  paste0(pretag, caption)
 }
 ```
 
