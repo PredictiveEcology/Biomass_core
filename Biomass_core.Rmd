@@ -491,7 +491,7 @@ pander(tab, caption = addLabel(caption), justify = justCols)
 
 A species' probability of germination results from the combination of its shade
 tolerance level (an invariant species trait in the `species` table; Table
-\ref\@(tab:invariantSpptraits)) and the site shade [defined by the amount of
+\@ref(tab:invariantSpptraits)) and the site shade [defined by the amount of
 biomass in the pixel -- see [minimum relative biomass
 parameter](#ecolocation-traits) and @SchellerMiranda2015,p.14]. By default, both
 *Biomass_core* and *Biomass_borealDataPrep* use a publicly available LANDIS-II
@@ -727,7 +727,7 @@ event (growth and mortality are always yearly);
 \newpage
 \blandscape
 
-```{r moduleParams2-Biomass-core, echo = FALSE, eval = FALSE, message = FALSE, results = 'asis'}
+```{r moduleParams2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 df_params <- SpaDES.core::moduleParams("Biomass_core", "..")
 caption <- "List of (ref:Biomass-core) parameters and their description."
 
