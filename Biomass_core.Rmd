@@ -68,6 +68,11 @@ wrapStrFun <- function(x, size, breakChar = "\n") {
     }
   })
 }
+
+## TODO: move to package
+addLabel <- function(caption = "", tag = "tab") {
+  paste0("\\label{", tag, ":", knitr::opts_current$get("label"), "}", caption)
+}
 ```
 
 ```{r badgeFigs-Biomass-core, include = FALSE, eval = TRUE, cache = FALSE}
@@ -398,7 +403,7 @@ caption <- paste("Example of an invariant species traits table (the",
 ## justify character columns to left, and numeric to right
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
 opts <- panderOptions("knitr.auto.asis", FALSE)   ## to make landscape and escape special characters 
-pander(tab, caption = caption, justify = justCols)
+pander(tab, caption = addLabel(caption), justify = justCols)
 options(opts)
 ```
 
@@ -648,7 +653,7 @@ df_inputs$objectClass <- wrapStrFun(df_inputs$objectClass, size = 10)
 df_inputs$desc <- wrapStrFun(df_inputs$desc, size = 40)
 df_inputs$sourceURL <- wrapStrFun(df_inputs$sourceURL, size = 10)
 
-pander::pander(df_inputs, caption = caption, justify = "left",
+pander::pander(df_inputs, caption = addLabel(caption), justify = "left",
                split.tables = Inf, keep.line.breaks = TRUE)
 options(opts)
 ```
@@ -715,7 +720,7 @@ caption <- "List of (ref:Biomass-core) parameters and their description."
 # landscape(.) %>%
 
 opts <- panderOptions("knitr.auto.asis", FALSE)    
-pander(df_params, caption = caption, justify = "left", 
+pander(df_params, caption = addLabel(caption), justify = "left", 
        digits = 3, split.cells = c(15,15, 5, 5, 5, 40), split.tables = Inf)
 options(opts)
 ```
@@ -748,7 +753,7 @@ caption <- "List of (ref:Biomass-core) output objects and their description."
 #   kableExtra::kable_styling(latex_options = c("repeat_header"), full_width = TRUE)
 
 ## options and results='asis' not necessary when not using landscape
-pander(df_outputs, caption = caption, justify = "left", 
+pander(df_outputs, caption = addLabel(caption), justify = "left", 
        digits = 3, split.cells = c(15, 15, 40), split.tables = Inf)
 ```
 
