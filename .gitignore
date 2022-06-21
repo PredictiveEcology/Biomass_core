@@ -13,6 +13,14 @@
 Biomass_core_cache/
 cache/
 libs/
+citations/*.csl
+
+## html cache/files
+*_cache/
+*_files/
+
+## these are downloaded automatically, no point in caching
+figures/*Badge.png
 
 CHECKSUMS.txt
 
