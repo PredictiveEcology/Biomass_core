@@ -2098,18 +2098,18 @@ CohortAgeReclassification <- function(sim) {
   paramCheckOtherMods(sim, "vegLeadingProportion", ifSetButDifferent = "error")
 
   sppOuts <- sppHarmonize(sim$sppEquiv, sim$sppNameVector, P(sim)$sppEquivCol,
-                          sim$sppColorVect, P(sim)$vegLeadingProportion)
+                          sim$sppColorVect, P(sim)$vegLeadingProportion, sim$studyArea)
   ## the following may, or may not change inputs
   sim$sppEquiv <- sppOuts$sppEquiv
   sim$sppNameVector <- sppOuts$sppNameVector
-  P(sim)$sppEquivCol <- sppOuts$sppEquivCol
+  P(sim, module = currentModule(sim))$sppEquivCol <- sppOuts$sppEquivCol
   sim$sppColorVect <- sppOuts$sppColorVect
 
   ## make empty treedFirePixelTableSinceLastDisp
   if (!suppliedElsewhere("treedFirePixelTableSinceLastDisp", sim)) {
-    sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(),
-                                                       pixelGroup = integer(),
-                                                       burnTime = numeric())
+    sim$treedFirePixelTableSinceLastDisp <- data.table(pixelIndex = integer(0),
+                                                       pixelGroup = integer(0),
+                                                       burnTime = numeric(0))
   }
 
   ## get default species layers
@@ -2142,7 +2142,7 @@ CohortAgeReclassification <- function(sim) {
   }
 
   ## if not using LandR growth/mortality drivers... (assumes LandR.CS)
-  if (P(sim)$growthAndMortalityDrivers != 'LandR') {
+  if (P(sim)$growthAndMortalityDrivers != "LandR") {
     if (!suppliedElsewhere("cceArgs", sim)) {
       sim$cceArgs <- list(quote(CMI),
                           quote(ATA),
@@ -2157,7 +2157,6 @@ CohortAgeReclassification <- function(sim) {
     #   stop("Some or all of sim$cceArgs are not supplied")
     # }
   }
-
 
   gc() ## AMC added this 2019-08-20
 
