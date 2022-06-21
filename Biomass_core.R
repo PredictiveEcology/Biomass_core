@@ -22,7 +22,7 @@ defineModule(sim, list(
                   "ggplot2", "grid", "parallel", "purrr", "quickPlot",
                   "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
                   "RandomFields",
-                  "PredictiveEcology/LandR@development (>= 1.0.7.9018)",
+                  "PredictiveEcology/LandR@development (>= 1.0.7.9022)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
