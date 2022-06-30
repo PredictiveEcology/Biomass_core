@@ -2099,6 +2099,7 @@ CohortAgeReclassification <- function(sim) {
 
   sppOuts <- sppHarmonize(sim$sppEquiv, sim$sppNameVector, P(sim)$sppEquivCol,
                           sim$sppColorVect, P(sim)$vegLeadingProportion, sim$studyArea)
+
   ## the following may, or may not change inputs
   sim$sppEquiv <- sppOuts$sppEquiv
   sim$sppNameVector <- sppOuts$sppNameVector
