@@ -113,7 +113,7 @@ defineModule(sim, list(
                                  "To plotting off completely use `P(sim)$.plots`.")),
     defineParameter(".plotInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the plotting time step.",
-                                 "If `NA`, the default, .plotInterval is set to successionTimestep.")),
+                                 "If `NA`, the default, `.plotInterval` is set to `successionTimestep`.")),
     defineParameter(".plots", "character", default = "object",
                     desc = paste("Passed to `types` in `Plots` (see `?Plots`). There are a few plots that are made within this module, if set.",
                                  "Note that plots (or their data) saving will ONLY occur at `end(sim)`.",
