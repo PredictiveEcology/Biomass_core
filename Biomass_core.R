@@ -23,7 +23,7 @@ defineModule(sim, list(
                   ## Excluded because loading is not necessary (just installation)
                   "parallel", "purrr", "quickPlot", "raster", "Rcpp",
                   "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>= 1.0.9.9000)",
+                  "PredictiveEcology/LandR@development (>= 1.0.9.9002)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
