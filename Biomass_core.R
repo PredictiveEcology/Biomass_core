@@ -19,11 +19,12 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_core.Rmd"),
-  reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare",
-                  "ggplot2", "grid", "parallel", "purrr", "quickPlot",
-                  "raster", "Rcpp", "R.utils", "scales", "sp", "tidyr",
-                  "RandomFields",
-                  "PredictiveEcology/LandR@development (>= 1.0.7.9015)",
+  reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare", "ggplot2", "grid",
+                  # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
+                  ## Excluded because loading is not necessary (just installation)
+                  "parallel", "purrr", "quickPlot", "raster", "Rcpp",
+                  "R.utils", "scales", "sp", "tidyr",
+                  "PredictiveEcology/LandR@development (>= 1.0.9.9002)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
@@ -46,6 +47,10 @@ defineModule(sim, list(
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
                     desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
+    defineParameter("initialB", "numeric", 10, 1, NA,
+                    desc = paste("initial biomass values of new age-1 cohorts.",
+                                 "If `NA` or `NULL`, initial biomass will be calculated as in LANDIS-II Biomass Suc. Extension",
+                                 "(see Scheller and Miranda, 2015 or `?LandR::.initiateNewCohorts`)")),
     defineParameter("gmcsGrowthLimits", "numeric", c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
                     paste("if using `LandR.CS` for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
@@ -68,7 +73,6 @@ defineModule(sim, list(
                                  "(see `LandR.CS` for climate sensitivity equivalent functions, or leave default if this is not desired)")),
     defineParameter("growthInitialTime", "numeric", start(sim), NA_real_, NA_real_,
                     desc = "Initial time for the growth event to occur"),
-    defineParameter("initialB", "numeric", 10, 1, NA, desc = "initial biomass values of new age-1 cohorts"),
     defineParameter("initialBiomassSource", "character", "cohortData", NA, NA,
                     paste("Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. ",
                           "If 'spinUp', it will derive biomass by running spinup derived from Landis-II.",
@@ -110,7 +114,7 @@ defineModule(sim, list(
                                  "To plotting off completely use `P(sim)$.plots`.")),
     defineParameter(".plotInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the plotting time step.",
-                                 "If `NA`, the default, .plotInterval is set to successionTimestep.")),
+                                 "If `NA`, the default, `.plotInterval` is set to `successionTimestep`.")),
     defineParameter(".plots", "character", default = "object",
                     desc = paste("Passed to `types` in `Plots` (see `?Plots`). There are a few plots that are made within this module, if set.",
                                  "Note that plots (or their data) saving will ONLY occur at `end(sim)`.",
@@ -124,6 +128,10 @@ defineModule(sim, list(
     defineParameter(".saveInterval", "numeric", NA, NA, NA,
                     desc = paste("defines the saving time step.",
                                  "If `NA`, the default, .saveInterval is set to `P(sim)$successionTimestep`.")),
+    defineParameter(".sslVerify", "integer", unname(curl::curl_options("^ssl_verifypeer$")), NA , NA,
+                    paste("Passed to `httr::config(ssl_verifypeer = P(sim)$sslVerify)` when downloading KNN",
+                          "(NFI) datasets. Set to 0L if necessary to bypass checking the SSL certificate (this",
+                          "may be necessary when NFI's website SSL certificate is not correctly configured).")),
     defineParameter(".studyAreaName", "character", NA, NA, NA,
                     "Human-readable name for the study area used. If `NA`, a hash of `studyArea` will be used."),
     defineParameter(".useCache", "character", c(".inputObjects", "init"), NA, NA,
@@ -549,6 +557,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
             "Only trees that are older than successionTimestep are included in the ",
             "calculation of sumB, i.e., trees younger than this do not contribute ",
             "to competitive interactions")
+
+  paramCheckOtherMods(sim, "initialB", ifSetButDifferent = "warning")
+
   ##############################################
   ## Prepare individual objects
   ##############################################
@@ -602,7 +613,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'biomassMap'"))
     ## note that to make the dummy sim$biomassMap, we need to first make a dummy rawBiomassMap
-    rawBiomassMap <- makeDummyRawBiomassMap(sim$rasterToMatch)
+    httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
+      rawBiomassMap <- makeDummyRawBiomassMap(sim$rasterToMatch)
+    })
 
     if (suppliedElsewhere("standAgeMap", sim, where = "sim"))
       message(blue("'standAgeMap' was supplied, but "),
@@ -2006,7 +2019,7 @@ CohortAgeReclassification <- function(sim) {
                                  "2001-attributes_attributs-2001/",
                                  "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
       rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-      # httr::with_config(config = httr::config(ssl_verifypeer = 0L), { ## TODO: re-enable verify
+      httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
       #necessary for KNN
       rawBiomassMap <- Cache(prepInputs,
                              targetFile = rawBiomassMapFilename,
@@ -2021,7 +2034,7 @@ CohortAgeReclassification <- function(sim) {
                              filename2 = NULL,
                              userTags = c(cacheTags, "rawBiomassMap"),
                              omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
-      # })
+      })
     } else {
       rawBiomassMap <- Cache(postProcess,
                              x = sim$rawBiomassMap,
@@ -2094,6 +2107,7 @@ CohortAgeReclassification <- function(sim) {
 
   sppOuts <- sppHarmonize(sim$sppEquiv, sim$sppNameVector, P(sim)$sppEquivCol,
                           sim$sppColorVect, P(sim)$vegLeadingProportion, sim$studyArea)
+
   ## the following may, or may not change inputs
   sim$sppEquiv <- sppOuts$sppEquiv
   sim$sppNameVector <- sppOuts$sppNameVector
