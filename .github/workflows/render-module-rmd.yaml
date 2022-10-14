@@ -49,6 +49,7 @@ jobs:
           install.packages("remotes")
           remotes::install_cran("rmarkdown")
           remotes::install_cran("knitr")
+          remotes::install_cran("bookdown")
         shell: Rscript {0}
 
       - name: Install SpaDES
