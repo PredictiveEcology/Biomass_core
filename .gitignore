@@ -19,6 +19,9 @@ citations/*.csl
 *_cache/
 *_files/
 
+## don't ignore tables needed for manual
+!tables/*
+
 ## these are downloaded automatically, no point in caching
 figures/*Badge.png
 
