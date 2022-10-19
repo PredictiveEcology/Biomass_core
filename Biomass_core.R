@@ -7,9 +7,10 @@ defineModule(sim, list(
   authors = c(
     person("Yong", "Luo", email = "yluo1@lakeheadu.ca", role = "aut"),
     person(c("Eliot", "J", "B"), "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut", "cre")),
-    person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb"),
-    person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = "ctb"),
-    person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = "ctb")
+    person("Ceres", "Barros", email = "ceres.barros@ubc.ca", role = "aut"),
+    person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = "aut"),
+    person("Ian", "Eddy", email = "ian.eddy@nrcan-rncan.gc.ca", role = c("ctb")),
+    person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
   version = list(Biomass_core = numeric_version("1.3.9")),
@@ -170,7 +171,7 @@ defineModule(sim, list(
     expectsInput("lastReg", "numeric",
                  desc = "an internal counter keeping track of when the last regeneration event occurred"),
     expectsInput("minRelativeB", "data.frame",
-                 desc = "table defining the relative biomass cut points to classify stand shadeness"),
+                 desc = "table defining the relative biomass cut points to classify stand shadeness."),
     expectsInput("pixelGroupMap", "RasterLayer",
                  desc = paste("a raster layer with `pixelGroup` IDs per pixel. Pixels are grouped" ,
                               "based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition,",
