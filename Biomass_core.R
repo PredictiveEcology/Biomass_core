@@ -23,7 +23,7 @@ defineModule(sim, list(
                   ## Excluded because loading is not necessary (just installation)
                   "parallel", "purrr", "quickPlot", "raster", "Rcpp",
                   "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>= 1.0.9.9002)",
+                  "PredictiveEcology/LandR@development (>= 1.0.9.9004)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
@@ -1643,9 +1643,7 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
-  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
-                   sppColorVect = cols2)
-
+  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol, sppColorVect = sim$sppColorVect)
   checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
 
   ## BIOMASS, WEIGHTED AVERAGE AGE, AVERAGE ANPP
@@ -1715,6 +1713,12 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
     cols2 <- df$cols
     names(cols2) <- df$species
+
+    unqdf <- unique(df[, c("cols", "species")])
+    unqCols2 <- unqdf$cols
+    names(unqCols2) <- unqdf$species
+
+    assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = "EN_generic_short", sppColorVect = unqCols2)
 
     ## although Plots can deal with   .plotInitialTime == NA by not plotting, we need to
     ## make sure the plotting windows are not changed/opened if  .plotInitialTime == NA
