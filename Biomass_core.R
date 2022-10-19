@@ -24,7 +24,7 @@ defineModule(sim, list(
                   ## Excluded because loading is not necessary (just installation)
                   "parallel", "purrr", "quickPlot", "raster", "Rcpp",
                   "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>= 1.0.9.9002)",
+                  "PredictiveEcology/LandR@development (>= 1.1.0.9004)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
@@ -278,7 +278,7 @@ defineModule(sim, list(
                   desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
                                "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs")),
     createsOutput("speciesEcoregion", "data.table",
-                  desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
+                  desc = "define the `maxANPP`, `maxB` and `SEP` change with both ecoregion and simulation time."),
     createsOutput("speciesLayers", "RasterStack",
                   desc = paste("species percent cover raster layers, based on input `speciesLayers` object.",
                                "Not changed by this module.")),
@@ -288,7 +288,7 @@ defineModule(sim, list(
                   desc = paste("The total species biomass (in g/m^2 as in `cohortData`), average age and aNPP (in",
                                "g/m^2 as in `cohortData`),  across the landscape (used for plotting and reporting).")),
     createsOutput("summaryBySpecies1", "data.table",
-                  desc = "No. pixels of each leading vegetation type (used for plotting and reporting)."),
+                  desc = "Number of pixels of each leading vegetation type (used for plotting and reporting)."),
     createsOutput("summaryLandscape", "data.table",
                   desc = paste("The averages of total biomass (in *tonnes/ha*, not g/m^2 like in `cohortData`), age",
                                "and aNPP (also in tonnes/ha) across the landscape (used for plotting and reporting).")),
@@ -1644,9 +1644,7 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
-  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
-                   sppColorVect = cols2)
-
+  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol, sppColorVect = sim$sppColorVect)
   checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
 
   ## BIOMASS, WEIGHTED AVERAGE AGE, AVERAGE ANPP
@@ -1716,6 +1714,12 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
     cols2 <- df$cols
     names(cols2) <- df$species
+
+    unqdf <- unique(df[, c("cols", "species")])
+    unqCols2 <- unqdf$cols
+    names(unqCols2) <- unqdf$species
+
+    assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = "EN_generic_short", sppColorVect = unqCols2)
 
     ## although Plots can deal with   .plotInitialTime == NA by not plotting, we need to
     ## make sure the plotting windows are not changed/opened if  .plotInitialTime == NA
