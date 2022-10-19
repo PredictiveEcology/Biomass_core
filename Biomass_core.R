@@ -277,7 +277,7 @@ defineModule(sim, list(
                   desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
                                "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs")),
     createsOutput("speciesEcoregion", "data.table",
-                  desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
+                  desc = "define the `maxANPP`, `maxB` and `SEP` change with both ecoregion and simulation time."),
     createsOutput("speciesLayers", "RasterStack",
                   desc = paste("species percent cover raster layers, based on input `speciesLayers` object.",
                                "Not changed by this module.")),
@@ -287,7 +287,7 @@ defineModule(sim, list(
                   desc = paste("The total species biomass (in g/m^2 as in `cohortData`), average age and aNPP (in",
                                "g/m^2 as in `cohortData`),  across the landscape (used for plotting and reporting).")),
     createsOutput("summaryBySpecies1", "data.table",
-                  desc = "No. pixels of each leading vegetation type (used for plotting and reporting)."),
+                  desc = "Number of pixels of each leading vegetation type (used for plotting and reporting)."),
     createsOutput("summaryLandscape", "data.table",
                   desc = paste("The averages of total biomass (in *tonnes/ha*, not g/m^2 like in `cohortData`), age",
                                "and aNPP (also in tonnes/ha) across the landscape (used for plotting and reporting).")),
@@ -297,7 +297,7 @@ defineModule(sim, list(
                                "since last dispersal event, with its corresponding `pixelGroup` and time it occurred")),
     createsOutput("vegTypeMap", "RasterLayer",
                   desc = paste("Map of leading species in each pixel, colored according to `sim$sppColorVect`.",
-                               "Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)`$mixedType."))
+                               "Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)$mixedType`."))
   )
 ))
 
