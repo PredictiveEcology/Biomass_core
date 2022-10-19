@@ -54,6 +54,7 @@ jobs:
           remotes::install_cran("rmarkdown")
           remotes::install_cran("knitr")
           remotes::install_cran("bookdown")
+          remotes::install_cran("openxlsx")
         shell: Rscript {0}
 
       - name: Install SpaDES packages
