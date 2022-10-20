@@ -44,7 +44,9 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core/commit/cb00170f84da4c7890fa475811ed2e8a88a9965b)
+[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core/commit/8826b4b993b44e2cd49457394d50937e313d15ae)
+
+[![Issues-badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
 #### Authors:
 
