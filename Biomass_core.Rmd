@@ -82,16 +82,26 @@ download.file(url = paste0("https://img.shields.io/badge/Biomass_core-", paste0(
 
 ``` {r moduleBadge-Biomass-core, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
 ## try to automatically get the commit URL and the path to the badge image
-badgeURL <- if (!git2r::is_detached()) {
-  commitSHA <- git2r::sha(git2r::revparse_single(".", "HEAD"))
+modulePath <- if (grepl("Biomass_core$", normPath("."))) {
+    normPath(".")
+  } else {
+    modulePath <- grep("Biomass_core$", 
+                       list.files(pattern = "Biomass_core", recursive = TRUE, include.dirs = TRUE),
+                       value = TRUE)
+    modulePath <- grep("docs/", modulePath, value = TRUE, invert = TRUE)  ## exclude "copied" modules dirs for bookdown
+    normPath(modulePath)
+  }
+
+badgeURL <- if (!git2r::is_detached(modulePath)) {
+  commitSHA <- git2r::sha(git2r::revparse_single(modulePath, "HEAD"))
   repo <- sub("[.]git$", "/commit/",
-              git2r::branch_remote_url(git2r::branch_get_upstream(git2r::repository_head("."))))
-  paste0(repo, "/tree/", commitSHA)
+              git2r::branch_remote_url(git2r::branch_get_upstream(git2r::repository_head(modulePath))))
+  paste0(repo, commitSHA)
 } else {
   ## if detached point to the first remote
-  git2r::remote_url()[1]
+  git2r::remote_url(modulePath)[1]
 }
-badgeURL <- sub(".*github[.]com", "https://github.com", badgeURL)
+badgeURL <- sub(".*github[.]com:", "https://github.com/", badgeURL)
 
 badgePath <- normPath("figures/moduleVersionBadge.png")
 
