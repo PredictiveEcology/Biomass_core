@@ -110,6 +110,14 @@ badgePath <- normPath("figures/moduleVersionBadge.png")
 cat(paste0("[![module-version-Badge](", badgePath, ")](", badgeURL, ")"))
 ```
 
+``` {r issuesBadge-Biomass-core, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
+badgeURL <- "https://github.com/PredictiveEcology/Biomass_core/issues"
+badgePath <- normPath("figures/issuesBadge.png")
+
+## make string of markdown code to be executed as-is
+cat(paste0("[![Issues-badge](", badgePath, ")](", badgeURL,")"))
+```
+
 #### Authors:
 
 `r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), sep = ', ')`
