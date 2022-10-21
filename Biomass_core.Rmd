@@ -1084,17 +1084,23 @@ knitr::include_graphics(normPath("figures/figLBSEtest5.png"))
 ### Set up R libraries {#example-libs}
 
 ```{r load-Rlibs-Biomass-core, eval=FALSE}
-if (!require(Require)) {
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+tempDir <- tempdir()
+
+pkgPath <- file.path(tempDir, "packages", version$platform,
+                     paste0(version$major, ".", strsplit(version$minor, "[.]")[[1]][1]))
+dir.create(pkgPath, recursive = TRUE)
+.libPaths(pkgPath, include.site = FALSE)
+
+if (!require(Require, lib.loc = pkgPath)) {
   install.packages("Require")
-  library(Require)
+  library(Require, lib.loc = pkgPath)
 }
 
-Require(c("PredictiveEcology/SpaDES.install",
-          "SpaDES", "PredictiveEcology/SpaDES.core@development",
-          "PredictiveEcology/LandR"), 
-        install_githubArgs = list(dependencies = TRUE))# In general, a module code will be controlled at one level above the source code
+setLinuxBinaryRepo()
+Require("PredictiveEcology/SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db", 
+        require = FALSE, upgrade = FALSE, standAlone = TRUE)
 
-tempDir <- tempdir()
 paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
               cachePath = normPath(file.path(tempDir, "cache")), 
               modulePath = normPath(file.path(tempDir, "modules")), 
@@ -1115,11 +1121,17 @@ dependencies are installed in their correct version.
 in the `paths$modulePath`.
 
 ```{r getModule-Biomass-core, eval=FALSE}
-SpaDES.install::getModule("PredictiveEcology/Biomass_core", 
-                          modulePath = paths$modulePath, overwrite = TRUE)
+SpaDES.project::getModule(modulePath = paths$modulePath,
+                          c("PredictiveEcology/Biomass_core@master"),
+                          overwrite = TRUE)
 
 ## make sure all necessary packages are installed:
-SpaDES.install::makeSureAllPackagesInstalled(paths$modulePath)
+outs <- SpaDES.project::packagesInModules(modulePath = paths$modulePath)
+Require(c(unname(unlist(outs)), "SpaDES"),
+        require = FALSE, standAlone = TRUE)
+
+## load necessary packages
+Require(c("SpaDES", "LandR", "reproducible"), upgrade = FALSE, install = FALSE)
 ```
 
 ### Setup simulation {#example-setupSim}
@@ -1144,9 +1156,9 @@ studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a ran
 speciesNameConvention <- "Boreal"
 speciesToUse <- c("Pice_Gla", "Popu_Tre", "Pinu_Con")
 
-sppEquiv <- LandR::sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
+sppEquiv <- sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
 # Assign a colour convention for graphics for each species
-sppColorVect <- LandR::sppColors(sppEquiv, speciesNameConvention,
+sppColorVect <- sppColors(sppEquiv, speciesNameConvention,
                                  newVals = "Mixed", palette = "Set1")
 
 ## Usage example
