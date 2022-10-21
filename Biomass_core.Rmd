@@ -83,14 +83,14 @@ download.file(url = paste0("https://img.shields.io/badge/Biomass_core-", paste0(
 ``` {r moduleBadge-Biomass-core, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
 ## try to automatically get the commit URL and the path to the badge image
 modulePath <- if (grepl("Biomass_core$", normPath("."))) {
-    normPath(".")
-  } else {
-    modulePath <- grep("Biomass_core$", 
-                       list.files(pattern = "Biomass_core", recursive = TRUE, include.dirs = TRUE),
-                       value = TRUE)
-    modulePath <- grep("docs/", modulePath, value = TRUE, invert = TRUE)  ## exclude "copied" modules dirs for bookdown
-    normPath(modulePath)
-  }
+  normPath(".")
+} else {
+  modulePath <- grep("Biomass_core$", 
+                     list.files(pattern = "Biomass_core", recursive = TRUE, include.dirs = TRUE),
+                     value = TRUE)
+  modulePath <- grep("docs/", modulePath, value = TRUE, invert = TRUE)  ## exclude "copied" modules dirs for bookdown
+  normPath(modulePath)
+}
 
 badgeURL <- if (!git2r::is_detached(modulePath)) {
   commitSHA <- git2r::sha(git2r::revparse_single(modulePath, "HEAD"))
@@ -165,8 +165,8 @@ knitr::include_graphics(normPath("figures/Biomass_coreSchematic.png"))
 
 *Biomass_core* is intended to be used with data/calibration modules, disturbance
 modules and validation modules, amongst others. The following is a list of the
-modules most commonly used with *Biomass_core*. Not all are in the [LandR
-Manual](https://landr-manual.predictiveecology.org/), but see each module's
+modules most commonly used with *Biomass_core*. For those not yet in the [LandR
+Manual](https://landr-manual.predictiveecology.org/) see the individual module's
 documentation (`.Rmd` file) available in its repository.
 
 See [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem) for all
@@ -787,7 +787,7 @@ caption <- "List of (ref:Biomass-core) output objects and their description."
 
 panble(df_outputs, caption, 
        panderArgs = list("justify" = "left", 
-       "digits" = 3, "split.cells" = c(15, 15, 40), "split.tables" = Inf),
+                         "digits" = 3, "split.cells" = c(15, 15, 40), "split.tables" = Inf),
        kable_stylingArgs = list(full_width = TRUE))
 ```
 
