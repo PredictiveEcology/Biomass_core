@@ -1132,7 +1132,8 @@ Require(c(unname(unlist(outs)), "SpaDES"),
         require = FALSE, standAlone = TRUE)
 
 ## load necessary packages
-Require(c("SpaDES", "LandR", "reproducible"), upgrade = FALSE, install = FALSE)
+Require(c("SpaDES", "LandR", "reproducible", "pemisc"), 
+        upgrade = FALSE, install = FALSE)
 ```
 
 ### Setup simulation {#example-setupSim}
