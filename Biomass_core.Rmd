@@ -51,13 +51,12 @@ if (!file.exists("citations/ecology-letters.csl")) {
   download.file("https://www.zotero.org/styles/ecology-letters", destfile = "citations/ecology-letters.csl")
 }
 
-if (!require(Require)) {
-  install.packages("Require")
-  library(Require)
-}
+library(Require)
 
-Require(c("SpaDES.core", "git2r", "openxlsx"), require = FALSE)
-Require(c("dplyr", "data.table", "kableExtra", "pander", "PredictiveEcology/SpaDES.docs"))
+Require(c("SpaDES.core", "git2r", "openxlsx"), require = FALSE, install = FALSE)
+Require(c("dplyr", "data.table", "kableExtra",
+          "pander", "PredictiveEcology/SpaDES.docs"),
+        upgrade = FALSE, install = FALSE)
 ```
 
 ```{r badgeFigs-Biomass-core, include = FALSE, eval = TRUE, cache = FALSE}
