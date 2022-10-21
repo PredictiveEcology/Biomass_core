@@ -1098,18 +1098,11 @@ if (!require(Require, lib.loc = pkgPath)) {
 }
 
 setLinuxBinaryRepo()
-Require("PredictiveEcology/SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db", 
-        require = FALSE, upgrade = FALSE, standAlone = TRUE)
-
-paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
-              cachePath = normPath(file.path(tempDir, "cache")), 
-              modulePath = normPath(file.path(tempDir, "modules")), 
-              outputPath = normPath(file.path(tempDir, "outputs")))
 ```
 
 ### Get the module and module dependencies {#example-pkg-mods}
 
-We can use the `SpaDES.install::getModule` function to download the module to
+We can use the `SpaDES.project::getModule` function to download the module to
 the module folder specified above. Alternatively, see [SpaDES-modules
 repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to
 download this and other `SpaDES` modules, or fork/clone from its [GitHub
@@ -1117,10 +1110,18 @@ repository](https://github.com/PredictiveEcology/Biomass_core/) directly.
 
 After downloading the module, it is important to make sure all module R package
 dependencies are installed in their correct version.
-`SpaDES.install::makeSureAllPackagesInstalled` takes care of this for any module
-in the `paths$modulePath`.
+`SpaDES.project::packagesInModules` makes a list of necessary packages for all
+modules in the `paths$modulePath`, and `Require` installs them.
 
 ```{r getModule-Biomass-core, eval=FALSE}
+Require("PredictiveEcology/SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db", 
+        require = FALSE, upgrade = FALSE, standAlone = TRUE)
+
+paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
+              cachePath = normPath(file.path(tempDir, "cache")), 
+              modulePath = normPath(file.path(tempDir, "modules")), 
+              outputPath = normPath(file.path(tempDir, "outputs")))
+
 SpaDES.project::getModule(modulePath = paths$modulePath,
                           c("PredictiveEcology/Biomass_core@master"),
                           overwrite = TRUE)
