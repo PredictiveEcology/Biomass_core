@@ -1159,10 +1159,10 @@ speciesToUse <- c("Pice_Gla", "Popu_Tre", "Pinu_Con")
 sppEquiv <- sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
 # Assign a colour convention for graphics for each species
 sppColorVect <- sppColors(sppEquiv, speciesNameConvention,
-                                 newVals = "Mixed", palette = "Set1")
+                          newVals = "Mixed", palette = "Set1")
 
 ## Usage example
-modules <- as.list(moduleName)
+modules <- as.list("Biomass_core")
 objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppColorVect)
 
 successionTimestep <- 10L
