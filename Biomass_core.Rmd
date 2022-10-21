@@ -1188,8 +1188,6 @@ outputs <- data.frame(expand.grid(objectName = "cohortData",
                                   saveTime = unique(seq(times$start, times$end, by = 1)),
                                   eventPriority = 1,
                                   stringsAsFactors = FALSE))
-
-graphics.off()
 ```
 
 ### Run simulation {#example-runSim}
@@ -1199,6 +1197,7 @@ initialises all modules) and `spades` (which runs all modules, i.e., their event
 to which pass all the necessary setup objects created above.
 
 ```{r module usage example run -Biomass-core, eval=FALSE}
+graphics.off()
 mySim <- simInitAndSpades(times = times,
                           params = parameters, 
                           modules = modules, 
