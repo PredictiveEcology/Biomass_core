@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-date: "Last updated: 2022-10-20"
+date: "Last updated: 2022-10-24"
 output:
   bookdown::html_document2:
     toc: true
@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core/commit/8826b4b993b44e2cd49457394d50937e313d15ae)
+[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core/commit/9edefc5068d0ec2191464da459db5c8bf03ea1a1)
 
 [![Issues-badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
@@ -95,8 +95,8 @@ the model.
 
 *Biomass_core* is intended to be used with data/calibration modules, disturbance
 modules and validation modules, amongst others. The following is a list of the
-modules most commonly used with *Biomass_core*. Not all are in the [LandR
-Manual](https://landr-manual.predictiveecology.org/), but see each module's
+modules most commonly used with *Biomass_core*. For those not yet in the [LandR
+Manual](https://landr-manual.predictiveecology.org/) see the individual module's
 documentation (`.Rmd` file) available in its repository.
 
 See [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem) for all
@@ -1332,148 +1332,7 @@ However, any of the objects changed/output by *Biomass_core* (listed in Table
 \@ref(tab:moduleOutputs-Biomass-core)) can be saved via the `outputs` argument
 in `simInit`[^biomass_core-5].
 
-<table class="table" style="margin-left: auto; margin-right: auto;">
-<caption>(\#tab:moduleOutputs-Biomass-core)List of (ref:Biomass-core) output objects and their description.</caption>
- <thead>
-  <tr>
-   <th style="text-align:left;"> objectName </th>
-   <th style="text-align:left;"> objectClass </th>
-   <th style="text-align:left;"> desc </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> activePixelIndex </td>
-   <td style="text-align:left;"> integer </td>
-   <td style="text-align:left;"> internal use. Keeps track of which pixels are active </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> activePixelIndexReporting </td>
-   <td style="text-align:left;"> integer </td>
-   <td style="text-align:left;"> internal use. Keeps track of which pixels are active in the reporting study area </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> ANPPMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
-   <td style="text-align:left;"> ANPP map at each succession time step (in g /m^2) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> cohortData </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> `data.table` with cohort-level information on age, biomass, aboveground primary productivity (year's biomass gain) and mortality (year's biomass loss), by `pixelGroup` and ecolocation (i.e., `ecoregionGroup`). Contains at least the following columns: `pixelGroup` (integer), `ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in g/m^2), `age` (integer in years), `mortality` (integer in g/m^2), `aNPPAct` (integer in g/m^2). May have other columns depending on additional simulated processes (i.e., cliamte sensitivity; see, e.g., `P(sim)$keepClimateCols`). </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> ecoregionMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
-   <td style="text-align:left;"> map with mapcodes match `ecoregion` table and `speciesEcoregion` table. Defaults to a dummy map matching rasterToMatch with two regions </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> inactivePixelIndex </td>
-   <td style="text-align:left;"> logical </td>
-   <td style="text-align:left;"> internal use. Keeps track of which pixels are inactive </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> inactivePixelIndexReporting </td>
-   <td style="text-align:left;"> integer </td>
-   <td style="text-align:left;"> internal use. Keeps track of which pixels are inactive in the reporting study area </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> lastFireYear </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> Year of the most recent fire year </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> lastReg </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> an internal counter keeping track of when the last regeneration event occurred </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> minRelativeB </td>
-   <td style="text-align:left;"> data.frame </td>
-   <td style="text-align:left;"> define the relative biomass cut points to classify stand shade </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> mortalityMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
-   <td style="text-align:left;"> map of biomass lost (in g/m^2) at each succession time step </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> pixelGroupMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
-   <td style="text-align:left;"> updated community map at each succession time step </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> regenerationOutput </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> If `P(sim)$calibrate == TRUE`, an summary of seed dispersal and germination success (i.e., number of pixels where seeds successfully germinated) per species and year. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> reproductionMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
-   <td style="text-align:left;"> Regeneration map (biomass gains in g/m^2) at each succession time step </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> simulatedBiomassMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
-   <td style="text-align:left;"> Biomass map at each succession time step (in g/m^2) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> simulationOutput </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> contains simulation results by `ecoregionGroup` (main output) </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> simulationTreeOutput </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> Summary of several characteristics about the stands, derived from `cohortData` </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> species </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> a table that has species traits such as longevity, shade tolerance, etc. Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> speciesEcoregion </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> define the maxANPP, maxB and SEP change with both ecoregion and simulation time </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> speciesLayers </td>
-   <td style="text-align:left;"> RasterStack </td>
-   <td style="text-align:left;"> species percent cover raster layers, based on input `speciesLayers` object. Not changed by this module. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> spinupOutput </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> Spin-up output. Currently deactivated. </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> summaryBySpecies </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> The total species biomass (in g/m^2 as in `cohortData`), average age and aNPP (in g/m^2 as in `cohortData`), across the landscape (used for plotting and reporting). </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> summaryBySpecies1 </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> No. pixels of each leading vegetation type (used for plotting and reporting). </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> summaryLandscape </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> The averages of total biomass (in tonnes/ha , not g/m^2 like in `cohortData`), age and aNPP (also in tonnes/ha) across the landscape (used for plotting and reporting). </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> treedFirePixelTableSinceLastDisp </td>
-   <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> 3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding `pixelGroup` and time it occurred </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> vegTypeMap </td>
-   <td style="text-align:left;"> RasterLayer </td>
-   <td style="text-align:left;"> Map of leading species in each pixel, colored according to `sim$sppColorVect`. Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)$mixedType`. </td>
-  </tr>
-</tbody>
-</table>
+
 
 [^biomass_core-5]: see `?SpaDES.core::outputs`
 
@@ -1774,26 +1633,25 @@ from smaller to larger maps (Fig. \@ref(fig:figLBSEtest5)b).
 
 
 ```r
-if (!require(Require)) {
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+# tempDir <- tempdir()
+tempDir <- "C:/Users/cbarros/AppData/Local/Temp/Biomass_core-example"
+pkgPath <- file.path(tempDir, "packages", version$platform,
+                     paste0(version$major, ".", strsplit(version$minor, "[.]")[[1]][1]))
+dir.create(pkgPath, recursive = TRUE)
+.libPaths(pkgPath, include.site = FALSE)
+
+if (!require(Require, lib.loc = pkgPath)) {
   install.packages("Require")
-  library(Require)
+  library(Require, lib.loc = pkgPath)
 }
 
-Require(c("PredictiveEcology/SpaDES.install",
-          "SpaDES", "PredictiveEcology/SpaDES.core@development",
-          "PredictiveEcology/LandR"), 
-        install_githubArgs = list(dependencies = TRUE))# In general, a module code will be controlled at one level above the source code
-
-tempDir <- tempdir()
-paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
-              cachePath = normPath(file.path(tempDir, "cache")), 
-              modulePath = normPath(file.path(tempDir, "modules")), 
-              outputPath = normPath(file.path(tempDir, "outputs")))
+setLinuxBinaryRepo()
 ```
 
 ### Get the module and module dependencies {#example-pkg-mods}
 
-We can use the `SpaDES.install::getModule` function to download the module to
+We can use the `SpaDES.project::getModule` function to download the module to
 the module folder specified above. Alternatively, see [SpaDES-modules
 repository](https://github.com/PredictiveEcology/SpaDES-modules) to see how to
 download this and other `SpaDES` modules, or fork/clone from its [GitHub
@@ -1801,16 +1659,31 @@ repository](https://github.com/PredictiveEcology/Biomass_core/) directly.
 
 After downloading the module, it is important to make sure all module R package
 dependencies are installed in their correct version.
-`SpaDES.install::makeSureAllPackagesInstalled` takes care of this for any module
-in the `paths$modulePath`.
+`SpaDES.project::packagesInModules` makes a list of necessary packages for all
+modules in the `paths$modulePath`, and `Require` installs them.
 
 
 ```r
-SpaDES.install::getModule("PredictiveEcology/Biomass_core", 
-                          modulePath = paths$modulePath, overwrite = TRUE)
+Require("PredictiveEcology/SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db", 
+        require = FALSE, upgrade = FALSE, standAlone = TRUE)
+
+paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 
+              cachePath = normPath(file.path(tempDir, "cache")), 
+              modulePath = normPath(file.path(tempDir, "modules")), 
+              outputPath = normPath(file.path(tempDir, "outputs")))
+
+SpaDES.project::getModule(modulePath = paths$modulePath,
+                          c("PredictiveEcology/Biomass_core@master"),
+                          overwrite = TRUE)
 
 ## make sure all necessary packages are installed:
-SpaDES.install::makeSureAllPackagesInstalled(paths$modulePath)
+outs <- SpaDES.project::packagesInModules(modulePath = paths$modulePath)
+Require(c(unname(unlist(outs)), "SpaDES"),
+        require = FALSE, standAlone = TRUE)
+
+## load necessary packages
+Require(c("SpaDES", "LandR", "reproducible", "pemisc"), 
+        upgrade = FALSE, install = FALSE)
 ```
 
 ### Setup simulation {#example-setupSim}
@@ -1836,13 +1709,13 @@ studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a ran
 speciesNameConvention <- "Boreal"
 speciesToUse <- c("Pice_Gla", "Popu_Tre", "Pinu_Con")
 
-sppEquiv <- LandR::sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
+sppEquiv <- sppEquivalencies_CA[get(speciesNameConvention) %in% speciesToUse]
 # Assign a colour convention for graphics for each species
-sppColorVect <- LandR::sppColors(sppEquiv, speciesNameConvention,
-                                 newVals = "Mixed", palette = "Set1")
+sppColorVect <- sppColors(sppEquiv, speciesNameConvention,
+                          newVals = "Mixed", palette = "Set1")
 
 ## Usage example
-modules <- as.list(moduleName)
+modules <- as.list("Biomass_core")
 objects <- list(studyArea = studyArea, sppEquiv = sppEquiv, sppColorVect = sppColorVect)
 
 successionTimestep <- 10L
@@ -1866,8 +1739,6 @@ outputs <- data.frame(expand.grid(objectName = "cohortData",
                                   saveTime = unique(seq(times$start, times$end, by = 1)),
                                   eventPriority = 1,
                                   stringsAsFactors = FALSE))
-
-graphics.off()
 ```
 
 ### Run simulation {#example-runSim}
@@ -1878,6 +1749,7 @@ to which pass all the necessary setup objects created above.
 
 
 ```r
+graphics.off()
 mySim <- simInitAndSpades(times = times,
                           params = parameters, 
                           modules = modules, 
