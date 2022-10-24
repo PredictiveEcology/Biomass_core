@@ -25,11 +25,11 @@ defineModule(sim, list(
                   "R.utils", "scales", "sp", "tidyr",
                   # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
                   ## Excluded because loading is not necessary (just installation)
-                  "PredictiveEcology/LandR@development (>= 1.0.7.9010)",
+                  "PredictiveEcology/LandR@development (>= 1.1.0.9005)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
-                  "PredictiveEcology/SpaDES.tools@development",
+                  "PredictiveEcology/SpaDES.tools@development (>= 1.0.0.9000)",
                   "ianmseddy/LandR.CS@master (>= 0.0.2.0002)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
