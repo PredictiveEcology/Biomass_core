@@ -25,7 +25,7 @@ defineModule(sim, list(
                   "R.utils", "scales", "sp", "tidyr",
                   # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
                   ## Excluded because loading is not necessary (just installation)
-                  "PredictiveEcology/LandR@development (>= 1.1.0.9005)",
+                  "PredictiveEcology/LandR@development (>= 1.1.0.9006)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9001)",
