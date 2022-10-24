@@ -2003,20 +2003,20 @@ CohortAgeReclassification <- function(sim) {
                                  "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
       rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
       httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-      #necessary for KNN
-      rawBiomassMap <- Cache(prepInputs,
-                             targetFile = rawBiomassMapFilename,
-                             url = rawBiomassMapURL,
-                             destinationPath = dPath,
-                             studyArea = sim$studyArea,
-                             rasterToMatch = NULL,
-                             maskWithRTM = FALSE,
-                             useSAcrs = FALSE,     ## never use SA CRS
-                             method = "bilinear",
-                             datatype = "INT2U",
-                             filename2 = NULL,
-                             userTags = c(cacheTags, "rawBiomassMap"),
-                             omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
+        #necessary for KNN
+        rawBiomassMap <- Cache(prepInputs,
+                               targetFile = rawBiomassMapFilename,
+                               url = rawBiomassMapURL,
+                               destinationPath = dPath,
+                               studyArea = sim$studyArea,
+                               rasterToMatch = NULL,
+                               maskWithRTM = FALSE,
+                               useSAcrs = FALSE,     ## never use SA CRS
+                               method = "bilinear",
+                               datatype = "INT2U",
+                               filename2 = NULL,
+                               userTags = c(cacheTags, "rawBiomassMap"),
+                               omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
       })
     } else {
       rawBiomassMap <- Cache(postProcess,
