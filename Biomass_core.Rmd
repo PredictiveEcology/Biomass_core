@@ -1196,7 +1196,12 @@ outputs <- data.frame(expand.grid(objectName = "cohortData",
 initialises all modules) and `spades` (which runs all modules, i.e., their events),
 to which pass all the necessary setup objects created above.
 
+Below, we pass some useful `reproducible` options that control caching (`"reproducible.useCache"`)
+and where inputs should be downloaded to (`"reproducible.destinationPath"`).
+
 ```{r module usage example run -Biomass-core, eval=FALSE}
+opts <- options(reproducible.useCache = TRUE,
+                reproducible.destinationPath = paths$inputPath)
 graphics.off()
 mySim <- simInitAndSpades(times = times,
                           params = parameters, 
