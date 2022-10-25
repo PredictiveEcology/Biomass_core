@@ -13,7 +13,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.3.9.9001")),
+  version = list(Biomass_core = numeric_version("1.3.9.9002")),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
@@ -1870,7 +1870,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
     clearPlot()
   }
 
-  Plots(mapsToPlot, type = plotTypes, title = names(mapsToPlot), new = TRUE)
+  Plots(mapsToPlot, usePlot = TRUE, type = plotTypes, title = names(mapsToPlot), new = TRUE)
 
   ## add year
   if (any(P(sim)$.plots == "screen")) {
