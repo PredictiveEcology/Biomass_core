@@ -1149,7 +1149,7 @@ also be saved.
 Please see the lists of [input objects](#inputs-list),
 [parameters](#params-list) and [outputs](#outputs-list) for more information.
 
-```{r module usage example setup -Biomass-core, eval=FALSE}
+```{r module usage example setup-Biomass-core, eval=FALSE}
 times <- list(start = 0, end = 30)
 
 studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
