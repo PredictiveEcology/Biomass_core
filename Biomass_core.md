@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core/commit/9edefc5068d0ec2191464da459db5c8bf03ea1a1)
+[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core/commit/b3dc7c6b8dc3e07fa07304c7008255e83d20abe7)
 
 [![Issues-badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
@@ -1332,7 +1332,148 @@ However, any of the objects changed/output by *Biomass_core* (listed in Table
 \@ref(tab:moduleOutputs-Biomass-core)) can be saved via the `outputs` argument
 in `simInit`[^biomass_core-5].
 
-
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>(\#tab:moduleOutputs-Biomass-core)List of (ref:Biomass-core) output objects and their description.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> objectName </th>
+   <th style="text-align:left;"> objectClass </th>
+   <th style="text-align:left;"> desc </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> activePixelIndex </td>
+   <td style="text-align:left;"> integer </td>
+   <td style="text-align:left;"> internal use. Keeps track of which pixels are active </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> activePixelIndexReporting </td>
+   <td style="text-align:left;"> integer </td>
+   <td style="text-align:left;"> internal use. Keeps track of which pixels are active in the reporting study area </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ANPPMap </td>
+   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> ANPP map at each succession time step (in g /m^2) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> cohortData </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> `data.table` with cohort-level information on age, biomass, aboveground primary productivity (year's biomass gain) and mortality (year's biomass loss), by `pixelGroup` and ecolocation (i.e., `ecoregionGroup`). Contains at least the following columns: `pixelGroup` (integer), `ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in g/m^2), `age` (integer in years), `mortality` (integer in g/m^2), `aNPPAct` (integer in g/m^2). May have other columns depending on additional simulated processes (i.e., cliamte sensitivity; see, e.g., `P(sim)$keepClimateCols`). </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ecoregionMap </td>
+   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> map with mapcodes match `ecoregion` table and `speciesEcoregion` table. Defaults to a dummy map matching rasterToMatch with two regions </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> inactivePixelIndex </td>
+   <td style="text-align:left;"> logical </td>
+   <td style="text-align:left;"> internal use. Keeps track of which pixels are inactive </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> inactivePixelIndexReporting </td>
+   <td style="text-align:left;"> integer </td>
+   <td style="text-align:left;"> internal use. Keeps track of which pixels are inactive in the reporting study area </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> lastFireYear </td>
+   <td style="text-align:left;"> numeric </td>
+   <td style="text-align:left;"> Year of the most recent fire year </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> lastReg </td>
+   <td style="text-align:left;"> numeric </td>
+   <td style="text-align:left;"> an internal counter keeping track of when the last regeneration event occurred </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> minRelativeB </td>
+   <td style="text-align:left;"> data.frame </td>
+   <td style="text-align:left;"> define the relative biomass cut points to classify stand shade </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> mortalityMap </td>
+   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> map of biomass lost (in g/m^2) at each succession time step </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> pixelGroupMap </td>
+   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> updated community map at each succession time step </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> regenerationOutput </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> If `P(sim)$calibrate == TRUE`, an summary of seed dispersal and germination success (i.e., number of pixels where seeds successfully germinated) per species and year. </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> reproductionMap </td>
+   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> Regeneration map (biomass gains in g/m^2) at each succession time step </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> simulatedBiomassMap </td>
+   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> Biomass map at each succession time step (in g/m^2) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> simulationOutput </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> contains simulation results by `ecoregionGroup` (main output) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> simulationTreeOutput </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> Summary of several characteristics about the stands, derived from `cohortData` </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> species </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> a table that has species traits such as longevity, shade tolerance, etc. Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> speciesEcoregion </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> define the maxANPP, maxB and SEP change with both ecoregion and simulation time </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> speciesLayers </td>
+   <td style="text-align:left;"> RasterStack </td>
+   <td style="text-align:left;"> species percent cover raster layers, based on input `speciesLayers` object. Not changed by this module. </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> spinupOutput </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> Spin-up output. Currently deactivated. </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> summaryBySpecies </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> The total species biomass (in g/m^2 as in `cohortData`), average age and aNPP (in g/m^2 as in `cohortData`), across the landscape (used for plotting and reporting). </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> summaryBySpecies1 </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> No. pixels of each leading vegetation type (used for plotting and reporting). </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> summaryLandscape </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> The averages of total biomass (in tonnes/ha , not g/m^2 like in `cohortData`), age and aNPP (also in tonnes/ha) across the landscape (used for plotting and reporting). </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> treedFirePixelTableSinceLastDisp </td>
+   <td style="text-align:left;"> data.table </td>
+   <td style="text-align:left;"> 3 columns: `pixelIndex`, `pixelGroup`, and `burnTime`. Each row represents a forested pixel that was burned up to and including this year, since last dispersal event, with its corresponding `pixelGroup` and time it occurred </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> vegTypeMap </td>
+   <td style="text-align:left;"> RasterLayer </td>
+   <td style="text-align:left;"> Map of leading species in each pixel, colored according to `sim$sppColorVect`. Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)$mixedType`. </td>
+  </tr>
+</tbody>
+</table>
 
 [^biomass_core-5]: see `?SpaDES.core::outputs`
 
@@ -1642,7 +1783,8 @@ dir.create(pkgPath, recursive = TRUE)
 .libPaths(pkgPath, include.site = FALSE)
 
 if (!require(Require, lib.loc = pkgPath)) {
-  install.packages("Require")
+  remotes::install_github("PredictiveEcology/Require@f2c791eb05fb0ad99b278619198ef925f85cbb9d",
+                          upgrade = FALSE, force = TRUE)
   library(Require, lib.loc = pkgPath)
 }
 
@@ -1747,8 +1889,13 @@ outputs <- data.frame(expand.grid(objectName = "cohortData",
 initialises all modules) and `spades` (which runs all modules, i.e., their events),
 to which pass all the necessary setup objects created above.
 
+Below, we pass some useful `reproducible` options that control caching (`"reproducible.useCache"`)
+and where inputs should be downloaded to (`"reproducible.destinationPath"`).
+
 
 ```r
+opts <- options(reproducible.useCache = TRUE,
+                reproducible.destinationPath = paths$inputPath)
 graphics.off()
 mySim <- simInitAndSpades(times = times,
                           params = parameters, 
