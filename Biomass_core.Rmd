@@ -1092,7 +1092,7 @@ dir.create(pkgPath, recursive = TRUE)
 .libPaths(pkgPath, include.site = FALSE)
 
 if (!require(Require, lib.loc = pkgPath)) {
-  remotes::install_github("PredictiveEcology/Require@f2c791eb05fb0ad99b278619198ef925f85cbb9d",
+  remotes::install_github("CeresBarros/Require@d90fd6727698ec2af419e6195001bb12345256c3",
                           upgrade = FALSE, force = TRUE)
   library(Require, lib.loc = pkgPath)
 }
