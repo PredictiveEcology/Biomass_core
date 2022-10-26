@@ -389,7 +389,7 @@ further detail.
 
 ```{r invariantSpptraits, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Example of an invariant species traits table (the",
                  "`species` table object in the module), with species (ref:Abie-sp),",
                  "(ref:Pice-eng), (ref:Pice-gla), (ref:Pinu-sp), (ref:Popu-sp) and (ref:Pseud-men).",
@@ -432,7 +432,7 @@ Canadian forests). See Table \@ref(tab:varyingSpptraits) for an example.
 
 ```{r varyingSpptraits, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/exampleTables.xlsx", sheet = "spatially_varyingTraits", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Example of a spatio-temporally varying species traits",
                  "table (the `speciesEcoregion` table object in the module), with two ecolocations",
                  "(called `ecoregionGroups`) and species (ref:Abie-sp),",
@@ -473,7 +473,7 @@ user-defined tables.
 
 ```{r minRelB, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/exampleTables.xlsx", sheet = "minRelativeB", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 names(tab)[grep("X", names(tab))] <- ""
 caption <- paste("Example of a minimum relative biomass table (the `minRelativeB`",
                  "table object in the module), with two ecolocations (`ecoregionGroups`) sharing",
@@ -499,7 +499,7 @@ table (called `sufficientLight` in the module; Table \@ref(tab:suffLight)).
 
 ```{r suffLight, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/exampleTables.xlsx", sheet = "probGerm", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 tab[, 1] <- as.character(tab[, 1])  ## for alignment
 caption <- paste("Default species probability of germination values used by",
                  "(ref:Biomass-core) and (ref:Biomass-borealdataPrep). Columns X0-X5 are different site",
@@ -1201,7 +1201,8 @@ and where inputs should be downloaded to (`"reproducible.destinationPath"`).
 
 ```{r module usage example run -Biomass-core, eval=FALSE}
 opts <- options(reproducible.useCache = TRUE,
-                reproducible.destinationPath = paths$inputPath)
+                reproducible.destinationPath = paths$inputPath,
+                spades.useRequire = FALSE)
 graphics.off()
 mySim <- simInitAndSpades(times = times,
                           params = parameters, 
@@ -1226,7 +1227,7 @@ knitr::include_graphics(normPath(c("figures/Biomass_coreOutPlots1.png",
 
 ```{r tableLBSEtest1, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table1_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 names(tab)[grep("X", names(tab))] <- ""
 caption <- paste("Input order and processing order (as determined by",
                  "LBSE) for the same community used to assess the impact",
@@ -1251,7 +1252,7 @@ panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 
 ```{r tableLBSEtest2, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table2_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 names(tab)[grep("X", names(tab))] <- ""
 caption <- paste("Input order and processing order (as determined by LBSE) for",
                  "the same community used to assess the impact of setting the",
@@ -1277,7 +1278,7 @@ panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 
 ```{r tableLBSEtest3, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table3_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 1 used in the",
                  "recruitment comparison runs.")
 # knitr::kable(tab, caption = caption) %>%
@@ -1291,7 +1292,7 @@ panble(tab, caption, panderArgs = list("justify" = justCols))
 
 ```{r tableLBSEtest4, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table4_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 2 used in",
                  "the recruitment comparison runs.")
 # knitr::kable(tab, caption = caption) %>%
@@ -1307,7 +1308,7 @@ panble(tab, caption, panderArgs = list("justify" = justCols))
 
 ```{r tableLBSEtest5, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table5_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 3 used in the",
                  "recruitment comparison runs.")
 # knitr::kable(tab, caption = caption) %>%
@@ -1324,7 +1325,7 @@ panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 
 ```{r tableLBSEtest6, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table6_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Invariant species traits table used in comparison runs.")
 # knitr::kable(tab, caption = caption) %>%
 #   kableExtra::kable_styling(latex_options = c("repeat_header"))
@@ -1336,7 +1337,7 @@ panble(tab, caption, panderArgs = list("justify" = justCols))
 
 ```{r tableLBSEtest7, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table7_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Minimum relative biomass table used in comparison runs. X0-5",
                  "represent site shade classes from no-shade (0) to maximum",
                  "shade (5). All ecolocations shared the same values.")
@@ -1350,7 +1351,7 @@ panble(tab, caption, panderArgs = list("justify" = justCols))
 
 ```{r tableLBSEtest8, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table8_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 tab[,1] <- as.character(tab[,1])
 caption <- paste("Probability of germination for species shade tolerance and",
                  "shade level combinations (called (ref:sufficient-light) table in",
@@ -1366,7 +1367,7 @@ panble(tab, caption, panderArgs = list("justify" = justCols))
 
 ```{r tableLBSEtest9, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table9_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+                 colNames = TRUE, sep.names = " ")
 tab[,1] <- as.character(tab[,1])
 caption <- paste("Species ecolocation table used in comparison runs. `SEP`",
                  "stands for species establishment probability, `maxB` for",
