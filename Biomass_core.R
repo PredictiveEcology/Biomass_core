@@ -7,9 +7,10 @@ defineModule(sim, list(
   authors = c(
     person("Yong", "Luo", email = "yluo1@lakeheadu.ca", role = "aut"),
     person(c("Eliot", "J", "B"), "McIntire", email = "eliot.mcintire@nrcan-rncan.gc.ca", role = c("aut", "cre")),
-    person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb"),
-    person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = "ctb"),
-    person("Ceres", "Barros", email = "cbarros@mail.ubc.ca", role = "ctb")
+    person("Ceres", "Barros", email = "ceres.barros@ubc.ca", role = "aut"),
+    person(c("Alex", "M."), "Chubaty", email = "achubaty@for-cast.ca", role = "aut"),
+    person("Ian", "Eddy", email = "ian.eddy@nrcan-rncan.gc.ca", role = c("ctb")),
+    person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
   version = list(Biomass_core = numeric_version("1.3.9")),
@@ -23,7 +24,7 @@ defineModule(sim, list(
                   ## Excluded because loading is not necessary (just installation)
                   "parallel", "purrr", "quickPlot", "raster", "Rcpp",
                   "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>= 1.0.9.9002)",
+                  "PredictiveEcology/LandR@development (>= 1.1.0.9004)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
@@ -170,7 +171,7 @@ defineModule(sim, list(
     expectsInput("lastReg", "numeric",
                  desc = "an internal counter keeping track of when the last regeneration event occurred"),
     expectsInput("minRelativeB", "data.frame",
-                 desc = "table defining the relative biomass cut points to classify stand shadeness"),
+                 desc = "table defining the relative biomass cut points to classify stand shadeness."),
     expectsInput("pixelGroupMap", "RasterLayer",
                  desc = paste("a raster layer with `pixelGroup` IDs per pixel. Pixels are grouped" ,
                               "based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition,",
@@ -277,7 +278,7 @@ defineModule(sim, list(
                   desc = paste("a table that has species traits such as longevity, shade tolerance, etc.",
                                "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs")),
     createsOutput("speciesEcoregion", "data.table",
-                  desc = "define the maxANPP, maxB and SEP change with both ecoregion and simulation time"),
+                  desc = "define the `maxANPP`, `maxB` and `SEP` change with both ecoregion and simulation time."),
     createsOutput("speciesLayers", "RasterStack",
                   desc = paste("species percent cover raster layers, based on input `speciesLayers` object.",
                                "Not changed by this module.")),
@@ -287,7 +288,7 @@ defineModule(sim, list(
                   desc = paste("The total species biomass (in g/m^2 as in `cohortData`), average age and aNPP (in",
                                "g/m^2 as in `cohortData`),  across the landscape (used for plotting and reporting).")),
     createsOutput("summaryBySpecies1", "data.table",
-                  desc = "No. pixels of each leading vegetation type (used for plotting and reporting)."),
+                  desc = "Number of pixels of each leading vegetation type (used for plotting and reporting)."),
     createsOutput("summaryLandscape", "data.table",
                   desc = paste("The averages of total biomass (in *tonnes/ha*, not g/m^2 like in `cohortData`), age",
                                "and aNPP (also in tonnes/ha) across the landscape (used for plotting and reporting).")),
@@ -297,7 +298,7 @@ defineModule(sim, list(
                                "since last dispersal event, with its corresponding `pixelGroup` and time it occurred")),
     createsOutput("vegTypeMap", "RasterLayer",
                   desc = paste("Map of leading species in each pixel, colored according to `sim$sppColorVect`.",
-                               "Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)`$mixedType."))
+                               "Species mixtures calculated according to `P(sim)$vegLeadingProportion` and `P(sim)$mixedType`."))
   )
 ))
 
@@ -1643,9 +1644,7 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
-  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
-                   sppColorVect = cols2)
-
+  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol, sppColorVect = sim$sppColorVect)
   checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
 
   ## BIOMASS, WEIGHTED AVERAGE AGE, AVERAGE ANPP
@@ -1715,6 +1714,12 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
     cols2 <- df$cols
     names(cols2) <- df$species
+
+    unqdf <- unique(df[, c("cols", "species")])
+    unqCols2 <- unqdf$cols
+    names(unqCols2) <- unqdf$species
+
+    assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = "EN_generic_short", sppColorVect = unqCols2)
 
     ## although Plots can deal with   .plotInitialTime == NA by not plotting, we need to
     ## make sure the plotting windows are not changed/opened if  .plotInitialTime == NA
