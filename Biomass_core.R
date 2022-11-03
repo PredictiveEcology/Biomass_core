@@ -1892,7 +1892,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
     clearPlot()
   }
 
-  Plots(mapsToPlot, type = plotTypes, title = names(mapsToPlot), new = TRUE)
+  Plots(mapsToPlot, usePlot = TRUE, type = plotTypes, title = names(mapsToPlot), new = TRUE)
 
   ## add year
   if (any(P(sim)$.plots == "screen")) {
