@@ -164,8 +164,8 @@ knitr::include_graphics(normPath("figures/Biomass_coreSchematic.png"))
 
 *Biomass_core* is intended to be used with data/calibration modules, disturbance
 modules and validation modules, amongst others. The following is a list of the
-modules most commonly used with *Biomass_core*. Not all are in the [LandR
-Manual](https://landr-manual.predictiveecology.org/), but see each module's
+modules most commonly used with *Biomass_core*. For those not yet in the [LandR
+Manual](https://landr-manual.predictiveecology.org/) see the individual module's
 documentation (`.Rmd` file) available in its repository.
 
 See [here](https://rpubs.com/PredictiveEcology/LandR_Module_Ecosystem) for all
