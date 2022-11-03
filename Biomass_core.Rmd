@@ -397,18 +397,6 @@ caption <- paste("Example of an invariant species traits table (the",
 
 ## justify character columns to left, and numeric to right
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-
-## kable/kableExtra do not work properly. Table is always too wide.
-## use pander instead and latex code to make landscape table
-# if (knitr::is_latex_output()) {
-#   opts <- pander::panderOptions("knitr.auto.asis", FALSE)  
-#   pander::pander(tab, caption = SpaDES.docs::addLabel(caption), justify = justCols)
-#   options(opts)
-# } else {
-#   knitr::kable(tab, caption = caption) %>%
-#     kableExtra::kable_styling(latex_options = c("repeat_header")) %>%
-#     kableExtra::landscape(.)
-# }
 panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 ```
 
@@ -439,9 +427,6 @@ caption <- paste("Example of a spatio-temporally varying species traits",
                  "(ref:Pice-eng), (ref:Pice-gla), (ref:Pinu-sp), (ref:Popu-sp) and (ref:Pseud-men).",
                  "If a simulation runs for 10 year using this table, trait values from",
                  "year 2 would be used during simulation years 2-10.")
-
-# knitr::kable(tab, caption = caption, longtable = TRUE) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 ## pander tables actually look nicer (no horizontal lines)
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
@@ -478,10 +463,6 @@ names(tab)[grep("X", names(tab))] <- ""
 caption <- paste("Example of a minimum relative biomass table (the `minRelativeB`",
                  "table object in the module), with two ecolocations (`ecoregionGroups`) sharing",
                  "the same values")
-# knitr::kable(tab, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
-# pander(tab, caption = addLabel(caption), justify = justCols)
-
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
 panble(tab, caption, panderArgs = list("justify" = justCols))
@@ -505,9 +486,6 @@ caption <- paste("Default species probability of germination values used by",
                  "(ref:Biomass-core) and (ref:Biomass-borealdataPrep). Columns X0-X5 are different site",
                  "shade levels and each line has the probability of germination for each site",
                  "shade and species shade tolerance combination.")
-# knitr::kable(tab, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
-# pander(tab, caption = addLabel(caption), justify = justCols)
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
 panble(tab, caption, panderArgs = list("justify" = justCols))
@@ -659,16 +637,6 @@ then *Biomass_core* attempts to use any species for which if finds available spe
 df_inputs <- moduleInputs("Biomass_core", "..")
 caption <- "List of (ref:Biomass-core) input objects and their description."
 
-## knitr/kableExtra longtable = TRUE and scale_down do not work together
-## knitr/kableExtra longtable = TRUE/latex_table_env = "longtable" and full_width do not work together (as of June 3rd 2022)
-## instead, we use pander and latex commands to put the table in a landscape page.
-# knitr::kable(df_inputs, caption) %>%
-# kable_styling(latex_table_env = "longtable",
-# latex_options = c("repeat_header"), full_width = TRUE) %>%
-# landscape(.) %>%
-
-## setting the options is necessary to escape special characters (must have chunk opt results = 'asis')
-# opts <- panderOptions("knitr.auto.asis", FALSE)  
 ## pander's hyphenation doesn't work with URLs and big/strange words (like obj names). split manually
 if (knitr::is_latex_output()) {
   df_inputs$objectName <- wrapStrFun(df_inputs$objectName, size = 10)
@@ -677,12 +645,9 @@ if (knitr::is_latex_output()) {
   df_inputs$sourceURL <- wrapStrFun(df_inputs$sourceURL, size = 10)
 }
 
-# pander::pander(df_inputs, caption = addLabel(caption), justify = "left",
-#                split.tables = Inf, keep.line.breaks = TRUE)
 panble(df_inputs, caption, landscape = TRUE,
        panderArgs = list("justify" = "left", "split.tables" = Inf, "keep.line.breaks" = TRUE),
        kable_stylingArgs = list(full_width = TRUE))
-# options(opts)
 ```
 
 \elandscape
@@ -741,16 +706,6 @@ event (growth and mortality are always yearly);
 df_params <- moduleParams("Biomass_core", "..")
 caption <- "List of (ref:Biomass-core) parameters and their description."
 
-# knitr::kable(df_params, caption = caption) %>%
-# kable_styling(latex_table_env = "longtable",
-# latex_options = c("repeat_header"), full_width = TRUE) %>%
-# landscape(.) %>%
-
-# opts <- panderOptions("knitr.auto.asis", FALSE)    
-# pander(df_params, caption = addLabel(caption), justify = "left", 
-#        digits = 3, split.cells = c(15,15, 5, 5, 5, 40), split.tables = Inf)
-# options(opts)
-
 panble(df_params, caption, landscape = TRUE,
        panderArgs = list("justify" = "left", "digits" = 3,
                          "split.cells" = c(15,15, 5, 5, 5, 40), "split.tables" = Inf),
@@ -780,13 +735,6 @@ in `simInit`[^biomass_core-5].
 ```{r moduleOutputs-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 df_outputs <- moduleOutputs("Biomass_core", "..")
 caption <- "List of (ref:Biomass-core) output objects and their description."
-
-# knitr::kable(df_outputs, caption = caption, longtable = TRUE) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"), full_width = TRUE)
-
-## options and results='asis' not necessary when not using landscape
-# pander(df_outputs, caption = addLabel(caption), justify = "left", 
-#        digits = 3, split.cells = c(15, 15, 40), split.tables = Inf)
 
 panble(df_outputs, caption, 
        panderArgs = list("justify" = "left", 
@@ -1222,14 +1170,8 @@ caption <- paste("Input order and processing order (as determined by",
                  "the order used in the simulation, which was obtained from",
                  "`Landis-log.txt` when `CalibrateMode` was set to 'yes'.",
                  "Species starting ages are also shown.")
-# knitr::kable(tab, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-# opts <- panderOptions("knitr.auto.asis", FALSE)   ## to make landscape and escape special characters 
-# pander(tab, caption = addLabel(caption), justify = justCols)
-# options(opts)
-
 panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 ```
 
@@ -1246,14 +1188,8 @@ caption <- paste("Input order and processing order (as determined by LBSE) for",
                  "was the order used in the simulation, which was obtained from",
                  "`Landis-log.txt` when `CalibrateMode` was set to 'yes'.",
                  "Species starting ages are also shown.")
-# knitr::kable(tab, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-# opts <- panderOptions("knitr.auto.asis", FALSE)   ## to make landscape and escape special characters 
-# pander(tab, caption = addLabel(caption), justify = justCols)
-# options(opts)
-
 panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 ```
 
@@ -1265,11 +1201,8 @@ tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table3_Appe
                  colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 1 used in the",
                  "recruitment comparison runs.")
-# knitr::kable(tab, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-# pander(tab, caption = addLabel(caption), justify = justCols)
 panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
@@ -1279,11 +1212,8 @@ tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table4_Appe
                  colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 2 used in",
                  "the recruitment comparison runs.")
-# knitr::kable(tab, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-# pander(tab, caption = addLabel(caption), justify = justCols)
 panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
@@ -1295,13 +1225,8 @@ tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table5_Appe
                  colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 3 used in the",
                  "recruitment comparison runs.")
-# knitr::kable(tab, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-# opts <- panderOptions("knitr.auto.asis", FALSE)   ## to make landscape and escape special characters 
-# pander(tab, caption = addLabel(caption), justify = justCols)
-# options(opts)
 panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 ```
 
@@ -1311,11 +1236,8 @@ panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table6_Appendix1", 
                  colNames = TRUE, sep.names = " ")
 caption <- paste("Invariant species traits table used in comparison runs.")
-# knitr::kable(tab, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-# pander(tab, caption = addLabel(caption), justify = justCols)
 panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
@@ -1325,11 +1247,8 @@ tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table7_Appe
 caption <- paste("Minimum relative biomass table used in comparison runs. X0-5",
                  "represent site shade classes from no-shade (0) to maximum",
                  "shade (5). All ecolocations shared the same values.")
-# knitr::kable(tab, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-# pander(tab, caption = addLabel(caption), justify = justCols)
 panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
@@ -1345,7 +1264,6 @@ caption <- paste("Probability of germination for species shade tolerance and",
 #   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-# pander(tab, caption = addLabel(caption), justify = justCols)
 panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
@@ -1358,11 +1276,8 @@ caption <- paste("Species ecolocation table used in comparison runs. `SEP`",
                  "maximum biomass and `maxANPP` for maximum aboveground net",
                  "primary productivity. Values were held constant throughout",
                  "the simulation.")
-# knitr::kable(tab, caption = caption) %>%
-#   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-# pander(tab, caption = addLabel(caption), justify = justCols)
 panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
