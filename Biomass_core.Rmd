@@ -51,12 +51,11 @@ if (!file.exists("citations/ecology-letters.csl")) {
   download.file("https://www.zotero.org/styles/ecology-letters", destfile = "citations/ecology-letters.csl")
 }
 
-if (!require(Require)) {
-  install.packages("Require")
-  library(Require)
-}
-Require(c("SpaDES.core", "git2r", "kableExtra", "openxlsx"), require = FALSE)
-Require("dplyr")
+library(Require)
+
+Require(c("SpaDES.core", "git2r",  "dplyr", "data.table", "kableExtra",
+          "openxlsx", "pander", "PredictiveEcology/SpaDES.docs"),
+        upgrade = FALSE, install = FALSE)
 ```
 
 ```{r badgeFigs-Biomass-core, include = FALSE, eval = TRUE, cache = FALSE}
@@ -73,7 +72,7 @@ if (!file.exists("figures/issuesBadge.png")) {
                 mode = 'wb')
 }
 
-modversion <- paste(unlist(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$version), collapse = ".")
+modversion <- paste(unlist(moduleMetadata(module = 'Biomass_core', path = '..')$version), collapse = ".")
 download.file(url = paste0("https://img.shields.io/badge/Biomass_core-", paste0("v.%20", modversion),
                            "-%3CCOLOR%3E.png"),
               destfile = "figures/moduleVersionBadge.png",
@@ -82,16 +81,26 @@ download.file(url = paste0("https://img.shields.io/badge/Biomass_core-", paste0(
 
 ``` {r moduleBadge-Biomass-core, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
 ## try to automatically get the commit URL and the path to the badge image
-badgeURL <- if (!git2r::is_detached()) {
-  commitSHA <- git2r::sha(git2r::revparse_single(".", "HEAD"))
+modulePath <- if (grepl("Biomass_core$", normPath("."))) {
+  normPath(".")
+} else {
+  modulePath <- grep("Biomass_core$", 
+                     list.files(pattern = "Biomass_core", recursive = TRUE, include.dirs = TRUE),
+                     value = TRUE)
+  modulePath <- grep("docs/", modulePath, value = TRUE, invert = TRUE)  ## exclude "copied" modules dirs for bookdown
+  normPath(modulePath)
+}
+
+badgeURL <- if (!is_detached(modulePath)) {
+  commitSHA <- sha(revparse_single(modulePath, "HEAD"))
   repo <- sub("[.]git$", "/commit/",
-              git2r::branch_remote_url(git2r::branch_get_upstream(git2r::repository_head("."))))
-  paste0(repo, "/tree/", commitSHA)
+              branch_remote_url(branch_get_upstream(repository_head(modulePath))))
+  paste0(repo, commitSHA)
 } else {
   ## if detached point to the first remote
-  git2r::remote_url()[1]
+  remote_url(modulePath)[1]
 }
-badgeURL <- sub(".*github[.]com", "https://github.com", badgeURL)
+badgeURL <- sub(".*github[.]com:", "https://github.com/", badgeURL)
 
 badgePath <- normPath("figures/moduleVersionBadge.png")
 
@@ -99,9 +108,17 @@ badgePath <- normPath("figures/moduleVersionBadge.png")
 cat(paste0("[![module-version-Badge](", badgePath, ")](", badgeURL, ")"))
 ```
 
+``` {r issuesBadge-Biomass-core, echo = FALSE, eval = TRUE, cache = FALSE, results = "asis"}
+badgeURL <- "https://github.com/PredictiveEcology/Biomass_core/issues"
+badgePath <- normPath("figures/issuesBadge.png")
+
+## make string of markdown code to be executed as-is
+cat(paste0("[![Issues-badge](", badgePath, ")](", badgeURL,")"))
+```
+
 #### Authors:
 
-`r paste(as.character(SpaDES.core::moduleMetadata(module = 'Biomass_core', path = '..')$authors), sep = ', ')`
+`r paste(as.character(moduleMetadata(module = 'Biomass_core', path = '..')$authors), sep = ', ')`
 <!-- ideally separate authors with new lines, '\n' not working -->
 
 **This documentation is work in progress. Potential discrepancies and omissions
@@ -137,7 +154,7 @@ LANDIS-II counterpart, and we refer the reader to the corresponding LBSE manual
 [@SchellerMiranda2015] for a detailed reading of the mechanisms implemented in
 the model.
 
-```{r fig-Biomass-core, echo = FALSE, eval = TRUE, out.width = "60%", fig.align = 'center', fig.cap = "(ref:Biomass-core) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)."}
+```{r fig-Biomass-core, echo = FALSE, eval = TRUE, out.width = "80%", fig.align = 'center', fig.cap = "(ref:Biomass-core) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)."}
 ## make sure all include_graphics have wd attached to figure path
 ## this is necessary to knit to pdf using child Rmds - see https://stackoverflow.com/questions/61065560/cant-compile-rmarkdown-pdf-with-image-in-child-rmd-latex-error-image-file
 knitr::include_graphics(normPath("figures/Biomass_coreSchematic.png"))
@@ -367,16 +384,35 @@ species traits. Note that *Biomass_core* (alone) requires all the columns Table
 Please see @SchellerDomingo2011 [p.18] and @SchellerMiranda2015 [p.16] for
 further detail.
 
-```{r invariantSpptraits, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- read.csv(normPath("tables/invariantTraits_example.csv"))
+\newpage
+\blandscape
+
+```{r invariantSpptraits, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Example of an invariant species traits table (the",
                  "`species` table object in the module), with species (ref:Abie-sp),",
                  "(ref:Pice-eng), (ref:Pice-gla), (ref:Pinu-sp), (ref:Popu-sp) and (ref:Pseud-men).",
                  " Note that these are theoretical values.")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header", "scale_down")) %>%
-  kableExtra::landscape(.)
+
+## justify character columns to left, and numeric to right
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+
+## kable/kableExtra do not work properly. Table is always too wide.
+## use pander instead and latex code to make landscape table
+# if (knitr::is_latex_output()) {
+#   opts <- pander::panderOptions("knitr.auto.asis", FALSE)  
+#   pander::pander(tab, caption = SpaDES.docs::addLabel(caption), justify = justCols)
+#   options(opts)
+# } else {
+#   knitr::kable(tab, caption = caption) %>%
+#     kableExtra::kable_styling(latex_options = c("repeat_header")) %>%
+#     kableExtra::landscape(.)
+# }
+panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 ```
+
+\elandscape
 
 #### Spatio-temporally varying species traits {#varying-traits}
 
@@ -393,16 +429,23 @@ further calibrates `maxB` and `maxANPP` by estimating two additional invariant
 species traits (`inflationFactor` and `mANPPproportion`; also for Western
 Canadian forests). See Table \@ref(tab:varyingSpptraits) for an example.
 
-```{r varyingSpptraits, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- read.csv(normPath("tables/spatiallyVaryingTraits_example.csv"))
+
+```{r varyingSpptraits, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/exampleTables.xlsx", sheet = "spatially_varyingTraits", 
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Example of a spatio-temporally varying species traits",
                  "table (the `speciesEcoregion` table object in the module), with two ecolocations",
                  "(called `ecoregionGroups`) and species (ref:Abie-sp),",
                  "(ref:Pice-eng), (ref:Pice-gla), (ref:Pinu-sp), (ref:Popu-sp) and (ref:Pseud-men).",
                  "If a simulation runs for 10 year using this table, trait values from",
                  "year 2 would be used during simulation years 2-10.")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header", "scale_down"))
+
+# knitr::kable(tab, caption = caption, longtable = TRUE) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+## pander tables actually look nicer (no horizontal lines)
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+panble(tab, caption, panderArgs = list("justify" = justCols), kableArgs = list(longtable = TRUE))
 ```
 
 #### Ecolocation-specific parameters -- minimum relative biomass {#ecolocation-traits}
@@ -428,34 +471,46 @@ Western Canada boreal forest dynamics (see Table \@ref(tab:minRelB)).
 inputs, these values can be adjusted by using other modules or by passing
 user-defined tables.
 
-```{r minRelB, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- read.csv(normPath("tables/minRelativeB_example.csv"))
+```{r minRelB, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/exampleTables.xlsx", sheet = "minRelativeB", 
+                 colNames = TRUE, sep.names = " ")
+names(tab)[grep("X", names(tab))] <- ""
 caption <- paste("Example of a minimum relative biomass table (the `minRelativeB`",
                  "table object in the module), with two ecolocations (`ecoregionGroups`) sharing",
                  "the same values")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+# pander(tab, caption = addLabel(caption), justify = justCols)
+
+
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
 #### Probabilities of germination {#prob-germ}
 
 A species' probability of germination results from the combination of its shade
 tolerance level (an invariant species trait in the `species` table; Table
-\ref@(tab:invariantSpptraits)) and the site shade [defined by the amount of
+\@ref(tab:invariantSpptraits)) and the site shade [defined by the amount of
 biomass in the pixel -- see [minimum relative biomass
 parameter](#ecolocation-traits) and @SchellerMiranda2015,p.14]. By default, both
 *Biomass_core* and *Biomass_borealDataPrep* use a publicly available LANDIS-II
 table (called `sufficientLight` in the module; Table \@ref(tab:suffLight)).
 
-```{r suffLight, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- read.csv(normPath("tables/probGerm_example.csv"))
+```{r suffLight, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/exampleTables.xlsx", sheet = "probGerm", 
+                 colNames = TRUE, sep.names = " ")
+tab[, 1] <- as.character(tab[, 1])  ## for alignment
 caption <- paste("Default species probability of germination values used by",
                  "(ref:Biomass-core) and (ref:Biomass-borealdataPrep). Columns X0-X5 are different site",
                  "shade levels and each line has the probability of germination for each site",
                  "shade and species shade tolerance combination.")
-tab$species.shade.tolerance <- as.character(tab$species.shade.tolerance) ## to ensure left-alignment
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+# pander(tab, caption = addLabel(caption), justify = justCols)
+
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
 #### Other module inputs {#other-inputs}
@@ -478,6 +533,11 @@ run *Biomass_core* by itself supplying only a `studyArea` polygon, before
 attempting to supply their own or combining *Biomass_core* with other modules.
 This will enable them to become familiar with all the input objects in a
 theoretical setting.
+
+[^biomass_core-2]: usually, default inputs are made when running the
+`.inputObjects` function (inside the module R script) during the `simInit`
+call and in the `init` event during the `spades` call -- see
+`?SpaDES.core::events` and `SpaDES.core::simInit`
 
 Of the inputs listed in Table \@ref(tab:moduleInputs2-Biomass-core), the
 following are particularly important and deserve special attention:
@@ -595,17 +655,37 @@ for the listed species. If not provided, the user (or another module) can pass a
 then *Biomass_core* attempts to use any species for which if finds available species
 (ref:percent) cover data in the study area.
 
-```{r moduleInputs2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
-df_inputs <- SpaDES.core::moduleInputs("Biomass_core", "..")
+```{r moduleInputs2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+df_inputs <- moduleInputs("Biomass_core", "..")
 caption <- "List of (ref:Biomass-core) input objects and their description."
-knitr::kable(df_inputs, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+## knitr/kableExtra longtable = TRUE and scale_down do not work together
+## knitr/kableExtra longtable = TRUE/latex_table_env = "longtable" and full_width do not work together (as of June 3rd 2022)
+## instead, we use pander and latex commands to put the table in a landscape page.
+# knitr::kable(df_inputs, caption) %>%
+# kable_styling(latex_table_env = "longtable",
+# latex_options = c("repeat_header"), full_width = TRUE) %>%
+# landscape(.) %>%
+
+## setting the options is necessary to escape special characters (must have chunk opt results = 'asis')
+# opts <- panderOptions("knitr.auto.asis", FALSE)  
+## pander's hyphenation doesn't work with URLs and big/strange words (like obj names). split manually
+if (knitr::is_latex_output()) {
+  df_inputs$objectName <- wrapStrFun(df_inputs$objectName, size = 10)
+  df_inputs$objectClass <- wrapStrFun(df_inputs$objectClass, size = 10)
+  df_inputs$desc <- wrapStrFun(df_inputs$desc, size = 40)
+  df_inputs$sourceURL <- wrapStrFun(df_inputs$sourceURL, size = 10)
+}
+
+# pander::pander(df_inputs, caption = addLabel(caption), justify = "left",
+#                split.tables = Inf, keep.line.breaks = TRUE)
+panble(df_inputs, caption, landscape = TRUE,
+       panderArgs = list("justify" = "left", "split.tables" = Inf, "keep.line.breaks" = TRUE),
+       kable_stylingArgs = list(full_width = TRUE))
+# options(opts)
 ```
 
-[^biomass_core-2]: usually, default inputs are made when running the
-`.inputObjects` function (inside the module R script) during the `simInit`
-call and in the `init` event during the `spades` call -- see
-`?SpaDES.core::events` and `SpaDES.core::simInit`
+\elandscape
 
 ### List of parameters {#params-list}
 
@@ -654,12 +734,30 @@ event (growth and mortality are always yearly);
 -   `vegLeadingProportion` -- relative biomass threshold to consider a species
 "leading" (i.e., dominant);
 
-```{r moduleParams2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
-df_params <- SpaDES.core::moduleParams("Biomass_core", "..")
+\newpage
+\blandscape
+
+```{r moduleParams2-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+df_params <- moduleParams("Biomass_core", "..")
 caption <- "List of (ref:Biomass-core) parameters and their description."
-knitr::kable(df_params, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+# knitr::kable(df_params, caption = caption) %>%
+# kable_styling(latex_table_env = "longtable",
+# latex_options = c("repeat_header"), full_width = TRUE) %>%
+# landscape(.) %>%
+
+# opts <- panderOptions("knitr.auto.asis", FALSE)    
+# pander(df_params, caption = addLabel(caption), justify = "left", 
+#        digits = 3, split.cells = c(15,15, 5, 5, 5, 40), split.tables = Inf)
+# options(opts)
+
+panble(df_params, caption, landscape = TRUE,
+       panderArgs = list("justify" = "left", "digits" = 3,
+                         "split.cells" = c(15,15, 5, 5, 5, 40), "split.tables" = Inf),
+       kable_stylingArgs = list(full_width = TRUE))
 ```
+
+\elandscape
 
 [^biomass_core-3]: in `SpaDES` lingo parameters are "small" objects, such as an
 integer or boolean, that can be controlled via the `parameters` argument in
@@ -679,11 +777,21 @@ However, any of the objects changed/output by *Biomass_core* (listed in Table
 \@ref(tab:moduleOutputs-Biomass-core)) can be saved via the `outputs` argument
 in `simInit`[^biomass_core-5].
 
-```{r moduleOutputs-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE}
-df_outputs <- SpaDES.core::moduleOutputs("Biomass_core", "..")
+```{r moduleOutputs-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+df_outputs <- moduleOutputs("Biomass_core", "..")
 caption <- "List of (ref:Biomass-core) output objects and their description."
-knitr::kable(df_outputs, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+# knitr::kable(df_outputs, caption = caption, longtable = TRUE) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"), full_width = TRUE)
+
+## options and results='asis' not necessary when not using landscape
+# pander(df_outputs, caption = addLabel(caption), justify = "left", 
+#        digits = 3, split.cells = c(15, 15, 40), split.tables = Inf)
+
+panble(df_outputs, caption, 
+       panderArgs = list("justify" = "left", 
+                         "digits" = 3, "split.cells" = c(15, 15, 40), "split.tables" = Inf),
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 [^biomass_core-5]: see `?SpaDES.core::outputs`
@@ -1030,7 +1138,7 @@ also be saved.
 Please see the lists of [input objects](#inputs-list),
 [parameters](#params-list) and [outputs](#outputs-list) for more information.
 
-```{r module usage example setup -Biomass-core, eval=FALSE}
+```{r module usage example setup-Biomass-core, eval=FALSE}
 times <- list(start = 0, end = 30)
 
 studyArea <- Cache(randomStudyArea, size = 1e7) # cache this so it creates a random one only once on a machine
@@ -1097,40 +1205,13 @@ knitr::include_graphics(normPath(c("figures/Biomass_coreOutPlots1.png",
 ## Appendix {#appendix}
 
 ### Tables {#appendix-tables}
-<!--
-| Input order 1 |          |     |            | Input order 2 |          |     |            |
-|:--------------|:---------|:----|:-----------|:--------------|:---------|:----|:-----------|
-| Community     | Input    | Age | Processing | Community     | Input    | Age | Processing |
-|               | order    |     | order      |               | order    |     | order      |
-| 1             | abiebals | 20  | poputrem   | 1             | pinustro | 20  | thujocci   |
-| 1             | acerrubr | 20  | querelli   | 1             | poputrem | 20  | tiliamer   |
-| 1             | acersacc | 20  | pinuresi   | 1             | acerrubr | 20  | querelli   |
-| 1             | betualle | 20  | pinustro   | 1             | pinubank | 20  | querrubr   |
-| 1             | betupapy | 20  | tiliamer   | 1             | betualle | 20  | betupapy   |
-| 1             | fraxamer | 20  | tsugcana   | 1             | piceglau | 20  | fraxamer   |
-| 1             | piceglau | 20  | querrubr   | 1             | pinuresi | 20  | tsugcana   |
-| 1             | pinubank | 20  | thujocci   | 1             | acersacc | 20  | abiebals   |
-| 1             | pinuresi | 20  | acersacc   | 1             | querelli | 20  | acerrubr   |
-| 1             | pinustro | 20  | betualle   | 1             | querrubr | 20  | pinubank   |
-| 1             | poputrem | 20  | abiebals   | 1             | thujocci | 20  | pinustro   |
-| 1             | querelli | 20  | acerrubr   | 1             | tiliamer | 20  | poputrem   |
-| 1             | querrubr | 20  | piceglau   | 1             | tsugcana | 20  | pinuresi   |
-| 1             | thujocci | 20  | pinubank   | 1             | abiebals | 20  | acersacc   |
-| 1             | tiliamer | 20  | betupapy   | 1             | betupapy | 20  | betualle   |
-| 1             | tsugcana | 20  | fraxamer   | 1             | fraxamer | 20  | piceglau   |
 
-: (#tab:tableLBSEtest1) Input order and processing order (as determined by LBSE)
-for the same community used to assess the impact of sequential calculation of
-the competition index, combined with a lack of explicit species ordering. The
-input order was the order of species in the initial communities table input
-file. The processing order was the order used in the simulation, which was
-obtained from `Landis-log.txt` when `CalibrateMode` was set to 'yes'. Species
-starting ages are also shown.
--->
+\newpage
+\blandscape
 
-```{r tableLBSEtest1, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table1_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+```{r tableLBSEtest1, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table1_Appendix1", 
+                 colNames = TRUE, sep.names = " ")
 names(tab)[grep("X", names(tab))] <- ""
 caption <- paste("Input order and processing order (as determined by",
                  "LBSE) for the same community used to assess the impact",
@@ -1141,44 +1222,21 @@ caption <- paste("Input order and processing order (as determined by",
                  "the order used in the simulation, which was obtained from",
                  "`Landis-log.txt` when `CalibrateMode` was set to 'yes'.",
                  "Species starting ages are also shown.")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+# opts <- panderOptions("knitr.auto.asis", FALSE)   ## to make landscape and escape special characters 
+# pander(tab, caption = addLabel(caption), justify = justCols)
+# options(opts)
+
+panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 ```
 
-<!--
-| Input order 1 |          |     |            | Input order 2 |          |     |            |
-|:--------------|:---------|:----|:-----------|:--------------|:---------|:----|:-----------|
-| Community     | Input    | Age | Processing | Community     | Input    | Age | Processing |
-|               | order    |     | order      |               | order    |     | order      |
-| 1             | abiebals | 1   | poputrem   | 1             | pinustro | 1   | thujocci   |
-| 1             | acerrubr | 1   | querelli   | 1             | poputrem | 1   | tiliamer   |
-| 1             | acersacc | 1   | pinuresi   | 1             | acerrubr | 1   | querelli   |
-| 1             | betualle | 1   | pinustro   | 1             | pinubank | 1   | querrubr   |
-| 1             | betupapy | 1   | tiliamer   | 1             | betualle | 1   | betupapy   |
-| 1             | fraxamer | 1   | tsugcana   | 1             | piceglau | 1   | fraxamer   |
-| 1             | piceglau | 1   | querrubr   | 1             | pinuresi | 1   | tsugcana   |
-| 1             | pinubank | 1   | thujocci   | 1             | acersacc | 1   | abiebals   |
-| 1             | pinuresi | 1   | acersacc   | 1             | querelli | 1   | acerrubr   |
-| 1             | pinustro | 1   | betualle   | 1             | querrubr | 1   | pinubank   |
-| 1             | poputrem | 1   | abiebals   | 1             | thujocci | 1   | pinustro   |
-| 1             | querelli | 1   | acerrubr   | 1             | tiliamer | 1   | poputrem   |
-| 1             | querrubr | 1   | piceglau   | 1             | tsugcana | 1   | pinuresi   |
-| 1             | thujocci | 1   | pinubank   | 1             | abiebals | 1   | acersacc   |
-| 1             | tiliamer | 1   | betupapy   | 1             | betupapy | 1   | betualle   |
-| 1             | tsugcana | 1   | fraxamer   | 1             | fraxamer | 1   | piceglau   |
 
-: (#tab:tableLBSEtest2) Input order and processing order (as determined by LBSE)
-for the same community used to assess the impact of setting the succession time
-step to 1, combined with a lack of explicit species ordering. The input order
-was the order of species in the initial communities table input file. The
-processing order was the order used in the simulation, which was obtained from
-`Landis-log.txt` when `CalibrateMode` was set to 'yes'. Species starting ages
-are also shown.
--->
-
-```{r tableLBSEtest2, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table2_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+```{r tableLBSEtest2, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table2_Appendix1", 
+                 colNames = TRUE, sep.names = " ")
 names(tab)[grep("X", names(tab))] <- ""
 caption <- paste("Input order and processing order (as determined by LBSE) for",
                  "the same community used to assess the impact of setting the",
@@ -1188,271 +1246,124 @@ caption <- paste("Input order and processing order (as determined by LBSE) for",
                  "was the order used in the simulation, which was obtained from",
                  "`Landis-log.txt` when `CalibrateMode` was set to 'yes'.",
                  "Species starting ages are also shown.")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+# opts <- panderOptions("knitr.auto.asis", FALSE)   ## to make landscape and escape special characters 
+# pander(tab, caption = addLabel(caption), justify = justCols)
+# options(opts)
+
+panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 ```
 
-<!--
-| Community | Species  | Age 1 | Age 2 | Age 3 | Age 4 | Age 5 | Age 6 | Age 7 |
-|:----------|:---------|:------|:------|:------|:------|:------|:------|:------|
-| 0         | betupapy | 1     | 37    | 45    | 46    | 85    | NA    | NA    |
-| 0         | piceglau | 27    | 73    | 153   | 256   | 270   | NA    | NA    |
-| 0         | pinustro | 157   | 159   | 181   | 220   | 223   | 303   | 307   |
-| 0         | querrubr | 80    | 102   | 127   | 152   | 206   | 227   | NA    |
-| 1         | acerrubr | 3     | 91    | 126   | 145   | NA    | NA    | NA    |
-| 1         | acersacc | 138   | 144   | 276   | NA    | NA    | NA    | NA    |
-| 1         | betualle | 24    | 106   | 136   | 149   | 279   | NA    | NA    |
-| 1         | piceglau | 27    | 67    | 70    | 153   | NA    | NA    | NA    |
-| 1         | pinubank | 3     | 10    | 24    | 31    | 71    | NA    | NA    |
-| 1         | querelli | 92    | 224   | 234   | NA    | NA    | NA    | NA    |
-| 1         | thujocci | 73    | 146   | 262   | NA    | NA    | NA    | NA    |
-| 2         | fraxamer | 108   | 118   | 137   | 147   | 204   | NA    | NA    |
-| 2         | piceglau | 40    | 128   | 131   | 159   | 174   | NA    | NA    |
-| 2         | pinustro | 78    | 156   | 237   | 245   | 270   | NA    | NA    |
-| 2         | querelli | 67    | 97    | 186   | 292   | NA    | NA    | NA    |
-| 2         | tiliamer | 70    | 103   | 121   | 152   | 178   | 180   | 245   |
-| 3         | acerrubr | 5     | 83    | 125   | 126   | 127   | NA    | NA    |
-| 3         | pinuresi | 1     | 25    | 42    | 49    | 76    | 79    | 103   |
-| 3         | poputrem | 4     | 9     | 62    | NA    | NA    | NA    | NA    |
-| 3         | querelli | 101   | 104   | 167   | 226   | NA    | NA    | NA    |
-| 3         | tsugcana | 37    | 135   | 197   | 404   | 405   | NA    | NA    |
-| 4         | acerrubr | 15    | 29    | 63    | 70    | 105   | 133   | NA    |
-| 4         | piceglau | 67    | 132   | 189   | NA    | NA    | NA    | NA    |
-| 4         | tsugcana | 21    | 26    | 110   | 146   | 341   | 462   | 463   |
-| 5         | acerrubr | 128   | 137   | 145   | 147   | NA    | NA    | NA    |
-| 5         | acersacc | 241   | 245   | 261   | 277   | NA    | NA    | NA    |
-| 5         | querrubr | 23    | 72    | 120   | 142   | 188   | NA    | NA    |
-| 5         | tiliamer | 4     | 68    | 98    | 118   | 139   | 197   | NA    |
-| 6         | betualle | 5     | 23    | 31    | 249   | NA    | NA    | NA    |
-| 6         | pinubank | 67    | 70    | 89    | NA    | NA    | NA    | NA    |
-| 6         | querelli | 194   | 217   | 257   | NA    | NA    | NA    | NA    |
+\elandscape
 
-: (#tab:tableLBSEtest3) Randomly generated community combination no. 1 used in
-the recruitment comparison runs.
--->
 
-```{r tableLBSEtest3, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table3_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+```{r tableLBSEtest3, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table3_Appendix1", 
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 1 used in the",
                  "recruitment comparison runs.")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+# pander(tab, caption = addLabel(caption), justify = justCols)
+panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
-<!--
-| Community | Species  | Age 1 | Age 2 | Age 3 | Age 4 | Age 5 | Age 6 | Age 7 |
-|:----------|:---------|:------|:------|:------|:------|:------|:------|:------|
-| 0         | acerrubr | 22    | 26    | 30    | 40    | 47    | 145   | 146   |
-| 0         | betualle | 23    | 41    | 43    | 120   | 209   | 227   | 270   |
-| 0         | fraxamer | 25    | 90    | 119   | 173   | 185   | 282   | NA    |
-| 0         | pinuresi | 48    | 53    | 70    | 121   | 157   | NA    | NA    |
-| 0         | pinustro | 5     | 82    | 126   | 298   | 352   | NA    | NA    |
-| 0         | querrubr | 2     | 30    | 34    | 74    | 77    | 162   | 245   |
-| 1         | acerrubr | 2     | 39    | 43    | 84    | 116   | 127   | 143   |
-| 1         | pinubank | 34    | 57    | 75    | NA    | NA    | NA    | NA    |
-| 1         | querelli | 108   | 202   | 218   | 243   | NA    | NA    | NA    |
-| 1         | querrubr | 5     | 117   | 131   | 186   | 189   | 246   | NA    |
-| 1         | tiliamer | 10    | 19    | 46    | 80    | 133   | 148   | 231   |
-| 1         | tsugcana | 31    | 48    | 190   | 246   | 330   | NA    | NA    |
-| 2         | pinubank | 11    | 37    | 38    | 47    | 67    | 93    | NA    |
-| 2         | querrubr | 11    | 48    | 57    | 177   | 180   | 228   | 236   |
-| 2         | tiliamer | 28    | 42    | 78    | 79    | 223   | 250   | NA    |
-| 2         | tsugcana | 140   | 202   | 372   | 381   | 451   | NA    | NA    |
-| 3         | acersacc | 48    | 107   | 262   | 265   | NA    | NA    | NA    |
-| 3         | betupapy | 4     | 12    | 45    | 65    | 83    | 96    | NA    |
-| 3         | poputrem | 13    | 20    | 37    | 75    | 90    | NA    | NA    |
-| 3         | querelli | 72    | 90    | 104   | 115   | 116   | 265   | 278   |
-| 3         | tiliamer | 20    | 21    | 56    | 98    | 237   | NA    | NA    |
-| 3         | tsugcana | 86    | 224   | 425   | 429   | NA    | NA    | NA    |
-| 4         | fraxamer | 77    | 133   | 181   | NA    | NA    | NA    | NA    |
-| 4         | pinustro | 13    | 37    | 67    | 220   | 287   | 293   | 375   |
-| 4         | querrubr | 27    | 48    | 89    | 97    | NA    | NA    | NA    |
-| 4         | thujocci | 91    | 244   | 305   | 390   | NA    | NA    | NA    |
-| 5         | abiebals | 86    | 95    | 119   | 121   | 127   | 158   | NA    |
-| 5         | betualle | 83    | 113   | 136   | 161   | 216   | 231   | NA    |
-| 5         | betupapy | 10    | 38    | 64    | NA    | NA    | NA    | NA    |
-| 5         | piceglau | 16    | 63    | 70    | 102   | NA    | NA    | NA    |
-| 6         | acerrubr | 8     | 34    | 112   | NA    | NA    | NA    | NA    |
-| 6         | betupapy | 1     | 31    | 57    | 61    | 74    | 80    | 91    |
-| 6         | fraxamer | 63    | 100   | 108   | 140   | 196   | 294   | NA    |
-| 6         | pinubank | 15    | 19    | 44    | 47    | 51    | 80    | NA    |
-| 6         | thujocci | 78    | 146   | 163   | 213   | 214   | 228   | NA    |
-| 6         | tsugcana | 47    | 108   | 387   | 389   | 449   | NA    | NA    |
 
-: (#tab:tableLBSEtest4) Randomly generated community combination no. 2 used in
-the recruitment comparison runs.
--->
-<!--
-| Community | Species  | Age 1 | Age 2 | Age 3 | Age 4 | Age 5 | Age 6 | Age 7 |
-|:----------|:---------|:------|:------|:------|:------|:------|:------|:------|
-| 0         | pinubank | 7     | 26    | 32    | 37    | 48    | 85    | 90    |
-| 0         | pinuresi | 11    | 103   | 109   | 179   | 188   | 197   | NA    |
-| 0         | querrubr | 89    | 139   | 180   | 206   | NA    | NA    | NA    |
-| 1         | betupapy | 36    | 39    | 45    | 49    | 66    | 68    | NA    |
-| 1         | piceglau | 13    | 165   | 254   | NA    | NA    | NA    | NA    |
-| 1         | pinubank | 3     | 19    | 54    | 64    | 76    | NA    | NA    |
-| 1         | poputrem | 22    | 59    | 93    | NA    | NA    | NA    | NA    |
-| 1         | thujocci | 68    | 98    | 274   | 275   | 363   | 378   | NA    |
-| 1         | tiliamer | 13    | 20    | 105   | 124   | 248   | NA    | NA    |
-| 1         | tsugcana | 36    | 90    | 142   | NA    | NA    | NA    | NA    |
-| 2         | fraxamer | 11    | 241   | 279   | NA    | NA    | NA    | NA    |
-| 2         | piceglau | 16    | 42    | 129   | 177   | 200   | 244   | NA    |
-| 2         | pinustro | 200   | 342   | 384   | NA    | NA    | NA    | NA    |
-| 3         | abiebals | 31    | 57    | 61    | 92    | 108   | 162   | 183   |
-| 3         | piceglau | 126   | 255   | 261   | 267   | NA    | NA    | NA    |
-| 3         | poputrem | 28    | 41    | 57    | NA    | NA    | NA    | NA    |
-| 3         | querrubr | 83    | 91    | 144   | 173   | 184   | 238   | NA    |
-| 3         | thujocci | 6     | 66    | 68    | 204   | NA    | NA    | NA    |
-| 4         | fraxamer | 12    | 110   | 266   | 270   | NA    | NA    | NA    |
-| 4         | pinustro | 174   | 270   | 359   | 379   | NA    | NA    | NA    |
-| 4         | poputrem | 4     | 7     | 18    | 24    | 63    | 76    | NA    |
-| 4         | tiliamer | 126   | 136   | 197   | NA    | NA    | NA    | NA    |
-| 4         | tsugcana | 49    | 91    | 128   | 194   | 411   | 487   | NA    |
-| 5         | abiebals | 35    | 53    | 108   | 114   | 147   | 174   | 195   |
-| 5         | acerrubr | 1     | 2     | 101   | 145   | NA    | NA    | NA    |
-| 5         | pinubank | 14    | 15    | 38    | 40    | 59    | 69    | 83    |
-| 6         | acerrubr | 4     | 46    | 117   | NA    | NA    | NA    | NA    |
-| 6         | betualle | 36    | 41    | 116   | 213   | 253   | NA    | NA    |
-| 6         | betupapy | 4     | 6     | 76    | NA    | NA    | NA    | NA    |
-| 6         | pinuresi | 43    | 68    | 85    | 171   | NA    | NA    | NA    |
-| 6         | querrubr | 84    | 86    | 113   | 185   | 193   | 223   | 228   |
-| 6         | tiliamer | 13    | 106   | 181   | 199   | 246   | NA    | NA    |
+```{r tableLBSEtest4, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table4_Appendix1", 
+                 colNames = TRUE, sep.names = " ")
+caption <- paste("Randomly generated community combination no. 2 used in",
+                 "the recruitment comparison runs.")
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
-: (#tab:tableLBSEtest5) Randomly generated community combination no. 3 used in the recruitment comparison runs.
--->
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+# pander(tab, caption = addLabel(caption), justify = justCols)
+panble(tab, caption, panderArgs = list("justify" = justCols))
+```
 
-```{r tableLBSEtest5, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table5_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+\newpage
+\blandscape
+
+```{r tableLBSEtest5, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table5_Appendix1", 
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Randomly generated community combination no. 3 used in the",
                  "recruitment comparison runs.")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+# opts <- panderOptions("knitr.auto.asis", FALSE)   ## to make landscape and escape special characters 
+# pander(tab, caption = addLabel(caption), justify = justCols)
+# options(opts)
+panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
 ```
 
-<!--
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| Species  | Longevity | Sexualmature | Shadetolerance | Seeddistance_eff | Seeddistance_max | Mortalityshape | Growthcurve |
-+==========+===========+==============+================+==================+==================+================+=============+
-| abiebals | 200       | 25           | 5              | 30               | 160              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| acerrubr | 150       | 10           | 4              | 100              | 200              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| acersacc | 300       | 40           | 5              | 100              | 200              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| betualle | 300       | 40           | 4              | 100              | 400              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| betupapy | 100       | 30           | 2              | 200              | 5000             | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| fraxamer | 300       | 30           | 4              | 70               | 140              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| piceglau | 300       | 25           | 3              | 30               | 200              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| pinubank | 100       | 15           | 1              | 20               | 100              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| pinuresi | 200       | 35           | 2              | 20               | 275              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| pinustro | 400       | 40           | 3              | 60               | 210              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| poputrem | 100       | 20           | 1              | 1000             | 5000             | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| querelli | 300       | 35           | 2              | 30               | 3000             | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| querrubr | 250       | 25           | 3              | 30               | 3000             | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| thujocci | 400       | 30           | 2              | 45               | 60               | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| tiliamer | 250       | 30           | 4              | 30               | 120              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
-| tsugcana | 500       | 30           | 5              | 30               | 100              | 10             | 0.25        |
-+----------+-----------+--------------+----------------+------------------+------------------+----------------+-------------+
+\elandscape
 
-: (#tab:tableLBSEtest6) Invariant species traits table used in comparison runs.
--->
-
-```{r tableLBSEtest6, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table6_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+```{r tableLBSEtest6, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table6_Appendix1", 
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Invariant species traits table used in comparison runs.")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+# pander(tab, caption = addLabel(caption), justify = justCols)
+panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
-<!--
-| Ecolocation | X0  | X1   | X2   | X3  | X4  | X5   |
-|:------------|:----|:-----|:-----|:----|:----|:-----|
-| All         | 0   | 0.15 | 0.25 | 0.5 | 0.8 | 0.95 |
-
-: (#tab:tableLBSEtest7) Minimum relative biomass table used in comparison runs. X0-5 represent site shade classes from no-shade (0) to maximum shade (5). All ecolocations shared the same values.
--->
-
-```{r tableLBSEtest7, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table7_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+```{r tableLBSEtest7, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table7_Appendix1", 
+                 colNames = TRUE, sep.names = " ")
 caption <- paste("Minimum relative biomass table used in comparison runs. X0-5",
                  "represent site shade classes from no-shade (0) to maximum",
                  "shade (5). All ecolocations shared the same values.")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+# pander(tab, caption = addLabel(caption), justify = justCols)
+panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
-<!--
-| Shadetolerance | 0   | 1   | 2   | 3   | 4   | 5   |
-|:---------------|:----|:----|:----|:----|:----|:----|
-| 1              | 1   | 0   | 0   | 0   | 0   | 0   |
-| 2              | 1   | 1   | 0   | 0   | 0   | 0   |
-| 3              | 1   | 1   | 1   | 0   | 0   | 0   |
-| 4              | 1   | 1   | 1   | 1   | 0   | 0   |
-| 5              | 0   | 0   | 1   | 1   | 1   | 1   |
-
-: (#tab:tableLBSEtest8) Probability of germination for species shade tolerance and shade level combinations (called *sufficient light* table in LBSE and `sufficientLight` input `data.table` in LandR *Biomass_core*) used in comparison runs.
--->
-
-```{r tableLBSEtest8, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table8_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+```{r tableLBSEtest8, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table8_Appendix1", 
+                 colNames = TRUE, sep.names = " ")
+tab[,1] <- as.character(tab[,1])
 caption <- paste("Probability of germination for species shade tolerance and",
                  "shade level combinations (called (ref:sufficient-light) table in",
                  "LBSE and `sufficientLight` input `data.table` in LandR",
                  "(ref:Biomass-core)) used in comparison runs.")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+# pander(tab, caption = addLabel(caption), justify = justCols)
+panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
-<!--
-| Ecolocation | Species  | SEP  | maxANPP | maxB  |
-|:------------|:---------|:-----|:--------|:------|
-| 1           | abiebals | 0.9  | 886     | 26580 |
-| 1           | acerrubr | 1    | 1175    | 35250 |
-| 1           | acersacc | 0.82 | 1106    | 33180 |
-| 1           | betualle | 0.64 | 1202    | 36060 |
-| 1           | betupapy | 1    | 1202    | 36060 |
-| 1           | fraxamer | 0.18 | 1202    | 36060 |
-| 1           | piceglau | 0.58 | 969     | 29070 |
-| 1           | pinubank | 1    | 1130    | 33900 |
-| 1           | pinuresi | 0.56 | 1017    | 30510 |
-| 1           | pinustro | 0.72 | 1090    | 38150 |
-| 1           | poputrem | 1    | 1078    | 32340 |
-| 1           | querelli | 0.96 | 1096    | 32880 |
-| 1           | querrubr | 0.66 | 1017    | 30510 |
-| 1           | thujocci | 0.76 | 1090    | 32700 |
-| 1           | tiliamer | 0.54 | 1078    | 32340 |
-| 1           | tsugcana | 0.22 | 1096    | 32880 |
-
-: (#tab:tableLBSEtest9) Species ecolocation table used in comparison runs. `SEP` stands for species establishment probability, `maxB` for maximum biomass and `maxANPP` for maximum aboveground net primary productivity. Values were held constant throughout the simulation.
--->
-
-```{r tableLBSEtest9, echo = FALSE, eval = TRUE, message = FALSE}
-tab <- openxlsx::read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table9_Appendix1", 
-                           colNames = TRUE, sep.names = " ")
+```{r tableLBSEtest9, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
+tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table9_Appendix1", 
+                 colNames = TRUE, sep.names = " ")
+tab[,1] <- as.character(tab[,1])
 caption <- paste("Species ecolocation table used in comparison runs. `SEP`",
                  "stands for species establishment probability, `maxB` for",
                  "maximum biomass and `maxANPP` for maximum aboveground net",
                  "primary productivity. Values were held constant throughout",
                  "the simulation.")
-knitr::kable(tab, caption = caption) %>%
-  kableExtra::kable_styling(latex_options = c("repeat_header"))
+# knitr::kable(tab, caption = caption) %>%
+#   kableExtra::kable_styling(latex_options = c("repeat_header"))
+
+justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
+# pander(tab, caption = addLabel(caption), justify = justCols)
+panble(tab, caption, panderArgs = list("justify" = justCols))
 ```
 
 ## References {#refs}
