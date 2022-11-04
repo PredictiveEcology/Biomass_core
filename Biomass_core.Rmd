@@ -397,7 +397,8 @@ caption <- paste("Example of an invariant species traits table (the",
 
 ## justify character columns to left, and numeric to right
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
+panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 \elandscape
@@ -430,7 +431,9 @@ caption <- paste("Example of a spatio-temporally varying species traits",
 
 ## pander tables actually look nicer (no horizontal lines)
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, panderArgs = list("justify" = justCols), kableArgs = list(longtable = TRUE))
+panble(tab, caption, panderArgs = list("justify" = justCols), 
+       kableArgs = list(longtable = TRUE), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 #### Ecolocation-specific parameters -- minimum relative biomass {#ecolocation-traits}
@@ -465,7 +468,8 @@ caption <- paste("Example of a minimum relative biomass table (the `minRelativeB
                  "the same values")
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, panderArgs = list("justify" = justCols))
+panble(tab, caption, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 #### Probabilities of germination {#prob-germ}
@@ -488,7 +492,8 @@ caption <- paste("Default species probability of germination values used by",
                  "shade and species shade tolerance combination.")
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, panderArgs = list("justify" = justCols))
+panble(tab, caption, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 #### Other module inputs {#other-inputs}
@@ -1188,7 +1193,8 @@ caption <- paste("Input order and processing order (as determined by",
                  "Species starting ages are also shown.")
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
+panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 
@@ -1206,7 +1212,8 @@ caption <- paste("Input order and processing order (as determined by LBSE) for",
                  "Species starting ages are also shown.")
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
+panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 \elandscape
@@ -1219,7 +1226,8 @@ caption <- paste("Randomly generated community combination no. 1 used in the",
                  "recruitment comparison runs.")
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, panderArgs = list("justify" = justCols))
+panble(tab, caption, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 
@@ -1230,7 +1238,8 @@ caption <- paste("Randomly generated community combination no. 2 used in",
                  "the recruitment comparison runs.")
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, panderArgs = list("justify" = justCols))
+panble(tab, caption, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 \newpage
@@ -1243,7 +1252,8 @@ caption <- paste("Randomly generated community combination no. 3 used in the",
                  "recruitment comparison runs.")
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols))
+panble(tab, caption, landscape = TRUE, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 \elandscape
@@ -1254,7 +1264,8 @@ tab <- read.xlsx("tables/LBSE_LandR_comparisonTables.xlsx", sheet = "Table6_Appe
 caption <- paste("Invariant species traits table used in comparison runs.")
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, panderArgs = list("justify" = justCols))
+panble(tab, caption, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 ```{r tableLBSEtest7, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
@@ -1265,7 +1276,8 @@ caption <- paste("Minimum relative biomass table used in comparison runs. X0-5",
                  "shade (5). All ecolocations shared the same values.")
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, panderArgs = list("justify" = justCols))
+panble(tab, caption, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 ```{r tableLBSEtest8, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
@@ -1280,7 +1292,8 @@ caption <- paste("Probability of germination for species shade tolerance and",
 #   kableExtra::kable_styling(latex_options = c("repeat_header"))
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, panderArgs = list("justify" = justCols))
+panble(tab, caption, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 ```{r tableLBSEtest9, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
@@ -1294,7 +1307,8 @@ caption <- paste("Species ecolocation table used in comparison runs. `SEP`",
                  "the simulation.")
 
 justCols <- sapply(tab, function(x) ifelse(is.numeric(x), "right", "left"))
-panble(tab, caption, panderArgs = list("justify" = justCols))
+panble(tab, caption, panderArgs = list("justify" = justCols), 
+       kable_stylingArgs = list(full_width = TRUE))
 ```
 
 ## References {#refs}
