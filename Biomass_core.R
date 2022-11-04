@@ -13,22 +13,23 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.3.9")),
+  version = list(Biomass_core = numeric_version("1.3.10")),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_core.Rmd"),
-  reqdPkgs = list("assertthat", "compiler", "crayon", "data.table", "dplyr", "fpCompare", "ggplot2", "grid",
-                  # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
-                  ## Excluded because loading is not necessary (just installation)
+  reqdPkgs = list("assertthat", "compiler", "crayon", "data.table",
+                  "dplyr", "fpCompare", "ggplot2", "grid",
                   "parallel", "purrr", "quickPlot", "raster", "Rcpp",
                   "R.utils", "scales", "sp", "tidyr",
-                  "PredictiveEcology/LandR@development (>= 1.1.0.9004)",
+                  # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
+                  ## Excluded because loading is not necessary (just installation)
+                  "PredictiveEcology/LandR@development (>= 1.1.0.9006)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
-                  "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9000)",
-                  "PredictiveEcology/SpaDES.tools@development",
+                  "PredictiveEcology/SpaDES.core@development (>= 1.0.8.9001)",
+                  "PredictiveEcology/SpaDES.tools@development (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@master (>= 0.0.2.0002)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
@@ -129,7 +130,7 @@ defineModule(sim, list(
                     desc = paste("defines the saving time step.",
                                  "If `NA`, the default, .saveInterval is set to `P(sim)$successionTimestep`.")),
     defineParameter(".sslVerify", "integer", as.integer(unname(curl::curl_options("^ssl_verifypeer$"))), NA_integer_, NA_integer_,
-                    paste("Passed to `httr::config(ssl_verifypeer = P(sim)$sslVerify)` when downloading KNN",
+                    paste("Passed to `httr::config(ssl_verifypeer = P(sim)$.sslVerify)` when downloading KNN",
                           "(NFI) datasets. Set to 0L if necessary to bypass checking the SSL certificate (this",
                           "may be necessary when NFI's website SSL certificate is not correctly configured).")),
     defineParameter(".studyAreaName", "character", NA, NA, NA,
@@ -1891,7 +1892,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
     clearPlot()
   }
 
-  Plots(mapsToPlot, type = plotTypes, title = names(mapsToPlot), new = TRUE)
+  Plots(mapsToPlot, usePlot = TRUE, type = plotTypes, title = names(mapsToPlot), new = TRUE)
 
   ## add year
   if (any(P(sim)$.plots == "screen")) {
@@ -2024,20 +2025,20 @@ CohortAgeReclassification <- function(sim) {
                                  "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
       rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
       httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-      #necessary for KNN
-      rawBiomassMap <- Cache(prepInputs,
-                             targetFile = rawBiomassMapFilename,
-                             url = rawBiomassMapURL,
-                             destinationPath = dPath,
-                             studyArea = sim$studyArea,
-                             rasterToMatch = NULL,
-                             maskWithRTM = FALSE,
-                             useSAcrs = FALSE,     ## never use SA CRS
-                             method = "bilinear",
-                             datatype = "INT2U",
-                             filename2 = NULL,
-                             userTags = c(cacheTags, "rawBiomassMap"),
-                             omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
+        #necessary for KNN
+        rawBiomassMap <- Cache(prepInputs,
+                               targetFile = rawBiomassMapFilename,
+                               url = rawBiomassMapURL,
+                               destinationPath = dPath,
+                               studyArea = sim$studyArea,
+                               rasterToMatch = NULL,
+                               maskWithRTM = FALSE,
+                               useSAcrs = FALSE,     ## never use SA CRS
+                               method = "bilinear",
+                               datatype = "INT2U",
+                               filename2 = NULL,
+                               userTags = c(cacheTags, "rawBiomassMap"),
+                               omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
       })
     } else {
       rawBiomassMap <- Cache(postProcess,
