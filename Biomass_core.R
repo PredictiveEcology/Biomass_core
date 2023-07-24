@@ -650,9 +650,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
               blue("If this is wrong, provide matching 'speciesLayers' and 'rasterToMatch'"))
 
       sim$speciesLayers <- postProcess(sim$speciesLayers,
-                                       rasterToMatch = sim$rasterToMatch,
-                                       maskWithRTM = TRUE,
-                                       filename1 = NULL, filename2 = NULL,
+                                       to = sim$rasterToMatch,
+                                       filename1 = NULL,
+                                       writeTo = NULL,
                                        userTags = c(currentModule(sim), "speciesLayers"))
     }
 
@@ -2041,25 +2041,24 @@ CohortAgeReclassification <- function(sim) {
                                targetFile = rawBiomassMapFilename,
                                url = rawBiomassMapURL,
                                destinationPath = dPath,
-                               studyArea = sim$studyArea,
-                               rasterToMatch = NULL,
-                               maskWithRTM = FALSE,
-                               useSAcrs = FALSE,     ## never use SA CRS
+                               cropTo = sim$studyArea,
+                               maskTo = sim$studyArea,
+                               projectTo = NA,     ## never use SA CRS
                                method = "bilinear",
                                datatype = "INT2U",
-                               filename2 = NULL,
+                               writeTo = NULL,
                                userTags = c(cacheTags, "rawBiomassMap"),
                                omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
       })
     } else {
       rawBiomassMap <- Cache(postProcess,
                              x = sim$rawBiomassMap,
-                             studyArea = sim$studyArea,
-                             useSAcrs = FALSE,
-                             maskWithRTM = FALSE,   ## mask with SA
+                             cropTo = sim$studyArea,
+                             maskTo = sim$studyArea,
+                             projectTo = NA,
                              method = "bilinear",
                              datatype = "INT2U",
-                             filename2 = NULL,
+                             writeTo = NULL,
                              overwrite = TRUE,
                              userTags = cacheTags,
                              omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
@@ -2075,7 +2074,7 @@ CohortAgeReclassification <- function(sim) {
     RTMvals <- getValues(sim$rasterToMatch)
     sim$rasterToMatch[!is.na(RTMvals)] <- 1
     sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
-                               filename2 = .suffix(file.path(dPath, "rasterToMatch.tif"),
+                               writeTo = .suffix(file.path(dPath, "rasterToMatch.tif"),
                                                    paste0("_", P(sim)$.studyAreaName)),
                                datatype = "INT2U", overwrite = TRUE,
                                userTags = c(cacheTags, "rasterToMatch"),
