@@ -2027,59 +2027,45 @@ CohortAgeReclassification <- function(sim) {
     }
   }
 
-  if (needRTM) {
-    if (!suppliedElsewhere("rawBiomassMap", sim) ||
-        !compareRaster(sim$rawBiomassMap, sim$studyArea, stopiffalse = FALSE)) {
-      rawBiomassMapURL <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
-                                 "canada-forests-attributes_attributs-forests-canada/",
-                                 "2001-attributes_attributs-2001/",
-                                 "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
-      rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-      httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-        #necessary for KNN
-        rawBiomassMap <- Cache(prepInputs,
-                               targetFile = rawBiomassMapFilename,
-                               url = rawBiomassMapURL,
-                               destinationPath = dPath,
-                               cropTo = sim$studyArea,
-                               maskTo = sim$studyArea,
-                               projectTo = NA,     ## never use SA CRS
-                               method = "bilinear",
-                               datatype = "INT2U",
-                               writeTo = NULL,
-                               userTags = c(cacheTags, "rawBiomassMap"),
-                               omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
-      })
-    } else {
+
+  if (is.null(sim$rawBiomassMap)) {
+    rawBiomassMapURL <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+                               "canada-forests-attributes_attributs-forests-canada/",
+                               "2001-attributes_attributs-2001/",
+                               "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
+    rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
+    httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
+      rawBiomassMap <- prepRawBiomassMap(url = rawBiomassMapURL,
+                                         studyAreaName = P(sim)$.studyAreaName,
+                                         cacheTags = cacheTags,
+                                         to = sim$studyArea,
+                                         projectTo = NA,  ## don't project to SA
+                                         destinationPath = dPath)
+    })
+  } else {
+    rawBiomassMap <- sim$rawBiomassMap
+    if (!.compareCRS(sim$rawBiomassMap, sim$studyArea)) {
+      ## note that extents may never align if the resolution and projection do not allow for it
       rawBiomassMap <- Cache(postProcess,
-                             x = sim$rawBiomassMap,
-                             cropTo = sim$studyArea,
-                             maskTo = sim$studyArea,
-                             projectTo = NA,
+                             rawBiomassMap,
                              method = "bilinear",
-                             datatype = "INT2U",
-                             writeTo = NULL,
-                             overwrite = TRUE,
-                             userTags = cacheTags,
-                             omitArgs = c("destinationPath", "targetFile", "userTags", "stable"))
+                             to = sim$studyAreaLarge,
+                             projectTo = NA,  ## don't project to SA
+                             overwrite = TRUE)
     }
-
-    ## if we need rasterToMatchLarge, that means a) we don't have it, but b) we will have rawBiomassMap
-
-    warning("rasterToMatch is missing and will be created",
-            " from rawBiomassMap and studyAreaLarge.",
-            " If this is wrong, provide raster.")
-
-    sim$rasterToMatch <- rawBiomassMap
-    RTMvals <- getValues(sim$rasterToMatch)
-    sim$rasterToMatch[!is.na(RTMvals)] <- 1
-    sim$rasterToMatch <- Cache(writeOutputs, sim$rasterToMatch,
-                               writeTo = .suffix(file.path(dPath, "rasterToMatch.tif"),
-                                                   paste0("_", P(sim)$.studyAreaName)),
-                               datatype = "INT2U", overwrite = TRUE,
-                               userTags = c(cacheTags, "rasterToMatch"),
-                               omitArgs = c("userTags"))
   }
+
+  RTMs <- prepRasterToMatch(studyArea = sim$studyArea,
+                            studyAreaLarge = sim$studyArea,
+                            rasterToMatch = NULL,
+                            rasterToMatchLarge = NULL,
+                            destinationPath = dPath,
+                            templateRas = rawBiomassMap,
+                            studyAreaName = P(sim)$.studyAreaName,
+                            cacheTags = cacheTags)
+  sim$rasterToMatch <- RTMs$rasterToMatch
+  rm(RTMs)
+
 
   if (!.compareCRS(sim$studyArea, sim$rasterToMatch)) {
     warning(paste0("studyArea and rasterToMatch projections differ.\n",
