@@ -2081,7 +2081,7 @@ CohortAgeReclassification <- function(sim) {
                                omitArgs = c("userTags"))
   }
 
-  if (!compareCRS(sim$studyArea, sim$rasterToMatch)) {
+  if (!.compareCRS(sim$studyArea, sim$rasterToMatch)) {
     warning(paste0("studyArea and rasterToMatch projections differ.\n",
                    "studyArea will be projected to match rasterToMatch"))
     sim$studyArea <- spTransform(sim$studyArea, crs(sim$rasterToMatch))
