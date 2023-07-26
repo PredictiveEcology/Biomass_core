@@ -1816,15 +1816,15 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   ## these plots are not saved.
   plotTypes <- "screen"
 
-  biomassMapForPlot <- raster::mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
-  ANPPMapForPlot <- raster::mask(sim$ANPPMap, sim$studyAreaReporting)
-  mortalityMapForPlot <- raster::mask(sim$mortalityMap, sim$studyAreaReporting)
+  biomassMapForPlot <- mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
+  ANPPMapForPlot <- mask(sim$ANPPMap, sim$studyAreaReporting)
+  mortalityMapForPlot <- mask(sim$mortalityMap, sim$studyAreaReporting)
 
   if (is.null(sim$reproductionMap)) {
     reproductionMapForPlot <- biomassMapForPlot
     reproductionMapForPlot[!is.na(as.vector(reproductionMapForPlot[]))][] <- 0
   } else {
-    reproductionMapForPlot <- raster::mask(sim$reproductionMap, sim$studyAreaReporting)
+    reproductionMapForPlot <- mask(sim$reproductionMap, sim$studyAreaReporting)
   }
 
   levs <- raster::levels(sim$vegTypeMap)[[1]]
@@ -1870,7 +1870,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   setColors(sim$vegTypeMap, levs$ID) <- colours
 
   # Mask out NAs based on rasterToMatch (for plotting only!)
-  vegTypeMapForPlot <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
+  vegTypeMapForPlot <- mask(sim$vegTypeMap, sim$studyAreaReporting)
 
   ## Plot
   mapsToPlot <- vegTypeMapForPlot
@@ -1960,10 +1960,10 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
 })
 
 Save <- compiler::cmpfun(function(sim) {
-  raster::projection(sim$simulatedBiomassMap) <- raster::projection(sim$ecoregionMap)
-  raster::projection(sim$ANPPMap) <- raster::projection(sim$ecoregionMap)
-  raster::projection(sim$mortalityMap) <- raster::projection(sim$ecoregionMap)
-  raster::projection(sim$reproductionMap) <- raster::projection(sim$ecoregionMap)
+  crs(sim$simulatedBiomassMap) <- crs(sim$ecoregionMap)
+  crs(sim$ANPPMap) <- crs(sim$ecoregionMap)
+  crs(sim$mortalityMap) <- crs(sim$ecoregionMap)
+  crs(sim$reproductionMap) <- crs(sim$ecoregionMap)
   writeRaster(sim$simulatedBiomassMap,
               file.path(outputPath(sim), "figures",
                         paste0("simulatedBiomassMap_Year", round(time(sim)), ".tif")),
