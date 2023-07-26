@@ -864,9 +864,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   names(pixelGroupMap) <- "pixelGroup"
 
   # Changed mechanism for active and inactive -- just use NA on ecoregionMap
-  ecoregionMapNAs <- is.na(sim$ecoregionMap[])
+  ecoregionMapNAs <- is.na(as.vector(sim$ecoregionMap[]))
   ecoregionMapReporting <- mask(sim$ecoregionMap, sim$studyAreaReporting)
-  ecoregionMapReportingNAs <- is.na(ecoregionMapReporting[])
+  ecoregionMapReportingNAs <- is.na(as.vector(ecoregionMapReporting[]))
 
   sim$activePixelIndex <- which(!ecoregionMapNAs)                    ## store for future use
   sim$activePixelIndexReporting <- which(!ecoregionMapReportingNAs)  ## store for future use
@@ -874,17 +874,17 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sim$inactivePixelIndex <- which(ecoregionMapNAs)                   ## store for future use
   sim$inactivePixelIndexReporting <- which(ecoregionMapReportingNAs) ## store for future use
 
-  assertthat::assert_that(all(is.na(sim$ecoregionMap[]) == is.na(pixelGroupMap[])))
+  assertthat::assert_that(all(is.na(as.vector(sim$ecoregionMap[])) == is.na(as.vector(pixelGroupMap[]))))
 
   # Keeps track of the length of the ecoregion
   mod$activeEcoregionLength <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
-                                                                         getValues(sim$ecoregionMap),
+                                                                         as.vector(values(sim$ecoregionMap)),
                                                                          att = "ecoregionGroup"),
                                           pixelIndex = 1:ncell(sim$ecoregionMap))[
                                             ecoregionGroup %in% active_ecoregion$ecoregionGroup,
                                             .(NofCell = length(pixelIndex)), by = "ecoregionGroup"]
 
-  cohortData <- sim$cohortData[pixelGroup %in% unique(getValues(pixelGroupMap)[sim$activePixelIndex]), ]
+  cohortData <- sim$cohortData[pixelGroup %in% unique(as.vector(values(pixelGroupMap))[sim$activePixelIndex]), ]
   cohortData <- updateSpeciesEcoregionAttributes(speciesEcoregion = speciesEcoregion,
                                                  currentTime = round(time(sim)),
                                                  cohortData = cohortData)
@@ -932,8 +932,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
          "please use 'cohortData'")
     if (verbose > 0)
       message("Skipping spinup and using the sim$biomassMap * SpeciesLayers pct as initial biomass values")
-    biomassTable <- data.table(biomass = getValues(sim$biomassMap),
-                               pixelGroup = getValues(pixelGroupMap))
+    biomassTable <- data.table(biomass = as.vector(values(sim$biomassMap)),
+                               pixelGroup = as.vector(values(pixelGroupMap)))
     biomassTable <- na.omit(biomassTable)
     maxBiomass <- maxValue(sim$biomassMap)
     if (maxBiomass < 1e3) {
@@ -975,9 +975,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sim$cohortData <- setcolorder(sim$cohortData, neworder = c("pixelGroup", "ecoregionGroup", "speciesCode", "age", "B",
                                                              "mortality", "aNPPAct"))
   simulationOutput <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
-                                                                getValues(sim$ecoregionMap),
+                                                                as.vector(values(sim$ecoregionMap)),
                                                                 att = "ecoregionGroup"),
-                                 pixelGroup = getValues(pixelGroupMap),
+                                 pixelGroup = as.vector(values(pixelGroupMap)),
                                  pixelIndex = 1:ncell(sim$ecoregionMap))[
                                    , .(NofPixel = length(pixelIndex)),
                                    by = c("ecoregionGroup", "pixelGroup")]
@@ -1027,9 +1027,9 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
                               labels = paste("Group", 1:(length(cutpoints) - 1), sep = ""),
                               include.lowest = TRUE)]
   ecoPixelgroup <- data.table(ecoregionGroup = factorValues2(sim$ecoregionMap,
-                                                             getValues(sim$ecoregionMap),
+                                                             as.vector(values(sim$ecoregionMap)),
                                                              att = "ecoregionGroup"),
-                              pixelGroup = getValues(sim$pixelGroupMap),
+                              pixelGroup = as.vector(values(sim$pixelGroupMap)),
                               pixelIndex = 1:ncell(sim$ecoregionMap))[
                                 , .(NofPixelGroup = length(pixelIndex)),
                                 by = c("ecoregionGroup", "pixelGroup")]
@@ -1181,17 +1181,17 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         # Identify the PGs that are totally gone, not just an individual cohort that died
         pgsToRm <- diedCohortData[!pixelGroup %in% subCohortPostLongevity$pixelGroup]
 
-        pixelsToRm <- which(getValues(sim$pixelGroupMap) %in% unique(pgsToRm$pixelGroup))
+        pixelsToRm <- which(as.vector(values(sim$pixelGroupMap)) %in% unique(pgsToRm$pixelGroup))
         # RM from the pixelGroupMap -- since it is a whole pixelGroup that is gone, not just a cohort, this is necessary
         if (isTRUE(getOption("LandR.assertions"))) {
-          a <- subCohortPostLongevity$pixelGroup %in% na.omit(getValues(sim$pixelGroupMap))
+          a <- subCohortPostLongevity$pixelGroup %in% na.omit(as.vector(values(sim$pixelGroupMap)))
           if (!all(a)) {
             stop("Post longevity-based mortality, there is a divergence between pixelGroupMap and cohortData pixelGroups")
           }
         }
         if (length(pixelsToRm) > 0) {
           if (getOption("LandR.verbose", TRUE) > 0) {
-            numPixelGrps <- sum(sim$pixelGroupMap[] != 0, na.rm = TRUE)
+            numPixelGrps <- sum(as.vector(sim$pixelGroupMap[]) != 0, na.rm = TRUE)
           }
           sim$pixelGroupMap[pixelsToRm] <- 0L
           if (getOption("LandR.verbose", TRUE) > 1) {
@@ -1203,7 +1203,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
           }
           if (getOption("LandR.verbose", TRUE) > 0) {
             message(blue("\n   Total number of pixelGroups -- Was:", numPixelGrps,
-                         ", Now:", magenta(sum(sim$pixelGroupMap[] != 0, na.rm = TRUE))))
+                         ", Now:", magenta(sum(as.vector(sim$pixelGroupMap[]) != 0, na.rm = TRUE))))
           }
         }
       }
@@ -1367,7 +1367,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFrom
   seedingData <- unique(seedingData, by = c("pixelGroup", "speciesCode"))
 
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
-                                   pixelGroup = getValues(sim$pixelGroupMap)[tempActivePixel]), pixelGroup)
+                                   pixelGroup = as.vector(values(sim$pixelGroupMap))[tempActivePixel]), pixelGroup)
   pixelsInfor <- setkey(pixelsInfor[pixelGroup %in% unique(seedingData$pixelGroup)], pixelGroup)
   seedingData <- setkey(seedingData, pixelGroup)[pixelsInfor, allow.cartesian = TRUE]
   seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
@@ -1422,8 +1422,8 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   speciessource <- setkey(sim$species[, .(speciesCode, k = 1)], k)
   siteShade <- data.table(calcSiteShade(currentTime = round(time(sim)), sim$cohortData,
                                         sim$speciesEcoregion, sim$minRelativeB))
-  activePixelGroup <- unique(data.table(pixelGroup = getValues(sim$pixelGroupMap)[tempActivePixel],
-                                        ecoregionGroup = factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap),
+  activePixelGroup <- unique(data.table(pixelGroup = as.vector(values(sim$pixelGroupMap))[tempActivePixel],
+                                        ecoregionGroup = factorValues2(sim$ecoregionMap, as.vector(values((sim$ecoregionMap))),
                                                                        att = "ecoregionGroup")[tempActivePixel]),
                              by = "pixelGroup")
   siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
@@ -1441,7 +1441,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   #   pixelGroupEcoregion <- unique(sim$cohortData, by = c("pixelGroup"))[,'.'(pixelGroup, sumB)]
 
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
-                                   pixelGroup = getValues(sim$pixelGroupMap)[tempActivePixel]), pixelGroup)
+                                   pixelGroup = as.vector(values(sim$pixelGroupMap))[tempActivePixel]), pixelGroup)
   pixelsInfor <- setkey(pixelsInfor[pixelGroup %in% unique(seedingData$pixelGroup)], pixelGroup)
   seedingData <- setkey(seedingData, pixelGroup)[pixelsInfor, allow.cartesian = TRUE]
   seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
@@ -1490,7 +1490,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
                                   successionTimestep = P(sim)$successionTimestep)
   siteShade <- calcSiteShade(currentTime = round(time(sim)), cohortData = sim$cohortData,
                              sim$speciesEcoregion, sim$minRelativeB)
-  activePixelGroup <- data.table(pixelGroup = unique(getValues(sim$pixelGroupMap)[tempActivePixel])) %>%
+  activePixelGroup <- data.table(pixelGroup = unique(as.vector(values(sim$pixelGroupMap))[tempActivePixel])) %>%
     na.omit()
   siteShade <- siteShade[activePixelGroup, on = "pixelGroup"]
   siteShade[is.na(siteShade), siteShade := 0]
@@ -1570,7 +1570,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
 
     rm(seedReceive, seedSource)
     if (NROW(seedingData) > 0) {
-      seedingData[, ecoregionGroup := factorValues2(sim$ecoregionMap, getValues(sim$ecoregionMap),
+      seedingData[, ecoregionGroup := factorValues2(sim$ecoregionMap, as.vector(values(sim$ecoregionMap)),
                                                     att = "ecoregionGroup")[seedingData$pixelIndex]]
       seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
 
@@ -1692,8 +1692,8 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   }
 
   ## MEAN NO. PIXELS PER LEADING SPECIES
-  vtm <- raster::mask(sim$vegTypeMap, sim$studyAreaReporting)
-  freqs <- table(na.omit(factorValues2(vtm, vtm[], att = 2)))
+  vtm <- mask(sim$vegTypeMap, sim$studyAreaReporting)
+  freqs <- table(na.omit(factorValues2(vtm, as.vector(vtm[]), att = 2)))
   tabl <- as.vector(freqs)
   summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)),
                                   leadingType = names(freqs),
@@ -1822,7 +1822,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
 
   if (is.null(sim$reproductionMap)) {
     reproductionMapForPlot <- biomassMapForPlot
-    reproductionMapForPlot[!is.na(reproductionMapForPlot)][] <- 0
+    reproductionMapForPlot[!is.na(as.vector(reproductionMapForPlot[]))][] <- 0
   } else {
     reproductionMapForPlot <- raster::mask(sim$reproductionMap, sim$studyAreaReporting)
   }
