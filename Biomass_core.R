@@ -2030,13 +2030,13 @@ CohortAgeReclassification <- function(sim) {
   if (needRTM) {
   if (is.null(sim$rawBiomassMap)) {
     rawBiomassMapURL <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
-                               "canada-forests-attributes_attributs-forests-canada/",
-                               "2001-attributes_attributs-2001/",
-                               "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
-    rawBiomassMapFilename <- "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif"
-    httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-      rawBiomassMap <- prepRawBiomassMap(url = rawBiomassMapURL,
-                                         studyAreaName = P(sim)$.studyAreaName,
+                                 "canada-forests-attributes_attributs-forests-canada/",
+                                 "2001-attributes_attributs-2001/",
+                                 "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
+
+      httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
+        rawBiomassMap <- prepRawBiomassMap(url = rawBiomassMapURL,
+                                           studyAreaName = P(sim)$.studyAreaName,
                                          cacheTags = cacheTags,
                                          to = sim$studyArea,
                                          projectTo = NA,  ## don't project to SA
