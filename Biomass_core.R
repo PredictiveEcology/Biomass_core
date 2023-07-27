@@ -2027,7 +2027,7 @@ CohortAgeReclassification <- function(sim) {
     }
   }
 
-
+  if (needRTM) {
   if (is.null(sim$rawBiomassMap)) {
     rawBiomassMapURL <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
                                "canada-forests-attributes_attributs-forests-canada/",
@@ -2062,10 +2062,10 @@ CohortAgeReclassification <- function(sim) {
                             destinationPath = dPath,
                             templateRas = rawBiomassMap,
                             studyAreaName = P(sim)$.studyAreaName,
-                            cacheTags = cacheTags)
-  sim$rasterToMatch <- RTMs$rasterToMatch
-  rm(RTMs)
-
+                              cacheTags = cacheTags)
+    sim$rasterToMatch <- RTMs$rasterToMatch
+    rm(RTMs)
+  }
 
   if (!.compareCRS(sim$studyArea, sim$rasterToMatch)) {
     warning(paste0("studyArea and rasterToMatch projections differ.\n",
