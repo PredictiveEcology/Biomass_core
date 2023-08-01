@@ -19,6 +19,7 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_core.Rmd"),
+  loadOrder = list(after = c("Biomass_speciesParameters")),
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table",
                   "dplyr", "fpCompare", "ggplot2", "grid",
                   "parallel", "purrr", "quickPlot", "raster", "Rcpp",
