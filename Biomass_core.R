@@ -819,7 +819,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   if (haveAllRasters) {
     rastersToCompare <- mget(rasterNamesToCompare, envir(sim))
-    do.call(.compareRas, append(list(x = sim$rasterToMatch, res = TRUE), rastersToCompare))
+    do.call(.compareRas, append(list(ras1 = sim$rasterToMatch, res = TRUE), rastersToCompare))
   } else {
     stop("Expecting 3 rasters at this point: sim$biomassMap, sim$ecoregionMap, ",
          "sim$pixelGroupMap and they must match sim$rasterToMatch")
