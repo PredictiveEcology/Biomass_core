@@ -1,17 +1,32 @@
-#' spinUp
+#' Spin-up cohort biomasses
 #'
-#' @param fnList TODO: remove this once the functions are in the package!
-#' @param cohortData TODO: description needed
-#' @param calibrate TODO: description needed
-#' @param successionTimestep TODO: description needed
-#' @param spinupMortalityfraction TODO: description needed
-#' @param species TODO: description needed
+#' @param cohortData A `data.table` with columns: `pixelGroup`, `ecoregionGroup`,
+#'   `speciesCode`, and optionally `age`, `B`, `mortality`, `aNPPAct`, and `sumB`.
+#' @param calibrate logical. If TRUE, an additional data.table with extra
+#'   information is output (see details)
+#' @param successionTimestep The time between successive seed dispersal events.
+#'   In LANDIS-II, this is called "Succession Timestep".
+#' @param spinupMortalityfraction `numeric`. Fraction of biomass lost during spin-up
+#'   stage, to simulate some biomass decay.
+#' @param species a `data.table` with species traits such as longevity, shade tolerance, etc.
+#'   Must have column `speciesCode`, with species names/IDs.
 #'
-#' @return TODO: description needed
+#' @details This function spins-up cohort biomass from known cohort ages in
+#'   `cohortData`, by growing cohorts sequentially from the oldest to the youngest
+#'   in each `pixelGroup`.
+#'   If `calibrate` is TRUE an additional data.table with the following information
+#'   is output:
+#'   * iniBiomass (the initial biomass of the cohort) before mortality/growth
+#'   are implemented (i.e., B + asInteger(mortality - aNPPAct))
+#'   * ANPP (rounded `aNPPact`)
+#'   * Mortality (rounded `mortality`)
+#'   * finBiomass (final biomass), which is B in `cohortData`
+#'
+#' @return a `list` with a modified `cohortData` table and, if `calibrate` is
+#'  TRUE, the calibration output.
 #'
 #' @export
 #' @importFrom data.table data.table set setkey
-#'
 spinUp <- compiler::cmpfun(function(cohortData, calibrate, successionTimestep,
                                     spinupMortalityfraction, species) {
   maxAge <- max(cohortData$age, na.rm = TRUE) # determine the pre-simulation length

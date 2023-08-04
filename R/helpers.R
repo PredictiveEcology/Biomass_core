@@ -2,14 +2,24 @@
 #'
 #' A LANDIS-II speciesEcoregion file has a column called "year", which specifies the
 #' year after which the speciesEcoregion values should be used. This function
-#' compares the `currentTime` in the simulation with the `year` column in the speciesEcoregion
-#' file and updates accordingly, if needed.
+#' compares the `currentTime` in the simulation with the `year` column in the `speciesEcoregion`
+#' table and updates accordingly, if needed.
 #'
-#' @param speciesEcoregion TODO: description needed
-#' @param currentTime TODO: description needed
-#' @param cohortData \code{data.table} TODO: description needed
+#' @param speciesEcoregion A `data.table` with `species`-`ecoregion`-specific species trait values.
+#' Ecoregion refers to "ecolocation", a categorical variable grouping sites with similar biophysical
+#' characteristics. The table should have at least the following columns: `speciesCode` and
+#' `ecoregionGroup`, character representation of species and ecoregion groups respectively,
+#' `maxB` the maximum biomass for the species in a given 'ecoregion', `maxANPP` the maximum
+#' aboveground net primary productivity and `SEP` the species establishment probability.
+#' May contain columns `inflationFactor`  (used to adjust `maxB`) and `mANPPproportion`
+#' (used to calculate `maxANPP`).
+#' @param currentTime `integer`/`numeric`. The current yeat/time-step (as in `time(sim)`)
+#' @param cohortData A `data.table` with columns: `pixelGroup`, `ecoregionGroup`,
+#'   `speciesCode`, and optionally `age`, `B`, `mortality`, `aNPPAct`, and `sumB`.
 #'
 #' @return updated cohort \code{data.table}
+#'
+#' @references Scheller, R.M. & Miranda, B.R. (2015). LANDIS-II Biomass Succession v3.2 Extension  – User Guide.
 #'
 #' @export
 #' @importFrom data.table setkey
@@ -52,12 +62,16 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, coho
 
 #' updateSpeciesAttributes
 #'
-#' TODO: description and title needed
+#' Add species traits to `cohortData`
 #'
-#' @param species TODO: description needed
-#' @param cohortData \code{data.table} TODO: description needed
+#' @param species a `data.table` with species traits such as longevity, shade tolerance, etc.
+#'   Must have column `speciesCode`, with species names/IDs
+#' @param cohortData A `data.table` with columns: `pixelGroup`, `ecoregionGroup`,
+#'   `speciesCode`, and optionally `age`, `B`, `mortality`, `aNPPAct`, and `sumB`.
 #'
 #' @return updated cohort \code{data.table}
+#'
+#' @references Scheller, R.M. & Miranda, B.R. (2015). LANDIS-II Biomass Succession v3.2 Extension  – User Guide.
 #'
 #' @export
 #' @importFrom data.table setkey
@@ -90,15 +104,21 @@ updateSpeciesAttributes <- function(species, cohortData) {
 #'
 #' Calculate the total stand biomass that does not include the new cohorts.
 #' The new cohorts are defined as the age younger than simulation time step.
-#' TODO: update description.
 #'
-#' @param cohortData \code{data.table} TODO: description needed
-#' @param lastReg TODO: description needed
-#' @param currentTime TODO: description needed -- rename this to 'time' to match others
-#' @param successionTimestep TODO: description needed
-#' @param doAssertion TODO: description needed (see LandR for description)
+#' @param cohortData A `data.table` with columns: `pixelGroup`, `ecoregionGroup`,
+#'   `speciesCode`, and optionally `age`, `B`, `mortality`, `aNPPAct`, and `sumB`.
+#' @param lastReg `integer`/`numeric`. The last year/time-step when regeneration from
+#'   seeding occurred.
+#' @param currentTime `integer`/`numeric`. The current yeat/time-step (as in `time(sim)`)
+#' @param successionTimestep The time between successive seed dispersal events.
+#'   In LANDIS-II, this is called "Succession Timestep".
+#' @param doAssertion A logical indicating whether some internal tests should be run to
+#'                    ensure the function is running correctly.
+#'                    Default: `getOption("LandR.assertions", TRUE)`.
 #'
-#' @return updated cohort \code{data.table}
+#' @return updated `cohortData` \code{data.table}
+#'
+#' @references Scheller, R.M. & Miranda, B.R. (2015). LANDIS-II Biomass Succession v3.2 Extension  – User Guide.
 #'
 #' @export
 #' @importFrom data.table copy rbindlist setkey
@@ -133,15 +153,25 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
   return(cohortData)
 })
 
-#' calculateAgeMortality
+#' Calculate age-related mortality
 #'
-#' TODO: description and title needed
+#' Calculate the amount of biomass lost to ageing of cohorts.
 #'
-#' @param cohortData \code{data.table} TODO: description needed
-#' @param stage TODO: description needed
-#' @param spinupMortalityfraction TODO: description needed
+#' @param cohortData A `data.table` with columns: `pixelGroup`, `ecoregionGroup`,
+#'   `speciesCode`, `age`, `B`, `longevity` and `mortalityshape`
+#' @param stage `character`. Either "spinup" or "nonSpinup", depending on whether
+#'   the functions is running during spin-up stage or not. See details.
+#' @param spinupMortalityfraction `numeric`. Fraction of biomass lost during spin-up
+#'   stage, to simulate some biomass decay.
 #'
-#' @return updated cohort \code{data.table}
+#' @details Age related mortality (M below) is calculated every year as:
+#'  M = B \* (exp((age / longevity) \* mortalityshape) / exp(mortalityshape))
+#'  During spin-up, additional mortality is calculated as:
+#'  M = M + B * spinupMortalityfraction
+#'
+#' @return updated `cohortData` \code{data.table}
+#'
+#' @references Scheller, R.M. & Miranda, B.R. (2015). LANDIS-II Biomass Succession v3.2 Extension  – User Guide.
 #'
 #' @export
 #' @importFrom data.table setkey
@@ -161,14 +191,33 @@ calculateAgeMortality <- function(cohortData, stage = "nonSpinup", spinupMortali
   return(cohortData)
 }
 
-#' calculateANPP
+#' Calculate above-ground net primary productivity (ANPP)
 #'
-#' TODO: description and title needed
+#' Calculate cohort-level primary productivity (i.e. biomass gains)
 #'
-#' @param cohortData \code{data.table} TODO: description needed
-#' @param stage TODO: description needed
+#' @param cohortData A `data.table` with columns: `pixelGroup`, `ecoregionGroup`,
+#'   `speciesCode`, `age`, `B`, `bAP`, `bPM`, `growthcurve` and `maxANPP`
+#' @param stage `character`. Either "spinup" or "nonSpinup", depending on whether
+#'   the functions is running during spin-up stage or not. See details.
+#'
+#' @details ANPP is calculated yearly, per cohort as:
+#'   aNPPAct = maxANPP \* exp(1) \* (bAPExponentGrowthCurve) \* exp(-(bAPExponentGrowthCurve)) \* bPM
+
+#'   where,
+#'   bAPExponentGrowthCurve = bAP^growthcurve, and B is the cohort Biomass and
+#'   maxB is the cohort's maximum biomass.
+#'   If aNPPAct > maxANPP\*bPM, then maxANPP\*bPM is used as
+#'   aNPPAct.
+#'
+#'   See `calculateCompetition` for details on the calculation of
+#'   bAP and bPM.
+#'
+#'   ANPP calculations during spin-up are identical, but
+#'   bypass non-initialised cohorts (age = 0).
 #'
 #' @return updated cohort \code{data.table}
+#'
+#' @references Scheller, R.M. & Miranda, B.R. (2015). LANDIS-II Biomass Succession v3.2 Extension  – User Guide.
 #'
 #' @export
 #' @importFrom data.table set
@@ -187,14 +236,34 @@ calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
   return(cohortData)
 })
 
-#' calculateGrowthMortality
+#' Calculate developmental mortality
 #'
-#' TODO: description and title needed
+#' Calculate cohort-level development-related mortality, this is
+#'  the loss of biomass from individual tree and branch loss (but
+#'  not leaf litter). Development mortality increases as a cohort
+#'  ages and plateaus at maturity. It is also constrained by species
+#'  maximum biomass (maxB) and competion.
 #'
-#' @param cohortData \code{data.table} TODO: description needed
-#' @param stage TODO: description needed
+#' @param cohortData A `data.table` with columns: `pixelGroup`, `ecoregionGroup`,
+#'   `speciesCode`, `age`, `B`, `bAP`, `bPM`, and `maxANPP`
+#' @param stage `character`. Either "spinup" or "nonSpinup", depending on whether
+#'   the functions is running during spin-up stage or not. See details.
+#'
+#' @details Developmental mortality (mBio) is calculated yearly as:
+#'  if bAP <= 1
+#'  mBio = maxANPP \* (2 \* bAP) / (1 + bAP) \* bPM
+#'  if bAP > 1
+#'  mBio = maxANPP \* bPM
+#'
+#'  See `calculateCompetition` for details on the calculation of
+#'  bAP and bPM.
+#'
+#'  Development mortality calculations during spin-up are identical, but
+#'  bypass non-initialised cohorts (age = 0).
 #'
 #' @return updated cohort \code{data.table}
+#'
+#' @references Scheller, R.M. & Miranda, B.R. (2015). LANDIS-II Biomass Succession v3.2 Extension  – User Guide.
 #'
 #' @export
 #' @importFrom data.table set
@@ -216,14 +285,32 @@ calculateGrowthMortality <- compiler::cmpfun(function(cohortData, stage = "nonSp
   return(cohortData)
 })
 
-#' calculateCompetition
+#' Calculate competition
 #'
-#' TODO: description and title needed
+#' Calculate cohort biomass reduction due to competition
 #'
-#' @param cohortData \code{data.table} TODO: description needed
-#' @param stage TODO: description needed
+#' @param cohortData A `data.table` with columns: `pixelGroup`, `ecoregionGroup`,
+#'   `speciesCode`, `age`, `B`, `sumB` (total biomass), and `maxB`
+#' @param stage `character`. Either "spinup" or "nonSpinup", depending on whether
+#'   the functions is running during spin-up stage or not. See details.
+#'
+#' @details Calculates the potential biomass (bPot), the ratio of cohort
+#'  biomass (B) to bPot (bAP) and bPM (competition):
+#'  bPot = maxB - sumB + B
+#'  bAP = B / bPot
+#'  bPM = cMultiplier / cMultTotal
+#'  with
+#'  cMultiplier = B^0.95 (or 1, if B^0.95 < 1)
+#'  cMultTotal = sum of cMultiplier across all cohorts
+#'  where sumB is the total cohort biomass in the pixel and maxB is the species
+#'  (i.e. focal cohort's) maximum biomass.
+#'
+#'  Competition calculations during spin-up are identical, but
+#'  bypass non-initialised cohorts (age = 0).
 #'
 #' @return updated cohort \code{data.table}
+#'
+#' @references Scheller, R.M. & Miranda, B.R. (2015). LANDIS-II Biomass Succession v3.2 Extension  – User Guide.
 #'
 #' @export
 #' @importFrom data.table key setkeyv
@@ -262,6 +349,13 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
   return(cohortData)
 })
 
+
+#' Change `data.table` key
+#'
+#' @param obj a `data.table`
+#' @param key character vector of columns to key `obj` by.
+#'
+#' @importFrom data.table setkeyv key
 checkAndChangeKey <- function(obj, key) {
   oldKey <- key(obj)
   oldKeyWasFine <- !identical(oldKey, key)
@@ -274,6 +368,19 @@ checkAndChangeKey <- function(obj, key) {
   returnKey
 }
 
+#' Calculate a maximum group size to break a `data.table` according to
+#'  a memory limit.
+#'
+#' @param maxLen numeric. A maximum number of rows for a group
+#' @param maxMem maximum memory.
+#' @param startClockTime sim$._startClockTime
+#' @param groupSize current group size
+#' @param modEnv module environment (`mod`).
+#'
+#' @return numeric a group size.
+#' @export
+#'
+#' @examples
 maxRowsDT <- function(maxLen, maxMem, startClockTime, groupSize,
                       modEnv) {
 

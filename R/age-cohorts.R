@@ -1,3 +1,28 @@
+#' Reclassify cohort ages
+#'
+#' Collapses cohorts into age bins defined by `successionTimestep`,
+#'  thereby reducing the number of cohorts in a `pixelGroup`.
+#'
+#' @param cohortData A `data.table` with columns: `pixelGroup`, `ecoregionGroup`,
+#'   `speciesCode`, and optionally `age`, `B`, `mortality`, `aNPPAct`, and `sumB`.
+#' @param successionTimestep The time between successive seed dispersal events.
+#'   In LANDIS-II, this is called "Succession Timestep".
+#' @param stage `character`. Either "spinup" or "nonSpinup", depending on whether
+#'   the functions is running during spin-up stage or not. See details.
+#' @param byGroups columns in `cohortData` defining that will define groups of
+#'   cohorts whose ages will be collapsed.
+#'
+#' @detail at each step defined by `successionTimestep` (i.e. if `successionTimestep` = 10,
+#'   at every 10 years), cohorts are collapsed into age bins defined by
+#'   `successionTimestep` (i.e. if `successionTimestep` = 10, 10-year bins). When
+#'   collapsing cohorts, their biomass (B), lost biomass (mortality) and primary
+#'   productivity (aNPPact) are summed.
+#'
+#' @return
+#' @export
+#'
+#' @importFrom data.table rbindlist
+#' @importFrom LandR asInteger
 ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep, stage,
                                                  byGroups = c("pixelGroup", "speciesCode", "age")) {
 
