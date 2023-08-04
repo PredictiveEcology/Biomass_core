@@ -1310,11 +1310,11 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     sim$cohortData[age == 1, age := age + 1L]
 
     if (isTRUE(getOption("LandR.assertions"))) {
-
       if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = P(sim)$cohortDefinitionCols)))) {
         stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
       }
     }
+
     LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   }
   return(invisible(sim))
@@ -2099,14 +2099,16 @@ CohortAgeReclassification <- function(sim) {
     sim$sufficientLight <- data.frame(sufficientLight, stringsAsFactors = FALSE)
   }
 
+  ## check parameter consistency across modules
+  paramCheckOtherMods(sim, "cohortDefinitionCols", ifSetButDifferent = "error")
+  paramCheckOtherMods(sim, "initialB", ifSetButDifferent = "error")
+  paramCheckOtherMods(sim, "sppEquivCol", ifSetButDifferent = "error")
+  paramCheckOtherMods(sim, "vegLeadingProportion", ifSetButDifferent = "error")
+
   ## make sppEquiv table and associated columns, vectors
   ## do not use suppliedElsewhere here as we need the tables to exist (or not)
   ## already (rather than potentially being supplied by a downstream module)
   ## the function checks whether the tables exist internally.
-  ## check parameter consistency across modules
-  paramCheckOtherMods(sim, "sppEquivCol", ifSetButDifferent = "error")
-  paramCheckOtherMods(sim, "vegLeadingProportion", ifSetButDifferent = "error")
-
   sppOuts <- sppHarmonize(sim$sppEquiv, sim$sppNameVector, P(sim)$sppEquivCol,
                           sim$sppColorVect, P(sim)$vegLeadingProportion, sim$studyArea)
 
