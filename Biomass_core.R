@@ -785,7 +785,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     sim$minRelativeB <- makeMinRelativeB(pixelCohortData)
     sim$pixelGroupMap <- makePixelGroupMap(pixelCohortData, sim$rasterToMatch)
 
-    compareRaster(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, orig = TRUE)
+    .compareRas(sim$biomassMap, sim$ecoregionMap, sim$pixelGroupMap, sim$rasterToMatch, res = TRUE)
 
     ## make ecoregionGroup a factor and export speciesEcoregion to sim
     speciesEcoregion[, ecoregionGroup := factor(as.character(ecoregionGroup))]
@@ -819,7 +819,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   if (haveAllRasters) {
     rastersToCompare <- mget(rasterNamesToCompare, envir(sim))
-    do.call(compareRaster, append(list(x = sim$rasterToMatch, orig = TRUE), rastersToCompare))
+    do.call(.compareRas, append(list(x = sim$rasterToMatch, res = TRUE), rastersToCompare))
   } else {
     stop("Expecting 3 rasters at this point: sim$biomassMap, sim$ecoregionMap, ",
          "sim$pixelGroupMap and they must match sim$rasterToMatch")
