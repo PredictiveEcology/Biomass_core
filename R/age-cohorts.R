@@ -17,6 +17,7 @@
 #'   `successionTimestep` (i.e. if `successionTimestep` = 10, 10-year bins). When
 #'   collapsing cohorts, their biomass (B), lost biomass (mortality) and primary
 #'   productivity (aNPPact) are summed.
+#'   If `stage == "spinup"` cohorts are not collapsed.
 #'
 #' @return
 #' @export
