@@ -91,7 +91,7 @@ spinUp <- compiler::cmpfun(function(cohortData, calibrate, successionTimestep,
         spoutput <- cohortData[origAge >= presimuT, .(pixelGroup, speciesCode, age,
                                                       iniBiomass = B + asInteger(mortality - aNPPAct),
                                                       ANPP = round(aNPPAct, 1),
-                                                      Mortality = round(mortality, 1),finBiomass = B)]
+                                                      Mortality = round(mortality, 1), finBiomass = B)]
         spoutput <- setkey(spoutput, speciesCode)[
           setkey(species[, .(species, speciesCode)], speciesCode), nomatch = 0][
             , speciesCode := species][, species := NULL]
