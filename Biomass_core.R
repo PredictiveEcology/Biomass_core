@@ -214,7 +214,7 @@ defineModule(sim, list(
                               "the entire `P(sim)$sppEquivCol` column in `sppEquiv`.",
                               "See `LandR::sppEquivalencies_CA`.")),
     expectsInput("studyArea", "sfc",
-                 desc = paste("Polygon to use as the study area. Must be provided by the user")),
+                 desc = paste("Polygon to use as the study area. Must be supplied by the user. Can also be a SpatVector.")),
     expectsInput("studyAreaReporting", "sfc",
                  desc = paste("multipolygon (typically smaller/unbuffered than studyArea) to use for plotting/reporting.",
                               "Defaults to `studyArea`.")),
