@@ -177,11 +177,13 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
 #' @importFrom data.table setkey
 calculateAgeMortality <- function(cohortData, stage = "nonSpinup", spinupMortalityfraction) {
   # for age-related mortality calculation
+  stage <- match.arg(stage, choices = c("spinup", "nonSpinup"))
   if (stage == "spinup") {
     cohortData[age > 0, mAge := B*(exp((age) / longevity*mortalityshape) / exp(mortalityshape))]
     cohortData[age > 0, mAge := mAge + B*spinupMortalityfraction]
     cohortData[age > 0, mAge := pmin(B, mAge)]
-  } else {
+  }
+  if (stage == "nonSpinup") {
     set(cohortData, NULL, "mAge",
         cohortData$B * (exp((cohortData$age) / cohortData$longevity * cohortData$mortalityshape) /
                           exp(cohortData$mortalityshape)))
@@ -222,11 +224,14 @@ calculateAgeMortality <- function(cohortData, stage = "nonSpinup", spinupMortali
 #' @export
 #' @importFrom data.table set
 calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
+  stage <- match.arg(stage, choices = c("spinup", "nonSpinup"))
+
   if (stage == "spinup") {
     cohortData[age > 0, aNPPAct := maxANPP * exp(1) * (bAP^growthcurve) *
                  exp(-(bAP^growthcurve)) * bPM]
     cohortData[age > 0, aNPPAct := pmin(maxANPP * bPM, aNPPAct)]
-  } else {
+  }
+  if (stage == "nonSpinup") {
     bAPExponentGrowthCurve <- cohortData$bAP^cohortData$growthcurve
     aNPPAct <- cohortData$maxANPP * exp(1) * (bAPExponentGrowthCurve) *
       exp(-(bAPExponentGrowthCurve)) * cohortData$bPM
@@ -269,12 +274,15 @@ calculateANPP <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
 #' @importFrom data.table set
 #' @importFrom fpCompare %>>% %<=%
 calculateGrowthMortality <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
+  stage <- match.arg(stage, choices = c("spinup", "nonSpinup"))
+
   if (stage == "spinup") {
     cohortData[age > 0 & bAP %>>% 1.0, mBio := maxANPP*bPM]
     cohortData[age > 0 & bAP %<=% 1.0, mBio := maxANPP*(2*bAP) / (1 + bAP)*bPM]
     cohortData[age > 0, mBio := pmin(B, mBio)]
     cohortData[age > 0, mBio := pmin(maxANPP*bPM, mBio)]
-  } else {
+  }
+  if (stage == "nonSpinup") {
     cohortData[bAP %>>% 1.0, mBio := maxANPP*bPM]
     cohortData[bAP %<=% 1.0, mBio := maxANPP*(2*bAP)/(1 + bAP)*bPM]
     set(cohortData, NULL, "mBio",
@@ -315,6 +323,8 @@ calculateGrowthMortality <- compiler::cmpfun(function(cohortData, stage = "nonSp
 #' @export
 #' @importFrom data.table key setkeyv
 calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup") {
+  stage <- match.arg(stage, choices = c("spinup", "nonSpinup"))
+
   # two competition indics are calculated bAP and bPM
   if (stage == "spinup") {
     cohortData[age > 0, bPot := pmax(1, maxB - sumB + B)]
@@ -324,8 +334,9 @@ calculateCompetition <- compiler::cmpfun(function(cohortData, stage = "nonSpinup
     cohortData[age > 0, cMultTotal := sum(cMultiplier), by = pixelGroup]
     cohortData[age > 0, bPM := cMultiplier / cMultTotal]
     set(cohortData, NULL, c("cMultiplier", "cMultTotal"), NULL)
-  } else {
+  }
 
+  if (stage == "nonSpinup") {
     bPot <- pmax(1, cohortData$maxB - cohortData$sumB + cohortData$B)  ## differs from manual, follows source code
     set(cohortData, NULL, "bAP", cohortData$B/bPot)
     set(cohortData, NULL, "cMultiplier", pmax(cohortData$B^0.95, 1))
