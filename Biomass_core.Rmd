@@ -388,8 +388,8 @@ further detail.
 \blandscape
 
 ```{r invariantSpptraits, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
-tab <- read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
-                 colNames = TRUE, sep.names = " ")
+tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
+                           colNames = TRUE, sep.names = " ")
 caption <- paste("Example of an invariant species traits table (the",
                  "`species` table object in the module), with species (ref:Abie-sp),",
                  "(ref:Pice-eng), (ref:Pice-gla), (ref:Pinu-sp), (ref:Popu-sp) and (ref:Pseud-men).",
