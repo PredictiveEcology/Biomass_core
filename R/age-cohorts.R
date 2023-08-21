@@ -19,6 +19,8 @@
 #'   productivity (aNPPact) are summed.
 #'   If `stage == "spinup"` cohorts are not collapsed.
 #'
+#' @references Scheller, R.M. & Miranda, B.R. (2015). LANDIS-II Biomass Succession v3.2 Extension  – User Guide.
+#'
 #' @return
 #' @export
 #'
