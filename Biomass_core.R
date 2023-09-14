@@ -964,7 +964,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     set(pixelAll, NULL, "uniqueSumB", asInteger(pixelAll[["uniqueSumB"]]))
 
   if (all(!is.na(P(sim)$.plots))) {
-    simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
+    sim$simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
   colsToKeep <- unique(c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B"))
