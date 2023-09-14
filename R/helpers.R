@@ -102,10 +102,7 @@ updateSpeciesAttributes <- function(species, cohortData) {
 #'
 #' @export
 #' @importFrom data.table copy rbindlist setkey
-calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, successionTimestep,
-                                           doAssertion = getOption("LandR.assertions", TRUE)) {
-  nrowCohortData <- NROW(cohortData)
-
+calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, successionTimestep) {
   is2YrsBeforeSuccessionTS <- (currentTime == lastReg + successionTimestep - 2)
 
   if (is2YrsBeforeSuccessionTS) {

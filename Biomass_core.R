@@ -1161,7 +1161,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                      lastReg = sim$lastReg,
                                      currentTime = time(sim),
                                      successionTimestep = P(sim)$successionTimestep)
-      startNumCohorts <- NROW(subCohortData)
 
       #########################################################
       # Die from old age or low biomass -- rm from cohortData
@@ -1327,9 +1326,9 @@ Dispersal <- function(sim) {
   # tempInactivePixel <- c(sim$inactivePixelIndex, pixelsFromCurYrBurn)
 
   if (P(sim)$seedingAlgorithm == "noDispersal") {
-    sim <- NoDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
+    sim <- NoDispersalSeeding(sim, tempActivePixel)
   } else if (P(sim)$seedingAlgorithm == "universalDispersal") {
-    sim <- UniversalDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
+    sim <- UniversalDispersalSeeding(sim, tempActivePixel)
   } else if (P(sim)$seedingAlgorithm == "wardDispersal") {
     sim <- WardDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
   } else if (!P(sim)$seedingAlgorithm == "noSeeding") {
@@ -1340,7 +1339,7 @@ Dispersal <- function(sim) {
   return(invisible(sim))
 }
 
-NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFromCurYrBurn) {
+NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   # if (sim$lastFireYear == round(time(sim))) { # if current year is both fire year and succession year
   #   # find new active pixel that remove successful postfire regeneration
   #   # since this is on site regeneration, all the burnt pixels can not seeding

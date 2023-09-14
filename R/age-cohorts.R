@@ -21,7 +21,7 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
     # NOTE: We do not need to squash if there is nothing to squash, i.e., cases with 1 species in a pixelGroup that is <successionTimestep old,
     #       don't need to be squashed.
     anyDuplicates <- duplicated(targetData, by = byGroupsNoAge)
-    cdColNames <- colnames(cohortData)
+
     message("  Setting all ages <= ", successionTimestep, " to ", successionTimestepPlusOne)
     if (any(anyDuplicates)) {
       # pull out only duplicated types. NOTE "which = TRUE" gives only the indices of the joined rows;
