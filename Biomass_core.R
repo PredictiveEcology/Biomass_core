@@ -1236,7 +1236,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         #get arguments from sim environment - this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
         #as long as the function is called 'calculateClimateEffect', represents a multiplier, and uses growth, mortality and age limits
         cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
-          arg <-  eval(x, envir = sim)
+          arg <- eval(x, envir = sim)
         })
         names(cceArgs) <- paste(sim$cceArgs)
 
