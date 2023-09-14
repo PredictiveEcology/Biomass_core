@@ -1554,9 +1554,9 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
                               pixelGroupMap = reducedPixelGroupMap,
                               plot.it = FALSE,
                               successionTimestep = P(sim)$successionTimestep,
-                              verbose = getOption("LandR.verbose", TRUE) > 0)
+                              verbose = verbose > 0)
 
-    if (getOption("LandR.verbose", TRUE) > 0) {
+    if (verbose > 0) {
       emptyForestPixels <- sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]
       # unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
       seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
@@ -1590,7 +1590,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
       LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
 
       seedingData <- seedingData[runif(nrow(seedingData)) <= establishprob, ]
-      if (getOption("LandR.verbose", TRUE) > 0) {
+      if (verbose > 0) {
         # seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
         seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
                                                  on = "pixelIndex", nomatch = 0], by = "pixelIndex")
