@@ -965,7 +965,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     set(pixelAll, NULL, "uniqueSumB", asInteger(pixelAll[["uniqueSumB"]]))
 
   if (all(!is.na(P(sim)$.plots))) {
-    simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
+    sim$simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
   colsToKeep <- unique(c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B"))
@@ -1162,7 +1162,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
                                      lastReg = sim$lastReg,
                                      currentTime = time(sim),
                                      successionTimestep = P(sim)$successionTimestep)
-      startNumCohorts <- NROW(subCohortData)
 
       #########################################################
       # Die from old age or low biomass -- rm from cohortData
@@ -1238,7 +1237,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         #get arguments from sim environment - this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
         #as long as the function is called 'calculateClimateEffect', represents a multiplier, and uses growth, mortality and age limits
         cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
-          arg <-  eval(x, envir = sim)
+          arg <- eval(x, envir = sim)
         })
         names(cceArgs) <- paste(sim$cceArgs)
 
@@ -1328,9 +1327,9 @@ Dispersal <- function(sim) {
   # tempInactivePixel <- c(sim$inactivePixelIndex, pixelsFromCurYrBurn)
 
   if (P(sim)$seedingAlgorithm == "noDispersal") {
-    sim <- NoDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
+    sim <- NoDispersalSeeding(sim, tempActivePixel)
   } else if (P(sim)$seedingAlgorithm == "universalDispersal") {
-    sim <- UniversalDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
+    sim <- UniversalDispersalSeeding(sim, tempActivePixel)
   } else if (P(sim)$seedingAlgorithm == "wardDispersal") {
     sim <- WardDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
   } else if (!P(sim)$seedingAlgorithm == "noSeeding") {
@@ -1341,7 +1340,7 @@ Dispersal <- function(sim) {
   return(invisible(sim))
 }
 
-NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFromCurYrBurn) {
+NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   # if (sim$lastFireYear == round(time(sim))) { # if current year is both fire year and succession year
   #   # find new active pixel that remove successful postfire regeneration
   #   # since this is on site regeneration, all the burnt pixels can not seeding
@@ -1556,9 +1555,9 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
                               pixelGroupMap = reducedPixelGroupMap,
                               plot.it = FALSE,
                               successionTimestep = P(sim)$successionTimestep,
-                              verbose = getOption("LandR.verbose", TRUE) > 0)
+                              verbose = verbose > 0)
 
-    if (getOption("LandR.verbose", TRUE) > 0) {
+    if (verbose > 0) {
       emptyForestPixels <- sim$treedFirePixelTableSinceLastDisp[burnTime < time(sim)]
       # unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
       seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
@@ -1592,7 +1591,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
       LandR::assertCohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
 
       seedingData <- seedingData[runif(nrow(seedingData)) <= establishprob, ]
-      if (getOption("LandR.verbose", TRUE) > 0) {
+      if (verbose > 0) {
         # seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
         seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
                                                  on = "pixelIndex", nomatch = 0], by = "pixelIndex")
