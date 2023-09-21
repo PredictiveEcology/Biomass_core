@@ -1629,7 +1629,6 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
   assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol, sppColorVect = sim$sppColorVect)
-  checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
 
   ## BIOMASS, WEIGHTED AVERAGE AGE, AVERAGE ANPP
   ## AND AGE OF OLDEST COHORT PER SPECIES
@@ -1715,7 +1714,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     ## biomass by species
     Plots(df, fn = speciesBiomassPlot,
           filename = "biomass_by_species",
-          path = file.path(outputPath(sim), "figures"),
+          path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
           y = "BiomassBySpecies",
@@ -1728,7 +1727,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     names(cols3) <- summaryBySpecies1$leadingType
     Plots(summaryBySpecies1, fn = speciesLeadingPlot,
           filename = "N_pixels_leading",
-          path = file.path(outputPath(sim), "figures"),
+          path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
           cols = cols3, maxNpixels = maxNpixels)
@@ -1736,7 +1735,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     ## species age
     Plots(df, fn = speciesAgeANPPPlot,
           filename = "biomass-weighted_species_age",
-          path = file.path(outputPath(sim), "figures"),
+          path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
           y = "AgeBySppWeighted", cols = cols2,
@@ -1747,7 +1746,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     if (P(sim)$plotOverstory) {
       Plots(df, fn = speciesBiomassPlot,
             filename = "overstory_biomass",
-            path = file.path(outputPath(sim), "figures"),
+            path = figurePath(sim),
             types = mod$plotTypes,
             ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
             y = "overstoryBiomass",
@@ -1757,7 +1756,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     } else {
       Plots(df, fn = speciesAgeANPPPlot,
             filename = "oldest_cohorts",
-            path = file.path(outputPath(sim), "figures"),
+            path = figurePath(sim),
             types = mod$plotTypes,
             ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
             y = "OldestCohortBySpp", cols = cols2,
@@ -1766,7 +1765,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     ## aNPP by species
     Plots(df, fn = speciesAgeANPPPlot,
           filename = "total_aNPP_by_species",
-          path = file.path(outputPath(sim), "figures"),
+          path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
           y = "aNPPBySpecies", cols = cols2,
@@ -1889,8 +1888,6 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
 plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
 
-  checkPath(file.path(outputPath(sim), "figures"), create = TRUE)
-
   ## AVERAGE STAND BIOMASS/AGE/ANPP
   ## calculate acrosS pixels
   ## don't expand table, multiply by no. pixels - faster
@@ -1920,7 +1917,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
     Plots(df2, fn = landscapeAttributesPlot,
           types = mod$plotTypes,
           filename = "landscape_biomass_aNPP_max_age",
-          path = file.path(outputPath(sim), "figures"),
+          path = figurePath(sim),
           ggsaveArgs = list(width = 10, height = 5, units = "in", dpi = 300),
           varLabels = varLabels)
   }
@@ -2146,3 +2143,12 @@ CohortAgeReclassification <- function(sim) {
 
   return(invisible(sim))
 })
+
+
+## older versions of SpaDES.core don't have this function
+if (packageVersion("SpaDES.core") < "2.0.2.9001") {
+  figurePath <- function(sim) {
+    file.path(outputPath(sim), "figures", current(sim)[["moduleName"]]) |>
+      checkPath(create = TRUE)
+  }
+}
