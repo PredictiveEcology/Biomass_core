@@ -23,7 +23,7 @@ defineModule(sim, list(
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table",
                   "dplyr", "fpCompare", "ggplot2", "grid",
                   "parallel", "purrr", "quickPlot", "raster", "Rcpp",
-                  "R.utils", "scales", "sp", "tidyr",
+                  "R.utils", "scales", "sp", "terra", "tidyr",
                   # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
                   ## Excluded because loading is not necessary (just installation)
                   "PredictiveEcology/LandR@development (>= 1.1.0.9006)",
