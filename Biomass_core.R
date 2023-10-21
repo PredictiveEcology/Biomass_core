@@ -14,7 +14,6 @@ defineModule(sim, list(
   ),
   childModules = character(0),
   version = list(Biomass_core = numeric_version("1.3.10")),
-  spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -22,8 +21,8 @@ defineModule(sim, list(
   loadOrder = list(after = c("Biomass_speciesParameters")),
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table",
                   "dplyr", "fpCompare", "ggplot2", "grid",
-                  "parallel", "purrr", "quickPlot", "raster", "Rcpp",
-                  "R.utils", "scales", "sp", "terra", "tidyr",
+                  "parallel", "purrr", "quickPlot", "Rcpp",
+                  "R.utils", "scales", "terra", "tidyr",
                   # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
                   ## Excluded because loading is not necessary (just installation)
                   "PredictiveEcology/LandR@development (>= 1.1.0.9006)",
@@ -195,7 +194,7 @@ defineModule(sim, list(
                  desc = paste("Table of spatially-varying species traits (`maxB`, `maxANPP`,",
                               "`establishprob`), defined by species and `ecoregionGroup` (i.e. ecolocation).",
                               "Defaults to a dummy table based on dummy data of biomass, age, ecoregion and land cover class")),
-    expectsInput("speciesLayers", "RasterStack",
+    expectsInput("speciesLayers", "SpatRaster",
                  desc = paste("Percent cover raster layers of tree species in Canada.",
                               "Defaults to the Canadian Forestry Service, National Forest Inventory,",
                               "kNN-derived species cover maps from 2001 using a cover threshold of 10 -",
@@ -287,7 +286,7 @@ defineModule(sim, list(
                                "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs")),
     createsOutput("speciesEcoregion", "data.table",
                   desc = "Define the `maxANPP`, `maxB` and `SEP` change with both ecoregion and simulation time."),
-    createsOutput("speciesLayers", "RasterStack",
+    createsOutput("speciesLayers", "SpatRaster",
                   desc = paste("Species percent cover raster layers, based on input `speciesLayers` object.",
                                "Not changed by this module.")),
     # createsOutput("spinUpCache", "logical", desc = ""),
@@ -1798,7 +1797,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
     reproductionMapForPlot <- mask(sim$reproductionMap, sim$studyAreaReporting)
   }
 
-  levs <- raster::levels(sim$vegTypeMap)[[1]]
+  levs <- terra::cats(sim$vegTypeMap)[[1]]
   levelsName <- names(levs)[2]
   # facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
   #                                  att = levelsName,
@@ -1848,22 +1847,22 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   names(mapsToPlot) <- c("Leading vegetation")
 
   if (!is.null(reproductionMapForPlot)) {
-    mapsToPlot <- stack(reproductionMapForPlot, mapsToPlot)
+    mapsToPlot <- c(reproductionMapForPlot, mapsToPlot)
     names(mapsToPlot)[1] <- "Reproduction"
   }
 
   if (!is.null(mortalityMapForPlot)) {
-    mapsToPlot <- stack(mortalityMapForPlot, mapsToPlot)
+    mapsToPlot <- c(mortalityMapForPlot, mapsToPlot)
     names(mapsToPlot)[1] <- "Mortality"
   }
 
   if (!is.null(ANPPMapForPlot)) {
-    mapsToPlot <- stack(ANPPMapForPlot, mapsToPlot)
+    mapsToPlot <- c(ANPPMapForPlot, mapsToPlot)
     names(mapsToPlot)[1] <- "ANPP"
   }
 
   if (!is.null(biomassMapForPlot)) {
-    mapsToPlot <- stack(biomassMapForPlot, mapsToPlot)
+    mapsToPlot <- c(biomassMapForPlot, mapsToPlot)
     names(mapsToPlot)[1] <- "Biomass"
   }
 
@@ -2095,7 +2094,8 @@ CohortAgeReclassification <- function(sim) {
 
   ## get default species layers
   if (!suppliedElsewhere("speciesLayers", sim)) {
-    message("No RasterStack map of biomass X species is provided; using KNN")
+    message("No SpatRaster map of biomass X species is provided; using KNN to",
+            "create sim$speciesLayers")
     url <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
                   "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")
     sim$speciesLayers <- Cache(loadkNNSpeciesLayers,
