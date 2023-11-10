@@ -1102,22 +1102,22 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
     ## This tests for available memory and tries to scale the groupSize accordingly.
     ## It is, however, a very expensive operation. It now only does it once per simulation
-    mod$groupSize <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory,
-                               startClockTime = sim$._startClockTime, groupSize = mod$groupSize,
+    groupSize <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory,
+                               startClockTime = sim$._startClockTime, groupSize = groupSize,
                                modEnv = mod)
 
-    numGroups <- ceiling(length(pgs) / mod$groupSize)
+    numGroups <- ceiling(length(pgs) / groupSize)
     groupNames <- paste0("Group", seq(numGroups))
-    if (length(pgs) > mod$groupSize) {
+    if (length(pgs) > groupSize) {
       sim$cohortData <- cohortData[0, ]
       pixelGroups <- data.table(pixelGroupIndex = unique(cohortData$pixelGroup),
                                 temID = 1:length(unique(cohortData$pixelGroup)))
-      cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = mod$groupSize), max(pixelGroups$temID))))
+      cutpoints <- sort(unique(c(seq(1, max(pixelGroups$temID), by = groupSize), max(pixelGroups$temID))))
       # cutpoints <- c(1,max(pixelGroups$temID))
       if (length(cutpoints) == 1)
         cutpoints <- c(cutpoints, cutpoints + 1)
 
-      pixelGroups[, groups := rep(groupNames, each = mod$groupSize, length.out = NROW(pixelGroups))]
+      pixelGroups[, groups := rep(groupNames, each = groupSize, length.out = NROW(pixelGroups))]
     }
     for (subgroup in groupNames) {
       if (numGroups == 1) {
