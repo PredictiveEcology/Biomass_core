@@ -122,7 +122,7 @@ updateSpeciesAttributes <- function(species, cohortData) {
 #'
 #' @export
 #' @importFrom data.table copy rbindlist setkey
-calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, successionTimestep) {
+calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, successionTimestep, verbose) {
   is2YrsBeforeSuccessionTS <- (currentTime == lastReg + successionTimestep - 2)
 
   if (is2YrsBeforeSuccessionTS) {
@@ -145,7 +145,8 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
     }
 
   } else {
-    message("Skipping sumB calculation because there are no cohorts older than successionTimestep")
+    Require::messageVerbose("Skipping sumB calculation because there are no cohorts older than successionTimestep",
+                            verbose = verbose)
   }
   return(cohortData)
 })

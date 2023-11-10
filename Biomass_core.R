@@ -1119,6 +1119,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
       pixelGroups[, groups := rep(groupNames, each = groupSize, length.out = NROW(pixelGroups))]
     }
+    verboseCSB <- 1
     for (subgroup in groupNames) {
       if (numGroups == 1) {
         subCohortData <- cohortData
@@ -1135,7 +1136,8 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       subCohortData <- calculateSumB(cohortData = subCohortData,
                                      lastReg = sim$lastReg,
                                      currentTime = time(sim),
-                                     successionTimestep = P(sim)$successionTimestep)
+                                     successionTimestep = P(sim)$successionTimestep, verbose = verboseCSB)
+      verboseCSB <- 0 # don't re-message in other subgroup
 
       ## Die from old age or low biomass -- rm from cohortData ------------------
       keep <- (subCohortData$age <= subCohortData$longevity) & (subCohortData$B >=  P(sim)$minCohortBiomass)
