@@ -839,7 +839,10 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   ## Changed mechanism for active and inactive -- just use NA on ecoregionMap
   ecoregionMapNAs <- is.na(as.vector(sim$ecoregionMap[]))
-  ecoregionMapReporting <- mask(sim$ecoregionMap, sim$studyAreaReporting)
+
+  # very possible that sim$studyAreaReporting is not same CRS as sim$ecoregionMap
+  #  used to be `mask(...)` which would fail ... Eliot Dec 1, 2023
+  ecoregionMapReporting <- maskTo(sim$ecoregionMap, sim$studyAreaReporting)
   ecoregionMapReportingNAs <- is.na(as.vector(ecoregionMapReporting[]))
 
   sim$activePixelIndex <- which(!ecoregionMapNAs)                    ## store for future use
