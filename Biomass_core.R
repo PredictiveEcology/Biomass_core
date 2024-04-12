@@ -30,7 +30,7 @@ defineModule(sim, list(
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 2.0.2.9004)",
                   "PredictiveEcology/SpaDES.tools@development (>= 1.0.0.9001)",
-                  "ianmseddy/LandR.CS@master (>= 0.0.2.0002)"),
+                  "ianmseddy/LandR.CS@master (>= 0.0.3.9001)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -1220,6 +1220,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
         predObj <- calculateClimateEffect(cceArgs = cceArgs,
                                           cohortData = subCohortData,
+                                          year = time(sim),
                                           pixelGroupMap = sim$pixelGroupMap,
                                           gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
                                           gmcsMortLimits = P(sim)$gmcsMortLimits,
