@@ -1975,7 +1975,7 @@ CohortAgeReclassification <- function(sim) {
 ## .inputObjects ------------------------------------------------------------------------------
 .inputObjects <- compiler::cmpfun(function(sim) {
   cacheTags <- c(currentModule(sim), "otherFunctions:.inputObjects")
-  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
+  dPath <- asPath(inputPath(sim), 1)
   if (getOption("LandR.verbose", TRUE) > 0)
     message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
