@@ -152,7 +152,7 @@ defineModule(sim, list(
     expectsInput("cceArgs", "list",
                  desc = paste("A list of quoted objects used by the `growthAndMortalityDriver` `calculateClimateEffect` function")),
     expectsInput("cohortData", "data.table",
-                 desc = paste("`data.table` with cohort-level information on age and biomass, by pixelGroup and ecolocation",
+                 desc = paste("`data.table` with cohort-level information on age and biomass, by `pixelGroup` and ecolocation",
                               "(i.e., `ecoregionGroup`). If supplied, it must have the following columns: `pixelGroup` (integer),",
                               "`ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in $g/m^2$), `age` (integer in years)")),
     expectsInput("ecoregion", "data.table",
