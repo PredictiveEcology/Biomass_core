@@ -40,7 +40,7 @@ defineModule(sim, list(
                                  "'postGM' - after growth and mortality, 'postAging' - after aging,",
                                  "'end' - at the end of vegetation succesion events, before plotting and saving.",
                                  "The 'end' option is always active, being also the default option.",
-                                 "If NULL, then will skip all summaryBGM related events")),
+                                 "If NULL, then will skip all `summaryBGM` related events")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to `FALSE`"),
     defineParameter("cohortDefinitionCols", "character", c("pixelGroup", "speciesCode", "age", "ecoregionGroup", "B"), NA, NA,
