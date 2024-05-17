@@ -13,7 +13,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.3.10")),
+  version = list(Biomass_core = numeric_version("1.4.0")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -25,7 +25,7 @@ defineModule(sim, list(
                   "R.utils", "scales", "terra", "tidyr",
                   # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
                   ## Excluded because loading is not necessary (just installation)
-                  "PredictiveEcology/LandR@development (>= 1.1.0.9006)",
+                  "PredictiveEcology/LandR@development (>= 1.1.1)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/reproducible@development",
                   "PredictiveEcology/SpaDES.core@development (>= 2.0.2.9004)",
@@ -576,17 +576,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   if (is.null(sim$species))
     stop("'species' object must be provided")
   species <- as.data.table(sim$species) # The former setDT actually changed the vector
+  LandR::assertSpeciesTable(species)
   set(species, NULL, "speciesCode", factor(species$species, levels = unique(species$species))) # supply levels for speed
-  LandR::assertColumns(species,
-                       c(species = "character", Area = "factor", longevity = "integer",
-                         sexualmature = "integer", shadetolerance = "numeric",
-                         firetolerance = "integer", seeddistance_eff = "integer",
-                         seeddistance_max = "integer", resproutprob = "numeric",
-                         resproutage_min = "integer", resproutage_max = "integer",
-                         postfireregen = "factor", leaflongevity = "integer",
-                         wooddecayrate = "numeric", mortalityshape = "integer",
-                         growthcurve = "numeric", leafLignin = "numeric",
-                         hardsoft = "factor", speciesCode = "factor"))
   sim$species <- setkey(species, speciesCode)
 
   ## prepare dummy versions if not supplied --------------------------
@@ -1302,7 +1293,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 })
 
 Dispersal <- function(sim) {
-
   treedFirePixelTableCurYr <- sim$treedFirePixelTableSinceLastDisp[burnTime == time(sim)]
   pixelsFromCurYrBurn <- treedFirePixelTableCurYr$pixelIndex
   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% pixelsFromCurYrBurn)]
