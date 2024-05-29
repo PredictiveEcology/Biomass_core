@@ -23,14 +23,11 @@ defineModule(sim, list(
                   "dplyr", "fpCompare", "ggplot2", "grid",
                   "parallel", "purrr", "quickPlot", "Rcpp",
                   "R.utils", "scales", "terra", "tidyr",
-                  # "curl", "httr", ## called directly by this module, but pulled in by LandR (Sep 6th 2022).
-                  ## Excluded because loading is not necessary (just installation)
-                  "PredictiveEcology/LandR@development (>= 1.1.1)",
+                  "reproducible (>= 2.0.12)",
+                  "SpaDES.core (>= 2.0.2.9004)", "SpaDES.tools (>= 1.0.0.9001)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/reproducible@development",
-                  "PredictiveEcology/SpaDES.core@development (>= 2.0.2.9004)",
-                  "PredictiveEcology/SpaDES.tools@development (>= 1.0.0.9001)",
-                  "ianmseddy/LandR.CS@master (>= 0.0.2.0002)"),
+                  "ianmseddy/LandR.CS@master (>= 0.0.2.0002)",
+                  "PredictiveEcology/LandR@development (>= 1.1.1)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
