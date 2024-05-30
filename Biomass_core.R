@@ -23,7 +23,7 @@ defineModule(sim, list(
                   "dplyr", "fpCompare", "ggplot2", "grid",
                   "parallel", "purrr", "quickPlot", "Rcpp",
                   "R.utils", "scales", "terra", "tidyr",
-                  "reproducible (>= 2.0.12)",
+                  "reproducible (>= 2.1.0)",
                   "SpaDES.core (>= 2.0.2.9004)", "SpaDES.tools (>= 1.0.0.9001)",
                   "PredictiveEcology/pemisc@development",
                   "ianmseddy/LandR.CS@master (>= 0.0.2.0002)",
