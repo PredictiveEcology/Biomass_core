@@ -25,8 +25,8 @@ defineModule(sim, list(
                   "R.utils", "scales", "terra", "tidyr",
                   "reproducible (>= 2.1.0)",
                   "SpaDES.core (>= 2.0.2.9004)", "SpaDES.tools (>= 1.0.0.9001)",
-                  "PredictiveEcology/pemisc@development",
                   "ianmseddy/LandR.CS@master (>= 0.0.2.0002)",
+                  "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/LandR@development (>= 1.1.1)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
