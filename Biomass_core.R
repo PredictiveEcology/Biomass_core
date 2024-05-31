@@ -24,7 +24,7 @@ defineModule(sim, list(
                   "parallel", "purrr", "quickPlot", "Rcpp",
                   "R.utils", "scales", "terra", "tidyr",
                   "reproducible (>= 2.1.0)",
-                  "SpaDES.core (>= 2.0.2.9004)", "SpaDES.tools (>= 1.0.0.9001)",
+                  "SpaDES.core (>= 2.1.0)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@master (>= 0.0.2.0002)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/LandR@development (>= 1.1.1)"),
@@ -2139,12 +2139,3 @@ CohortAgeReclassification <- function(sim) {
 
   return(invisible(sim))
 })
-
-
-## older versions of SpaDES.core don't have this function
-if (packageVersion("SpaDES.core") < "2.0.2.9001") {
-  figurePath <- function(sim) {
-    file.path(outputPath(sim), "figures", current(sim)[["moduleName"]]) |>
-      checkPath(create = TRUE)
-  }
-}
