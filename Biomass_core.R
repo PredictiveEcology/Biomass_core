@@ -2111,11 +2111,16 @@ CohortAgeReclassification <- function(sim) {
   if (!suppliedElsewhere("species", sim)) {
     speciesTable <- getSpeciesTable(dPath = dPath, url = extractURL("species"),
                                     cacheTags = c(cacheTags, "speciesTable"))
+    tempSppEquiv <- if (!is.null(sim$speciesLayers)) {   ## may be supplied *after* and not exist yet
+      sim$sppEquiv[get(P(sim)$sppEquivCol) %in% names(sim$speciesLayers)]
+    } else {
+      copy(sim$sppEquiv)
+    }
     sim$species <- prepSpeciesTable(speciesTable = speciesTable,
                                     # speciesLayers = sim$speciesLayers,
-                                    sppEquiv = sim$sppEquiv[get(P(sim)$sppEquivCol) %in%
-                                                              names(sim$speciesLayers)],
+                                    sppEquiv = tempSppEquiv,
                                     sppEquivCol = P(sim)$sppEquivCol)
+    rm(tempSppEquiv)
   }
 
   ## if not using LandR growth/mortality drivers... (assumes LandR.CS)
