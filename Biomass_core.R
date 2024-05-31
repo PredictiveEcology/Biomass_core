@@ -624,7 +624,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     rstLCC <- makeDummyRstLCC(sim$rasterToMatch)
 
     ## make sure speciesLayers match RTM (they may not if they come from another module's init.)
-    if (!.compareRas(sim$speciesLayers, sim$rasterToMatch)) {
+    if (!.compareRas(sim$speciesLayers, sim$rasterToMatch, stopOnError = FALSE)) {
       message(blue("'speciesLayers' and 'rasterToMatch' do not match. "),
               red("'speciesLayers' will be cropped/masked/reprojected to 'rasterToMatch'. "),
               blue("If this is wrong, provide matching 'speciesLayers' and 'rasterToMatch'"))
