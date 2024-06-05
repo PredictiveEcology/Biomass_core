@@ -781,6 +781,10 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                          age = "integer",
                                          B = "integer"))
 
+  assertSppVectors(sppEquiv = sim$species, sppEquivCol = "speciesCode",
+                   sppColorVect = sim$sppColorVect)
+  assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol, sppColorVect = sim$sppColorVect)
+
   rasterNamesToCompare <- c("ecoregionMap", "pixelGroupMap")
   if (!identical(P(sim)$initialBiomassSource, "cohortData")) {
     rasterNamesToCompare <- c(rasterNamesToCompare, "biomassMap")
