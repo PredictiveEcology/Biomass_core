@@ -922,10 +922,11 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       sim$regenerationOutput <- data.table(seedingAlgorithm = character(), species = character(),
                                            Year = numeric(), numberOfReg = numeric())
     }
-  } else if (grepl("biomassMap", tolower(P(sim)$initialBiomassSource))) {
-    stop("'biomassMap as a value for P(sim)$initialBiomassSource is not working currently; ",
-         "please use 'cohortData'")
-    if (verbose > 0)
+  } else {
+    if (grepl("biomassMap", tolower(P(sim)$initialBiomassSource))) {
+      stop("'biomassMap as a value for P(sim)$initialBiomassSource is not working currently; ",
+           "please use 'cohortData'")
+      if (verbose > 0)
       message("Skipping spinup and using the sim$biomassMap * SpeciesLayers pct as initial biomass values")
     biomassTable <- data.table(biomass = as.vector(values(sim$biomassMap)),
                                pixelGroup = as.vector(values(pixelGroupMap)))
@@ -949,9 +950,10 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     set(cohortData, NULL, "B", NULL)
     cohortData[, totalSpeciesPresence := sum(speciesPresence), by = "pixelGroup"]
     cohortData <- cohortData[biomassTable, on = "pixelGroup"]
-    cohortData[, B := Bsum * speciesPresence / totalSpeciesPresence, by = c("pixelGroup", "speciesCode")]
-    if (!is.integer(cohortData[["B"]]))
-      set(cohortData, NULL, "B", asInteger(cohortData[["B"]]))
+      cohortData[, B := Bsum * speciesPresence / totalSpeciesPresence, by = c("pixelGroup", "speciesCode")]
+      if (!is.integer(cohortData[["B"]]))
+        set(cohortData, NULL, "B", asInteger(cohortData[["B"]]))
+    }
   }
 
   pixelAll <- cohortData[, .(uniqueSumB = sum(B, na.rm = TRUE)), by = pixelGroup]
