@@ -781,6 +781,31 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                          age = "integer",
                                          B = "integer"))
 
+  ## hamornize to simulated species -- we assume species is the correct set
+  ## (it has been filtered by B_borealDP and B_speciesParams)
+  ## leave sim$sppEquiv untouched for future reference - sim$sppColorVect can be changed
+  mod$sppEquiv <- sim$sppEquiv[get(P(sim)$sppEquivCol) %in% unique(sim$species$speciesCode)]
+  sppColorVect <- sim$sppColorVect[c(unique(as.character(sim$species$speciesCode)), "Mixed")]
+  sppColorVect <- sppColorVect[complete.cases(sppColorVect)]
+
+  sppOuts <- sppHarmonize(mod$sppEquiv, unique(sim$species$speciesCode), sppEquivCol = P(sim)$sppEquivCol,
+                          sppColorVect = sppColorVect, vegLeadingProportion = P(sim)$vegLeadingProportion)
+
+  ## TODO: it'd be great to functionize this:
+  if (length(setdiff(sim$sppColorVect, sppOuts$sppColorVect))) {
+    message(blue(
+      "sim$sppColorVect will be filtered to simulated species only (sim$species$speciesCode)"
+      ))
+  }
+  sim$sppColorVect <- sppOuts$sppColorVect
+
+  if (length(setdiff(sim$sppNameVector, sppOuts$sppNameVector))) {
+    message(blue(
+      "sim$sppNameVector will be filtered to simulated species only (sim$species$speciesCode)"
+      ))
+  }
+  sim$sppNameVector <- sppOuts$sppNameVector
+
   assertSppVectors(sppEquiv = sim$species, sppEquivCol = "speciesCode",
                    sppColorVect = sim$sppColorVect)
   assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol, sppColorVect = sim$sppColorVect)
