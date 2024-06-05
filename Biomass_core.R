@@ -13,7 +13,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.4.1.9002")),
+  version = list(Biomass_core = numeric_version("1.4.1.9003")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -927,29 +927,29 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       stop("'biomassMap as a value for P(sim)$initialBiomassSource is not working currently; ",
            "please use 'cohortData'")
       if (verbose > 0)
-      message("Skipping spinup and using the sim$biomassMap * SpeciesLayers pct as initial biomass values")
-    biomassTable <- data.table(biomass = as.vector(values(sim$biomassMap)),
-                               pixelGroup = as.vector(values(pixelGroupMap)))
-    biomassTable <- na.omit(biomassTable)
-    maxBiomass <- maxValue(sim$biomassMap)
-    if (maxBiomass < 1e3) {
-      if (verbose > 0) {
-        message(crayon::green("  Because biomassMap values are all below 1000, assuming that these are on tonnes/ha.\n",
-                              "    Converting to $g/m^2$ by multiplying by 100"))
+        message("Skipping spinup and using the sim$biomassMap * SpeciesLayers pct as initial biomass values")
+      biomassTable <- data.table(biomass = as.vector(values(sim$biomassMap)),
+                                 pixelGroup = as.vector(values(pixelGroupMap)))
+      biomassTable <- na.omit(biomassTable)
+      maxBiomass <- maxValue(sim$biomassMap)
+      if (maxBiomass < 1e3) {
+        if (verbose > 0) {
+          message(crayon::green("  Because biomassMap values are all below 1000, assuming that these are on tonnes/ha.\n",
+                                "    Converting to $g/m^2$ by multiplying by 100"))
+        }
+        biomassTable[, `:=`(biomass = biomass * 100)]
       }
-      biomassTable[, `:=`(biomass = biomass * 100)]
-    }
 
-    ## In case there are non-identical biomasses in each pixelGroup -- this should be irrelevant with
-    ##   improved biomass_borealDataPrep.R (Jan 6, 2019 -- Eliot)
-    biomassTable <- biomassTable[, list(Bsum = mean(biomass, na.rm = TRUE)), by = pixelGroup]
-    if (!is.integer(biomassTable[["Bsum"]]))
-      set(biomassTable, NULL, "Bsum", asInteger(biomassTable[["Bsum"]]))
+      ## In case there are non-identical biomasses in each pixelGroup -- this should be irrelevant with
+      ##   improved biomass_borealDataPrep.R (Jan 6, 2019 -- Eliot)
+      biomassTable <- biomassTable[, list(Bsum = mean(biomass, na.rm = TRUE)), by = pixelGroup]
+      if (!is.integer(biomassTable[["Bsum"]]))
+        set(biomassTable, NULL, "Bsum", asInteger(biomassTable[["Bsum"]]))
 
-    ## Delete the B from cohortData -- it will be joined from biomassTable
-    set(cohortData, NULL, "B", NULL)
-    cohortData[, totalSpeciesPresence := sum(speciesPresence), by = "pixelGroup"]
-    cohortData <- cohortData[biomassTable, on = "pixelGroup"]
+      ## Delete the B from cohortData -- it will be joined from biomassTable
+      set(cohortData, NULL, "B", NULL)
+      cohortData[, totalSpeciesPresence := sum(speciesPresence), by = "pixelGroup"]
+      cohortData <- cohortData[biomassTable, on = "pixelGroup"]
       cohortData[, B := Bsum * speciesPresence / totalSpeciesPresence, by = c("pixelGroup", "speciesCode")]
       if (!is.integer(cohortData[["B"]]))
         set(cohortData, NULL, "B", asInteger(cohortData[["B"]]))
@@ -1130,8 +1130,8 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     ## This tests for available memory and tries to scale the groupSize accordingly.
     ## It is, however, a very expensive operation. It now only does it once per simulation
     groupSize <- maxRowsDT(maxLen = 1e7, maxMem = P(sim)$.maxMemory,
-                               startClockTime = sim$._startClockTime, groupSize = groupSize,
-                               modEnv = mod)
+                           startClockTime = sim$._startClockTime, groupSize = groupSize,
+                           modEnv = mod)
 
     numGroups <- ceiling(length(pgs) / groupSize)
     groupNames <- paste0("Group", seq(numGroups))
@@ -2024,8 +2024,8 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (needRTM) {
-  if (is.null(sim$rawBiomassMap)) {
-    rawBiomassMapURL <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
+    if (is.null(sim$rawBiomassMap)) {
+      rawBiomassMapURL <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
                                  "canada-forests-attributes_attributs-forests-canada/",
                                  "2001-attributes_attributs-2001/",
                                  "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
@@ -2033,31 +2033,31 @@ CohortAgeReclassification <- function(sim) {
       httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
         rawBiomassMap <- prepRawBiomassMap(url = rawBiomassMapURL,
                                            studyAreaName = P(sim)$.studyAreaName,
-                                         cacheTags = cacheTags,
-                                         to = sim$studyArea,
-                                         projectTo = NA,  ## don't project to SA
-                                         destinationPath = dPath)
-    })
-  } else {
-    rawBiomassMap <- sim$rawBiomassMap
-    if (!.compareCRS(sim$rawBiomassMap, sim$studyArea)) {
-      ## note that extents may never align if the resolution and projection do not allow for it
-      rawBiomassMap <- Cache(postProcess,
-                             rawBiomassMap,
-                             method = "bilinear",
-                             to = sim$studyAreaLarge,
-                             projectTo = NA,  ## don't project to SA
-                             overwrite = TRUE)
+                                           cacheTags = cacheTags,
+                                           to = sim$studyArea,
+                                           projectTo = NA,  ## don't project to SA
+                                           destinationPath = dPath)
+      })
+    } else {
+      rawBiomassMap <- sim$rawBiomassMap
+      if (!.compareCRS(sim$rawBiomassMap, sim$studyArea)) {
+        ## note that extents may never align if the resolution and projection do not allow for it
+        rawBiomassMap <- Cache(postProcess,
+                               rawBiomassMap,
+                               method = "bilinear",
+                               to = sim$studyAreaLarge,
+                               projectTo = NA,  ## don't project to SA
+                               overwrite = TRUE)
+      }
     }
-  }
 
-  RTMs <- prepRasterToMatch(studyArea = sim$studyArea,
-                            studyAreaLarge = sim$studyArea,
-                            rasterToMatch = NULL,
-                            rasterToMatchLarge = NULL,
-                            destinationPath = dPath,
-                            templateRas = rawBiomassMap,
-                            studyAreaName = P(sim)$.studyAreaName,
+    RTMs <- prepRasterToMatch(studyArea = sim$studyArea,
+                              studyAreaLarge = sim$studyArea,
+                              rasterToMatch = NULL,
+                              rasterToMatchLarge = NULL,
+                              destinationPath = dPath,
+                              templateRas = rawBiomassMap,
+                              studyAreaName = P(sim)$.studyAreaName,
                               cacheTags = cacheTags)
     sim$rasterToMatch <- RTMs$rasterToMatch
     rm(RTMs)
