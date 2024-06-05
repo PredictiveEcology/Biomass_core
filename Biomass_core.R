@@ -997,7 +997,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   if (!is.null(P(sim)$calcSummaryBGM))
     sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
                                           P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
-                                          sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+                                          sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
                                           colors = sim$sppColorVect,
                                           doAssertion = getOption("LandR.assertions", TRUE))
 
@@ -1096,7 +1096,7 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
   if (!is.null(P(sim)$calcSummaryBGM))
     sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
                                           P(sim)$vegLeadingProportion, mixedType = P(sim)$mixedType,
-                                          sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+                                          sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
                                           colors = sim$sppColorVect,
                                           doAssertion = getOption("LandR.assertions", TRUE))
 
@@ -1654,8 +1654,8 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 })
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
-  LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
-  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol, sppColorVect = sim$sppColorVect)
+  LandR::assertSpeciesPlotLabels(sim$species$species, mod$sppEquiv)
+  assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol, sppColorVect = sim$sppColorVect)
 
   ## BIOMASS, WEIGHTED AVERAGE AGE, AVERAGE ANPP
   ## AND AGE OF OLDEST COHORT PER SPECIES
@@ -1700,11 +1700,11 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                   stringsAsFactors = FALSE)
 
   whMixedLeading <- which(summaryBySpecies1$leadingType == "Mixed")
-  summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType, sim$sppEquiv,
+  summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType, mod$sppEquiv,
                                                   "EN_generic_short")
   summaryBySpecies1$leadingType[whMixedLeading] <- "Mixed"
 
-  colours <- equivalentName(names(sim$sppColorVect), sim$sppEquiv, "EN_generic_short")
+  colours <- equivalentName(names(sim$sppColorVect), mod$sppEquiv, "EN_generic_short")
   whMixedSppColors <- which(names(sim$sppColorVect) == "Mixed")
   colours[whMixedSppColors] <- "Mixed"
 
@@ -1717,7 +1717,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
   if (length(unique(summaryBySpecies1$year)) > 1) {
     df <- sim$species[, list(speciesCode, species)][summaryBySpecies, on = "speciesCode"]
-    df$species <- equivalentName(df$species, sim$sppEquiv, "EN_generic_short")
+    df$species <- equivalentName(df$species, mod$sppEquiv, "EN_generic_short")
 
     colorIDs <- match(df$species, colours)
     df$cols <- sim$sppColorVect[colorIDs]
@@ -1729,7 +1729,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     unqCols2 <- unqdf$cols
     names(unqCols2) <- unqdf$species
 
-    assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = "EN_generic_short", sppColorVect = unqCols2)
+    assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = "EN_generic_short", sppColorVect = unqCols2)
 
     ## although Plots can deal with   .plotInitialTime == NA by not plotting, we need to
     ## make sure the plotting windows are not changed/opened if  .plotInitialTime == NA
@@ -1807,8 +1807,8 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 })
 
 plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
-  LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
-  assertSppVectors(sppEquiv = sim$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+  LandR::assertSpeciesPlotLabels(sim$species$species, mod$sppEquiv)
+  assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
                    sppColorVect = sim$sppColorVect)
 
   ## these plots are not saved.
@@ -1836,7 +1836,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   ## Other species in levs[[levelsName]] are already "Leading",
   ##  but it needs to be here in case it is not Leading in the future.
   # The ones we want
-  sppEquiv <- sim$sppEquiv[!is.na(sim$sppEquiv[[P(sim)$sppEquivCol]]),]
+  sppEquiv <- mod$sppEquiv[!is.na(mod$sppEquiv[[P(sim)$sppEquivCol]]),]
 
   levsLeading <- equivalentName(levs[[levelsName]], sppEquiv, "Leading")
 
@@ -1913,7 +1913,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
 })
 
 plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
-  LandR::assertSpeciesPlotLabels(sim$species$species, sim$sppEquiv)
+  LandR::assertSpeciesPlotLabels(sim$species$species, mod$sppEquiv)
 
   ## AVERAGE STAND BIOMASS/AGE/ANPP
   ## calculate acrosS pixels
