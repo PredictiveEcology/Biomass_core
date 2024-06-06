@@ -13,7 +13,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.4.1")),
+  version = list(Biomass_core = numeric_version("1.4.2")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -1279,8 +1279,17 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     sim$cohortData[age == 1, age := age + 1L]
 
     if (isTRUE(getOption("LandR.assertions"))) {
-      if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = P(sim)$cohortDefinitionCols)))) {
-        stop("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age")
+      byCols <- P(sim)$cohortDefinitionCols
+      if (!identical(NROW(sim$cohortData), NROW(unique(sim$cohortData, by = byCols)))) {
+        whPGduplicated <- sim$cohortData[duplicated(sim$cohortData, by = byCols) %in% TRUE]
+        cd1 <- sim$cohortData[whPGduplicated[, ..byCols], on = byCols]
+        byColsNoB <- setdiff(byCols, "B")
+        sumCols <- c("B", "mortality", "aNPPAct")
+        cd1 <- cd1[, lapply(.SD, sum), .SDcols = sumCols,  by = byColsNoB]
+        cd2 <- sim$cohortData[!whPGduplicated, on = byCols]
+        sim$cohortData <- rbindlist(list(cd1, cd2), use.names = TRUE)
+        message("sim$cohortData has duplicated rows, i.e., multiple rows with the same pixelGroup, speciesCode and age.\n",
+                "These identical cohorts were summed together")
       }
     }
 
