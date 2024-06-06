@@ -13,7 +13,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.4.2")),
+  version = list(Biomass_core = numeric_version("1.4.3")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -27,7 +27,7 @@ defineModule(sim, list(
                   "SpaDES.core (>= 2.1.0)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@master (>= 0.0.2.0002)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/LandR@development (>= 1.1.3)"),
+                  "PredictiveEcology/LandR (>= 1.1.4)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -84,8 +84,8 @@ defineModule(sim, list(
     defineParameter("keepClimateCols", "logical", FALSE, NA, NA, "include growth and mortality predictions in `cohortData`?"),
     defineParameter("minCohortBiomass", "numeric", 0, NA, NA,
                     desc = "Cohorts with biomass below this threshold (in $g/m^2$) are removed. Not a LANDIS-II BSE parameter."),
-    defineParameter("mixedType", "numeric", 2,
-                    desc = paste("How to define mixed stands: 1 for any species admixture;",
+    defineParameter("mixedType", "numeric", 2, 0, 2,
+                    desc = paste("How to define mixed stands: 0 for none; 1 for any species admixture;",
                                  "2 for deciduous > conifer. See `?LandR::vegTypeMapGenerator`.")),
     defineParameter("plotOverstory", "logical", FALSE, NA, NA, desc = "swap max age plot with overstory biomass"),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
