@@ -681,7 +681,9 @@ no longer generates initial cohort biomass conditions using a spin-up based on
 initial stand age like LANDIS-II (`"spin-up"`), nor does it attempt to fill
 initial cohort biomasses using `biomassMap`.
 
-**Plotting and saving** - `.plots` -- activates/deactivates plotting and defines
+**Plotting and saving** 
+
+- `.plots` -- activates/deactivates plotting and defines
 type of plotting (see `?Plots`);
 
 -   `.plotInitialTime` -- defines when plotting starts;
@@ -701,8 +703,9 @@ type of plotting (see `?Plots`);
 -   `successionTimestep` -- defines frequency of dispersal/local recruitment
 event (growth and mortality are always yearly);
 
-**Other**\
-- `mixedType` -- how mixed forest stands are defined;
+**Other**
+
+-   `mixedType` -- how mixed forest stands are defined;
 
 -   `vegLeadingProportion` -- relative biomass threshold to consider a species
 "leading" (i.e., dominant);
@@ -750,6 +753,8 @@ panble(df_outputs, caption,
        kable_stylingArgs = list(full_width = TRUE))
 ```
 
+\elandscape
+
 [^biomass_core-5]: see `?SpaDES.core::outputs`
 
 ### Simulation flow and module events {#sim-flow}
@@ -778,25 +783,25 @@ regeneration module (e.g., *Biomass_regeneration*);
 
 4.  Seed dispersal (every `successionTimestep`; `Dispersal` event):
 
--   seed dispersal can be a slow process and has been adapted to occur every
-10 years (default `successionTimestep`). The user can set it to occur
-more/less often, with the caveat that if using *Biomass_borealDataPrep*
-to estimate species establishment probabilities, these values are
-integrated over 10 years.
--   see @SchellerDomingo2012 for details on dispersal algorithms.
+    -   seed dispersal can be a slow process and has been adapted to occur every
+    10 years (default `successionTimestep`). The user can set it to occur
+    more/less often, with the caveat that if using *Biomass_borealDataPrep*
+    to estimate species establishment probabilities, these values are
+    integrated over 10 years.
+    -   see @SchellerDomingo2012 for details on dispersal algorithms.
 
 5.  Growth and mortality (`mortalityAndGrowth` event):
 
--   unlike dispersal, growth and mortality always occur time step (year).
--   see @SchellerMladenoff2004 for further detail.
+    -   unlike dispersal, growth and mortality always occur time step (year).
+    -   see @SchellerMladenoff2004 for further detail.
 
 6.  Cohort age binning (every `successionTimestep`; `cohortAgeReclassification`
 event):
 
--   follows the same frequency as dispersal, collapsing cohorts (i.e.,
-summing their biomass/mortality/aNPP) to ages classes with resolution
-equal to `successionTimestep`.
--   see @SchellerMiranda2015 for further detail.
+    -   follows the same frequency as dispersal, collapsing cohorts (i.e.,
+    summing their biomass/mortality/aNPP) to ages classes with resolution
+    equal to `successionTimestep`.
+    -   see @SchellerMiranda2015 for further detail.
 
 7.  Summary tables of regeneration (`summaryRegen` event), biomass, age, growth
 and mortality (`summaryBGM` event);
@@ -1173,7 +1178,7 @@ mySim <- simInitAndSpades(times = times,
                           debug = TRUE)
 ```
 
-```{r fig-Biomass-coreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = "50%", fig.cap = "(ref:Biomass-core) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
+```{r fig-Biomass-coreOutPlots, echo = FALSE, eval = TRUE, fig.show='hold', out.width = ifelse(knitr::is_latex_output(), "100%", "80%"), fig.cap = "(ref:Biomass-core) automatically generates simulation visuals of species dynamics across the landscape in terms of total biomass, number of presences and age and productivity (above), as well as yearly plots of total biomass, productivity, mortality, reproduction and leading species in each pixel (below)."}
 knitr::include_graphics(normPath(c("figures/Biomass_coreOutPlots1.png", 
                                    "figures/Biomass_coreOutPlots2.png")))
 ```
