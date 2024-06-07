@@ -3,12 +3,10 @@ on:
     branches:
       - main
       - master
-      - development
   push:
     branches:
       - main
       - master
-      - development
     paths:
       - .github/workflows/render-module-rmd.yaml
       - Biomass_core.Rmd
