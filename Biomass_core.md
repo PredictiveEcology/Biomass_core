@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-date: "Last updated: 2022-11-03"
+date: "Last updated: 2022-10-24"
 output:
   bookdown::html_document2:
     toc: true
@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core/commit/c081e5bf998e73eb35f64002af43c10c5e604a98)
+[![module-version-Badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core/commit/b3dc7c6b8dc3e07fa07304c7008255e83d20abe7)
 
 [![Issues-badge](D:/GitHub/LandR-Manual/modules/Biomass_core/figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
@@ -87,7 +87,7 @@ LANDIS-II counterpart, and we refer the reader to the corresponding LBSE manual
 the model.
 
 <div class="figure" style="text-align: center">
-<img src="figures/Biomass_coreSchematic.png" alt="(ref:Biomass-core) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)." width="80%" />
+<img src="D:/GitHub/LandR-Manual/modules/Biomass_core/figures/Biomass_coreSchematic.png" alt="(ref:Biomass-core) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules)." width="80%" />
 <p class="caption">(\#fig:fig-Biomass-core)(ref:Biomass-core) simulates tree cohort growth, mortality, recruitment and dispersal dynamics, as a function of  cohort ageing and competition for light (shading) and space, as well as disturbances like fire (simulated using other modules).</p>
 </div>
 
@@ -851,26 +851,26 @@ then *Biomass_core* attempts to use any species for which if finds available spe
 simulation as cohort dynamics are simulated. It must contain the following
 columns:
 
-    -   *pixelGroup* -- integer. *pixelGroup* ID. See
-    [Hashing](#biomass-core-vs-lbse-enhan2).
-    
-    -   *ecoregionGroup* -- character. Ecolocation names. See `ecoregionMap` and
-    `ecoregion` objects above.
-    
-    -   *speciesCode* -- character. Species ID.
-    
-    -   *age* -- integer. Cohort age.
-    
-    -   *B* -- integer. Cohort biomass of the current year in $g/m^2$.
-    
-    -   *mortality* -- integer. Cohort dead biomass of the current year in
-    $g/m^2$. Usually filled with 0s in initial conditions.
+-   *pixelGroup* -- integer. *pixelGroup* ID. See
+[Hashing](#biomass-core-vs-lbse-enhan2).
 
-    -   *aNPPAct* -- integer. Actual aboveground net primary productivity of the
-    current year in $g/m^2$. `B` is the result of the previous year's `B`
-    minus the current year's `mortality` plus `aNPPAct`. Usually filled with
-    0s in initial conditions. See "*1.1.3 Cohort growth and ageing*" section
-    of @SchellerMiranda2015.
+-   *ecoregionGroup* -- character. Ecolocation names. See `ecoregionMap` and
+`ecoregion` objects above.
+
+-   *speciesCode* -- character. Species ID.
+
+-   *age* -- integer. Cohort age.
+
+-   *B* -- integer. Cohort biomass of the current year in $g/m^2$.
+
+-   *mortality* -- integer. Cohort dead biomass of the current year in
+$g/m^2$. Usually filled with 0s in initial conditions.
+
+-   *aNPPAct* -- integer. Actual aboveground net primary productivity of the
+current year in $g/m^2$. `B` is the result of the previous year's `B`
+minus the current year's `mortality` plus `aNPPAct`. Usually filled with
+0s in initial conditions. See "*1.1.3 Cohort growth and ageing*" section
+of @SchellerMiranda2015.
 
 -   `pixelGroupMap` -- a raster layer with `pixelGroup` IDs per pixel. Pixels
 are always grouped based on identical `ecoregionGroup`, `speciesCode`, `age`
@@ -1296,7 +1296,7 @@ event (growth and mortality are always yearly);
    <td style="text-align:left;"> 64 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> Passed to `httr::config(ssl_verifypeer = P(sim)$.sslVerify)` when downloading KNN (NFI) datasets. Set to 0L if necessary to bypass checking the SSL certificate (this may be necessary when NFI's website SSL certificate is not correctly configured). </td>
+   <td style="text-align:left;"> Passed to `httr::config(ssl_verifypeer = P(sim)$.sslVerify)` when downloading KNN (NFI) datasets. Set to 0L if necessary to bypass checking the SSL certificate (this may be necessary when NFI's FTP website SSL certificate is down/out-of-date). </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .studyAreaName </td>
@@ -1448,7 +1448,7 @@ in `simInit`[^biomass_core-5].
   <tr>
    <td style="text-align:left;"> speciesEcoregion </td>
    <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> define the `maxANPP`, `maxB` and `SEP` change with both ecoregion and simulation time. </td>
+   <td style="text-align:left;"> define the maxANPP, maxB and SEP change with both ecoregion and simulation time </td>
   </tr>
   <tr>
    <td style="text-align:left;"> speciesLayers </td>
@@ -1468,7 +1468,7 @@ in `simInit`[^biomass_core-5].
   <tr>
    <td style="text-align:left;"> summaryBySpecies1 </td>
    <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> Number of pixels of each leading vegetation type (used for plotting and reporting). </td>
+   <td style="text-align:left;"> No. pixels of each leading vegetation type (used for plotting and reporting). </td>
   </tr>
   <tr>
    <td style="text-align:left;"> summaryLandscape </td>
@@ -1788,15 +1788,15 @@ from smaller to larger maps (Fig. \@ref(fig:figLBSEtest5)b).
 
 ```r
 options(repos = c(CRAN = "https://cloud.r-project.org"))
-tempDir <- tempdir()
-
+# tempDir <- tempdir()
+tempDir <- "C:/Users/cbarros/AppData/Local/Temp/Biomass_core-example"
 pkgPath <- file.path(tempDir, "packages", version$platform,
                      paste0(version$major, ".", strsplit(version$minor, "[.]")[[1]][1]))
 dir.create(pkgPath, recursive = TRUE)
 .libPaths(pkgPath, include.site = FALSE)
 
 if (!require(Require, lib.loc = pkgPath)) {
-  remotes::install_github("PredictiveEcology/Require@5c44205bf407f613f53546be652a438ef1248147",
+  remotes::install_github("PredictiveEcology/Require@f2c791eb05fb0ad99b278619198ef925f85cbb9d",
                           upgrade = FALSE, force = TRUE)
   library(Require, lib.loc = pkgPath)
 }
@@ -1908,8 +1908,7 @@ and where inputs should be downloaded to (`"reproducible.destinationPath"`).
 
 ```r
 opts <- options(reproducible.useCache = TRUE,
-                reproducible.destinationPath = paths$inputPath,
-                spades.useRequire = FALSE)
+                reproducible.destinationPath = paths$inputPath)
 graphics.off()
 mySim <- simInitAndSpades(times = times,
                           params = parameters, 
