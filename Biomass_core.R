@@ -24,7 +24,7 @@ defineModule(sim, list(
                   "parallel", "purrr", "quickPlot", "Rcpp",
                   "R.utils", "scales", "terra", "tidyr",
                   "reproducible (>= 2.1.0)",
-                  "SpaDES.core (>= 2.1.0)", "SpaDES.tools (>= 1.0.0.9001)",
+                  "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@master (>= 0.0.2.0002)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/LandR (>= 1.1.4)"),
