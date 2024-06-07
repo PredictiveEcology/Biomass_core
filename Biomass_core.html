@@ -4328,10 +4328,10 @@ sourceURL
 biomassMap
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
-total biomass raster layer in study area (in g/m^2), filtered for pixels covered by cohortData. Only used if <code>P(sim)$initialBiomassSource == &#39;biomassMap&#39;</code>, which is currently deactivated.
+Total biomass raster layer in study area (in <span class="math inline">\(g/m^2\)</span>), filtered for pixels covered by <code>cohortData.</code> Only used if <code>P(sim)$initialBiomassSource == &#39;biomassMap&#39;</code>, which is currently deactivated.
 </td>
 <td style="text-align:left;">
 </td>
@@ -4344,7 +4344,7 @@ cceArgs
 list
 </td>
 <td style="text-align:left;">
-a list of quoted objects used by the <code>growthAndMortalityDriver</code> <code>calculateClimateEffect</code> function
+A list of quoted objects used by the <code>growthAndMortalityDriver</code> <code>calculateClimateEffect</code> function
 </td>
 <td style="text-align:left;">
 NA
@@ -4358,7 +4358,7 @@ cohortData
 data.table
 </td>
 <td style="text-align:left;">
-<code>data.table</code> with cohort-level information on age and biomass, by pixelGroup and ecolocation (i.e., <code>ecoregionGroup</code>). If supplied, it must have the following columns: <code>pixelGroup</code> (integer), <code>ecoregionGroup</code> (factor), <code>speciesCode</code> (factor), <code>B</code> (integer in g/m^2), <code>age</code> (integer in years)
+<code>data.table</code> with cohort-level information on age and biomass, by <code>pixelGroup</code> and ecolocation (i.e., <code>ecoregionGroup</code>). If supplied, it must have the following columns: <code>pixelGroup</code> (integer), <code>ecoregionGroup</code> (factor), <code>speciesCode</code> (factor), <code>B</code> (integer in latex2b27a1ad385d16c73646cd918252c6d2), <code>age</code> (integer in years)
 </td>
 <td style="text-align:left;">
 NA
@@ -4372,7 +4372,7 @@ ecoregion
 data.table
 </td>
 <td style="text-align:left;">
-ecoregion look up table
+Ecoregion look up table
 </td>
 <td style="text-align:left;">
 <a href="https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt" class="uri">https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/ecoregions.txt</a>
@@ -4383,10 +4383,10 @@ ecoregion look up table
 ecoregionMap
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
-ecoregion map that has mapcodes match ecoregion table and <code>speciesEcoregion</code> table. Defaults to a dummy map matching <code>rasterToMatch</code> with two regions
+Ecoregion map that has mapcodes match ecoregion table and <code>speciesEcoregion</code> table. Defaults to a dummy map matching <code>rasterToMatch</code> with two regions
 </td>
 <td style="text-align:left;">
 NA
@@ -4400,7 +4400,7 @@ lastReg
 numeric
 </td>
 <td style="text-align:left;">
-an internal counter keeping track of when the last regeneration event occurred
+An internal counter keeping track of when the last regeneration event occurred
 </td>
 <td style="text-align:left;">
 NA
@@ -4425,10 +4425,10 @@ NA
 pixelGroupMap
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
-a raster layer with <code>pixelGroup</code> IDs per pixel. Pixels are grouped based on identical <code>ecoregionGroup</code>, <code>speciesCode</code>, <code>age</code> and <code>B</code> composition, even if the user supplies other initial groupings (e.g., via the <code>Biomass_borealDataPrep</code> module.
+A raster layer with <code>pixelGroup</code> IDs per pixel. Pixels are grouped based on identical <code>ecoregionGroup</code>, <code>speciesCode</code>, <code>age</code> and <code>B</code> composition, even if the user supplies other initial groupings (e.g., via the <code>Biomass_borealDataPrep</code> module.
 </td>
 <td style="text-align:left;">
 NA
@@ -4439,10 +4439,10 @@ NA
 rasterToMatch
 </td>
 <td style="text-align:left;">
-RasterLayer
+SpatRaster
 </td>
 <td style="text-align:left;">
-a raster of the <code>studyArea</code> in the same resolution and projection as <code>biomassMap</code>
+A raster of the <code>studyArea</code> in the same resolution and projection as <code>biomassMap</code>
 </td>
 <td style="text-align:left;">
 NA
@@ -4456,7 +4456,7 @@ species
 data.table
 </td>
 <td style="text-align:left;">
-a table of invariant species traits with the following trait colums: ‘species’, ‘Area’, ‘longevity’, ‘sexualmature’, ‘shadetolerance’, ‘firetolerance’, ‘seeddistance_eff’, ‘seeddistance_max’, ‘resproutprob’, ‘mortalityshape’, ‘growthcurve’, ‘resproutage_min’, ‘resproutage_max’, ‘postfireregen’, ‘wooddecayrate’, ‘leaflongevity’ ‘leafLignin’, ‘hardsoft’. The last seven traits are not used in Biomass_core , and may be ommited. However, this may result in downstream issues with other modules. Default is from Dominic Cyr and Yan Boulanger’s project
+A table of invariant species traits with the following trait colums: ‘species’, ‘Area’, ‘longevity’, ‘sexualmature’, ‘shadetolerance’, ‘firetolerance’, ‘seeddistance_eff’, ‘seeddistance_max’, ‘resproutprob’, ‘mortalityshape’, ‘growthcurve’, ‘resproutage_min’, ‘resproutage_max’, ‘postfireregen’, ‘wooddecayrate’, ‘leaflongevity’ ‘leafLignin’, ‘hardsoft’. The last seven traits are not used in Biomass_core , and may be ommited. However, this may result in downstream issues with other modules. Default is from Dominic Cyr and Yan Boulanger’s project
 </td>
 <td style="text-align:left;">
 <a href="https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv" class="uri">https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv</a>
@@ -4470,7 +4470,7 @@ speciesEcoregion
 data.table
 </td>
 <td style="text-align:left;">
-table of spatially-varying species traits (<code>maxB</code>, <code>maxANPP</code>, <code>establishprob</code>), defined by species and <code>ecoregionGroup</code>) Defaults to a dummy table based on dummy data os biomass, age, ecoregion and land cover class
+Table of spatially-varying species traits (<code>maxB</code>, <code>maxANPP</code>, <code>establishprob</code>), defined by species and <code>ecoregionGroup</code> (i.e. ecolocation). Defaults to a dummy table based on dummy data of biomass, age, ecoregion and land cover class
 </td>
 <td style="text-align:left;">
 NA
@@ -4481,10 +4481,10 @@ NA
 speciesLayers
 </td>
 <td style="text-align:left;">
-RasterStack
+SpatRaster
 </td>
 <td style="text-align:left;">
-percent cover raster layers of tree species in Canada. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived species cover maps from 2001 using a cover threshold of 10 - see <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a> for metadata
+Percent cover raster layers of tree species in Canada. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived species cover maps from 2001 using a cover threshold of 10 - see <a href="https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990" class="uri">https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990</a> for metadata
 </td>
 <td style="text-align:left;">
 <a href="http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/" class="uri">http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/</a>
@@ -4498,7 +4498,7 @@ sppColorVect
 character
 </td>
 <td style="text-align:left;">
-A named vector of colors to use for plotting. The names must be in <code>sim$sppEquiv[[sim$sppEquivCol]]</code>, and should also contain a color for ‘Mixed’
+A named vector of colors to use for plotting. The names must be in <code>sim$sppEquiv[[sim$sppEquivCol]]</code>, and should also contain a color for ‘Mixed’.
 </td>
 <td style="text-align:left;">
 NA
@@ -4512,7 +4512,21 @@ sppEquiv
 data.table
 </td>
 <td style="text-align:left;">
-table of species equivalencies. See <code>LandR::sppEquivalencies_CA</code>.
+Table of species equivalencies. See <code>LandR::sppEquivalencies_CA</code>.
+</td>
+<td style="text-align:left;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+sppNameVector
+</td>
+<td style="text-align:left;">
+character
+</td>
+<td style="text-align:left;">
+An optional vector of species names to be pulled from <code>sppEquiv</code>. Species names must match <code>P(sim)$sppEquivCol</code> column in <code>sppEquiv</code>. If not provided, then species will be taken from the entire <code>P(sim)$sppEquivCol</code> column in <code>sppEquiv</code>. See <code>LandR::sppEquivalencies_CA</code>.
 </td>
 <td style="text-align:left;">
 NA
@@ -4523,10 +4537,10 @@ NA
 studyArea
 </td>
 <td style="text-align:left;">
-SpatialPolygonsDataFrame
+sfc
 </td>
 <td style="text-align:left;">
-Polygon to use as the study area. Must be provided by the user
+Polygon to use as the study area. Must be supplied by the user. Can also be a SpatVector.
 </td>
 <td style="text-align:left;">
 NA
@@ -4537,7 +4551,7 @@ NA
 studyAreaReporting
 </td>
 <td style="text-align:left;">
-SpatialPolygonsDataFrame
+sfc
 </td>
 <td style="text-align:left;">
 multipolygon (typically smaller/unbuffered than studyArea) to use for plotting/reporting. Defaults to <code>studyArea</code>.
@@ -4554,7 +4568,7 @@ sufficientLight
 data.frame
 </td>
 <td style="text-align:left;">
-table defining how the species with different shade tolerance respond to stand shade. Default is based on LANDIS-II Biomass Succession v6.2 parameters
+Table defining how the species with different shade tolerance respond to stand shade. Default is based on LANDIS-II Biomass Succession v6.2 parameters
 </td>
 <td style="text-align:left;">
 <a href="https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt" class="uri">https://raw.githubusercontent.com/LANDIS-II-Foundation/Extensions-Succession/master/biomass-succession-archive/trunk/tests/v6.0-2.0/biomass-succession_test.txt</a>
@@ -4662,7 +4676,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: ‘start’- as before vegetation succession events, i.e. before dispersal, ‘postDisp’ - after dispersal, ‘postRegen’ - after post-disturbance regeneration (currently the same as ‘start’), ‘postGM’ - after growth and mortality, ‘postAging’ - after aging, ‘end’ - at the end of vegetation succesion events, before plotting and saving. The ‘end’ option is always active, being also the default option. If NULL, then will skip all summaryBGM related events
+A character vector describing when to calculate the summary of biomass, growth and mortality Currently any combination of 5 options is possible: ‘start’- as before vegetation succession events, i.e. before dispersal, ‘postDisp’ - after dispersal, ‘postRegen’ - after post-disturbance regeneration (currently the same as ‘start’), ‘postGM’ - after growth and mortality, ‘postAging’ - after aging, ‘end’ - at the end of vegetation succesion events, before plotting and saving. The ‘end’ option is always active, being also the default option. If NULL, then will skip all <code>summaryBGM</code> related events
 </td>
 </tr>
 <tr>
@@ -4727,6 +4741,26 @@ A numeric scalar indicating how large each chunk of an internal data.table is, w
 </tr>
 <tr>
 <td style="text-align:left;">
+initialB
+</td>
+<td style="text-align:left;">
+numeric
+</td>
+<td style="text-align:left;">
+10
+</td>
+<td style="text-align:left;">
+1
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Initial biomass values of new age-1 cohorts. If <code>NA</code> or <code>NULL</code>, initial biomass will be calculated as in LANDIS-II Biomass Suc. Extension (see Scheller and Miranda, 2015 or <code>?LandR::.initiateNewCohorts</code>)
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
 gmcsGrowthLimits
 </td>
 <td style="text-align:left;">
@@ -4742,7 +4776,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-if using <code>LandR.CS</code> for climate-sensitive growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small denominators as well as predictions outside the data range used to generate the model
+If using <code>LandR.CS</code> for climate-sensitive growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small denominators as well as predictions outside the data range used to generate the model
 </td>
 </tr>
 <tr>
@@ -4762,7 +4796,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-if using <code>LandR.CS</code> for climate-sensitive growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small denominators as well as predictions outside the data range used to generate the model
+If using <code>LandR.CS</code> for climate-sensitive growth and mortality, a percentile is used to estimate the effect of climate on growth/mortality (currentClimate/referenceClimate). Upper and lower limits are suggested to circumvent problems caused by very small denominators as well as predictions outside the data range used to generate the model
 </td>
 </tr>
 <tr>
@@ -4782,7 +4816,7 @@ numeric
 NA
 </td>
 <td style="text-align:left;">
-if using <code>LandR.CS</code> for climate-sensitive growth and mortality, the minimum age for which to predict climate-sensitive growth and mortality. Young stands (&lt; 30) are poorly represented by the PSP data used to parameterize the model.
+If using <code>LandR.CS</code> for climate-sensitive growth and mortality, the minimum age for which to predict climate-sensitive growth and mortality. Young stands (&lt; 30) are poorly represented by the PSP data used to parameterize the model.
 </td>
 </tr>
 <tr>
@@ -4793,7 +4827,7 @@ growthAndMortalityDrivers
 character
 </td>
 <td style="text-align:left;">
-LandR
+0
 </td>
 <td style="text-align:left;">
 NA
@@ -4802,7 +4836,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-package name where the following functions can be found: <code>calculateClimateEffect</code>, <code>assignClimateEffect</code> (see <code>LandR.CS</code> for climate sensitivity equivalent functions, or leave default if this is not desired)
+Package name where the following functions can be found: <code>calculateClimateEffect</code>, <code>assignClimateEffect</code> (see <code>LandR.CS</code> for climate sensitivity equivalent functions, or leave default if this is not desired)
 </td>
 </tr>
 <tr>
@@ -4823,26 +4857,6 @@ NA
 </td>
 <td style="text-align:left;">
 Initial time for the growth event to occur
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-initialB
-</td>
-<td style="text-align:left;">
-numeric
-</td>
-<td style="text-align:left;">
-10
-</td>
-<td style="text-align:left;">
-1
-</td>
-<td style="text-align:left;">
-NA
-</td>
-<td style="text-align:left;">
-initial biomass values of new age-1 cohorts
 </td>
 </tr>
 <tr>
@@ -4902,7 +4916,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-cohorts with biomass below this threshold (in g/m^2) are removed. Not a LANDIS-II BSE parameter.
+Cohorts with biomass below this threshold (in <span class="math inline">\(g/m^2\)</span>) are removed. Not a LANDIS-II BSE parameter.
 </td>
 </tr>
 <tr>
@@ -4916,13 +4930,13 @@ numeric
 2
 </td>
 <td style="text-align:left;">
-NA
+0
 </td>
 <td style="text-align:left;">
-NA
+2
 </td>
 <td style="text-align:left;">
-How to define mixed stands: 1 for any species admixture; 2 for deciduous &gt; conifer. See <code>?LandR::vegTypeMapGenerator</code>.
+How to define mixed stands: 0 for none; 1 for any species admixture; 2 for deciduous &gt; conifer. See <code>?LandR::vegTypeMapGenerator</code>.
 </td>
 </tr>
 <tr>
@@ -4962,7 +4976,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-choose which seeding algorithm will be used among ‘noSeeding’ (no horizontal, nor vertical seeding - not in LANDIS-II BSE), ‘noDispersal’ (no horizontal seeding), ‘universalDispersal’ (seeds disperse to any pixel), and ‘wardDispersal’ (default; seeds disperse according to distance and dispersal traits). See Scheller &amp; Miranda (2015) - Biomass Succession extension, v3.2.1 User Guide
+Choose which seeding algorithm will be used among ‘noSeeding’ (no horizontal, nor vertical seeding - not in LANDIS-II BSE), ‘noDispersal’ (no horizontal seeding), ‘universalDispersal’ (seeds disperse to any pixel), and ‘wardDispersal’ (default; seeds disperse according to distance and dispersal traits). See Scheller &amp; Miranda (2015) - Biomass Succession extension, v3.2.1 User Guide
 </td>
 </tr>
 <tr>
@@ -4982,7 +4996,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-defines the mortality loss fraction in spin up-stage simulation. Only used if <code>P(sim)$initialBiomassSource == &#39;biomassMap&#39;</code>, which is currently deactivated.
+Defines the mortality loss fraction in spin up-stage simulation. Only used if <code>P(sim)$initialBiomassSource == &#39;biomassMap&#39;</code>, which is currently deactivated.
 </td>
 </tr>
 <tr>
@@ -5022,7 +5036,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions
+Defines the simulation time step, default is 10 years. Note that growth and mortality always happen on a yearly basis. Cohorts younger than this age will not be included in competitive interactions
 </td>
 </tr>
 <tr>
@@ -5042,7 +5056,7 @@ numeric
 1
 </td>
 <td style="text-align:left;">
-a number that defines whether a species is leading for a given pixel
+A number that defines whether a species is leading for a given pixel
 </td>
 </tr>
 <tr>
@@ -5062,7 +5076,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-maximum amount of memory (in GB) to use for dispersal calculations.
+Maximum amount of memory (in GB) to use for dispersal calculations.
 </td>
 </tr>
 <tr>
@@ -5102,7 +5116,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-defines the plotting time step. If <code>NA</code>, the default, .plotInterval is set to successionTimestep.
+Defines the plotting time step. If <code>NA</code>, the default, <code>.plotInterval</code> is set to <code>successionTimestep</code>.
 </td>
 </tr>
 <tr>
@@ -5182,7 +5196,7 @@ NA
 NA
 </td>
 <td style="text-align:left;">
-defines the saving time step. If <code>NA</code>, the default, .saveInterval is set to <code>P(sim)$successionTimestep</code>.
+Defines the saving time step. If <code>NA</code>, the default, .saveInterval is set to <code>P(sim)$successionTimestep</code>.
 </td>
 </tr>
 <tr>
@@ -5306,6 +5320,9 @@ integer
 <td style="text-align:left;">
 internal use. Keeps track of which pixels are active
 </td>
+<td style="text-align:left;">
+Internal use. Keeps track of which pixels are active.
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5316,6 +5333,9 @@ integer
 </td>
 <td style="text-align:left;">
 internal use. Keeps track of which pixels are active in the reporting study area
+</td>
+<td style="text-align:left;">
+Internal use. Keeps track of which pixels are active in the reporting study area.
 </td>
 </tr>
 <tr>
@@ -5331,6 +5351,17 @@ ANPP map at each succession time step (in g /m^2)
 </tr>
 <tr>
 <td style="text-align:left;">
+biomassMap
+</td>
+<td style="text-align:left;">
+SpatRaster
+</td>
+<td style="text-align:left;">
+Total biomass raster layer in study area (in <span class="math inline">\(g/m^2\)</span>), filtered for pixels covered by <code>cohortData</code>. Only used if <code>P(sim)$initialBiomassSource == &#39;biomassMap&#39;</code>, which is currently deactivated.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
 cohortData
 </td>
 <td style="text-align:left;">
@@ -5338,6 +5369,20 @@ data.table
 </td>
 <td style="text-align:left;">
 <code>data.table</code> with cohort-level information on age, biomass, aboveground primary productivity (year’s biomass gain) and mortality (year’s biomass loss), by <code>pixelGroup</code> and ecolocation (i.e., <code>ecoregionGroup</code>). Contains at least the following columns: <code>pixelGroup</code> (integer), <code>ecoregionGroup</code> (factor), <code>speciesCode</code> (factor), <code>B</code> (integer in g/m^2), <code>age</code> (integer in years), <code>mortality</code> (integer in g/m^2), <code>aNPPAct</code> (integer in g/m^2). May have other columns depending on additional simulated processes (i.e., cliamte sensitivity; see, e.g., <code>P(sim)$keepClimateCols</code>).
+</td>
+<td style="text-align:left;">
+<code>data.table</code> with cohort-level information on age, biomass, aboveground primary productivity (year’s biomass gain) and mortality (year’s biomass loss), by <code>pixelGroup</code> and ecolocation (i.e., <code>ecoregionGroup</code>). Contains at least the following columns: <code>pixelGroup</code> (integer), <code>ecoregionGroup</code> (factor), <code>speciesCode</code> (factor), <code>B</code> (integer in latex2b27a1ad385d16c73646cd918252c6d2), <code>age</code> (integer in years), <code>mortality</code> (integer in latex2b27a1ad385d16c73646cd918252c6d2), <code>aNPPAct</code> (integer in latex2b27a1ad385d16c73646cd918252c6d2). May have other columns depending on additional simulated processes (i.e., climate sensitivity; see, e.g., <code>P(sim)$keepClimateCols</code>).
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ecoregion
+</td>
+<td style="text-align:left;">
+data.table
+</td>
+<td style="text-align:left;">
+Ecoregion look up table
 </td>
 </tr>
 <tr>
@@ -5350,6 +5395,9 @@ RasterLayer
 <td style="text-align:left;">
 map with mapcodes match <code>ecoregion</code> table and <code>speciesEcoregion</code> table. Defaults to a dummy map matching rasterToMatch with two regions
 </td>
+<td style="text-align:left;">
+Map with mapcodes match <code>ecoregion</code> table and <code>speciesEcoregion</code> table. Defaults to a dummy map matching rasterToMatch with two regions.
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5360,6 +5408,9 @@ logical
 </td>
 <td style="text-align:left;">
 internal use. Keeps track of which pixels are inactive
+</td>
+<td style="text-align:left;">
+Internal use. Keeps track of which pixels are inactive.
 </td>
 </tr>
 <tr>
@@ -5372,6 +5423,9 @@ integer
 <td style="text-align:left;">
 internal use. Keeps track of which pixels are inactive in the reporting study area
 </td>
+<td style="text-align:left;">
+Internal use. Keeps track of which pixels are inactive in the reporting study area.
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5382,6 +5436,9 @@ numeric
 </td>
 <td style="text-align:left;">
 Year of the most recent fire year
+</td>
+<td style="text-align:left;">
+Year of the most recent fire.
 </td>
 </tr>
 <tr>
@@ -5394,6 +5451,9 @@ numeric
 <td style="text-align:left;">
 an internal counter keeping track of when the last regeneration event occurred
 </td>
+<td style="text-align:left;">
+An internal counter keeping track of when the last regeneration event occurred.
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5404,6 +5464,9 @@ data.frame
 </td>
 <td style="text-align:left;">
 define the relative biomass cut points to classify stand shade
+</td>
+<td style="text-align:left;">
+Define the relative biomass cut points to classify stand shade.
 </td>
 </tr>
 <tr>
@@ -5416,6 +5479,9 @@ RasterLayer
 <td style="text-align:left;">
 map of biomass lost (in g/m^2) at each succession time step
 </td>
+<td style="text-align:left;">
+Map of biomass lost (in <span class="math inline">\(g/m^2\)</span>) at each succession time step.
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5426,6 +5492,9 @@ RasterLayer
 </td>
 <td style="text-align:left;">
 updated community map at each succession time step
+</td>
+<td style="text-align:left;">
+Updated community map at each succession time step.
 </td>
 </tr>
 <tr>
@@ -5449,6 +5518,9 @@ RasterLayer
 <td style="text-align:left;">
 Regeneration map (biomass gains in g/m^2) at each succession time step
 </td>
+<td style="text-align:left;">
+Regeneration map (biomass gains in latex2b27a1ad385d16c73646cd918252c6d2) at each succession time step
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5460,6 +5532,9 @@ RasterLayer
 <td style="text-align:left;">
 Biomass map at each succession time step (in g/m^2)
 </td>
+<td style="text-align:left;">
+Biomass map at each succession time step (in latex2b27a1ad385d16c73646cd918252c6d2)
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5470,6 +5545,9 @@ data.table
 </td>
 <td style="text-align:left;">
 contains simulation results by <code>ecoregionGroup</code> (main output)
+</td>
+<td style="text-align:left;">
+Contains simulation results by <code>ecoregionGroup</code> (main output)
 </td>
 </tr>
 <tr>
@@ -5504,6 +5582,9 @@ data.table
 <td style="text-align:left;">
 define the maxANPP, maxB and SEP change with both ecoregion and simulation time
 </td>
+<td style="text-align:left;">
+Define the <code>maxANPP</code>, <code>maxB</code> and <code>SEP</code> change with both ecoregion and simulation time.
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5514,6 +5595,9 @@ RasterStack
 </td>
 <td style="text-align:left;">
 species percent cover raster layers, based on input <code>speciesLayers</code> object. Not changed by this module.
+</td>
+<td style="text-align:left;">
+Species percent cover raster layers, based on input <code>speciesLayers</code> object. Not changed by this module.
 </td>
 </tr>
 <tr>
@@ -5529,6 +5613,17 @@ Spin-up output. Currently deactivated.
 </tr>
 <tr>
 <td style="text-align:left;">
+sppColorVect
+</td>
+<td style="text-align:left;">
+character
+</td>
+<td style="text-align:left;">
+A named vector of colors to use for plotting. The names must be in <code>sim$sppEquiv[[sim$sppEquivCol]]</code>, and should also contain a color for ‘Mixed’.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
 summaryBySpecies
 </td>
 <td style="text-align:left;">
@@ -5536,6 +5631,9 @@ data.table
 </td>
 <td style="text-align:left;">
 The total species biomass (in g/m^2 as in <code>cohortData</code>), average age and aNPP (in g/m^2 as in <code>cohortData</code>), across the landscape (used for plotting and reporting).
+</td>
+<td style="text-align:left;">
+The total species biomass (in latex2b27a1ad385d16c73646cd918252c6d2 as in <code>cohortData</code>), average age and aNPP (in latex2b27a1ad385d16c73646cd918252c6d2 as in <code>cohortData</code>), across the landscape (used for plotting and reporting).
 </td>
 </tr>
 <tr>
@@ -5548,6 +5646,9 @@ data.table
 <td style="text-align:left;">
 No. pixels of each leading vegetation type (used for plotting and reporting).
 </td>
+<td style="text-align:left;">
+Number of pixels of each leading vegetation type (used for plotting and reporting).
+</td>
 </tr>
 <tr>
 <td style="text-align:left;">
@@ -5558,6 +5659,9 @@ data.table
 </td>
 <td style="text-align:left;">
 The averages of total biomass (in tonnes/ha , not g/m^2 like in <code>cohortData</code>), age and aNPP (also in tonnes/ha) across the landscape (used for plotting and reporting).
+</td>
+<td style="text-align:left;">
+The averages of total biomass (in tonnes/ha , not latex2b27a1ad385d16c73646cd918252c6d2 like in <code>cohortData</code>), age and aNPP (also in tonnes/ha) across the landscape (used for plotting and reporting).
 </td>
 </tr>
 <tr>
@@ -10887,13 +10991,13 @@ Chubaty, A.M. &amp; McIntire, E.J.B. (2019). <em><a href="https://CRAN.R-project
 McIntire, E.J.B. &amp; Chubaty, A.M. (2020). <em><a href="https://reproducible.predictiveecology.org, https://github.com/PredictiveEcology/reproducible">Reproducible: A set of tools that enhance reproducibility beyond package management</a></em>.
 </div>
 <div id="ref-SchellerDomingo2011" class="csl-entry">
-Scheller, R.M. &amp; Domingo, J.B. (2011). <em>LANDIS-II model v6.0 <span></span> user guide</em>.
+Scheller, R.M. &amp; Domingo, J.B. (2011). <em>LANDIS-II model v6.0 – user guide</em>.
 </div>
 <div id="ref-SchellerDomingo2012" class="csl-entry">
-Scheller, R.M. &amp; Domingo, J.B. (2012). <em>LANDIS-II model v6.0 <span></span> conceptual description</em>.
+Scheller, R.M. &amp; Domingo, J.B. (2012). <em>LANDIS-II model v6.0 – conceptual description</em>.
 </div>
 <div id="ref-SchellerMiranda2015" class="csl-entry">
-Scheller, R.M. &amp; Miranda, B.R. (2015). <em>LANDIS-II biomass succession v3.2 extension <span></span> user guide</em>.
+Scheller, R.M. &amp; Miranda, B.R. (2015). <em>LANDIS-II biomass succession v3.2 extension – user guide</em>.
 </div>
 <div id="ref-SchellerMladenoff2004" class="csl-entry">
 Scheller, R.M. &amp; Mladenoff, D.J. (2004). <a href="https://doi.org/10.1016/j.ecolmodel.2004.01.022">A forest growth and biomass module for a landscape simulation model, LANDIS: design, validation, and application</a>. <em>Ecological Modelling</em>, 180, 211–229.

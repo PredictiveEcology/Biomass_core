@@ -388,8 +388,8 @@ further detail.
 \blandscape
 
 ```{r invariantSpptraits, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
-tab <- read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
-                 colNames = TRUE, sep.names = " ")
+tab <- openxlsx::read.xlsx("tables/exampleTables.xlsx", sheet = "invariantTraits", 
+                           colNames = TRUE, sep.names = " ")
 caption <- paste("Example of an invariant species traits table (the",
                  "`species` table object in the module), with species (ref:Abie-sp),",
                  "(ref:Pice-eng), (ref:Pice-gla), (ref:Pinu-sp), (ref:Popu-sp) and (ref:Pseud-men).",
@@ -597,6 +597,13 @@ dynamics. Should contain one colour per species in the `species` table and,
 potentially a colour for species mixtures (named "Mixed"). Vector names must
 follow `species$speciesCode`.
 
+-   `sppNameVector` -- (OPTIONAL) a character vector of species to be simulated.
+If provided, *Biomass_core* uses this vector to (attempt to) obtain `speciesLayers`
+for the listed species. If not provided, the user (or another module) can pass a filtered `sppEquiv` table
+(i.e., containing only the species that are to be simulated). If neither is provided,
+then *Biomass_core* attempts to use any species for which if finds available species
+(ref:percent) cover data in the study area.
+
 **Cohort-simulation-related objects**
 
 -   `cohortData` -- a `data.table` containing initial cohort information per
@@ -618,7 +625,7 @@ columns:
     
     -   *mortality* -- integer. Cohort dead biomass of the current year in
     $g/m^2$. Usually filled with 0s in initial conditions.
-    
+
     -   *aNPPAct* -- integer. Actual aboveground net primary productivity of the
     current year in $g/m^2$. `B` is the result of the previous year's `B`
     minus the current year's `mortality` plus `aNPPAct`. Usually filled with
@@ -736,14 +743,11 @@ However, any of the objects changed/output by *Biomass_core* (listed in Table
 \@ref(tab:moduleOutputs-Biomass-core)) can be saved via the `outputs` argument
 in `simInit`[^biomass_core-5].
 
-\newpage
-\blandscape
-
 ```{r moduleOutputs-Biomass-core, echo = FALSE, eval = TRUE, message = FALSE, results = 'asis'}
 df_outputs <- moduleOutputs("Biomass_core", "..")
 caption <- "List of (ref:Biomass-core) output objects and their description."
 
-panble(df_outputs, caption, landscape = TRUE,
+panble(df_outputs, caption, 
        panderArgs = list("justify" = "left", 
                          "digits" = 3, "split.cells" = c(15, 15, 40), "split.tables" = Inf),
        kable_stylingArgs = list(full_width = TRUE))
@@ -1053,10 +1057,8 @@ dir.create(pkgPath, recursive = TRUE)
 .libPaths(pkgPath, include.site = FALSE)
 
 if (!require(Require, lib.loc = pkgPath)) {
-  remotes::install_github(
-    paste0("PredictiveEcology/",
-           "Require@5c44205bf407f613f53546be652a438ef1248147"),
-    upgrade = FALSE, force = TRUE)
+  remotes::install_github("PredictiveEcology/Require@5c44205bf407f613f53546be652a438ef1248147",
+                          upgrade = FALSE, force = TRUE)
   library(Require, lib.loc = pkgPath)
 }
 
@@ -1077,8 +1079,7 @@ dependencies are installed in their correct version.
 modules in the `paths$modulePath`, and `Require` installs them.
 
 ```{r getModule-Biomass-core, eval=FALSE}
-Require(paste0("PredictiveEcology/",
-               "SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db"), 
+Require("PredictiveEcology/SpaDES.project@6d7de6ee12fc967c7c60de44f1aa3b04e6eeb5db", 
         require = FALSE, upgrade = FALSE, standAlone = TRUE)
 
 paths <- list(inputPath = normPath(file.path(tempDir, "inputs")), 

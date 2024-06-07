@@ -837,6 +837,13 @@ dynamics. Should contain one colour per species in the `species` table and,
 potentially a colour for species mixtures (named "Mixed"). Vector names must
 follow `species$speciesCode`.
 
+-   `sppNameVector` -- (OPTIONAL) a character vector of species to be simulated.
+If provided, *Biomass_core* uses this vector to (attempt to) obtain `speciesLayers`
+for the listed species. If not provided, the user (or another module) can pass a filtered `sppEquiv` table
+(i.e., containing only the species that are to be simulated). If neither is provided,
+then *Biomass_core* attempts to use any species for which if finds available species
+(ref:percent) cover data in the study area.
+
 **Cohort-simulation-related objects**
 
 -   `cohortData` -- a `data.table` containing initial cohort information per
@@ -970,6 +977,12 @@ and `B` composition, even if the user supplies other initial groupings
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> sppNameVector </td>
+   <td style="text-align:left;"> character </td>
+   <td style="text-align:left;"> an optional vector of species names to be pulled from `sppEquiv`. Species names must match `P(sim)$sppEquivCol` column in `sppEquiv`. If not provided, then species will be taken from the entire `P(sim)$sppEquivCol` column in `sppEquiv`. See `LandR::sppEquivalencies_CA`. </td>
+   <td style="text-align:left;"> NA </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> studyArea </td>
    <td style="text-align:left;"> SpatialPolygonsDataFrame </td>
    <td style="text-align:left;"> Polygon to use as the study area. Must be provided by the user </td>
@@ -1094,6 +1107,14 @@ event (growth and mortality are always yearly);
    <td style="text-align:left;"> A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> initialB </td>
+   <td style="text-align:left;"> numeric </td>
+   <td style="text-align:left;"> 10 </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> initial biomass values of new age-1 cohorts. If `NA` or `NULL`, initial biomass will be calculated as in LANDIS-II Biomass Suc. Extension (see Scheller and Miranda, 2015 or `?LandR::.initiateNewCohorts`) </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> gmcsGrowthLimits </td>
    <td style="text-align:left;"> numeric </td>
    <td style="text-align:left;"> 66.66666.... </td>
@@ -1132,14 +1153,6 @@ event (growth and mortality are always yearly);
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Initial time for the growth event to occur </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> initialB </td>
-   <td style="text-align:left;"> numeric </td>
-   <td style="text-align:left;"> 10 </td>
-   <td style="text-align:left;"> 1 </td>
-   <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> initial biomass values of new age-1 cohorts </td>
   </tr>
   <tr>
    <td style="text-align:left;"> initialBiomassSource </td>
@@ -1243,7 +1256,7 @@ event (growth and mortality are always yearly);
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> defines the plotting time step. If `NA`, the default, .plotInterval is set to successionTimestep. </td>
+   <td style="text-align:left;"> defines the plotting time step. If `NA`, the default, `.plotInterval` is set to `successionTimestep`. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .plots </td>
