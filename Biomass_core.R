@@ -21,7 +21,7 @@ defineModule(sim, list(
   loadOrder = list(after = c("Biomass_speciesParameters")),
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table",
                   "dplyr", "fpCompare", "ggplot2", "grid",
-                  "parallel", "purrr", "quickPlot", "Rcpp",
+                  "parallel", "purrr", "quickPlot (>= 1.0.2.9001)", "Rcpp",
                   "R.utils", "scales", "terra", "tidyr",
                   "reproducible (>= 2.1.0)",
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
@@ -1835,6 +1835,8 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   }
 
   levs <- terra::cats(sim$vegTypeMap)[[1]]
+  levelsID <- grep("^id$", ignore.case = TRUE,
+                  colnames(levs), value = TRUE)
   levelsName <- names(levs)[2]
   # facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
   #                                  att = levelsName,
@@ -1874,7 +1876,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   sppColorVect <- sim$sppColorVect
   names(sppColorVect) <- colsLeading
   colours <- sppColorVect[na.omit(match(levsLeading, colsLeading))]
-  setColors(sim$vegTypeMap, levs$ID) <- colours
+  setColors(sim$vegTypeMap, levs[[levelsID]]) <- colours
 
   # Mask out NAs based on rasterToMatch (for plotting only!)
   vegTypeMapForPlot <- mask(sim$vegTypeMap, sim$studyAreaReporting)
