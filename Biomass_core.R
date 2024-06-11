@@ -1972,21 +1972,21 @@ Save <- compiler::cmpfun(function(sim) {
   crs(sim$mortalityMap) <- crs(sim$ecoregionMap)
   crs(sim$reproductionMap) <- crs(sim$ecoregionMap)
   writeRaster(sim$simulatedBiomassMap,
-              file.path(outputPath(sim), "figures",
+              file.path(outputPath(sim),
                         paste0("simulatedBiomassMap_Year", round(time(sim)), ".tif")),
-              datatype = 'INT4S', overwrite = TRUE)
+              datatype = "INT4S", overwrite = TRUE)
   writeRaster(sim$ANPPMap,
-              file.path(outputPath(sim), "figures",
+              file.path(outputPath(sim),
                         paste0("ANPP_Year", round(time(sim)), ".tif")),
-              datatype = 'INT4S', overwrite = TRUE)
+              datatype = "INT4S", overwrite = TRUE)
   writeRaster(sim$mortalityMap,
-              file.path(outputPath(sim), "figures",
+              file.path(outputPath(sim),
                         paste0("mortalityMap_Year", round(time(sim)), ".tif")),
-              datatype = 'INT4S', overwrite = TRUE)
+              datatype = "INT4S", overwrite = TRUE)
   writeRaster(sim$reproductionMap,
-              file.path(outputPath(sim), "figures",
+              file.path(outputPath(sim),
                         paste0("reproductionMap_Year", round(time(sim)), ".tif")),
-              datatype = 'INT4S', overwrite = TRUE)
+              datatype = "INT4S", overwrite = TRUE)
 
   return(invisible(sim))
 })
