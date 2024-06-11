@@ -21,7 +21,7 @@ defineModule(sim, list(
   loadOrder = list(after = c("Biomass_speciesParameters")),
   reqdPkgs = list("assertthat", "compiler", "crayon", "data.table",
                   "dplyr", "fpCompare", "ggplot2", "grid",
-                  "parallel", "purrr", "quickPlot (>= 1.0.2.9001)", "Rcpp",
+                  "parallel", "purrr", "quickPlot (>= 1.0.2.9003)", "Rcpp",
                   "R.utils", "scales", "terra", "tidyr",
                   "reproducible (>= 2.1.0)",
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
@@ -795,14 +795,14 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   if (length(setdiff(sim$sppColorVect, sppOuts$sppColorVect))) {
     message(blue(
       "sim$sppColorVect will be filtered to simulated species only (sim$species$speciesCode)"
-      ))
+    ))
   }
   sim$sppColorVect <- sppOuts$sppColorVect
 
   if (length(setdiff(sim$sppNameVector, sppOuts$sppNameVector))) {
     message(blue(
       "sim$sppNameVector will be filtered to simulated species only (sim$species$speciesCode)"
-      ))
+    ))
   }
   sim$sppNameVector <- sppOuts$sppNameVector
 
@@ -1836,7 +1836,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
 
   levs <- terra::cats(sim$vegTypeMap)[[1]]
   levelsID <- grep("^id$", ignore.case = TRUE,
-                  colnames(levs), value = TRUE)
+                   colnames(levs), value = TRUE)
   levelsName <- names(levs)[2]
   # facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
   #                                  att = levelsName,
