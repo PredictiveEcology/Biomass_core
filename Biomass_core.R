@@ -1666,17 +1666,20 @@ summaryRegen <- compiler::cmpfun(function(sim) {
 
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, mod$sppEquiv)
-  assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol, sppColorVect = sim$sppColorVect)
+  assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
+                   sppColorVect = sim$sppColorVect)
 
   ## BIOMASS, WEIGHTED AVERAGE AGE, AVERAGE ANPP
   ## AND AGE OF OLDEST COHORT PER SPECIES
 
   ## Averages are calculated across pixels
   ## don't expand table, multiply by no. pixels - faster
-  thisPeriod <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
+  thisPeriod <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap,
+                                      cohortDefinitionCols = P(sim)$cohortDefinitionCols)
 
-  for (column in names(thisPeriod)) if (is.integer(thisPeriod[[column]]))
+  for (column in names(thisPeriod)) if (is.integer(thisPeriod[[column]])) {
     set(thisPeriod, NULL, column, as.numeric(thisPeriod[[column]]))
+  }
 
   thisPeriod <- thisPeriod[, list(year = time(sim),
                                   BiomassBySpecies = sum(B * noPixels, na.rm = TRUE),
@@ -1686,13 +1689,14 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                   OldestCohortBySpp = max(age, na.rm = TRUE)),
                            by = .(speciesCode)]
 
-  #overstory
-  cohortData <-  addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
+  ## overstory
+  cohortData <-  addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap,
+                                       cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   cohortData[, bWeightedAge := floor(sum(age * B) / sum(B) / 10) * 10, .(pixelGroup)]
   # B was set as numeric to avoid problems with big numbers being integers
   overstory <- cohortData[age >= bWeightedAge, .(overstoryBiomass = sum(as.numeric(B) * noPixels)),
                           .(speciesCode)]
-  thisPeriod <- thisPeriod[overstory, on = 'speciesCode']
+  thisPeriod <- thisPeriod[overstory, on = "speciesCode"]
 
   if (is.null(sim$summaryBySpecies)) {
     summaryBySpecies <- thisPeriod
@@ -1749,6 +1753,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
         dev(mod$statsWindow)
       }
     }
+
     ## biomass by species
     Plots(df, fn = speciesBiomassPlot,
           filename = "biomass_by_species",
