@@ -13,7 +13,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.4.3")),
+  version = list(Biomass_core = numeric_version("1.4.4")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -352,25 +352,26 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            if (is.na(P(sim)$.saveInterval))
              params(sim)$Biomass_core$.saveInterval <- P(sim)$successionTimestep
 
-           ## make sure plotting window is big enough
-           if (anyPlotting(P(sim)$.plots) &&
-               any(P(sim)$.plots == "screen")) {
-             ## if current plot dev is too small, open a new one
-             if (is.null(dev.list())) {
-               dev(x = dev.cur() + 1, height = 7, width = 14)
-               clearPlot()
-             } else {
-               if (dev.size()[2] < 14) {
+           if (anyPlotting(P(sim)$.plots)) {
+             if (any(P(sim)$.plots == "screen")) {
+               ## make sure plotting window is big enough
+               ## if current plot dev is too small, open a new one
+               if (is.null(dev.list())) {
                  dev(x = dev.cur() + 1, height = 7, width = 14)
                  clearPlot()
+               } else {
+                 if (dev.size()[2] < 14) {
+                   dev(x = dev.cur() + 1, height = 7, width = 14)
+                   clearPlot()
+                 }
                }
-             }
-             ## current window will be used for  summary stats
-             ## a new one for maps
-             mod$statsWindow <- dev.cur()
-             if (P(sim)$.plotMaps) {
-               mod$mapWindow <- mod$statsWindow + 1
-               dev(x = mod$mapWindow, height = 8, width = 10)
+               ## current window will be used for  summary stats
+               ## a new one for maps
+               mod$statsWindow <- dev.cur()
+               if (P(sim)$.plotMaps) {
+                 mod$mapWindow <- mod$statsWindow + 1
+                 dev(x = mod$mapWindow, height = 8, width = 10)
+               }
              }
            } else {
              ## if plotting is deactivated make sure maps are NOT plotted
@@ -536,9 +537,9 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
          },
          plotMaps = {
            sim <- plotVegAttributesMaps(sim)
-           if (P(sim)$.plotMaps)
-             sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
-                                  "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
+
+           sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval,
+                                "Biomass_core", "plotMaps", eventPriority = plotPriority + 0.25)
          },
          save = {
            sim <- Save(sim)
@@ -1622,13 +1623,17 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
         sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, seedingData_summ))
       }
       if (nrow(seedingData) > 0) {
-        outs <- updateCohortData(seedingData, cohortData = sim$cohortData,
-                                 pixelGroupMap = sim$pixelGroupMap,
-                                 currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
-                                 cohortDefinitionCols = P(sim)$cohortDefinitionCols,
-                                 treedFirePixelTableSinceLastDisp = NULL,
-                                 initialB = P(sim)$initialB,
-                                 successionTimestep = P(sim)$successionTimestep)
+        outs <- updateCohortData(
+          seedingData,
+          cohortData = sim$cohortData,
+          pixelGroupMap = sim$pixelGroupMap,
+          currentTime = round(time(sim)),
+          speciesEcoregion = sim$speciesEcoregion,
+          cohortDefinitionCols = P(sim)$cohortDefinitionCols,
+          treedFirePixelTableSinceLastDisp = NULL,
+          initialB = P(sim)$initialB,
+          successionTimestep = P(sim)$successionTimestep
+        )
 
         sim$cohortData <- outs$cohortData
         sim$pixelGroupMap <- outs$pixelGroupMap
@@ -1688,15 +1693,23 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                   aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
                                   OldestCohortBySpp = max(age, na.rm = TRUE)),
                            by = .(speciesCode)]
+  ## add back in species that are not on the landscape (e.g., killed)
+  thisPeriod <- thisPeriod[sim$species[, .(speciesCode)], on = "speciesCode", nomatch = NA]
+  thisPeriod[is.na(year), `:=`(year = time(sim), BiomassBySpecies = 0, AgeBySppWeighted = 0,
+                               aNPPBySpecies = 0, OldestCohortBySpp = 0)]
 
   ## overstory
   cohortData <-  addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap,
                                        cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   cohortData[, bWeightedAge := floor(sum(age * B) / sum(B) / 10) * 10, .(pixelGroup)]
-  # B was set as numeric to avoid problems with big numbers being integers
+  ## B was set as numeric to avoid problems with big numbers being integers
   overstory <- cohortData[age >= bWeightedAge, .(overstoryBiomass = sum(as.numeric(B) * noPixels)),
                           .(speciesCode)]
+  overstory <- overstory[sim$species[, .(speciesCode)], on = "speciesCode", nomatch = NA] ## add missing back
+  overstory[is.na(overstoryBiomass), overstoryBiomass := 0]
   thisPeriod <- thisPeriod[overstory, on = "speciesCode"]
+
+  assertthat::assert_that(nrow(thisPeriod) == nrow(sim$species)) ## TODO: check this if Mixed used
 
   if (is.null(sim$summaryBySpecies)) {
     summaryBySpecies <- thisPeriod
@@ -1746,7 +1759,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
     assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = "EN_generic_short", sppColorVect = unqCols2)
 
-    ## although Plots can deal with   .plotInitialTime == NA by not plotting, we need to
+    ## although Plots can deal with .plotInitialTime == NA by not plotting, we need to
     ## make sure the plotting windows are not changed/opened if  .plotInitialTime == NA
     if (!any(is.na(P(sim)$.plots))) {
       if (any(P(sim)$.plots == "screen")) {
@@ -1756,7 +1769,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
     ## biomass by species
     Plots(df, fn = speciesBiomassPlot,
-          filename = "biomass_by_species",
+          filename = "summary_biomass_by_species",
           path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
@@ -1769,7 +1782,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     cols3 <- summaryBySpecies1$cols
     names(cols3) <- summaryBySpecies1$leadingType
     Plots(summaryBySpecies1, fn = speciesLeadingPlot,
-          filename = "N_pixels_leading",
+          filename = "summary_N_pixels_leading",
           path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
@@ -1777,28 +1790,27 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
     ## species age
     Plots(df, fn = speciesAgeANPPPlot,
-          filename = "biomass-weighted_species_age",
+          filename = "summary_biomass-weighted_species_age",
           path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
           y = "AgeBySppWeighted", cols = cols2,
-          ylab = "Age", plotTitle = paste0("Biomass-weighted species age\n",
-                                           "averaged across pixels"))
+          ylab = "Age",
+          plotTitle = paste0("Biomass-weighted species age\n", "averaged across pixels"))
 
     ## overstory biomass by species OR oldest cohort age
     if (P(sim)$plotOverstory) {
       Plots(df, fn = speciesBiomassPlot,
-            filename = "overstory_biomass",
+            filename = "summary_overstory_biomass",
             path = figurePath(sim),
             types = mod$plotTypes,
             ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
             y = "overstoryBiomass",
             cols = cols2, ylab = "Overstory Biomass",
             plotTitle = "Overstory biomass by species")
-
     } else {
       Plots(df, fn = speciesAgeANPPPlot,
-            filename = "oldest_cohorts",
+            filename = "summary_oldest_cohorts",
             path = figurePath(sim),
             types = mod$plotTypes,
             ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
@@ -1807,12 +1819,13 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     }
     ## aNPP by species
     Plots(df, fn = speciesAgeANPPPlot,
-          filename = "total_aNPP_by_species",
+          filename = "summary_total_aNPP_by_species",
           path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
           y = "aNPPBySpecies", cols = cols2,
-          ylab = "aNPP", plotTitle = paste0("Total aNPP by species\n", "across pixels"))
+          ylab = "aNPP",
+          plotTitle = paste0("Total aNPP by species\n", "across pixels"))
   }
 
   ## export to sim
@@ -1822,13 +1835,29 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   return(invisible(sim))
 })
 
+#' @param x a single layer `SpatRaster`.
+#' @param title character string to use as plot title
+gg_vegAttrMap <- function(x, title) {
+  if (terra::is.factor(x)) {
+    gg <- ggplot() +
+      tidyterra::geom_spatraster(data = x) +
+      tidyterra::scale_fill_coltab(data = x, na.value = "transparent")
+  } else {
+    ## need to convert integer rasters to float to get colours (won't use coltab b/c continuous)
+    gg <- ggplot() +
+      tidyterra::geom_spatraster(data = x * 10 / 10) +
+      viridis::scale_fill_viridis(na.value = "transparent")
+  }
+
+  gg <- gg + ggtitle(title) + theme_bw()
+
+  return(gg)
+}
+
 plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, mod$sppEquiv)
   assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
                    sppColorVect = sim$sppColorVect)
-
-  ## these plots are not saved.
-  plotTypes <- "screen"
 
   biomassMapForPlot <- mask(sim$simulatedBiomassMap, sim$studyAreaReporting)
   ANPPMapForPlot <- mask(sim$ANPPMap, sim$studyAreaReporting)
@@ -1842,12 +1871,8 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   }
 
   levs <- terra::cats(sim$vegTypeMap)[[1]]
-  levelsID <- grep("^id$", ignore.case = TRUE,
-                  colnames(levs), value = TRUE)
+  levelsID <- grep("^id$", ignore.case = TRUE, colnames(levs), value = TRUE)
   levelsName <- names(levs)[2]
-  # facVals <- pemisc::factorValues2(sim$vegTypeMap, sim$vegTypeMap[],
-  #                                  att = levelsName,
-  #                                  na.rm = TRUE)
 
   ## Doesn't change anything in the current default setting, but it does create
   ##  an NA where there is "Mixed".
@@ -1912,20 +1937,20 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
     names(mapsToPlot)[1] <- "Biomass"
   }
 
-  if (any(P(sim)$.plots == "screen")) {
+  if (any(mod$plotTypes == "screen")) {
     dev(mod$mapWindow)
     ## for some reason not clearing the plot at the start was causing issues.
     ## even when graphics were turned off, there seemed to be some inheritance of previous plots
     clearPlot()
   }
 
-  Plots(mapsToPlot, usePlot = TRUE, types = plotTypes, title = names(mapsToPlot), new = TRUE)
-
-  ## add year
-  if (any(P(sim)$.plots == "screen")) {
-    grid.rect(0.93, 0.97, width = 0.2, height = 0.06, gp = gpar(fill = "white", col = "white"))
-    grid.text(label = paste0("Year = ", round(time(sim))), x = 0.93, y = 0.97)
-  }
+  lapply(names(mapsToPlot), function(lyr) {
+    Plots(terra::subset(mapsToPlot, lyr),
+          fn = gg_vegAttrMap,
+          types = mod$plotTypes,
+          filename = paste0("vegAttr_", lyr, "_year_", round(time(sim))),
+          title = paste(lyr, "year", round(time(sim))))
+  })
 
   return(invisible(sim))
 })
