@@ -379,7 +379,6 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            }
 
            ## if not end(sim) don't save plots and only plot to screen.
-           ## plotMaps is the exception, as it never is saved.
            if (time(sim) != end(sim)) {
              if (any(is.na(P(sim)$.plots))) {
                mod$plotTypes <- NA
@@ -1947,7 +1946,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   lapply(names(mapsToPlot), function(lyr) {
     Plots(terra::subset(mapsToPlot, lyr),
           fn = gg_vegAttrMap,
-          types = mod$plotTypes,
+          types = P(sim)$.plots,
           filename = paste0("vegAttr_", lyr, "_year_", round(time(sim))),
           title = paste(lyr, "year", round(time(sim))))
   })
@@ -1959,7 +1958,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, mod$sppEquiv)
 
   ## AVERAGE STAND BIOMASS/AGE/ANPP
-  ## calculate acrosS pixels
+  ## calculate across pixels
   ## don't expand table, multiply by no. pixels - faster
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   thisPeriod <- pixelCohortData[, list(year = time(sim),
