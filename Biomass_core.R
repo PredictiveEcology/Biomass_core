@@ -1936,7 +1936,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
     names(mapsToPlot)[1] <- "Biomass"
   }
 
-  if (any(mod$plotTypes == "screen")) {
+  if (any(P(sim)$.plots == "screen")) {
     dev(mod$mapWindow)
     ## for some reason not clearing the plot at the start was causing issues.
     ## even when graphics were turned off, there seemed to be some inheritance of previous plots
