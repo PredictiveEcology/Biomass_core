@@ -1,9 +1,9 @@
-#' Updates the speciesEcoregion used in current year from original speciesEcoregion file
+#' Updates the `speciesEcoregion` used in current year from original `speciesEcoregion` file
 #'
-#' A LANDIS-II speciesEcoregion file has a column called "year", which specifies the
-#' year after which the speciesEcoregion values should be used. This function
-#' compares the `currentTime` in the simulation with the `year` column in the `speciesEcoregion`
-#' table and updates accordingly, if needed.
+#' A LANDIS-II `speciesEcoregion` file has a column called "year", which specifies the
+#' year after which the `speciesEcoregion` values should be used.
+#' This function compares the `currentTime` in the simulation with the `year` column in
+#' the `speciesEcoregion` table and updates accordingly, if needed.
 #'
 #' @param speciesEcoregion A `data.table` with `species`-`ecoregion`-specific species trait values.
 #' Ecoregion refers to "ecolocation", a categorical variable grouping sites with similar biophysical
@@ -60,9 +60,9 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, coho
   return(cohortData)
 }
 
-#' updateSpeciesAttributes
+#' Update species attributes
 #'
-#' Add species traits to `cohortData`
+#' Add species traits to `cohortData`.
 #'
 #' @param species a `data.table` with species traits such as longevity, shade tolerance, etc.
 #'   Must have column `speciesCode`, with species names/IDs

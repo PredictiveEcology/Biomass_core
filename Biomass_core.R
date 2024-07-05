@@ -581,9 +581,11 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ## prepare dummy versions if not supplied --------------------------
   ## This next chunk is to supply defaults for the case where `cohortData`  or `pixelGroupMap` is not supplied
   ##   e.g., via a module like `Biomass_borealDataPrep`
-  if (!suppliedElsewhere("cohortData", sim, where = "sim") | !suppliedElsewhere("pixelGroupMap", sim, where = "sim")) {
-    if (is.null(sim$rasterToMatch))
-      stop("Must supply sim$rasterToMatch, since sim$cohortData or sim$pixelGroupMap are not supplied")
+  if (!suppliedElsewhere("cohortData", sim, where = "sim") ||
+      !suppliedElsewhere("pixelGroupMap", sim, where = "sim")) {
+    if (is.null(sim$rasterToMatch)) {
+      stop("Must supply sim$rasterToMatch, since sim$cohortData or sim$pixelGroupMap are not supplied.")
+    }
 
     if ((!suppliedElsewhere("cohortData", sim, where = "sim") && suppliedElsewhere("pixelGroupMap", sim, where = "sim")) ||
         (suppliedElsewhere("cohortData", sim, where = "sim") && !suppliedElsewhere("pixelGroupMap", sim, where = "sim"))) {
@@ -781,7 +783,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                          age = "integer",
                                          B = "integer"))
 
-  ## hamornize to simulated species -- we assume species is the correct set
+  ## harmonize to simulated species -- we assume species is the correct set
   ## (it has been filtered by B_borealDP and B_speciesParams)
   ## leave sim$sppEquiv untouched for future reference - sim$sppColorVect can be changed
   mod$sppEquiv <- sim$sppEquiv[get(P(sim)$sppEquivCol) %in% unique(sim$species$speciesCode)]
@@ -795,7 +797,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   if (length(setdiff(sim$sppColorVect, sppOuts$sppColorVect))) {
     message(blue(
       "sim$sppColorVect will be filtered to simulated species only (sim$species$speciesCode)"
-      ))
+    ))
   }
   sim$sppColorVect <- sppOuts$sppColorVect
 
@@ -1438,17 +1440,17 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
                                         ecoregionGroup = factorValues2(sim$ecoregionMap, as.vector(values((sim$ecoregionMap))),
                                                                        att = "ecoregionGroup")[tempActivePixel]),
                              by = "pixelGroup")
-  siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") %>% data.table()
+  siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") |> data.table()
   siteShade[is.na(siteShade), siteShade := 0]
   setkey(siteShade[, k := 1], k)
-  # i believe this is the latest version how the landis guys calculate sufficient light
-  # http://landis-extensions.googlecode.com/svn/trunk/succession-library/trunk/src/ReproductionDefaults.cs
+  ## I believe this is the latest version how the LANDIS-II folks calculate sufficient light
+  ## https://github.com/LANDIS-II-Foundation/Library-Succession/blob/master/src/ReproductionDefaults.cs
   seedingData <- siteShade[speciessource, allow.cartesian = TRUE][, k := NULL]
   seedingData <- setkey(seedingData, speciesCode)[setkey(sim$species[, .(speciesCode, shadetolerance)],
                                                          speciesCode),
                                                   nomatch = 0]
   seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
-  seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData), 0 , 1),]
+  seedingData <- seedingData[lightProb |> runif(nrow(seedingData), 0 , 1),]
   set(seedingData, NULL, c("siteShade", "lightProb", "shadetolerance"), NULL)
   # pixelGroupEcoregion <- unique(sim$cohortData, by = c("pixelGroup"))[,'.'(pixelGroup, sumB)]
 
@@ -1460,7 +1462,8 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
 
   specieseco_current <- speciesEcoregionLatestYear(
     sim$speciesEcoregion[,.(year, speciesCode, establishprob, ecoregionGroup)],
-    round(time(sim)))
+    round(time(sim))
+  )
   specieseco_current <- setkeyv(specieseco_current, c("ecoregionGroup", "speciesCode"))
 
   # specieseco_current <- sim$speciesEcoregion[year <= round(time(sim))]
