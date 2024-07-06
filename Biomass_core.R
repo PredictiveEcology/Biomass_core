@@ -1440,7 +1440,8 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
                                         ecoregionGroup = factorValues2(sim$ecoregionMap, as.vector(values((sim$ecoregionMap))),
                                                                        att = "ecoregionGroup")[tempActivePixel]),
                              by = "pixelGroup")
-  siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = "pixelGroup") |> data.table()
+  siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = c("pixelGroup", "ecoregionGroup")) |>
+    data.table()
   siteShade[is.na(siteShade), siteShade := 0]
   setkey(siteShade[, k := 1], k)
   ## I believe this is the latest version how the LANDIS-II folks calculate sufficient light
@@ -1450,7 +1451,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
                                                          speciesCode),
                                                   nomatch = 0]
   seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
-  seedingData <- seedingData[lightProb |> runif(nrow(seedingData), 0 , 1),]
+  seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData)), ]
   set(seedingData, NULL, c("siteShade", "lightProb", "shadetolerance"), NULL)
   # pixelGroupEcoregion <- unique(sim$cohortData, by = c("pixelGroup"))[,'.'(pixelGroup, sumB)]
 
@@ -1461,7 +1462,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   seedingData <- setkey(seedingData, ecoregionGroup, speciesCode)
 
   specieseco_current <- speciesEcoregionLatestYear(
-    sim$speciesEcoregion[,.(year, speciesCode, establishprob, ecoregionGroup)],
+    sim$speciesEcoregion[, .(year, speciesCode, establishprob, ecoregionGroup)],
     round(time(sim))
   )
   specieseco_current <- setkeyv(specieseco_current, c("ecoregionGroup", "speciesCode"))
@@ -1471,7 +1472,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   #                                                 .(speciesCode, establishprob, ecoregionGroup)],
   #                              ecoregionGroup, speciesCode)
   seedingData <- seedingData[specieseco_current, nomatch = 0]
-  seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData), 0, 1),]
+  seedingData <- seedingData[establishprob %>>% runif(nrow(seedingData)), ]
   set(seedingData, NULL, "establishprob", NULL)
   if (P(sim)$calibrate == TRUE) {
     newCohortData_summ <- seedingData[, .(seedingAlgorithm = P(sim)$seedingAlgorithm,
@@ -1539,7 +1540,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
     set(seedReceive, NULL, "siteShade", NULL)
 
     # 3. Remove any species from the seedSource that couldn't regeneration anywhere on the map due to insufficient light
-    seedReceive <- seedReceive[lightProb %>>% runif(NROW(seedReceive), 0, 1), ][
+    seedReceive <- seedReceive[lightProb %>>% runif(NROW(seedReceive)), ][
       , .(pixelGroup, speciesCode, seeddistance_eff, seeddistance_max)]
     setkey(seedReceive, speciesCode)
 
