@@ -2,7 +2,8 @@
 # are put into the simList. To use objects and functions, use sim$xxx.
 defineModule(sim, list(
   name = "Biomass_core",
-  description = "A fast and large landscape biomass succession model modified from LANDIS-II Biomass Succession extension, v3.2.1",
+  description = paste("A fast and large landscape biomass succession model modified from",
+                      "LANDIS-II Biomass Succession extension, v3.2.1"),
   keywords = c("forest succession", "LANDIS II", "Biomass"),
   authors = c(
     person("Yong", "Luo", email = "yluo1@lakeheadu.ca", role = "aut"),
@@ -49,13 +50,13 @@ defineModule(sim, list(
                     desc = paste("Initial biomass values of new age-1 cohorts.",
                                  "If `NA` or `NULL`, initial biomass will be calculated as in LANDIS-II Biomass Suc. Extension",
                                  "(see Scheller and Miranda, 2015 or `?LandR::.initiateNewCohorts`)")),
-    defineParameter("gmcsGrowthLimits", "numeric", c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
+    defineParameter("gmcsGrowthLimits", "numeric", c(2/3 * 100, 3/2 * 100), NA, NA,
                     paste("If using `LandR.CS` for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
                           "(currentClimate/referenceClimate). Upper and lower limits are ",
                           "suggested to circumvent problems caused by very small denominators as well as ",
                           "predictions outside the data range used to generate the model")),
-    defineParameter("gmcsMortLimits", "numeric", c(1/1.5 * 100, 1.5/1 * 100), NA, NA,
+    defineParameter("gmcsMortLimits", "numeric", c(2/3 * 100, 3/2 * 100), NA, NA,
                     paste("If using `LandR.CS` for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
                           "(currentClimate/referenceClimate). Upper and lower limits are ",
