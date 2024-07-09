@@ -1410,12 +1410,17 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   }
 
   if (nrow(seedingData) > 0) {
-    outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
-                             currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
-                             cohortDefinitionCols = P(sim)$cohortDefinitionCols,
-                             treedFirePixelTableSinceLastDisp = NULL,
-                             initialB = P(sim)$initialB,
-                             successionTimestep = P(sim)$successionTimestep)
+    outs <- updateCohortData(
+      seedingData,
+      cohortData = sim$cohortData,
+      pixelGroupMap = sim$pixelGroupMap,
+      currentTime = round(time(sim)),
+      speciesEcoregion = sim$speciesEcoregion,
+      cohortDefinitionCols = P(sim)$cohortDefinitionCols,
+      treedFirePixelTableSinceLastDisp = NULL,
+      initialB = P(sim)$initialB,
+      successionTimestep = P(sim)$successionTimestep
+    )
     sim$cohortData <- outs$cohortData
     sim$pixelGroupMap <- outs$pixelGroupMap
   }
@@ -1437,10 +1442,12 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   speciessource <- setkey(sim$species[, .(speciesCode, k = 1)], k)
   siteShade <- data.table(calcSiteShade(currentTime = round(time(sim)), sim$cohortData,
                                         sim$speciesEcoregion, sim$minRelativeB))
-  activePixelGroup <- unique(data.table(pixelGroup = as.vector(values(sim$pixelGroupMap))[tempActivePixel],
-                                        ecoregionGroup = factorValues2(sim$ecoregionMap, as.vector(values((sim$ecoregionMap))),
-                                                                       att = "ecoregionGroup")[tempActivePixel]),
-                             by = "pixelGroup")
+  activePixelGroup <- data.table(
+    pixelGroup = as.vector(values(sim$pixelGroupMap))[tempActivePixel],
+    ecoregionGroup = factorValues2(sim$ecoregionMap, as.vector(values((sim$ecoregionMap))),
+                                   att = "ecoregionGroup")[tempActivePixel]
+  ) |>
+    unique(by = "pixelGroup")
   siteShade <- dplyr::left_join(activePixelGroup, siteShade, by = c("pixelGroup", "ecoregionGroup")) |>
     data.table()
   siteShade[is.na(siteShade), siteShade := 0]
@@ -1486,12 +1493,17 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
   if (nrow(seedingData) > 0) {
-    outs <- updateCohortData(seedingData, cohortData = sim$cohortData, sim$pixelGroupMap,
-                             currentTime = round(time(sim)), speciesEcoregion = sim$speciesEcoregion,
-                             treedFirePixelTableSinceLastDisp = NULL,
-                             cohortDefinitionCols = P(sim)$cohortDefinitionCols,
-                             initialB = P(sim)$initialB,
-                             successionTimestep = P(sim)$successionTimestep)
+    outs <- updateCohortData(
+      seedingData,
+      cohortData = sim$cohortData,
+      pixelGroupMap = sim$pixelGroupMap,
+      currentTime = round(time(sim)),
+      speciesEcoregion = sim$speciesEcoregion,
+      cohortDefinitionCols = P(sim)$cohortDefinitionCols,
+      treedFirePixelTableSinceLastDisp = NULL,
+      initialB = P(sim)$initialB,
+      successionTimestep = P(sim)$successionTimestep
+    )
     sim$cohortData <- outs$cohortData
     sim$pixelGroupMap <- outs$pixelGroupMap
   }
