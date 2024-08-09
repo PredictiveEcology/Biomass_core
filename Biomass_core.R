@@ -14,7 +14,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.4.4")),
+  version = list(Biomass_core = numeric_version("1.4.4.9000")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -28,7 +28,7 @@ defineModule(sim, list(
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@master (>= 0.0.2.0002)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/LandR@development (>= 1.1.5.9015)"),
+                  "PredictiveEcology/LandR@development (>= 1.1.5.9016)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -967,11 +967,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     sim$simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
-  # can't add ecoregionGroup and B here in an adhoc way Eliot: Jan 19, 2024 ... the other modules
-  #   don't add them in adhoc ways, so they will not match ... the parameters must be the same in
-  #   all modules that use cohortDefinitionCols
-  # colsToKeep <- unique(c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B"))
-  colsToKeep <- unique(c(P(sim)$cohortDefinitionCols))
+  ## 2024-08: typically, cohortDefinitionCols should not include ecoregionGroup and B,
+  ## but we want to keep these columns in this case (currently never run; note 'stop()' above)
+  colsToKeep <- unique(c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B"))
   sim$cohortData <- cohortData[, .SD, .SDcol = colsToKeep]
   sim$cohortData[, c("mortality", "aNPPAct") := 0L]
   # sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L, aNPPAct = 0L)]
