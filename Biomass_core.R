@@ -28,7 +28,7 @@ defineModule(sim, list(
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@master (>= 0.0.2.0002)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/LandR (>= 1.1.4)"),
+                  "PredictiveEcology/LandR@development (>= 1.1.5.9015)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -41,7 +41,7 @@ defineModule(sim, list(
                                  "If NULL, then will skip all `summaryBGM` related events")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to `FALSE`"),
-    defineParameter("cohortDefinitionCols", "character", c("pixelGroup", "speciesCode", "age", "ecoregionGroup", "B"), NA, NA,
+    defineParameter("cohortDefinitionCols", "character", LandR::cohortDefinitionCols(), NA, NA,
                     desc = paste("`cohortData` columns that determine what constitutes a cohort",
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
