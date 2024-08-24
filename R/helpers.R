@@ -56,7 +56,6 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, coho
     cohortData <- specieseco_current[cohortData, on = c("speciesCode", "ecoregionGroup"), nomatch = 0]
   }
 
-
   return(cohortData)
 }
 
@@ -390,9 +389,7 @@ checkAndChangeKey <- function(obj, key) {
 #' @export
 #'
 #' @examples
-maxRowsDT <- function(maxLen, maxMem, startClockTime, groupSize,
-                      modEnv) {
-
+maxRowsDT <- function(maxLen, maxMem, startClockTime, groupSize, modEnv) {
   updateMaxMemoryTime <- FALSE
   if (!exists("groupSize", envir = modEnv)) {
     updateMaxMemoryTime <- TRUE

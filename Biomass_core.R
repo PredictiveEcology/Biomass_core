@@ -830,20 +830,18 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   LandR::assertERGs(sim$ecoregionMap, sim$cohortData, sim$speciesEcoregion, sim$minRelativeB)
 
   ## ecoregion -------------------------------------------------
-  if (is.null(sim$ecoregion))
+  if (is.null(sim$ecoregion)) {
     stop("Need to supply sim$ecoregion")
+  }
   setDT(sim$ecoregion)
   LandR::assertColumns(sim$ecoregion, c(active = "character", ecoregionGroup = "factor"))
 
-  ecoregion <- sim$ecoregion#[, ecoregionGroup := as.factor(ecoregion)]
-  # ecoregion_temp <- setkey(ecoregion[, .(ecoregion, ecoregionGroup)], ecoregion)
-
+  ecoregion <- sim$ecoregion
   ## speciesEcoregion - checks
   LandR::assertColumns(sim$speciesEcoregion,
                        c(ecoregionGroup = "factor", speciesCode = "factor",
                          establishprob = "numeric", maxB = "integer", maxANPP = "numeric"))
-  # speciesEcoregion[, ecoregionGroup := as.factor(ecoregion)]
-  speciesEcoregion <- sim$speciesEcoregion#[sim$species[, .(species, speciesCode)],
+  speciesEcoregion <- sim$speciesEcoregion
   speciesEcoregion <- setkey(speciesEcoregion, ecoregionGroup, speciesCode)
 
   ## minRelativeB ----------------------------------------------
@@ -861,8 +859,6 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ## Changed mechanism for active and inactive -- just use NA on ecoregionMap
   ecoregionMapNAs <- is.na(as.vector(sim$ecoregionMap[]))
 
-  # very possible that sim$studyAreaReporting is not same CRS as sim$ecoregionMap
-  #  used to be `mask(...)` which would fail ... Eliot Dec 1, 2023
   ecoregionMapReporting <- maskTo(sim$ecoregionMap, sim$studyAreaReporting)
   ecoregionMapReportingNAs <- is.na(as.vector(ecoregionMapReporting[]))
 
@@ -1233,7 +1229,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       if (!P(sim)$growthAndMortalityDrivers == "LandR") {
         ## necessary due to column joining
         if (!is.null(subCohortData$growthPred)) {
-          set(subCohortData, NULL, c('growthPred', 'mortPred'), NULL)
+          set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
         }
 
         ## get arguments from sim environment --
@@ -1258,7 +1254,6 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred/100))] ## changed from ratio to pct for memory
       }
       subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
-
 
       ## NOTE RE: double removal of mAge -- it is a correct implementation of the LANDIS source
       ## We already tried to purge the double removal... but reverted:
@@ -1490,7 +1485,8 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
       nomatch = 0][, .(species, seedingAlgorithm, Year, numberOfReg)]
     sim$regenerationOutput <- rbindlist(list(sim$regenerationOutput, newCohortData_summ))
   }
-  if (nrow(seedingData) > 0) {
+
+  if (NROW(seedingData) > 0) {
     outs <- updateCohortData(
       seedingData,
       cohortData = sim$cohortData,
@@ -2056,9 +2052,7 @@ CohortAgeReclassification <- function(sim) {
     message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   if (!suppliedElsewhere("studyArea", sim)) {
-    stop("Please provide a 'studyArea' polygon")
-    # message("'studyArea' was not provided by user. Using a polygon (6250000 m^2) in southwestern Alberta, Canada")
-    # sim$studyArea <- randomStudyArea(seed = 1234, size = (250^2)*100)  # Jan 2021 we agreed to force user to provide a SA/SAL
+    stop("Please provide a 'studyArea' polygon") ## Jan 2021 we agreed user must provide SA/SAL
   }
 
   if (is.na(P(sim)$.studyAreaName)) {
@@ -2128,9 +2122,17 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!suppliedElsewhere("studyAreaReporting", sim)) {
-    if (getOption("LandR.verbose", TRUE) > 0)
+    if (getOption("LandR.verbose", TRUE) > 0) {
       message("'studyAreaReporting' was not provided by user. Using the same as 'studyArea'.")
+    }
     sim$studyAreaReporting <- sim$studyArea
+  }
+
+  if (!.compareCRS(sim$studyArea, sim$sim$studyAreaReporting)) {
+    warning(paste("studyArea and studyAreaReporting projections differ.\n",
+                  "studyAreaReporting will be projected to match studyArea."))
+    sim$studyAreaReporting <- projectInputs(sim$studyAreaReporting, crs(sim$studyArea))
+    sim$studyAreaReporting <- fixErrors(sim$studyAreaReporting)
   }
 
   ## make light requirements table
