@@ -1431,7 +1431,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   sim$cohortData <- calculateSumB(sim$cohortData, lastReg = sim$lastReg, currentTime = round(time(sim)),
                                   successionTimestep = P(sim)$successionTimestep)
   species <- sim$species
-  # all species can provide seed source, i.e. age>=sexualmature
+  ## all species can provide seed source, i.e. age >= sexualmature
   speciessource <- setkey(sim$species[, .(speciesCode, k = 1)], k)
   siteShade <- data.table(calcSiteShade(currentTime = round(time(sim)), sim$cohortData,
                                         sim$speciesEcoregion, sim$minRelativeB))
@@ -1536,9 +1536,9 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
       setkey(., speciesCode) %>%
       .[matureCohorts]
     setkey(seedSource, speciesCode)
-    #  Seed Receiving cells:
-    #  1. Must be sufficient light
-    # seed receive just for the species that are seed source
+    ##  Seed Receiving cells:
+    ##  1. Must be sufficient light
+    ## seed receive just for the species that are seed source
     tempspecies1 <- sim$species[speciesCode %in% unique(matureCohorts$speciesCode),][
       , .(speciesCode, shadetolerance, seeddistance_eff, seeddistance_max)]
     seedReceive <- setkey(tempspecies1[, c(k = 1, .SD)], k)[setkey(siteShade[
@@ -1546,20 +1546,21 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
     seedReceive <- assignLightProb(sufficientLight = sim$sufficientLight, seedReceive)
     set(seedReceive, NULL, "siteShade", NULL)
 
-    # 3. Remove any species from the seedSource that couldn't regeneration anywhere on the map due to insufficient light
+    ## 3. Remove any species from the seedSource that couldn't regenerate
+    ##    anywhere on the map due to insufficient light
     seedReceive <- seedReceive[lightProb %>>% runif(NROW(seedReceive)), ][
       , .(pixelGroup, speciesCode, seeddistance_eff, seeddistance_max)]
     setkey(seedReceive, speciesCode)
 
-    # rm ones that had successful serotiny or resprouting
+    ## rm ones that had successful serotiny or resprouting
     seedReceive <- seedReceive[!sim$cohortData[age == 1L], on = c("pixelGroup", "speciesCode")]
-    #    (info contained within seedReceive)
-    # this is should be a inner join, needs to specify the nomatch=0, nomatch = NA is default that sugest the full joint.
-    seedSource <- seedSource[speciesCode %in% unique(seedReceive$speciesCode),]
+    ##    (info contained within seedReceive)
+    ## this is should be a inner join, needs to specify the nomatch=0, nomatch = NA is default that suggest the full join.
+    seedSource <- seedSource[speciesCode %in% unique(seedReceive$speciesCode), ]
 
-    # it could be more efficient if sim$pixelGroupMap is reduced map by removing the pixels that have
-    # successful postdisturbance regeneration and the inactive pixels
-    # how to subset the reducedmap
+    ## it could be more efficient if sim$pixelGroupMap is reduced map by removing the pixels that
+    ## have successful postdisturbance regeneration and the inactive pixels
+    ## how to subset the reducedmap
     # if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
     #   inactivePixelIndex <- c(sim$inactivePixelIndex, sim$treedFirePixelTableSinceLastDisp$pixelIndex)
     # } else {
