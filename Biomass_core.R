@@ -40,7 +40,7 @@ defineModule(sim, list(
                                  "If NULL, then will skip all `summaryBGM` related events")),
     defineParameter("calibrate", "logical", FALSE,
                     desc = "Do calibration? Defaults to `FALSE`"),
-    defineParameter("cohortDefinitionCols", "character", c("pixelGroup", "speciesCode", "age", "ecoregionGroup", "B"), NA, NA,
+    defineParameter("cohortDefinitionCols", "character", LandR::cohortDefinitionCols(), NA, NA,
                     desc = paste("`cohortData` columns that determine what constitutes a cohort",
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
@@ -964,11 +964,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     sim$simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
   }
 
-  # can't add ecoregionGroup and B here in an adhoc way Eliot: Jan 19, 2024 ... the other modules
-  #   don't add them in adhoc ways, so they will not match ... the parameters must be the same in
-  #   all modules that use cohortDefinitionCols
-  # colsToKeep <- unique(c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B"))
-  colsToKeep <- unique(c(P(sim)$cohortDefinitionCols))
+  colsToKeep <- unique(c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B"))
+  # colsToKeep <- unique(c(P(sim)$cohortDefinitionCols))
   sim$cohortData <- cohortData[, .SD, .SDcol = colsToKeep]
   sim$cohortData[, c("mortality", "aNPPAct") := 0L]
   # sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L, aNPPAct = 0L)]
