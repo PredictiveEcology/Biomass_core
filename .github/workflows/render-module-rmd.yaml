@@ -49,7 +49,7 @@ jobs:
         with:
           GitTag: 'development'
 
-      - uses: PredictiveEcology/actions/install-SpaDES@v0.0
+      - uses: PredictiveEcology/actions/install-SpaDES@v0.2
 
       - uses: PredictiveEcology/actions/install-Rmd-pkgs@v0.2
 
