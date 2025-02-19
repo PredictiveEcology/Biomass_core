@@ -98,7 +98,7 @@ defineModule(sim, list(
     defineParameter("spinupMortalityfraction", "numeric", 0.001,
                     desc = paste("Defines the mortality loss fraction in spin up-stage simulation.",
                                  "Only used if `P(sim)$initialBiomassSource == 'biomassMap'`, which is currently deactivated.")),
-    defineParameter("sppEquivCol", "character", "Boreal", NA, NA,
+    defineParameter("sppEquivCol", "character", "LandR", NA, NA,
                     "The column in `sim$sppEquiv` data.table to use as a naming convention"),
     defineParameter("successionTimestep", "numeric", 10, NA, NA,
                     paste("Defines the simulation time step, default is 10 years.",
