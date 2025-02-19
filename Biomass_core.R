@@ -99,7 +99,9 @@ defineModule(sim, list(
                     desc = paste("Defines the mortality loss fraction in spin up-stage simulation.",
                                  "Only used if `P(sim)$initialBiomassSource == 'biomassMap'`, which is currently deactivated.")),
     defineParameter("sppEquivCol", "character", "LandR", NA, NA,
-                    "The column in `sim$sppEquiv` data.table to use as a naming convention"),
+                    "The column in `sim$sppEquiv` data.table to use as a naming convention during simulation"),
+    defineParameter("sppEquivPlotCol", "character", "LandR", NA, NA,
+                    "The column in `sim$sppEquiv` data.table to use as a naming convention for plots"),
     defineParameter("successionTimestep", "numeric", 10, NA, NA,
                     paste("Defines the simulation time step, default is 10 years.",
                           "Note that growth and mortality always happen on a yearly basis.",
@@ -1740,10 +1742,10 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
   whMixedLeading <- which(summaryBySpecies1$leadingType == "Mixed")
   summaryBySpecies1$leadingType <- equivalentName(summaryBySpecies1$leadingType, mod$sppEquiv,
-                                                  "EN_generic_short")
+                                                  P(sim)$sppEquivPlotCol)
   summaryBySpecies1$leadingType[whMixedLeading] <- "Mixed"
 
-  colours <- equivalentName(names(sim$sppColorVect), mod$sppEquiv, "EN_generic_short")
+  colours <- equivalentName(names(sim$sppColorVect), mod$sppEquiv, P(sim)$sppEquivPlotCol)
   whMixedSppColors <- which(names(sim$sppColorVect) == "Mixed")
   colours[whMixedSppColors] <- "Mixed"
 
@@ -1756,7 +1758,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
 
   if (length(unique(summaryBySpecies1$year)) > 1) {
     df <- sim$species[, list(speciesCode, species)][summaryBySpecies, on = "speciesCode"]
-    df$species <- equivalentName(df$species, mod$sppEquiv, "EN_generic_short")
+    df$species <- equivalentName(df$species, mod$sppEquiv, P(sim)$sppEquivPlotCol)
 
     colorIDs <- match(df$species, colours)
     df$cols <- sim$sppColorVect[colorIDs]
@@ -1768,7 +1770,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     unqCols2 <- unqdf$cols
     names(unqCols2) <- unqdf$species
 
-    assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = "EN_generic_short", sppColorVect = unqCols2)
+    assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivPlotCol, sppColorVect = unqCols2)
 
     ## although Plots can deal with .plotInitialTime == NA by not plotting, we need to
     ## make sure the plotting windows are not changed/opened if  .plotInitialTime == NA
@@ -1909,7 +1911,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   # Will return NA where there is no value, e.g., Mixed
   levsLeading[whMixedLevs] <- "Mixed"
 
-  shortNames <- equivalentName(levsLeading, sppEquiv, "EN_generic_short")
+  shortNames <- equivalentName(levsLeading, sppEquiv, P(sim)$sppEquivPlotCol)
   shortNames[whMixedLevs] <- "Mixed"
   levs[[levelsName]] <- shortNames
   levels(sim$vegTypeMap) <- levs
