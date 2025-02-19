@@ -1002,14 +1002,31 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   }
 
   sim$lastReg <- 0
-  speciesEcoregion[, identifier := year > P(sim)$successionTimestep]
-  speciesEcoregion_True <- speciesEcoregion[identifier == TRUE, ]
-  speciesEcoregion_False <- speciesEcoregion[identifier == FALSE, ]
-  if (NROW(speciesEcoregion_False)) {
-    speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(year), ]
-    speciesEcoregion_True <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))
+
+  ## the code below makes sure the first year of traits is used even if it's < successionTimestep
+  ## if all(year == start(sim)), all become 0, which is ok because only the most recent
+  ## year of trait data up time(sim) is used (so if all year == 0, year 0's traits
+  ## are used during the first growth event). HOWEVER, this will be problematic if
+  ## speciesEcoregion contains projected values for the entire simulation as only the last
+  ## year of values would be used since all become lower than time(sim)
+
+  # speciesEcoregion[, identifier := year > P(sim)$successionTimestep]
+  # speciesEcoregion_True <- speciesEcoregion[identifier == TRUE, ]
+  # speciesEcoregion_False <- speciesEcoregion[identifier == FALSE, ]
+  # if (NROW(speciesEcoregion_False)) {
+  #   speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(year), ]
+  #   speciesEcoregion_True <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))
+  # }
+  # sim$speciesEcoregion <- speciesEcoregion_True[, ':='(year = year - min(year), identifier = NULL)]
+
+  ## proposed fix: check that year 0 exists and if not, add it -- LANDIS-II doc requires a year 0 to be present
+  if (!any(speciesEcoregion$year == 0)) {
+    message("Could not find 'year == 0' in 'speciesEcoregion' table.")
+    message("Using the first year of trait values as 'year 0'")
+    firstYrSppEcoregion <- sim$speciesEcoregion[year == min(year)]
+    firstYrSppEcoregion$year <- 0L
+    sim$speciesEcoregion <- rbind(firstYrSppEcoregion, sim$speciesEcoregion)
   }
-  sim$speciesEcoregion <- speciesEcoregion_True[, ':='(year = year - min(year), identifier = NULL)]
 
   sim$lastFireYear <- "noFire"
 
