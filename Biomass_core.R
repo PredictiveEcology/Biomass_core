@@ -286,10 +286,6 @@ defineModule(sim, list(
                                "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs")),
     createsOutput("speciesEcoregion", "data.table",
                   desc = "Define the `maxANPP`, `maxB` and `SEP` change with both ecoregion and simulation time."),
-    createsOutput("speciesLayers", "SpatRaster",
-                  desc = paste("Species percent cover raster layers, based on input `speciesLayers` object.",
-                               "Not changed by this module.")),
-    # createsOutput("spinUpCache", "logical", desc = ""),
     createsOutput("spinupOutput", "data.table",
                   desc = "Spin-up output. Currently deactivated."),
     createsOutput("sppColorVect", "character",
@@ -631,15 +627,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
     ## make sure speciesLayers match RTM (they may not if they come from another module's init.)
     if (!.compareRas(sim$speciesLayers, sim$rasterToMatch, stopOnError = FALSE)) {
-      message(blue("'speciesLayers' and 'rasterToMatch' do not match. "),
-              red("'speciesLayers' will be cropped/masked/reprojected to 'rasterToMatch'. "),
-              blue("If this is wrong, provide matching 'speciesLayers' and 'rasterToMatch'"))
+      stop(blue("'speciesLayers' and 'rasterToMatch' do not match. "),
+              red("Please ensure speciesLayers  is be cropped/masked/reprojected to 'rasterToMatch'"))
 
-      sim$speciesLayers <- postProcess(sim$speciesLayers,
-                                       to = sim$rasterToMatch,
-                                       filename1 = NULL,
-                                       writeTo = NULL,
-                                       userTags = c(currentModule(sim), "speciesLayers"))
     }
 
     ecoregionFiles <- makeDummyEcoregionFiles(ecoregionMap, rstLCC, sim$rasterToMatch)
