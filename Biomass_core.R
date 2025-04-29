@@ -212,9 +212,9 @@ defineModule(sim, list(
                               "`P(sim)$sppEquivCol` column in `sppEquiv`. If not provided, then species will be taken from",
                               "the entire `P(sim)$sppEquivCol` column in `sppEquiv`.",
                               "See `LandR::sppEquivalencies_CA`.")),
-    expectsInput("studyArea", "sfc",
+    expectsInput("studyArea", "SpatVector",
                  desc = paste("Polygon to use as the study area. Must be supplied by the user. Can also be a SpatVector.")),
-    expectsInput("studyAreaReporting", "sfc",
+    expectsInput("studyAreaReporting", "SpatVector",
                  desc = paste("multipolygon (typically smaller/unbuffered than studyArea) to use for plotting/reporting.",
                               "Defaults to `studyArea`.")),
     expectsInput("sufficientLight", "data.frame",
@@ -2054,60 +2054,21 @@ CohortAgeReclassification <- function(sim) {
             params(sim)[[currentModule(sim)]][[".studyAreaName"]])
   }
 
-  needRTM <- FALSE
-  if (is.null(sim$rasterToMatch)) {
-    if (!suppliedElsewhere("rasterToMatch", sim)) {
-      needRTM <- TRUE
-      message("There is no rasterToMatch supplied; will attempt to use rawBiomassMap")
-    } else {
-      stop("rasterToMatch is going to be supplied, but ", currentModule(sim), " requires it ",
-           "as part of its .inputObjects. Please make it accessible to ", currentModule(sim),
-           " in the .inputObjects by passing it in as an object in simInit(objects = list(rasterToMatch = aRaster)",
-           " or in a module that gets loaded prior to ", currentModule(sim))
+  if (!suppliedElsewhere("rasterToMatch", sim)) {
+    studyArea <- sim$studyArea
+    if (terra::is.lonlat(sim$studyArea)) {
+      #use NTEMS projection - LandR requires projected rasters for dispersal
+      studyArea <- project(studyArea,
+                           paste0("+proj=lcc +lat_0=49 +lon_0=-95 +lat_1=49 +lat_2=77",
+                                  " +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +type=crs"))
     }
-  }
-
-  if (needRTM) {
-    if (is.null(sim$rawBiomassMap)) {
-      rawBiomassMapURL <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
-                                 "canada-forests-attributes_attributs-forests-canada/",
-                                 "2001-attributes_attributs-2001/",
-                                 "NFI_MODIS250m_2001_kNN_Structure_Biomass_TotalLiveAboveGround_v1.tif")
-
-      httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-        rawBiomassMap <- prepRawBiomassMap(url = rawBiomassMapURL,
-                                           studyAreaName = P(sim)$.studyAreaName,
-                                           cacheTags = cacheTags,
-                                           to = sim$studyArea,
-                                           projectTo = NA,  ## don't project to SA
-                                           destinationPath = dPath)
-      })
-    } else {
-      rawBiomassMap <- sim$rawBiomassMap
-      if (!.compareCRS(sim$rawBiomassMap, sim$studyArea)) {
-        ## note that extents may never align if the resolution and projection do not allow for it
-        rawBiomassMap <- Cache(postProcess,
-                               rawBiomassMap,
-                               method = "bilinear",
-                               to = sim$studyAreaLarge,
-                               projectTo = NA,  ## don't project to SA
-                               overwrite = TRUE)
-      }
-    }
-
-    RTMs <- prepRasterToMatch(studyArea = sim$studyArea,
-                              studyAreaLarge = sim$studyArea,
-                              rasterToMatch = NULL,
-                              rasterToMatchLarge = NULL,
-                              destinationPath = dPath,
-                              templateRas = rawBiomassMap,
-                              studyAreaName = P(sim)$.studyAreaName,
-                              cacheTags = cacheTags)
-    sim$rasterToMatch <- RTMs$rasterToMatch
-    rm(RTMs)
+    sim$rasterToMatch <- rast(studyArea, res = c(250, 250), vals = 1) |>
+      mask(mask = studyArea)
   }
 
   if (!.compareCRS(sim$studyArea, sim$rasterToMatch)) {
+    #TODO: I don't think this is necessary 2025-04-28..?
+    #the only vector dataset is ecoregion and it can be projected to rasterToMatch anyway
     warning(paste0("studyArea and rasterToMatch projections differ.\n",
                    "studyArea will be projected to match rasterToMatch"))
     sim$studyArea <- projectInputs(sim$studyArea, crs(sim$rasterToMatch))
@@ -2201,7 +2162,6 @@ CohortAgeReclassification <- function(sim) {
       copy(sim$sppEquiv)
     }
     sim$species <- prepSpeciesTable(speciesTable = speciesTable,
-                                    # speciesLayers = sim$speciesLayers,
                                     sppEquiv = tempSppEquiv,
                                     sppEquivCol = P(sim)$sppEquivCol)
     rm(tempSppEquiv)
@@ -2217,11 +2177,6 @@ CohortAgeReclassification <- function(sim) {
                           quote(gcsModel))
       names(sim$cceArgs) <- paste(sim$cceArgs)
     }
-
-    ## check for climate args
-    # if (!all(unlist(lapply(names(sim$cceArgs), suppliedElsewhere, sim = sim)))) {
-    #   stop("Some or all of sim$cceArgs are not supplied")
-    # }
   }
 
   gc() ## AMC added this 2019-08-20
