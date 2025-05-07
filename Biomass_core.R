@@ -83,7 +83,7 @@ defineModule(sim, list(
                           "about biomass, unless this is set to 'biomassMap', and a `sim$biomassMap` is supplied.",
                           "**Only the 'cohortData' option is currently active.**")),
     defineParameter("keepClimateCols", "logical", FALSE, NA, NA, "include growth and mortality predictions in `cohortData`?"),
-    defineParameter("minCohortBiomass", "numeric", P(sim)$initialB - 1, NA, NA,
+    defineParameter("minCohortBiomass", "numeric", 9, NA, NA,
                     desc = "Cohorts with biomass below this threshold (in $g/m^2$) are removed. Not a LANDIS-II BSE parameter."),
     defineParameter("mixedType", "numeric", 2, 0, 2,
                     desc = paste("How to define mixed stands: 0 for none; 1 for any species admixture;",
@@ -566,6 +566,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
             "calculation of sumB, i.e., trees younger than this do not contribute ",
             "to competitive interactions")
 
+  if (P(sim)$minCohortBiomass >= P(sim)$initialB) {
+    stop("please set `P(sim)$minCohortBiomass` to be lower than `P(sim)$initialB`")
+  }
   paramCheckOtherMods(sim, "initialB", ifSetButDifferent = "warning")
 
   ## prepare species ------------------------------------------------
