@@ -2059,19 +2059,22 @@ CohortAgeReclassification <- function(sim) {
 
   if (!suppliedElsewhere("rasterToMatch", sim)) {
     studyArea <- sim$studyArea
-    if (terra::is.lonlat(sim$studyArea)) {
+    #check else risk lonlat error
+    if (inherits(studyArea, "sf")) {
+      studyArea <- terra::vect(studyArea)
+    }
+    if (terra::is.lonlat(studyArea)) {
       #use NTEMS projection - LandR requires projected rasters for dispersal
       studyArea <- project(studyArea,
                            paste0("+proj=lcc +lat_0=49 +lon_0=-95 +lat_1=49 +lat_2=77",
                                   " +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +type=crs"))
     }
-    sim$rasterToMatch <- rast(studyArea, res = c(250, 250), vals = 1) |>
+    sim$rasterToMatch <- rast(studyArea, res = as.integer(c(250, 250)), vals = 1) |>
       mask(mask = studyArea)
   }
 
   if (!.compareCRS(sim$studyArea, sim$rasterToMatch)) {
-    #TODO: I don't think this is necessary 2025-04-28..?
-    #the only vector dataset is ecoregion and it can be projected to rasterToMatch anyway
+    #TODO: convert to LandR general purpose function, add to other modules
     warning(paste0("studyArea and rasterToMatch projections differ.\n",
                    "studyArea will be projected to match rasterToMatch"))
     sim$studyArea <- projectInputs(sim$studyArea, crs(sim$rasterToMatch))
