@@ -559,12 +559,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   cacheTags <- c(currentModule(sim), "init")
 
   # Check some parameter values
-  if (P(sim)$successionTimestep > 10)
+  if (P(sim)$successionTimestep > 10) {
     warning("successionTimestep parameter is > 10. Make sure this intended, ",
             "keeping in mind that growth in the model depends on estimating 'sumB'. ",
             "Only trees that are older than successionTimestep are included in the ",
             "calculation of sumB, i.e., trees younger than this do not contribute ",
             "to competitive interactions")
+  }
 
   if (P(sim)$minCohortBiomass >= P(sim)$initialB) {
     stop("please set `P(sim)$minCohortBiomass` to be lower than `P(sim)$initialB`")
@@ -572,8 +573,9 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   paramCheckOtherMods(sim, "initialB", ifSetButDifferent = "warning")
 
   ## prepare species ------------------------------------------------
-  if (is.null(sim$species))
+  if (is.null(sim$species)) {
     stop("'species' object must be provided")
+  }
 
   species <- as.data.table(sim$species) # The former setDT actually changed the vector
   LandR::assertSpeciesTable(species)
