@@ -1080,13 +1080,15 @@ SummaryBGM <- compiler::cmpfun(function(sim) {
   names(sim$pixelGroupMap) <- "pixelGroup"
 
   sim$simulatedBiomassMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumB")
-  setColors(sim$simulatedBiomassMap) <- c("light green", "dark green")
+
+  #quickPlot colors will not work with terra
+  #setColors(sim$simulatedBiomassMap) <- c("light green", "dark green")
 
   sim$ANPPMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumANPP")
-  setColors(sim$ANPPMap) <- c("light green", "dark green")
+  # setColors(sim$ANPPMap) <- c("light green", "dark green")
 
   sim$mortalityMap <- rasterizeReduced(summaryBGMtable, sim$pixelGroupMap, "uniqueSumMortality")
-  setColors(sim$mortalityMap) <- c("light green", "dark green")
+  # setColors(sim$mortalityMap) <- c("light green", "dark green")
 
   if (!is.null(P(sim)$calcSummaryBGM)) {
     sim$vegTypeMap <- vegTypeMapGenerator(sim$cohortData, sim$pixelGroupMap,
@@ -1972,11 +1974,13 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   thisPeriod <- pixelCohortData[, list(year = time(sim),
                                        sumB = sum(B*noPixels, na.rm = TRUE),
-                                       maxAge = asInteger(max(age, na.rm = TRUE)),
-                                       sumANPP = asInteger(sum(aNPPAct*noPixels, na.rm = TRUE)))]
+                                       maxAge = as.numeric(max(age, na.rm = TRUE)),
+                                       sumANPP = as.numeric(sum(aNPPAct*noPixels, na.rm = TRUE)))]
+
+  #integer is too coarse for ANPP, which will often be around 2-4 per pixel
   denominator <- length(sim$pixelGroupMap[!is.na(sim$pixelGroupMap)]) * 100 # to get tonnes/ha below
-  thisPeriod[, sumB := asInteger(sumB/denominator)]
-  thisPeriod[, sumANPP := asInteger(sumANPP/denominator)]
+  thisPeriod[, sumB := as.numeric(sumB/denominator)]
+  thisPeriod[, sumANPP := as.numeric(sumANPP/denominator)]
 
   if (is.null(sim$summaryLandscape)) {
     summaryLandscape <- thisPeriod
