@@ -2111,7 +2111,7 @@ CohortAgeReclassification <- function(sim) {
     sim$studyAreaReporting <- sim$studyArea
   }
 
-  if (!.compareCRS(sim$studyArea, sim$sim$studyAreaReporting)) {
+  if (!.compareCRS(sim$studyArea, sim$studyAreaReporting)) {
     warning(paste("studyArea and studyAreaReporting projections differ.\n",
                   "studyAreaReporting will be projected to match studyArea."))
     sim$studyAreaReporting <- projectInputs(sim$studyAreaReporting, crs(sim$studyArea))
