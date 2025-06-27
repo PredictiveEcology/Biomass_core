@@ -1703,10 +1703,17 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
                                   aNPPBySpecies = sum(aNPPAct * noPixels, na.rm = TRUE),
                                   OldestCohortBySpp = max(age, na.rm = TRUE)),
                            by = .(speciesCode)]
+  thisPeriod <- thisPeriod[, list(speciesCode,
+                                  year,
+                                  BiomassBySpecies,
+                                  AgeBySppWeighted,
+                                  aNPPBySpecies,
+                                  OldestCohortBySpp,
+                                  RelativeBiomassBySpecies = BiomassBySpecies/sum(BiomassBySpecies)),]
   ## add back in species that are not on the landscape (e.g., killed)
   thisPeriod <- thisPeriod[sim$species[, .(speciesCode)], on = "speciesCode", nomatch = NA]
-  thisPeriod[is.na(year), `:=`(year = time(sim), BiomassBySpecies = 0, AgeBySppWeighted = 0,
-                               aNPPBySpecies = 0, OldestCohortBySpp = 0)]
+  thisPeriod[is.na(year), `:=`(year = time(sim), BiomassBySpecies = 0, RelativeBiomassBySpecies = 0,
+                               AgeBySppWeighted = 0, aNPPBySpecies = 0, OldestCohortBySpp = 0)]
 
   ## overstory
   cohortData <-  addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap,
@@ -1786,6 +1793,16 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
           y = "BiomassBySpecies",
           cols = cols2, ylab = "Biomass",
           plotTitle = paste0("Total biomass by species\n", "across pixels"))
+
+    ## relative biomass by species
+    Plots(df, fn = speciesRelativeBiomassPlot,
+          filename = "summary_relative_biomass_by_species",
+          path = figurePath(sim),
+          types = mod$plotTypes,
+          ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
+          y = "RelativeBiomassBySpecies",
+          cols = cols2, ylab = "Relative Biomass by Species",
+          plotTitle = paste0("Relative biomass"))
 
     ## leading species
     maxNpixels <- length(sim$activePixelIndexReporting)
