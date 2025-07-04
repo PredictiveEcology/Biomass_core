@@ -2086,7 +2086,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   if (length(unique(summaryLandscape$year)) > 1) {
     df2 <- melt(summaryLandscape, id.vars = "year")
 
-    varLabels <- c(sumB = "Biomass (Mg/ha)", AgeBySppWeighted = "Biomass-Weighted Age (Years)", sumANPP = "aNPP (Mg/ha/year)")
+    varLabels <- c(sumB = "Biomass (Mg/ha)", AgeBySppWeighted = "Biomass-Weighted Age (Years)", sumANPP = "aNPP (Mg/ha/Year)")
 
     if (any(P(sim)$.plots == "screen")) {
       dev(mod$statsWindow)
