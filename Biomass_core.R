@@ -567,8 +567,10 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
             "to competitive interactions")
   }
 
-  if (P(sim)$minCohortBiomass >= P(sim)$initialB) {
-    stop("please set `P(sim)$minCohortBiomass` to be lower than `P(sim)$initialB`")
+  if (!is.na(P(sim)$initialB)) {
+    if (P(sim)$minCohortBiomass >= P(sim)$initialB) {
+      stop("please set `P(sim)$minCohortBiomass` to be lower than `P(sim)$initialB`")
+    }
   }
   paramCheckOtherMods(sim, "initialB", ifSetButDifferent = "warning")
 
