@@ -1802,8 +1802,8 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     AverageBiomassBySpecies <- AverageBiomassBySpecies[, list(speciesCode,
                                                               year,
                                                               BiomassBySpecies = BiomassBySpecies,
-                                                              AverageBiomassBySpecies = BiomassBySpecies/(maxNpixels*100), #converting to t/ha
-                                                              overstoryBiomass = overstoryBiomass/(maxNpixels*100)),]  #converting to t/ha
+                                                              AverageBiomassBySpecies = BiomassBySpecies/(maxNpixels*100), #converting to Mg/ha
+                                                              overstoryBiomass = overstoryBiomass/(maxNpixels*100)),]  #converting to Mg/ha
     AverageBiomassBySpecies <- AverageBiomassBySpecies[, list(speciesCode,
                                                               year,
                                                               TotalBiomassBySpecies = (BiomassBySpecies * (prod(res(sim$rasterToMatch))))/1000000, #calculating total B and converting to t
@@ -1826,7 +1826,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
           y = "AverageBiomassBySpecies",
           species = "speciesCode",
-          cols = cols2, ylab = "Biomass (t/Ha)",
+          cols = cols2, ylab = "Biomass (Mg/ha)",
           plotTitle = paste0("Average biomass by species"),
           plotSubtitle = runName)
 
@@ -1882,7 +1882,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
             ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
             y = "overstoryBiomass",
             species = "speciesCode",
-            cols = cols2, ylab = "Overstory Biomass (t/Ha)",
+            cols = cols2, ylab = "Overstory Biomass (Mg/ha)",
             plotTitle = "Overstory biomass by species",
             plotSubtitle = runName)
     } else {
@@ -1903,7 +1903,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     aNPPBySpecies <- aNPPBySpecies[, list(speciesCode,
                                           year,
                                           aNPPBySpecies = aNPPBySpecies,
-                                          AverageaNPPBySpecies = aNPPBySpecies/(maxNpixels*100)),] #converting to t/ha
+                                          AverageaNPPBySpecies = aNPPBySpecies/(maxNpixels*100)),] #converting to Mg/ha
     aNPPBySpecies <- aNPPBySpecies[, list(speciesCode,
                                           year,
                                           aNPPBySpecies = (aNPPBySpecies * (prod(res(sim$rasterToMatch))))/1000000, #calculating total aNNP and converting to t
@@ -1916,7 +1916,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
           y = "aNPPBySpecies",
           species = "speciesCode",
           cols = cols2,
-          ylab = "Total aNPP (tonnes/year)",
+          ylab = "Total aNPP (Mg/year)",
           plotTitle = paste0("Total aNPP by species\n", "across ", studyAreaName),
           plotSubtitle = runName)
     ## Average aNPP by species
@@ -1928,7 +1928,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
           y = "AverageaNPPBySpecies",
           species = "speciesCode",
           cols = cols2,
-          ylab = "Average aNPP (t/Ha/year)",
+          ylab = "Average aNPP (Mg/ha/year)",
           plotTitle = paste0("Average  aNPP by species\n", "across ", studyAreaName),
           plotSubtitle = runName)
   }
@@ -2086,7 +2086,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   if (length(unique(summaryLandscape$year)) > 1) {
     df2 <- melt(summaryLandscape, id.vars = "year")
 
-    varLabels <- c(sumB = "Biomass (t/Ha)", AgeBySppWeighted = "Biomass-Weighted Age (Years)", sumANPP = "aNPP (t/Ha/year)")
+    varLabels <- c(sumB = "Biomass (Mg/ha)", AgeBySppWeighted = "Biomass-Weighted Age (Years)", sumANPP = "aNPP (Mg/ha/year)")
 
     if (any(P(sim)$.plots == "screen")) {
       dev(mod$statsWindow)
