@@ -107,9 +107,9 @@ gg_vegAttrMap <- function(x, title, subtitle = NULL) {
       tidyterra::geom_spatraster(data = x * 10 / 10) +
       viridis::scale_fill_viridis(na.value = "transparent")
   }
-  
+
   gg <- gg + ggtitle(title) + labs(subtitle = subtitle) + theme_bw()
-  
+
   return(gg)
 }
 
