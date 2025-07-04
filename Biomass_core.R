@@ -141,7 +141,10 @@ defineModule(sim, list(
                     desc = paste("Used only in seed dispersal.",
                                  "If numeric, it will be passed to `data.table::setDTthreads` and should be <= 2;",
                                  "If `TRUE`, it will be passed to `parallel::makeCluster`;",
-                                 "and if a cluster object, it will be passed to `parallel::parClusterApplyB`."))
+                                 "and if a cluster object, it will be passed to `parallel::parClusterApplyB`.")),
+    defineParameter(".runName", "character", NA_character_, NA, NA,
+                    paste('Name for simulation provided by user. Used as a subtitle for plots',
+                          'NULL is allowed but will result in plots without subtitles.'))
   ),
   inputObjects = bindrows(
     expectsInput("biomassMap", "SpatRaster",
@@ -606,7 +609,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
               blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'ecoregionMap'"))
     }
-    ecoregionMap <- makeDummyEcoregionMap(sim$rasterToMatch)
+    ecoregionMap <- makeDummyEcoregionMaP(sim$rasterToMatch)
 
     if (suppliedElsewhere("biomassMap", sim, where = "sim"))
       message(blue("'biomassMap' was supplied, but "),
@@ -615,7 +618,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                    "'cohortData', 'pixelGroupMap' and 'biomassMap'"))
     ## note that to make the dummy sim$biomassMap, we need to first make a dummy rawBiomassMap
     httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-      rawBiomassMap <- makeDummyRawBiomassMap(sim$rasterToMatch)
+      rawBiomassMap <- makeDummyRawBiomassMaP(sim$rasterToMatch)
     })
 
     if (suppliedElsewhere("standAgeMap", sim, where = "sim"))
@@ -635,7 +638,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ## make sure speciesLayers match RTM (they may not if they come from another module's init.)
     if (!.compareRas(sim$speciesLayers, sim$rasterToMatch, stopOnError = FALSE)) {
       stop(blue("'speciesLayers' and 'rasterToMatch' do not match. "),
-              red("Please ensure speciesLayers  is be cropped/masked/reprojected to 'rasterToMatch'"))
+           red("Please ensure speciesLayers  is be cropped/masked/reprojected to 'rasterToMatch'"))
 
     }
 
@@ -1681,6 +1684,9 @@ summaryRegen <- compiler::cmpfun(function(sim) {
   return(invisible(sim))
 })
 
+#' Prepares data and plots species specific attributes
+#' @param sim a simList object from SpaDES.core::simInit.
+#'
 plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, mod$sppEquiv)
   assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
@@ -1735,7 +1741,6 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   } else {
     summaryBySpecies <- rbindlist(list(sim$summaryBySpecies, thisPeriod))
   }
-
   ## MEAN NO. PIXELS PER LEADING SPECIES
   vtm <- mask(sim$vegTypeMap, sim$studyAreaReporting)
   freqs <- table(na.omit(factorValues2(vtm, as.vector(vtm[]), att = 2)))
@@ -1786,15 +1791,46 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
       }
     }
 
+    if (is.na(P(sim)$.runName)) {
+      runName <- NULL
+    } else {
+      runName <- P(sim)$.runName
+    }
+    studyAreaName <- P(sim)$.studyAreaName
+
     ## biomass by species
-    Plots(df, fn = speciesBiomassPlot,
-          filename = "summary_biomass_by_species",
+    maxNpixels <- length(sim$activePixelIndexReporting)
+    AverageBiomassBySpecies <- summaryBySpecies[, .(speciesCode, year, BiomassBySpecies, overstoryBiomass)]
+    AverageBiomassBySpecies <- AverageBiomassBySpecies[, list(speciesCode,
+                                                              year,
+                                                              BiomassBySpecies = BiomassBySpecies,
+                                                              AverageBiomassBySpecies = BiomassBySpecies/(maxNpixels*100), #converting to Mg/ha
+                                                              overstoryBiomass = overstoryBiomass/(maxNpixels*100)),]  #converting to Mg/ha
+    AverageBiomassBySpecies <- AverageBiomassBySpecies[, list(speciesCode,
+                                                              year,
+                                                              TotalBiomassBySpecies = (BiomassBySpecies * (prod(res(sim$rasterToMatch))))/1000000, #calculating total B and converting to t
+                                                              AverageBiomassBySpecies,
+                                                              overstoryBiomass),]
+    Plots(AverageBiomassBySpecies, fn = speciesBiomassPlot,
+          filename = "summary_total_biomass_by_species",
           path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
-          y = "BiomassBySpecies",
-          cols = cols2, ylab = "Biomass",
-          plotTitle = paste0("Total biomass by species\n", "across pixels"))
+          y = "TotalBiomassBySpecies",
+          species = "speciesCode",
+          cols = cols2, ylab = "Biomass (t)",
+          plotTitle = paste0("Total biomass by species\nacross ", studyAreaName),
+          plotSubtitle = runName)
+    Plots(AverageBiomassBySpecies, fn = speciesBiomassPlot,
+          filename = "summary_average_biomass_by_species",
+          path = figurePath(sim),
+          types = mod$plotTypes,
+          ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
+          y = "AverageBiomassBySpecies",
+          species = "speciesCode",
+          cols = cols2, ylab = "Biomass (Mg/ha)",
+          plotTitle = paste0("Average biomass by species"),
+          plotSubtitle = runName)
 
     ## relative biomass by species
     Plots(df, fn = speciesRelativeBiomassPlot,
@@ -1803,19 +1839,28 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
           y = "RelativeBiomassBySpecies",
+          species = "speciesCode",
           cols = cols2, ylab = "Relative Biomass by Species",
-          plotTitle = paste0("Relative biomass"))
+          plotTitle = paste0("Relative biomass"),
+          plotSubtitle = runName)
 
     ## leading species
-    maxNpixels <- length(sim$activePixelIndexReporting)
-    cols3 <- summaryBySpecies1$cols
-    names(cols3) <- summaryBySpecies1$leadingType
-    Plots(summaryBySpecies1, fn = speciesLeadingPlot,
+    totalTreedPixels <- summaryBySpecies1[, .(counts = sum(counts)), by = .(year)]
+    EmptyPixels <- totalTreedPixels
+    EmptyPixels$counts <- maxNpixels - EmptyPixels$counts
+    EmptyPixels$leadingType <- "1. Empty"
+    EmptyPixels$cols <- NA
+    LeadingPixelsSummary <- rbind(summaryBySpecies1, EmptyPixels)
+    cols3 <- LeadingPixelsSummary$cols
+    names(cols3) <- LeadingPixelsSummary$leadingType
+    Plots(LeadingPixelsSummary, fn = speciesLeadingPlot,
           filename = "summary_N_pixels_leading",
           path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
-          cols = cols3, maxNpixels = maxNpixels)
+          cols = cols3,
+          plotTitle = paste0("Proportion of pixels by leading species"),
+          plotSubtitle = runName)
 
     ## species age
     Plots(df, fn = speciesAgeANPPPlot,
@@ -1823,38 +1868,71 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
           path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
-          y = "AgeBySppWeighted", cols = cols2,
+          y = "AgeBySppWeighted",
+          species = "speciesCode",
+          cols = cols2,
           ylab = "Age",
-          plotTitle = paste0("Biomass-weighted species age\n", "averaged across pixels"))
+          plotTitle = paste0("Average biomass-weighted species age"),
+          plotSubtitle = runName)
 
     ## overstory biomass by species OR oldest cohort age
     if (P(sim)$plotOverstory) {
-      Plots(df, fn = speciesBiomassPlot,
+      Plots(AverageBiomassBySpecies, fn = speciesBiomassPlot,
             filename = "summary_overstory_biomass",
             path = figurePath(sim),
             types = mod$plotTypes,
             ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
             y = "overstoryBiomass",
-            cols = cols2, ylab = "Overstory Biomass",
-            plotTitle = "Overstory biomass by species")
+            species = "speciesCode",
+            cols = cols2, ylab = "Overstory Biomass (Mg/ha)",
+            plotTitle = "Overstory biomass by species",
+            plotSubtitle = runName)
     } else {
       Plots(df, fn = speciesAgeANPPPlot,
             filename = "summary_oldest_cohorts",
             path = figurePath(sim),
             types = mod$plotTypes,
             ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
-            y = "OldestCohortBySpp", cols = cols2,
-            ylab = "Age", plotTitle = paste("Oldest cohort age\n", "across pixels"))
+            y = "OldestCohortBySpp",
+            species = "speciesCode",
+            cols = cols2,
+            ylab = "Age", plotTitle = paste("Oldest cohort age"),
+            plotSubtitle = runName)
     }
     ## aNPP by species
-    Plots(df, fn = speciesAgeANPPPlot,
+    #####NOTE HERE: rasterToMatch may not correspond to activePixelIndexReporting
+    aNPPBySpecies <- summaryBySpecies[, .(speciesCode, year, aNPPBySpecies)]
+    aNPPBySpecies <- aNPPBySpecies[, list(speciesCode,
+                                          year,
+                                          aNPPBySpecies = aNPPBySpecies,
+                                          AverageaNPPBySpecies = aNPPBySpecies/(maxNpixels*100)),] #converting to Mg/ha
+    aNPPBySpecies <- aNPPBySpecies[, list(speciesCode,
+                                          year,
+                                          aNPPBySpecies = (aNPPBySpecies * (prod(res(sim$rasterToMatch))))/1000000, #calculating total aNNP and converting to t
+                                          AverageaNPPBySpecies = AverageaNPPBySpecies),]
+    Plots(aNPPBySpecies, fn = speciesAgeANPPPlot,
           filename = "summary_total_aNPP_by_species",
           path = figurePath(sim),
           types = mod$plotTypes,
           ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
-          y = "aNPPBySpecies", cols = cols2,
-          ylab = "aNPP",
-          plotTitle = paste0("Total aNPP by species\n", "across pixels"))
+          y = "aNPPBySpecies",
+          species = "speciesCode",
+          cols = cols2,
+          ylab = "Total aNPP (Mg/year)",
+          plotTitle = paste0("Total aNPP by species\n", "across ", studyAreaName),
+          plotSubtitle = runName)
+    ## Average aNPP by species
+    Plots(aNPPBySpecies, fn = speciesAgeANPPPlot,
+          filename = "summary_average_aNPP_by_species",
+          path = figurePath(sim),
+          types = mod$plotTypes,
+          ggsaveArgs = list(width = 7, height = 5, units = "in", dpi = 300),
+          y = "AverageaNPPBySpecies",
+          species = "speciesCode",
+          cols = cols2,
+          ylab = "Average aNPP (Mg/ha/year)",
+          plotTitle = paste0("Average  aNPP by species\n", "across ", studyAreaName),
+          plotSubtitle = runName)
   }
 
   ## export to sim
@@ -1864,25 +1942,9 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   return(invisible(sim))
 })
 
-#' @param x a single layer `SpatRaster`.
-#' @param title character string to use as plot title
-gg_vegAttrMap <- function(x, title) {
-  if (terra::is.factor(x)) {
-    gg <- ggplot() +
-      tidyterra::geom_spatraster(data = x) +
-      tidyterra::scale_fill_coltab(data = x, na.value = "transparent")
-  } else {
-    ## need to convert integer rasters to float to get colours (won't use coltab b/c continuous)
-    gg <- ggplot() +
-      tidyterra::geom_spatraster(data = x * 10 / 10) +
-      viridis::scale_fill_viridis(na.value = "transparent")
-  }
-
-  gg <- gg + ggtitle(title) + theme_bw()
-
-  return(gg)
-}
-
+#' Prepares and plots maps of vegetation attributes
+#' @param sim a simList object from SpaDES.core::simInit.
+#'
 plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, mod$sppEquiv)
   assertSppVectors(sppEquiv = mod$sppEquiv, sppEquivCol = P(sim)$sppEquivCol,
@@ -1973,29 +2035,45 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
     clearPlot()
   }
 
+  if (is.na(P(sim)$.runName)) {
+    runName <- NULL
+  } else {
+    runName <- P(sim)$.runName
+  }
+
   lapply(names(mapsToPlot), function(lyr) {
     Plots(terra::subset(mapsToPlot, lyr),
           fn = gg_vegAttrMap,
           types = P(sim)$.plots,
           filename = paste0("vegAttr_", lyr, "_year_", round(time(sim))),
-          title = paste(lyr, "year", round(time(sim))))
+          title = paste(lyr,", Year", round(time(sim))),
+          subtitle = runName)
   })
 
   return(invisible(sim))
 })
 
+#' Prepares and plots landscape attributes for all species
+#' @param sim a simList object from SpaDES.core::simInit.
+#'
 plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   LandR::assertSpeciesPlotLabels(sim$species$species, mod$sppEquiv)
 
   ## AVERAGE STAND BIOMASS/AGE/ANPP
   ## calculate across pixels
   ## don't expand table, multiply by no. pixels - faster
+  if (is.na(P(sim)$.runName)) {
+    runName <- NULL
+  } else {
+    runName <- P(sim)$.runName
+  }
+
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   thisPeriod <- pixelCohortData[, list(year = time(sim),
                                        sumB = sum(B*noPixels, na.rm = TRUE),
-                                       maxAge = as.numeric(max(age, na.rm = TRUE)),
-                                       sumANPP = as.numeric(sum(aNPPAct*noPixels, na.rm = TRUE)))]
-
+                                       AgeBySppWeighted = sum(age * B * noPixels, na.rm = TRUE) /
+                                         sum(B * noPixels, na.rm = TRUE),
+                                       sumANPP = as.numeric(sum(aNPPAct * noPixels, na.rm = TRUE)))]
   #integer is too coarse for ANPP, which will often be around 2-4 per pixel
   denominator <- length(sim$pixelGroupMap[!is.na(sim$pixelGroupMap)]) * 100 # to get tonnes/ha below
   thisPeriod[, sumB := as.numeric(sumB/denominator)]
@@ -2010,17 +2088,25 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   if (length(unique(summaryLandscape$year)) > 1) {
     df2 <- melt(summaryLandscape, id.vars = "year")
 
-    varLabels <- c(sumB = "Biomass", maxAge = "Age", sumANPP = "aNPP")
+    varLabels <- c(sumB = "Biomass (Mg/ha)", AgeBySppWeighted = "Biomass-Weighted Age (Years)", sumANPP = "aNPP (Mg/ha/Year)")
 
     if (any(P(sim)$.plots == "screen")) {
       dev(mod$statsWindow)
     }
+
+    if (is.na(P(sim)$.runName)) {
+      runName <- NULL
+    } else {
+      runName <- P(sim)$.runName
+    }
+
     Plots(df2, fn = landscapeAttributesPlot,
           types = mod$plotTypes,
-          filename = "landscape_biomass_aNPP_max_age",
+          filename = "landscape_biomass_aNPP_weighted_age",
           path = figurePath(sim),
           ggsaveArgs = list(width = 10, height = 5, units = "in", dpi = 300),
-          varLabels = varLabels)
+          varLabels = varLabels,
+          plotSubtitle = runName)
   }
 
   ## export to sim
