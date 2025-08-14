@@ -1862,6 +1862,10 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
           plotTitle = paste0("Proportion of pixels by leading species"),
           plotSubtitle = runName)
 
+    #fix bug in duplicated colours, triggers NA error in ggplot
+    cols3 <- unique(LeadingPixelsSummary$cols)
+    names(cols3) <- unique(LeadingPixelsSummary$leadingType)
+
     ## species age
     Plots(df, fn = speciesAgeANPPPlot,
           filename = "summary_biomass-weighted_species_age",
