@@ -1851,8 +1851,10 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
     EmptyPixels$leadingType <- "1. Empty"
     EmptyPixels$cols <- NA
     LeadingPixelsSummary <- rbind(summaryBySpecies1, EmptyPixels)
-    cols3 <- LeadingPixelsSummary$cols
-    names(cols3) <- LeadingPixelsSummary$leadingType
+    
+    #fix bug in duplicated colours, triggers NA error in ggplot
+    cols3 <- unique(LeadingPixelsSummary$cols)
+    names(cols3) <- unique(LeadingPixelsSummary$leadingType)
     Plots(LeadingPixelsSummary, fn = speciesLeadingPlot,
           filename = "summary_N_pixels_leading",
           path = figurePath(sim),
@@ -1861,10 +1863,6 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
           cols = cols3,
           plotTitle = paste0("Proportion of pixels by leading species"),
           plotSubtitle = runName)
-
-    #fix bug in duplicated colours, triggers NA error in ggplot
-    cols3 <- unique(LeadingPixelsSummary$cols)
-    names(cols3) <- unique(LeadingPixelsSummary$leadingType)
 
     ## species age
     Plots(df, fn = speciesAgeANPPPlot,
