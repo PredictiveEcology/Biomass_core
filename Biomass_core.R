@@ -2162,6 +2162,8 @@ CohortAgeReclassification <- function(sim) {
   if (getOption("LandR.verbose", TRUE) > 0)
     message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
+  rtm_res <- 240 ## SCANFI is 30m resolution and would be aggregated to this
+
   if (!suppliedElsewhere("studyArea", sim)) {
     stop("Please provide a 'studyArea' polygon") ## Jan 2021 we agreed user must provide SA/SAL
   }
@@ -2179,12 +2181,12 @@ CohortAgeReclassification <- function(sim) {
       studyArea <- terra::vect(studyArea)
     }
     if (terra::is.lonlat(studyArea)) {
-      #use NTEMS projection - LandR requires projected rasters for dispersal
+      ## use SCANFI projection - LandR requires projected rasters for dispersal
       studyArea <- project(studyArea,
-                           paste0("+proj=lcc +lat_0=49 +lon_0=-95 +lat_1=49 +lat_2=77",
-                                  " +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs +type=crs"))
+                           paste("+proj=lcc +lat_0=0 +lon_0=-95 +lat_1=49 +lat_2=77",
+                                 "+x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs"))
     }
-    sim$rasterToMatch <- rast(studyArea, res = as.integer(c(250, 250)), vals = 1) |>
+    sim$rasterToMatch <- rast(studyArea, res = c(rtm_res, rtm_res), vals = 1) |>
       mask(mask = studyArea)
   }
 
