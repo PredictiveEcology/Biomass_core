@@ -675,12 +675,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ## note that pixelGroupBiomassClass here is forced to 100, to match dummy biomass units
     message(blue("Creating a", red("DUMMY"), blue("cohorData table.")))
     coverColNames <- paste0("cover.", sim$species$species)
-    pixelCohortData <- Cache(makeAndCleanInitialCohortData, pixelTable,
+    pixelCohortData <- makeAndCleanInitialCohortData(pixelTable,
                              sppColumns = coverColNames,
                              minCoverThreshold = 1,
-                             doSubset = FALSE,
-                             userTags = c(cacheTags, "pixelCohortData"),
-                             omitArgs = c("userTags"))
+                             doSubset = FALSE) |>
+      Cache(userTags = c(cacheTags, "pixelCohortData"),
+            omitArgs = c("userTags"))
     pixelCohortData <- partitionBiomass(x = 1, pixelCohortData)
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
 
@@ -708,11 +708,11 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     message(blue("Estimating Species Establishment Probability from "), red("DUMMY values of ecoregionGroup "),
             blue("using the formula:\n"), magenta(format(coverModel)))
 
-    modelCover <- Cache(statsModel,
+    modelCover <- statsModel(
                         modelFn = coverModel,
-                        .specialData = cohortDataShort,
-                        userTags = c(cacheTags, "modelCover"),
-                        omitArgs = c("userTags"))  ## DON'T IGNORE .specialData - will fail downstream due to randomness
+                        .specialData = cohortDataShort) |>
+      Cache(userTags = c(cacheTags, "modelCover"),
+            omitArgs = c("userTags"))  ## DON'T IGNORE .specialData - will fail downstream due to randomness
 
     message(blue("  The rsquared is: "))
     print(modelCover$rsq)
@@ -722,11 +722,11 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     message(blue("Estimating maxB from "), red("DUMMY values of age and ecoregionGroup "),
             blue("using the formula:\n"),
             magenta(paste0(format(biomassModel), collapse = "")))
-    modelBiomass <- Cache(statsModel,
+    modelBiomass <- statsModel(
                           modelFn = biomassModel,
-                          .specialData = cohortDataNoBiomass,
-                          userTags = c(cacheTags, "modelBiomass"),
-                          omitArgs = c("userTags"))  ## DON'T IGNORE .specialData - will fail downstream due to randomness
+                          .specialData = cohortDataNoBiomass) |>
+      Cache(userTags = c(cacheTags, "modelBiomass"),
+            omitArgs = c("userTags"))  ## DON'T IGNORE .specialData - will fail downstream due to randomness
     message(blue("  The rsquared is: "))
     print(modelBiomass$rsq)
 
@@ -912,14 +912,14 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     if (verbose > 0)
       message("Running spinup")
 
-    spinupstage <- Cache(spinUp,
+    spinupstage <- spinUp(
                          cohortData = cohortData,
                          calibrate = P(sim)$calibrate,
                          successionTimestep = P(sim)$successionTimestep,
                          spinupMortalityfraction = P(sim)$spinupMortalityfraction,
-                         species = sim$species,
-                         userTags = c(cacheTags, "spinUp"),
-                         omitArgs = c("userTags"))
+                         species = sim$species) |>
+      Cache(userTags = c(cacheTags, "spinUp"),
+            omitArgs = c("userTags"))
 
     cohortData <- spinupstage$cohortData
     if (P(sim)$calibrate) {
