@@ -46,6 +46,17 @@ defineModule(sim, list(
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
                     desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
+    defineParameter("dataSource", "character", "SCANFI", NA, NA,
+                    paste(
+                      "Source for species cover, biomass, age, and landcover data used to initialize cohorts.",
+                      "Currently, only kNN (2001, 2011) and SCANFI (2020) provide all necesarry layers.",
+                      "Mixing multiple datasets requires additonal raster geoprocessing and is not recommended."
+                    )),
+    defineParameter("dataYear", "numeric", 2020, NA, NA,
+                    paste(
+                      "the year for which SCANFI data wil be fetched for use with the module.",
+                      "One of 2000, 2010, or 2020, but note that only 2020 is currently supported." ## TODO
+                    )),
     defineParameter("initialB", "numeric", 10, 1, NA,
                     desc = paste("Initial biomass values of new age-1 cohorts.",
                                  "If `NA` or `NULL`, initial biomass will be calculated as in LANDIS-II Biomass Suc. Extension",
@@ -198,12 +209,12 @@ defineModule(sim, list(
                               "`establishprob`), defined by species and `ecoregionGroup` (i.e. ecolocation).",
                               "Defaults to a dummy table based on dummy data of biomass, age, ecoregion and land cover class")),
     expectsInput("speciesLayers", "SpatRaster",
-                 desc = paste("Percent cover raster layers of tree species in Canada.",
-                              "Defaults to the Canadian Forestry Service, National Forest Inventory,",
-                              "kNN-derived species cover maps from 2001 using a cover threshold of 10 -",
-                              "see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata"),
-                 sourceURL = paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
-                                    "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")),
+                 paste(
+                   "cover percentage raster layers by species in Canada species map.",
+                   "Defaults to the Canadian Forestry Service, National Forest Inventory,",
+                   "SCANFI-derived species cover maps from 2020 using a cover threshold of 10 -",
+                   "see <https://open.canada.ca/data/en/dataset/18e6a919-53fd-41ce-b4e2-44a9707c52dc> for metadata"
+                 )),
     expectsInput("sppColorVect", "character",
                  desc = paste("A named vector of colors to use for plotting.",
                               "The names must be in `sim$sppEquiv[[sim$sppEquivCol]]`,",
