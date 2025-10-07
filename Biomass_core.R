@@ -2269,21 +2269,22 @@ CohortAgeReclassification <- function(sim) {
 
   ## get default species layers
   if (!suppliedElsewhere("speciesLayers", sim)) {
-    message("No SpatRaster map of biomass X species is provided; using KNN to",
+    message("No SpatRaster map of biomass X species is provided; using SCANFI to",
             "create sim$speciesLayers")
-    url <- paste0("http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/",
-                  "canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/")
-    sim$speciesLayers <- Cache(loadkNNSpeciesLayers,
-                               dPath = dPath,
-                               rasterToMatch = sim$rasterToMatch,
-                               studyArea = sim$studyArea,
-                               sppEquiv = sim$sppEquiv,
-                               knnNamesCol = "KNN",
-                               sppEquivCol = P(sim)$sppEquivCol,
-                               thresh = 10,
-                               url = url,
-                               userTags = c(cacheTags, "speciesLayers"),
-                               omitArgs = c("userTags"))
+      httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
+        sim$speciesLayers <- Cache(prepSpeciesLayers_SCANFI,
+                                   destinationPath = dPath,
+                                   outputPath = dPath,
+                                   studyArea = sim$studyArea_biomassParam,
+                                   studyAreaName = P(sim)$.studyAreaName,
+                                   rasterToMatch = sim$rasterToMatch_biomassParam,
+                                   sppEquiv = sim$sppEquiv,
+                                   sppEquivCol = P(sim)$sppEquivCol,
+                                   thresh = 10,
+                                   year = P(sim)$dataYear,
+                                   userTags = c(cacheTags, "speciesLayers"),
+                                   omitArgs = c("userTags"))
+      })
   }
 
   ## additional species traits
