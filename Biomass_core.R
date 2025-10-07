@@ -2272,7 +2272,7 @@ CohortAgeReclassification <- function(sim) {
     message("No SpatRaster map of biomass X species is provided; using SCANFI to",
             "create sim$speciesLayers")
       httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-        sim$speciesLayers <- Cache(prepSpeciesLayers_SCANFI,
+        sim$speciesLayers <- prepSpeciesLayers_SCANFI(
                                    destinationPath = dPath,
                                    outputPath = dPath,
                                    studyArea = sim$studyArea_biomassParam,
@@ -2281,9 +2281,10 @@ CohortAgeReclassification <- function(sim) {
                                    sppEquiv = sim$sppEquiv,
                                    sppEquivCol = P(sim)$sppEquivCol,
                                    thresh = 10,
-                                   year = P(sim)$dataYear,
-                                   userTags = c(cacheTags, "speciesLayers"),
-                                   omitArgs = c("userTags"))
+                                   year = P(sim)$dataYear) |>
+          Cache(userTags = c(cacheTags, "speciesLayers"),
+                .functionName = paste0("prepSpeciesLayers_SCANFI_", P(sim)$.studyAreaName),
+                omitArgs = c("userTags"))
       })
   }
 
