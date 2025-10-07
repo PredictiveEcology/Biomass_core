@@ -562,6 +562,13 @@ for spatial resolution and projection.
 determining the where the simulation will take place. This is the only input
 object that **must be supplied by the user or another module**.
 
+-   `speciesLayers` -- layers of species (ref:percent) cover data. Default data
+currently comes from the Spatialized Canadian National Forest Inventory 
+[`SCANFI`; @Guindon2023, @Guindon2024], a raster-based database of forest 
+characteristics including species covers. The species must match those 
+available in default (or provided) species traits tables (the `species` 
+and `speciesEcoregion` tables).
+
 **Species traits and other parameter tables**
 
 -   `ecoregion` -- a `data.table` listing all ecolocation "names"

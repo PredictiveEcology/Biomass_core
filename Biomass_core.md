@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-date: "Last updated: 2022-10-24"
+date: "Last updated: 2025-10-07"
 output:
   bookdown::html_document2:
     toc: true
@@ -624,7 +624,7 @@ depending on their shade tolerance (see [Probabilities of
 germination](#prob-germ)).
 
 Site shade varies from X0 (no shade) to X5 (maximum shade). By default,
-*Biomass_core* uses the same minimum realtive biomass threshold values across
+*Biomass_core* uses the same minimum relative biomass threshold values across
 all ecolocations, adjusted from a [publicly available LANDIS-II
 table](https://github.com/dcyr/LANDIS-II_IA_generalUseFiles) to better reflect
 Western Canada boreal forest dynamics (see Table \@ref(tab:minRelB)).
@@ -802,6 +802,13 @@ for spatial resolution and projection.
 determining the where the simulation will take place. This is the only input
 object that **must be supplied by the user or another module**.
 
+-   `speciesLayers` -- layers of species (ref:percent) cover data. Default data
+currently comes from the Spatialized Canadian National Forest Inventory 
+[`SCANFI`; @Guindon2023, @Guindon2024], a raster-based database of forest 
+characteristics including species covers. The species must match those 
+available in default (or provided) species traits tables (the `species` 
+and `speciesEcoregion` tables).
+
 **Species traits and other parameter tables**
 
 -   `ecoregion` -- a `data.table` listing all ecolocation "names"
@@ -961,8 +968,8 @@ and `B` composition, even if the user supplies other initial groupings
   <tr>
    <td style="text-align:left;"> speciesLayers </td>
    <td style="text-align:left;"> RasterStack </td>
-   <td style="text-align:left;"> percent cover raster layers of tree species in Canada. Defaults to the Canadian Forestry Service, National Forest Inventory, kNN-derived species cover maps from 2001 using a cover threshold of 10 - see https://open.canada.ca/data/en/dataset/ec9e2659-1c29-4ddb-87a2-6aced147a990 for metadata </td>
-   <td style="text-align:left;"> http://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada-forests-attributes_attributs-forests-canada/2001-attributes_attributs-2001/ </td>
+   <td style="text-align:left;"> cover percentage raster layers by species in Canada species map. Defaults to the Canadian Forestry Service, National Forest Inventory, SCANFI-derived species cover maps from 2020 using a cover threshold of 10 - see <https://open.canada.ca/data/en/dataset/18e6a919-53fd-41ce-b4e2-44a9707c52dc> for metadata </td>
+   <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sppColorVect </td>
