@@ -20,7 +20,7 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = list("README.txt", "Biomass_core.Rmd"),
   loadOrder = list(after = c("Biomass_speciesParameters")),
-  reqdPkgs = list("assertthat", "compiler", "crayon", "data.table",
+  reqdPkgs = list("assertthat", "cli", "compiler", "data.table",
                   "dplyr", "fpCompare", "ggplot2", "grid",
                   "parallel", "purrr", "quickPlot (>= 1.0.2.9003)", "Rcpp",
                   "R.utils", "scales", "terra", "tidyr",
@@ -462,7 +462,7 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
 
            if (!is.na(P(sim)$.saveInitialTime)) {
              if (P(sim)$.saveInitialTime < start(sim) + P(sim)$successionTimestep) {
-               message(crayon::blue(
+               message(cli::col_blue(
                  paste(".saveInitialTime should be >=",  start(sim) + P(sim)$successionTimestep,
                        ". First save changed to", start(sim) + P(sim)$successionTimestep)))
                params(sim)$Biomass_core$.saveInitialTime <- start(sim) + P(sim)$successionTimestep
@@ -615,17 +615,17 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     }
 
     if (suppliedElsewhere("ecoregionMap", sim, where = "sim")) {
-      message(blue("'ecoregionMap' was supplied, but "),
-              red("will be replaced by a dummy version to make "),
-              blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
+      message(cli::col_blue("'ecoregionMap' was supplied, but "),
+              cli::col_red("will be replaced by a dummy version to make "),
+              cli::col_blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'ecoregionMap'"))
     }
     ecoregionMap <- makeDummyEcoregionMaP(sim$rasterToMatch)
 
     if (suppliedElsewhere("biomassMap", sim, where = "sim"))
-      message(blue("'biomassMap' was supplied, but "),
-              red("will be replaced by a dummy version to make "),
-              blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
+      message(cli::col_blue("'biomassMap' was supplied, but "),
+              cli::col_red("will be replaced by a dummy version to make "),
+              cli::col_blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'biomassMap'"))
     ## note that to make the dummy sim$biomassMap, we need to first make a dummy rawBiomassMap
     httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
@@ -633,23 +633,23 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     })
 
     if (suppliedElsewhere("standAgeMap", sim, where = "sim"))
-      message(blue("'standAgeMap' was supplied, but "),
-              red("will be replaced by a dummy version to make "),
-              blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
+      message(cli::col_blue("'standAgeMap' was supplied, but "),
+              cli::col_red("will be replaced by a dummy version to make "),
+              cli::col_blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'standAgeMap'"))
     standAgeMap <- makeDummyStandAgeMap(rawBiomassMap)
 
     if (suppliedElsewhere("rstLCC", sim, where = "sim"))
-      message(blue("'rstLCC' was supplied, but "),
-              red("will be replaced by a dummy version to make "),
-              blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
+      message(cli::col_blue("'rstLCC' was supplied, but "),
+              cli::col_red("will be replaced by a dummy version to make "),
+              cli::col_blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'rstLCC'"))
     rstLCC <- makeDummyRstLCC(sim$rasterToMatch)
 
     ## make sure speciesLayers match RTM (they may not if they come from another module's init.)
     if (!.compareRas(sim$speciesLayers, sim$rasterToMatch, stopOnError = FALSE)) {
-      stop(blue("'speciesLayers' and 'rasterToMatch' do not match. "),
-           red("Please ensure speciesLayers  is be cropped/masked/reprojected to 'rasterToMatch'"))
+      stop(cli::col_blue("'speciesLayers' and 'rasterToMatch' do not match. "),
+           cli::col_red("Please ensure speciesLayers  is be cropped/masked/reprojected to 'rasterToMatch'"))
 
     }
 
@@ -673,7 +673,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
     ## create initial pixelCohortData table
     ## note that pixelGroupBiomassClass here is forced to 100, to match dummy biomass units
-    message(blue("Creating a", red("DUMMY"), blue("cohorData table.")))
+    message(cli::col_blue("Creating a", cli::col_red("DUMMY"), cli::col_blue("cohorData table.")))
     coverColNames <- paste0("cover.", sim$species$species)
     pixelCohortData <- makeAndCleanInitialCohortData(
       pixelTable,
@@ -708,8 +708,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                                        (logAge + cover + speciesCode | ecoregionGroup)))
 
     ## COVER
-    message(blue("Estimating Species Establishment Probability from "), red("DUMMY values of ecoregionGroup "),
-            blue("using the formula:\n"), magenta(format(coverModel)))
+    message(cli::col_blue("Estimating Species Establishment Probability from "), cli::col_red("DUMMY values of ecoregionGroup "),
+            cli::col_blue("using the formula:\n"), cli::col_magenta(format(coverModel)))
 
     modelCover <- statsModel(
       modelFn = coverModel,
@@ -720,14 +720,14 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
         omitArgs = c("userTags") ## DON'T IGNORE .specialData - will fail downstream due to randomness
       )
 
-    message(blue("  The rsquared is: "))
+    message(cli::col_blue("  The rsquared is: "))
     print(modelCover$rsq)
 
     ## BIOMASS
     ## For Cache -- doesn't need to cache all columns in the data.table -- only the ones in the model
-    message(blue("Estimating maxB from "), red("DUMMY values of age and ecoregionGroup "),
-            blue("using the formula:\n"),
-            magenta(paste0(format(biomassModel), collapse = "")))
+    message(cli::col_blue("Estimating maxB from "), cli::col_red("DUMMY values of age and ecoregionGroup "),
+            cli::col_blue("using the formula:\n"),
+            cli::col_magenta(paste0(format(biomassModel), collapse = "")))
     modelBiomass <- statsModel(
       modelFn = biomassModel,
       .specialData = cohortDataNoBiomass
@@ -736,13 +736,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
         userTags = c(cacheTags, "modelBiomass"),
         omitArgs = c("userTags")  ## DON'T IGNORE .specialData - will fail downstream due to randomness
       )
-    message(blue("  The rsquared is: "))
+    message(cli::col_blue("  The rsquared is: "))
     print(modelBiomass$rsq)
 
     ## create speciesEcoregion ---------------------------------------------
     ## a single line for each combination of ecoregionGroup & speciesCode
     ## doesn't include combinations with B = 0 because those places can't have the species/ecoregion combo
-    message(blue("Create speciesEcoregion from "), red("DUMMY values"))
+    message(cli::col_blue("Create speciesEcoregion from "), cli::col_red("DUMMY values"))
     speciesEcoregion <- makeSpeciesEcoregion(
       cohortDataBiomass = cohortDataNoBiomass,
       cohortDataShort = cohortDataShort,
@@ -790,8 +790,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     sim$speciesEcoregion <- speciesEcoregion
 
     ## do assertions
-    message(blue("Create pixelGroups based on: ", paste(columnsForPixelGroups, collapse = ", "),
-                 "\n  Resulted in", magenta(length(unique(sim$cohortData$pixelGroup))),
+    message(cli::col_blue("Create pixelGroups based on: ", paste(columnsForPixelGroups, collapse = ", "),
+                 "\n  Resulted in", cli::col_magenta(length(unique(sim$cohortData$pixelGroup))),
                  "unique pixelGroup values"))
     LandR::assertERGs(sim$ecoregionMap, cohortData = sim$cohortData,
                       speciesEcoregion = speciesEcoregion,
@@ -826,14 +826,14 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
   ## TODO: it'd be great to functionize this:
   if (length(setdiff(sim$sppColorVect, sppOuts$sppColorVect))) {
-    message(blue(
+    message(cli::col_blue(
       "sim$sppColorVect will be filtered to simulated species only (sim$species$speciesCode)"
     ))
   }
   sim$sppColorVect <- sppOuts$sppColorVect
 
   if (length(setdiff(sim$sppNameVector, sppOuts$sppNameVector))) {
-    message(blue(
+    message(cli::col_blue(
       "sim$sppNameVector will be filtered to simulated species only (sim$species$speciesCode)"
     ))
   }
@@ -976,8 +976,10 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       maxBiomass <- maxValue(sim$biomassMap)
       if (maxBiomass < 1e3) {
         if (verbose > 0) {
-          message(crayon::green("  Because biomassMap values are all below 1000, assuming that these are on tonnes/ha.\n",
-                                "    Converting to $g/m^2$ by multiplying by 100"))
+          message(cli::col_green(
+            "  Because biomassMap values are all below 1000, assuming that these are on tonnes/ha.\n",
+            "    Converting to $g/m^2$ by multiplying by 100"
+          ))
         }
         biomassTable[, `:=`(biomass = biomass * 100)]
       }
@@ -1242,15 +1244,15 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
           }
           sim$pixelGroupMap[pixelsToRm] <- 0L
           if (getOption("LandR.verbose", TRUE) > 1) {
-            message(blue("Death due to old age:",
+            message(cli::col_blue("Death due to old age:",
                          "\n  ", numCohortsDied, "cohorts died of old age (i.e., due to passing longevity) or biomass <= 1; ",
                          sum(is.na(diedCohortData$age)), " of those because age == NA; ",
                          "\n  ", NROW(unique(pgsToRm$pixelGroup)), "pixelGroups to be removed (i.e., ",
                          "\n  ", length(pixelsToRm), "pixels; "))
           }
           if (getOption("LandR.verbose", TRUE) > 0) {
-            message(blue("\n   Total number of pixelGroups -- Was:", numPixelGrps,
-                         ", Now:", magenta(sum(as.vector(sim$pixelGroupMap[]) != 0, na.rm = TRUE))))
+            message(cli::col_blue("\n   Total number of pixelGroups -- Was:", numPixelGrps,
+                         ", Now:", cli::col_magenta(sum(as.vector(sim$pixelGroupMap[]) != 0, na.rm = TRUE))))
           }
         }
       }
@@ -1635,7 +1637,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
       seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
                                                on = "pixelIndex", nomatch = 0], by = "pixelIndex")
 
-      message(blue("Of", NROW(emptyForestPixels),
+      message(cli::col_blue("Of", NROW(emptyForestPixels),
                    "burned and empty pixels: Num pixels where seeds arrived:",
                    NROW(seedsArrivedPixels)))
     }
@@ -1665,7 +1667,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
         # seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
         seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
                                                  on = "pixelIndex", nomatch = 0], by = "pixelIndex")
-        message(blue("Of", NROW(emptyForestPixels),
+        message(cli::col_blue("Of", NROW(emptyForestPixels),
                      "burned and empty pixels: Num pixels where seedlings established:",
                      NROW(seedsArrivedPixels)))
       }
