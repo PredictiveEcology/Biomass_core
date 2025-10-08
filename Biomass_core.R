@@ -78,11 +78,11 @@ defineModule(sim, list(
                           "age for which to predict climate-sensitive growth and mortality.",
                           "Young stands (< 30) are poorly represented by the PSP data used to parameterize the model.")),
     defineParameter("growthAndMortalityDrivers", "character", "LandR", NA, NA,
-                    desc = paste("Package name where the following functions can be found:",
-                                 "`calculateClimateEffect`, `assignClimateEffect`",
-                                 "(see `LandR.CS` for climate sensitivity equivalent functions, or leave default if this is not desired)")),
+                    paste("Package name where the following functions can be found:",
+                          "`calculateClimateEffect`, `assignClimateEffect`",
+                          "(see `LandR.CS` for climate sensitivity equivalent functions, or leave default if this is not desired)")),
     defineParameter("growthInitialTime", "numeric", start(sim), NA_real_, NA_real_,
-                    desc = "Initial time for the growth event to occur"),
+                    paste("Initial time for the growth event to occur")),
     defineParameter("initialBiomassSource", "character", "cohortData", NA, NA,
                     paste("Currently, there are three options: 'spinUp', 'cohortData', 'biomassMap'. ",
                           "If 'spinUp', it will derive biomass by running spinup derived from Landis-II.",
@@ -572,7 +572,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   #  stop("the species in sim$cohortData are not the same as the species in sim$species; these must match")
   cacheTags <- c(currentModule(sim), "init")
 
-  # Check some parameter values
+  ## Check some parameter values
   if (P(sim)$successionTimestep > 10) {
     warning("successionTimestep parameter is > 10. Make sure this intended, ",
             "keeping in mind that growth in the model depends on estimating 'sumB'. ",
@@ -666,7 +666,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     assertSppVectors(sppEquiv = sim$species, sppEquivCol = "speciesCode",
                      sppColorVect = sim$sppColorVect)
 
-    pixelTable <- makePixelTable(speciesLayers = sim$speciesLayers, #species = sim$species,
+    pixelTable <- makePixelTable(speciesLayers = sim$speciesLayers,
                                  standAgeMap = standAgeMap, ecoregionFiles = ecoregionFiles,
                                  biomassMap = rawBiomassMap, rasterToMatch = sim$rasterToMatch,
                                  rstLCC = rstLCC)
@@ -675,15 +675,18 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ## note that pixelGroupBiomassClass here is forced to 100, to match dummy biomass units
     message(blue("Creating a", red("DUMMY"), blue("cohorData table.")))
     coverColNames <- paste0("cover.", sim$species$species)
-    pixelCohortData <- makeAndCleanInitialCohortData(pixelTable,
-                             sppColumns = coverColNames,
-                             minCoverThreshold = 1,
-                             doSubset = FALSE) |>
-      Cache(userTags = c(cacheTags, "pixelCohortData"),
-            omitArgs = c("userTags"))
+    pixelCohortData <- makeAndCleanInitialCohortData(
+      pixelTable,
+      sppColumns = coverColNames,
+      minCoverThreshold = 1,
+      doSubset = FALSE
+    ) |>
+      Cache(
+        userTags = c(cacheTags, "pixelCohortData"),
+        omitArgs = c("userTags")
+      )
     pixelCohortData <- partitionBiomass(x = 1, pixelCohortData)
     setnames(pixelCohortData, "initialEcoregionCode", "ecoregionGroup")
-
 
     ## When using dummy values ecoregion codes are not changed
     rmZeroBiomassQuote <- quote(B > 0)
@@ -709,10 +712,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
             blue("using the formula:\n"), magenta(format(coverModel)))
 
     modelCover <- statsModel(
-                        modelFn = coverModel,
-                        .specialData = cohortDataShort) |>
-      Cache(userTags = c(cacheTags, "modelCover"),
-            omitArgs = c("userTags"))  ## DON'T IGNORE .specialData - will fail downstream due to randomness
+      modelFn = coverModel,
+      .specialData = cohortDataShort
+    ) |>
+      Cache(
+        userTags = c(cacheTags, "modelCover"),
+        omitArgs = c("userTags") ## DON'T IGNORE .specialData - will fail downstream due to randomness
+      )
 
     message(blue("  The rsquared is: "))
     print(modelCover$rsq)
@@ -723,10 +729,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
             blue("using the formula:\n"),
             magenta(paste0(format(biomassModel), collapse = "")))
     modelBiomass <- statsModel(
-                          modelFn = biomassModel,
-                          .specialData = cohortDataNoBiomass) |>
-      Cache(userTags = c(cacheTags, "modelBiomass"),
-            omitArgs = c("userTags"))  ## DON'T IGNORE .specialData - will fail downstream due to randomness
+      modelFn = biomassModel,
+      .specialData = cohortDataNoBiomass
+    ) |>
+      Cache(
+        userTags = c(cacheTags, "modelBiomass"),
+        omitArgs = c("userTags")  ## DON'T IGNORE .specialData - will fail downstream due to randomness
+      )
     message(blue("  The rsquared is: "))
     print(modelBiomass$rsq)
 
@@ -734,14 +743,16 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     ## a single line for each combination of ecoregionGroup & speciesCode
     ## doesn't include combinations with B = 0 because those places can't have the species/ecoregion combo
     message(blue("Create speciesEcoregion from "), red("DUMMY values"))
-    speciesEcoregion <- makeSpeciesEcoregion(cohortDataBiomass = cohortDataNoBiomass,
-                                             cohortDataShort = cohortDataShort,
-                                             cohortDataShortNoCover = cohortDataShortNoCover,
-                                             species = sim$species,
-                                             modelCover = modelCover,
-                                             modelBiomass = modelBiomass,
-                                             successionTimestep = P(sim)$successionTimestep,
-                                             currentYear = time(sim))
+    speciesEcoregion <- makeSpeciesEcoregion(
+      cohortDataBiomass = cohortDataNoBiomass,
+      cohortDataShort = cohortDataShort,
+      cohortDataShortNoCover = cohortDataShortNoCover,
+      species = sim$species,
+      modelCover = modelCover,
+      modelBiomass = modelBiomass,
+      successionTimestep = P(sim)$successionTimestep,
+      currentYear = time(sim)
+    )
     if (ncell(sim$rasterToMatch) > 3e7) .gc()
 
     ## Create initial communities, i.e., pixelGroups -----------------------
@@ -752,11 +763,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
     }
     ## make cohortDataFiles: pixelCohortData (rm unnecessary cols, subset pixels with B>0,
     ## generate pixelGroups, add ecoregionGroup and totalBiomass) and cohortData
-    cohortDataFiles <- makeCohortDataFiles(pixelCohortData, columnsForPixelGroups, speciesEcoregion,
-                                           pixelGroupBiomassClass = 10,
-                                           pixelGroupAgeClass = 10,
-                                           minAgeForGrouping = -1)#,
-    #pixelFateDT = pixelFateDT)
+    cohortDataFiles <- makeCohortDataFiles(
+      pixelCohortData, columnsForPixelGroups, speciesEcoregion,
+      pixelGroupBiomassClass = 10,
+      pixelGroupAgeClass = 10,
+      minAgeForGrouping = -1
+    )
 
     sim$cohortData <- cohortDataFiles$cohortData
     pixelCohortData <- cohortDataFiles$pixelCohortData
@@ -804,8 +816,13 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   sppColorVect <- sim$sppColorVect[c(unique(as.character(sim$species$speciesCode)), "Mixed")]
   sppColorVect <- sppColorVect[complete.cases(sppColorVect)]
 
-  sppOuts <- sppHarmonize(mod$sppEquiv, unique(sim$species$speciesCode), sppEquivCol = P(sim)$sppEquivCol,
-                          sppColorVect = sppColorVect, vegLeadingProportion = P(sim)$vegLeadingProportion)
+  sppOuts <- sppHarmonize(
+    sppEquiv = mod$sppEquiv,
+    sppNameVector = unique(sim$species$speciesCode),
+    sppEquivCol = P(sim)$sppEquivCol,
+    sppColorVect = sppColorVect,
+    vegLeadingProportion = P(sim)$vegLeadingProportion
+  )
 
   ## TODO: it'd be great to functionize this:
   if (length(setdiff(sim$sppColorVect, sppOuts$sppColorVect))) {
@@ -913,26 +930,39 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       message("Running spinup")
 
     spinupstage <- spinUp(
-                         cohortData = cohortData,
-                         calibrate = P(sim)$calibrate,
-                         successionTimestep = P(sim)$successionTimestep,
-                         spinupMortalityfraction = P(sim)$spinupMortalityfraction,
-                         species = sim$species) |>
-      Cache(userTags = c(cacheTags, "spinUp"),
-            omitArgs = c("userTags"))
+      cohortData = cohortData,
+      calibrate = P(sim)$calibrate,
+      successionTimestep = P(sim)$successionTimestep,
+      spinupMortalityfraction = P(sim)$spinupMortalityfraction,
+      species = sim$species
+    ) |>
+      Cache(
+        userTags = c(cacheTags, "spinUp"),
+        omitArgs = c("userTags")
+      )
 
     cohortData <- spinupstage$cohortData
     if (P(sim)$calibrate) {
       sim$spinupOutput <- spinupstage$spinupOutput
     }
     if (P(sim)$calibrate) {
-      sim$simulationTreeOutput <- data.table(Year = numeric(), siteBiomass = numeric(),
-                                             Species = character(), Age = numeric(),
-                                             iniBiomass = numeric(), ANPP = numeric(),
-                                             Mortality = numeric(), deltaB = numeric(),
-                                             finBiomass = numeric())
-      sim$regenerationOutput <- data.table(seedingAlgorithm = character(), species = character(),
-                                           Year = numeric(), numberOfReg = numeric())
+      sim$simulationTreeOutput <- data.table(
+        Year = numeric(),
+        siteBiomass = numeric(),
+        Species = character(),
+        Age = numeric(),
+        iniBiomass = numeric(),
+        ANPP = numeric(),
+        Mortality = numeric(),
+        deltaB = numeric(),
+        finBiomass = numeric()
+      )
+      sim$regenerationOutput <- data.table(
+        seedingAlgorithm = character(),
+        species = character(),
+        Year = numeric(),
+        numberOfReg = numeric()
+      )
     }
   } else {
     if (grepl("biomassMap", tolower(P(sim)$initialBiomassSource))) {
@@ -955,22 +985,25 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       ## In case there are non-identical biomasses in each pixelGroup -- this should be irrelevant with
       ##   improved biomass_borealDataPrep.R (Jan 6, 2019 -- Eliot)
       biomassTable <- biomassTable[, list(Bsum = mean(biomass, na.rm = TRUE)), by = pixelGroup]
-      if (!is.integer(biomassTable[["Bsum"]]))
+      if (!is.integer(biomassTable[["Bsum"]])) {
         set(biomassTable, NULL, "Bsum", asInteger(biomassTable[["Bsum"]]))
+      }
 
       ## Delete the B from cohortData -- it will be joined from biomassTable
       set(cohortData, NULL, "B", NULL)
       cohortData[, totalSpeciesPresence := sum(speciesPresence), by = "pixelGroup"]
       cohortData <- cohortData[biomassTable, on = "pixelGroup"]
       cohortData[, B := Bsum * speciesPresence / totalSpeciesPresence, by = c("pixelGroup", "speciesCode")]
-      if (!is.integer(cohortData[["B"]]))
+      if (!is.integer(cohortData[["B"]])) {
         set(cohortData, NULL, "B", asInteger(cohortData[["B"]]))
+      }
     }
   }
 
   pixelAll <- cohortData[, .(uniqueSumB = sum(B, na.rm = TRUE)), by = pixelGroup]
-  if (!is.integer(pixelAll[["uniqueSumB"]]))
+  if (!is.integer(pixelAll[["uniqueSumB"]])) {
     set(pixelAll, NULL, "uniqueSumB", asInteger(pixelAll[["uniqueSumB"]]))
+  }
 
   if (all(!is.na(P(sim)$.plots))) {
     sim$simulatedBiomassMap <- rasterizeReduced(pixelAll, pixelGroupMap, "uniqueSumB")
@@ -2273,18 +2306,21 @@ CohortAgeReclassification <- function(sim) {
             "create sim$speciesLayers")
       httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
         sim$speciesLayers <- prepSpeciesLayers_SCANFI(
-                                   destinationPath = dPath,
-                                   outputPath = dPath,
-                                   studyArea = sim$studyArea_biomassParam,
-                                   studyAreaName = P(sim)$.studyAreaName,
-                                   rasterToMatch = sim$rasterToMatch_biomassParam,
-                                   sppEquiv = sim$sppEquiv,
-                                   sppEquivCol = P(sim)$sppEquivCol,
-                                   thresh = 10,
-                                   year = P(sim)$dataYear) |>
-          Cache(userTags = c(cacheTags, "speciesLayers"),
-                .functionName = paste0("prepSpeciesLayers_SCANFI_", P(sim)$.studyAreaName),
-                omitArgs = c("userTags"))
+          destinationPath = dPath,
+          outputPath = dPath,
+          studyArea = sim$studyArea_biomassParam,
+          studyAreaName = P(sim)$.studyAreaName,
+          rasterToMatch = sim$rasterToMatch_biomassParam,
+          sppEquiv = sim$sppEquiv,
+          sppEquivCol = P(sim)$sppEquivCol,
+          thresh = 10,
+          year = P(sim)$dataYear
+        ) |>
+          Cache(
+            userTags = c(cacheTags, "speciesLayers"),
+            .functionName = paste0("prepSpeciesLayers_SCANFI_", P(sim)$.studyAreaName),
+            omitArgs = c("userTags")
+          )
       })
   }
 
