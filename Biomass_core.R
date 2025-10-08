@@ -2071,14 +2071,18 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   } else {
     runName <- P(sim)$.runName
   }
-
+browser() ## TODO: check coercion to float
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
+  for (column in names(pixelCohortData)) if (is.integer(pixelCohortData[[column]])) {
+    set(pixelCohortData, NULL, column, as.numeric(pixelCohortData[[column]]))
+  }
+
   thisPeriod <- pixelCohortData[, list(year = time(sim),
                                        sumB = sum(B*noPixels, na.rm = TRUE),
                                        AgeBySppWeighted = sum(age * B * noPixels, na.rm = TRUE) /
                                          sum(B * noPixels, na.rm = TRUE),
                                        sumANPP = as.numeric(sum(aNPPAct * noPixels, na.rm = TRUE)))]
-  #integer is too coarse for ANPP, which will often be around 2-4 per pixel
+  ## integer is too coarse for ANPP, which will often be around 2-4 per pixel
   denominator <- length(sim$pixelGroupMap[!is.na(sim$pixelGroupMap)]) * 100 # to get tonnes/ha below
   thisPeriod[, sumB := as.numeric(sumB/denominator)]
   thisPeriod[, sumANPP := as.numeric(sumANPP/denominator)]
@@ -2189,7 +2193,7 @@ CohortAgeReclassification <- function(sim) {
   }
 
   if (!.compareCRS(sim$studyArea, sim$rasterToMatch)) {
-    #TODO: convert to LandR general purpose function, add to other modules
+    ## TODO: convert to LandR general purpose function, add to other modules
     warning(paste0("studyArea and rasterToMatch projections differ.\n",
                    "studyArea will be projected to match rasterToMatch"))
     sim$studyArea <- projectInputs(sim$studyArea, crs(sim$rasterToMatch))
