@@ -250,7 +250,7 @@ defineModule(sim, list(
     createsOutput("activePixelIndexReporting", "integer",
                   desc = "Internal use. Keeps track of which pixels are active in the reporting study area."),
     createsOutput("ANPPMap", "SpatRaster",
-                  desc = "ANPP map at each succession time step (in g /m^2)"),
+                  desc = "ANPP map at each succession time step (in $g/m^2$)"),
     createsOutput("biomassMap", "SpatRaster",
                   desc = paste("Total biomass raster layer in study area (in $g/m^2$),",
                                "filtered for pixels covered by `cohortData`.",
@@ -346,9 +346,11 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
                           postAging = agingEvtPriotity + 0.25,
                           end = summRegenPriority + 0.25)
   ## add "end" to parameter vector if necessary
-  if (!is.null(P(sim)$calcSummaryBGM))
-    if (!any(P(sim)$calcSummaryBGM == "end"))
+  if (!is.null(P(sim)$calcSummaryBGM)) {
+    if (!any(P(sim)$calcSummaryBGM == "end")) {
       params(sim)$Biomass_core$calcSummaryBGM <- c(P(sim)$calcSummaryBGM, "end")
+    }
+  }
   summBGMPriority <- summBGMPriority[P(sim)$calcSummaryBGM] ## filter necessary priorities
 
   plotPriority <- 9
@@ -359,11 +361,13 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            ## do stuff for this event
 
            ## Define .plotInterval/.saveInterval if need be
-           if (is.na(P(sim)$.plotInterval))
+           if (is.na(P(sim)$.plotInterval)) {
              params(sim)$Biomass_core$.plotInterval <- P(sim)$successionTimestep
+           }
 
-           if (is.na(P(sim)$.saveInterval))
+           if (is.na(P(sim)$.saveInterval)) {
              params(sim)$Biomass_core$.saveInterval <- P(sim)$successionTimestep
+           }
 
            if (anyPlotting(P(sim)$.plots)) {
              if (any(P(sim)$.plots == "screen")) {
@@ -413,28 +417,33 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
            sim <- Init(sim)
 
            ## schedule events
-           if (!is.null(summBGMPriority$start))
+           if (!is.null(summBGMPriority$start)) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                   "Biomass_core", "summaryBGMstart", eventPriority = summBGMPriority$start)
+           }
            sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                 "Biomass_core", "Dispersal", eventPriority = dispEvtPriority)
            sim <- scheduleEvent(sim, P(sim)$growthInitialTime,
                                 "Biomass_core", "mortalityAndGrowth", GMEvtPriority)
-           if (!is.null(summBGMPriority$postDisp))
+           if (!is.null(summBGMPriority$postDisp)) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                   "Biomass_core", "summaryBGMpostDisp", eventPriority = summBGMPriority$postDisp)
-           if (!is.null(summBGMPriority$postRegen))
+           }
+           if (!is.null(summBGMPriority$postRegen)) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                   "Biomass_core", "summaryBGMpostRegen", eventPriority = summBGMPriority$postRegen)
-           if (!is.null(summBGMPriority$postGM))
+           }
+           if (!is.null(summBGMPriority$postGM)) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                   "Biomass_core", "summaryBGMpostGM", eventPriority = summBGMPriority$postGM)
+           }
            if (P(sim)$successionTimestep != 1) {
              sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep, "Biomass_core",
                                   "cohortAgeReclassification", eventPriority = agingEvtPriotity)
-             if (!is.null(summBGMPriority$postAging))
+             if (!is.null(summBGMPriority$postAging)) {
                sim <- scheduleEvent(sim, start(sim) + P(sim)$successionTimestep,
                                     "Biomass_core", "summaryBGMpostAging", eventPriority = summBGMPriority$postAging)
+             }
            }
 
            ## note that summaryBGM and summaryBySpecies, will occur during init too
