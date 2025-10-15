@@ -18,7 +18,7 @@ defineModule(sim, list(
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
-  documentation = list("README.txt", "Biomass_core.Rmd"),
+  documentation = list("README.md", "Biomass_core.Rmd"),
   loadOrder = list(after = c("Biomass_speciesParameters")),
   reqdPkgs = list("assertthat", "cli", "compiler", "data.table",
                   "dplyr", "fpCompare", "ggplot2", "grid",
@@ -2117,7 +2117,7 @@ plotAvgVegAttributes <- compiler::cmpfun(function(sim) {
   } else {
     runName <- P(sim)$.runName
   }
-browser() ## TODO: check coercion to float
+
   pixelCohortData <- addNoPixel2CohortData(sim$cohortData, sim$pixelGroupMap, cohortDefinitionCols = P(sim)$cohortDefinitionCols)
   for (column in names(pixelCohortData)) if (is.integer(pixelCohortData[[column]])) {
     set(pixelCohortData, NULL, column, as.numeric(pixelCohortData[[column]]))
