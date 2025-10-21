@@ -10,12 +10,12 @@
 #'
 speciesBiomassPlot <- function(df, cols, y, species, ylab = "y",
                                plotTitle = NULL, plotSubtitle = NULL) {
-  gg <- ggplot(data = df, aes_string(x = "year", y = y, fill = species, group = species)) +
+  gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[[y]], fill = .data[[species]], group = .data[[species]])) +
     geom_area(position = "stack") +
     scale_fill_manual(values = cols) +
     # scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
     scale_y_continuous() +
-    labs(x = "Year", y = ylab, fill ="Species", title = plotTitle, subtitle = plotSubtitle) +
+    labs(x = "Year", y = ylab, fill = "Species", title = plotTitle, subtitle = plotSubtitle) +
     theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
     theme_bw(base_size = 16)
   return(gg)
@@ -34,7 +34,7 @@ speciesBiomassPlot <- function(df, cols, y, species, ylab = "y",
 #'
 speciesRelativeBiomassPlot <- function(df, cols, y, species, ylab = "y",
                                        plotTitle = NULL, plotSubtitle = NULL) {
-  gg <- ggplot(data = df, aes_string(x = "year", y = y, fill = species, group = species)) +
+  gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[[y]], fill = .data[[species]], group = .data[[species]])) +
     geom_area(position = "stack") +
     scale_fill_manual(values = cols) +
     scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) +
@@ -54,7 +54,7 @@ speciesRelativeBiomassPlot <- function(df, cols, y, species, ylab = "y",
 #' @param subtitle character string to use as plot subtitle
 #'
 speciesLeadingPlot <- function(df, cols, plotTitle = NULL, plotSubtitle = NULL) {
-  gg <- ggplot(data = df, aes_string(x = "year", y = "counts", fill = "leadingType")) +
+  gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[["counts"]], fill = .data[["leadingType"]])) +
     geom_area(position = "fill") +
     scale_fill_manual(values = cols, , breaks = ~ .x[.x != "1. Empty"], na.value = "#00000000") +
     geom_hline(yintercept = 1, linetype = "dashed", color = "darkgrey", size = 1) +
@@ -70,15 +70,14 @@ speciesLeadingPlot <- function(df, cols, plotTitle = NULL, plotSubtitle = NULL) 
 #' @param df summary data of simulation measurements (biomass, age, etc) by species
 #' @param y variable for plotting. Either Age or aNPP
 #' @param species categorical species variable for plotting
-#' @param cols a named character vector of species and colours for labeling
+#' @param cols a named character vector of species and colours for labelling
 #' @param ylab character string to use as y axis label
 #' @param title character string to use as plot title
 #' @param subtitle character string to use as plot subtitle
 #'
 speciesAgeANPPPlot <- function(df, y, species, cols, ylab = "y",
                                plotTitle = NULL, plotSubtitle = NULL) {
-  gg <- ggplot(data = df,
-               aes_string(x = "year", y = y, colour = species, group = species)) +
+  gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[[y]], colour = .data[[species]], group = .data[[species]])) +
     geom_line(size = 1) +
     scale_colour_manual(values = cols) +
     labs(x = "Year", y = ylab, title = plotTitle, , subtitle = plotSubtitle, colour = "Species") +
@@ -121,7 +120,7 @@ gg_vegAttrMap <- function(x, title, subtitle = NULL) {
 #' @param subtitle character string to use as plot subtitle
 #'
 landscapeAttributesPlot <- function(df, varLabels, plotTitle = NULL, plotSubtitle = NULL) {
-  gg <- ggplot(data = df, aes_string(x = "year", y = "value", colour = "variable")) +
+  gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[["value"]], colour = .data[["variable"]])) +
     geom_line(size = 1) +
     scale_colour_brewer(type = "qual", palette = "Dark2") +
     facet_wrap(~ variable, scales = "free_y",
