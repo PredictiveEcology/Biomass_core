@@ -14,7 +14,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("1.4.4.9000")),
+  version = list(Biomass_core = numeric_version("2.0.0")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -1327,8 +1327,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
       ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
       if (!P(sim)$growthAndMortalityDrivers == "LandR") {
-
-        subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred/100))]
+        subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred / 100))]
         subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
         if (!P(sim)$keepClimateCols) {
           set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
@@ -1802,7 +1801,7 @@ plotSummaryBySpecies <- compiler::cmpfun(function(sim) {
   tabl <- as.vector(freqs)
   summaryBySpecies1 <- data.frame(year = rep(floor(time(sim)), length(freqs)),
                                   leadingType = names(freqs),
-                                  #freqs = freqs,
+                                  # freqs = freqs,
                                   counts = tabl,
                                   stringsAsFactors = FALSE)
 

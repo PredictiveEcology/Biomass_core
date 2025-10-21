@@ -1,9 +1,9 @@
 #' Creates time series plot of biomass measurements for each species in a simulation
 #'
 #' @param df summary data of simulation measurements by species
-#' @param y variable for plotting. Here should be `BiomassBySpecies`
+#' @param y variable for plotting. Here should be `BiomassBySpecies`.
 #' @param species categorical species variable for plotting
-#' @param cols a named character vector of species and colours for labeling
+#' @param cols a named character vector of species and colours for labelling
 #' @param ylab character string to use as y axis label
 #' @param title character string to use as plot title
 #' @param subtitle character string to use as plot subtitle
@@ -25,9 +25,9 @@ speciesBiomassPlot <- function(df, cols, y, species, ylab = "y",
 #' in a simulation
 #'
 #' @param df summary data of simulation measurements by species
-#' @param y variable for plotting. Here should be `RelativeBiomassBySpecies`
+#' @param y variable for plotting. Here should be `RelativeBiomassBySpecies`.
 #' @param species categorical species variable for plotting
-#' @param cols a named character vector of species and colours for labeling
+#' @param cols a named character vector of species and colours for labelling
 #' @param ylab character string to use as y axis label
 #' @param title character string to use as plot title
 #' @param subtitle character string to use as plot subtitle
@@ -49,7 +49,7 @@ speciesRelativeBiomassPlot <- function(df, cols, y, species, ylab = "y",
 #'
 #' @param df summary data of leading pixel counts by species. Here should
 #'    be `LeadingPixelsSummary`, data summarized to account for empty pixels
-#' @param cols a named character vector of species and colours for labeling
+#' @param cols a named character vector of species and colours for labelling
 #' @param title character string to use as plot title
 #' @param subtitle character string to use as plot subtitle
 #'
@@ -87,10 +87,8 @@ speciesAgeANPPPlot <- function(df, y, species, cols, ylab = "y",
   return(gg)
 }
 
-
-
-#' Create a map of an attribute (e.g. biomass, mortality,
-#' reproduction) for a given year in a simulation
+#' Create a map of an attribute (e.g. biomass, mortality, reproduction)
+#' for a given year in a simulation
 #'
 #' @param x a single layer `SpatRaster`.
 #' @param title character string to use as plot title
@@ -117,8 +115,8 @@ gg_vegAttrMap <- function(x, title, subtitle = NULL) {
 #' and aNPP) for a simulation
 #'
 #' @param df summary data of simulation measurements (biomass, age, etc) by species
-#' @param varLabels a named character vector for labeling plot panels
-#' @param unitLabels a named character vector for labeling the units of plot panels
+#' @param varLabels a named character vector for labelling plot panels
+#' @param unitLabels a named character vector for labelling the units of plot panels
 #' @param title character string to use as plot title
 #' @param subtitle character string to use as plot subtitle
 #'
