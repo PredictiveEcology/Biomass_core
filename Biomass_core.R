@@ -2104,7 +2104,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
           fn = gg_vegAttrMap,
           types = P(sim)$.plots,
           filename = paste0("vegAttr_", lyr, "_year_", round(time(sim))),
-          title = paste0(lyr,", Year ", round(time(sim))),
+          title = paste0(lyr, ", Year ", round(time(sim))),
           subtitle = runName)
   })
 
