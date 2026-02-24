@@ -26,7 +26,7 @@ defineModule(sim, list(
                   "R.utils", "scales", "terra", "tidyr",
                   "reproducible (>= 2.1.0)",
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
-                  "ianmseddy/LandR.CS@master (>= 0.0.2.0002)",
+                  "ianmseddy/LandR.CS@master (>= 2.0.0.9002)",
                   "PredictiveEcology/pemisc@development",
                   "PredictiveEcology/LandR@development (>= 1.1.5.9016)"),
   parameters = rbind(
@@ -62,12 +62,6 @@ defineModule(sim, list(
                                  "If `NA` or `NULL`, initial biomass will be calculated as in LANDIS-II Biomass Suc. Extension",
                                  "(see Scheller and Miranda, 2015 or `?LandR::.initiateNewCohorts`)")),
     defineParameter("gmcsGrowthLimits", "numeric", c(2/3 * 100, 3/2 * 100), NA, NA,
-                    paste("If using `LandR.CS` for climate-sensitive growth and mortality, a percentile",
-                          " is used to estimate the effect of climate on growth/mortality ",
-                          "(currentClimate/referenceClimate). Upper and lower limits are ",
-                          "suggested to circumvent problems caused by very small denominators as well as ",
-                          "predictions outside the data range used to generate the model")),
-    defineParameter("gmcsMortLimits", "numeric", c(2/3 * 100, 3/2 * 100), NA, NA,
                     paste("If using `LandR.CS` for climate-sensitive growth and mortality, a percentile",
                           " is used to estimate the effect of climate on growth/mortality ",
                           "(currentClimate/referenceClimate). Upper and lower limits are ",
@@ -1499,16 +1493,14 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
           arg <- eval(x, envir = sim)
         })
         names(cceArgs) <- paste(sim$cceArgs)
-
-        predObj <- calculateClimateEffect(
-          cceArgs = cceArgs,
-          cohortData = subCohortData,
-          pixelGroupMap = sim$pixelGroupMap,
-          gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
-          gmcsMortLimits = P(sim)$gmcsMortLimits,
-          gmcsMinAge = P(sim)$gmcsMinAge,
-          cohortDefinitionCols = P(sim)$cohortDefinitionCols
-        )
+        
+        predObj <- calculateClimateEffect(cceArgs = cceArgs,
+                                          cohortData = subCohortData,
+                                          pixelGroupMap = sim$pixelGroupMap,
+                                          gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
+                                          gmcsMinAge = P(sim)$gmcsMinAge,
+                                          time = time(sim),
+                                          cohortDefinitionCols = P(sim)$cohortDefinitionCols)
         ## Join must be done this way
         commonNames <- names(predObj)[names(predObj) %in% names(subCohortData)]
         subCohortData <- subCohortData[predObj, on = commonNames]
@@ -1529,7 +1521,8 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
       ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
       if (!P(sim)$growthAndMortalityDrivers == "LandR") {
-        subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred / 100))]
+        # subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred / 100))]
+        subCohortData[, mortality := pmax(0, mortality + mortPred)] #mortality is no longer a modifier
         subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
         if (!P(sim)$keepClimateCols) {
           set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
