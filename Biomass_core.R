@@ -14,7 +14,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("2.0.0")),
+  version = list(Biomass_core = numeric_version("2.0.1")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -1178,7 +1178,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   ## 2024-08: typically, cohortDefinitionCols should not include ecoregionGroup and B,
   ## but we want to keep these columns in this case (currently never run; note 'stop()' above)
   colsToKeep <- unique(c(P(sim)$cohortDefinitionCols, "ecoregionGroup", "B"))
-  sim$cohortData <- cohortData[, .SD, .SDcol = colsToKeep]
+  sim$cohortData <- cohortData[, .SD, .SDcols = colsToKeep]
   sim$cohortData[, c("mortality", "aNPPAct") := 0L]
   # sim$cohortData <- cohortData[, .(pixelGroup, ecoregionGroup, speciesCode, age, B, mortality = 0L, aNPPAct = 0L)]
   ## the above breaks with non-default cohortDefinitionCols
