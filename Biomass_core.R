@@ -268,6 +268,8 @@ defineModule(sim, list(
     createsOutput("ecoregionMap", "SpatRaster",
                   desc = paste("Map with mapcodes match `ecoregion` table and `speciesEcoregion` table.",
                                "Defaults to a dummy map matching rasterToMatch with two regions.")),
+    createsOutput("gmcsPredictions", "list",
+                  desc = "list of data frames of yearly prediction results of growth and mortality models from LandR.CS"),
     createsOutput("inactivePixelIndex", "logical",
                   desc = "Internal use. Keeps track of which pixels are inactive."),
     createsOutput("inactivePixelIndexReporting", "integer",
@@ -1505,6 +1507,17 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         commonNames <- names(predObj)[names(predObj) %in% names(subCohortData)]
         subCohortData <- subCohortData[predObj, on = commonNames]
         subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred / 100))] ## changed from ratio to pct for memory
+
+        #saving gmcs model predictions to simList
+        gmcs_dt <- subCohortData[, .(
+          year = as.integer(time(sim)),
+          speciesCode,
+          growthPred,
+          mortPred
+        )]
+        gmcs_dt <- gmcs_dt[!is.na(speciesCode)]
+        sim$gmcsPredictions <- c(sim$gmcsPredictions, list(gmcs_dt))
+
       }
       subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
 
@@ -2652,6 +2665,9 @@ CohortAgeReclassification <- function(sim) {
                           quote(mcsModel),
                           quote(gcsModel))
       names(sim$cceArgs) <- paste(sim$cceArgs)
+    }
+    if (P(sim)$growthAndMortalityDrivers == "LandR.CS") {
+    sim$gmcsPredictions <- list()
     }
   }
 
