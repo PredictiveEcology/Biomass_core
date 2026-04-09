@@ -1508,15 +1508,32 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         subCohortData <- subCohortData[predObj, on = commonNames]
         subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred / 100))] ## changed from ratio to pct for memory
 
-        #saving gmcs model predictions to simList
-        gmcs_dt <- subCohortData[, .(
-          year = as.integer(time(sim)),
-          speciesCode,
-          growthPred,
-          mortPred
+        ## Saving summaries of gmcs predictions to the simList
+        yr <- as.integer(time(sim))
+        gmcs_dt <- subCohortData[
+          !is.na(speciesCode),
+          .(speciesCode, growthPred, mortPred)
+        ]
+
+        #All species
+        year_summary <- gmcs_dt[, .(
+          year = yr,
+          mean_mortPred   = mean(mortPred, na.rm = TRUE),
+          median_mortPred = median(mortPred, na.rm = TRUE),
+          mean_growthPred   = mean(growthPred, na.rm = TRUE),
+          median_growthPred = median(growthPred, na.rm = TRUE)
         )]
-        gmcs_dt <- gmcs_dt[!is.na(speciesCode)]
-        sim$gmcsPredictions <- c(sim$gmcsPredictions, list(gmcs_dt))
+        sim$gmcsSummaryByYear <- rbind(sim$gmcsSummaryByYear, year_summary)
+
+        #By Species
+        species_summary <- gmcs_dt[, .(
+          mean_mortPred   = mean(mortPred, na.rm = TRUE),
+          median_mortPred = median(mortPred, na.rm = TRUE),
+          mean_growthPred   = mean(growthPred, na.rm = TRUE),
+          median_growthPred = median(growthPred, na.rm = TRUE)
+        ), by = speciesCode]
+        species_summary[, year := yr]
+        sim$gmcsSummaryByYearSpecies <- rbind(sim$gmcsSummaryByYearSpecies, species_summary, fill = TRUE)
 
       }
       subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
@@ -2657,19 +2674,25 @@ CohortAgeReclassification <- function(sim) {
   }
 
   ## if not using LandR growth/mortality drivers... (assumes LandR.CS)
-  if (P(sim)$growthAndMortalityDrivers != "LandR") {
-    if (!suppliedElsewhere("cceArgs", sim)) {
-      sim$cceArgs <- list(quote(CMI),
-                          quote(ATA),
-                          quote(CMInormal),
-                          quote(mcsModel),
-                          quote(gcsModel))
-      names(sim$cceArgs) <- paste(sim$cceArgs)
-    }
-    if (P(sim)$growthAndMortalityDrivers == "LandR.CS") {
-    sim$gmcsPredictions <- list()
-    }
+  if (P(sim)$growthAndMortalityDrivers != "LandR"){
+    sim$gmcsSummaryByYear <- data.table(
+      year = integer(),
+      mean_mortPred = numeric(),
+      median_mortPred = numeric(),
+      mean_growthPred = numeric(),
+      median_growthPred = numeric()
+    )
+    sim$gmcsSummaryByYearSpecies <- data.table(
+      year = integer(),
+      speciesCode = character(),
+      mean_mortPred = numeric(),
+      median_mortPred = numeric(),
+      mean_growthPred = numeric(),
+      median_growthPred = numeric()
+    )
   }
+
+
 
   gc() ## AMC added this 2019-08-20
 
