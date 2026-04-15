@@ -1496,13 +1496,13 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         })
         names(cceArgs) <- paste(sim$cceArgs)
        
-        predObj <- LandR.CS::calculateClimateEffect(cceArgs = cceArgs,
-                                                    cohortData = subCohortData,
-                                                    pixelGroupMap = sim$pixelGroupMap,
-                                                    gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
-                                                    gmcsMinAge = P(sim)$gmcsMinAge,
-                                                    time = time(sim),
-                                                    cohortDefinitionCols = P(sim)$cohortDefinitionCols)
+        predObj <- calculateClimateEffect(cceArgs = cceArgs,
+                                          cohortData = subCohortData,
+                                          pixelGroupMap = sim$pixelGroupMap,
+                                          gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
+                                          gmcsMinAge = P(sim)$gmcsMinAge,
+                                          time = time(sim),
+                                          cohortDefinitionCols = P(sim)$cohortDefinitionCols)
         ## Join must be done this way
         if (subgroup == "Group1" | numGroups == 1) {
           sim$gmcsPredictions <- list()
