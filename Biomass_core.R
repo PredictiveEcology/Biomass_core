@@ -272,6 +272,8 @@ defineModule(sim, list(
                   desc = "Internal use. Keeps track of which pixels are inactive."),
     createsOutput("inactivePixelIndexReporting", "integer",
                   desc = "Internal use. Keeps track of which pixels are inactive in the reporting study area."),
+    createsOutput("gmcsPredictions", "list", 
+                  desc = "optional list of data.frames containing climate-sensitive growth and mortality output"),
     # createsOutput("initialCommunities", "character",
     #               desc = "Because the initialCommunities object can be LARGE, it is saved to disk with this filename"),
     createsOutput("lastFireYear", "numeric",
@@ -1493,15 +1495,20 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
           arg <- eval(x, envir = sim)
         })
         names(cceArgs) <- paste(sim$cceArgs)
-        
-        predObj <- calculateClimateEffect(cceArgs = cceArgs,
-                                          cohortData = subCohortData,
-                                          pixelGroupMap = sim$pixelGroupMap,
-                                          gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
-                                          gmcsMinAge = P(sim)$gmcsMinAge,
-                                          time = time(sim),
-                                          cohortDefinitionCols = P(sim)$cohortDefinitionCols)
+       
+        predObj <- LandR.CS::calculateClimateEffect(cceArgs = cceArgs,
+                                                    cohortData = subCohortData,
+                                                    pixelGroupMap = sim$pixelGroupMap,
+                                                    gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
+                                                    gmcsMinAge = P(sim)$gmcsMinAge,
+                                                    time = time(sim),
+                                                    cohortDefinitionCols = P(sim)$cohortDefinitionCols)
         ## Join must be done this way
+        if (subgroup == "Group1" | numGroups == 1) {
+          sim$gmcsPredictions <- list()
+        }
+        sim$gmcsPredictions[[subgroup]] <- predObj
+        predObj <- predObj[, .SD, .SDcols = c(P(sim)$cohortDefinitionCols, "growthPred", "mortPred")]
         commonNames <- names(predObj)[names(predObj) %in% names(subCohortData)]
         subCohortData <- subCohortData[predObj, on = commonNames]
         subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred / 100))] ## changed from ratio to pct for memory
