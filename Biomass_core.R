@@ -708,7 +708,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
               cli::col_blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'ecoregionMap'"))
     }
-    ecoregionMap <- makeDummyEcoregionMaP(sim$rasterToMatch)
+    ecoregionMap <- makeDummyEcoregionMap(sim$rasterToMatch)
 
     if (suppliedElsewhere("biomassMap", sim, where = "sim"))
       message(cli::col_blue("'biomassMap' was supplied, but "),
@@ -717,7 +717,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                    "'cohortData', 'pixelGroupMap' and 'biomassMap'"))
     ## note that to make the dummy sim$biomassMap, we need to first make a dummy rawBiomassMap
     httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-      rawBiomassMap <- makeDummyRawBiomassMaP(sim$rasterToMatch)
+      rawBiomassMap <- makeDummyRawBiomassMap(sim$rasterToMatch)
     })
 
     if (suppliedElsewhere("standAgeMap", sim, where = "sim"))
