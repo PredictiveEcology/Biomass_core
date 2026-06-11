@@ -14,7 +14,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("2.0.1")),
+  version = list(Biomass_core = numeric_version("2.0.2")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -46,12 +46,12 @@ defineModule(sim, list(
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
                     desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
-    defineParameter("dataSource", "character", "SCANFI", NA, NA,
-                    paste(
-                      "Source for species cover, biomass, age, and landcover data used to initialize cohorts.",
-                      "Currently, only kNN (2001, 2011) and SCANFI (2020) provide all necesarry layers.",
-                      "Mixing multiple datasets requires additonal raster geoprocessing and is not recommended."
-                    )),
+    # defineParameter("dataSource", "character", "SCANFI", NA, NA,
+    #                 paste(
+    #                   "Source for species cover, biomass, age, and landcover data used to initialize cohorts.",
+    #                   "Currently, only kNN (2001, 2011) and SCANFI (2020) provide all necesarry layers.",
+    #                   "Mixing multiple datasets requires additonal raster geoprocessing and is not recommended."
+    #                 )),
     defineParameter("dataYear", "numeric", 2020, NA, NA,
                     paste(
                       "the year for which SCANFI data wil be fetched for use with the module.",
@@ -158,23 +158,25 @@ defineModule(sim, list(
                           'NULL is allowed but will result in plots without subtitles.'))
   ),
   inputObjects = bindrows(
-    expectsInput("biomassMap", "SpatRaster",
+    expectsInput("biomassMap", "SpatRaster",                                    # nolint: in_no_default
                  desc = paste("Total biomass raster layer in study area (in $g/m^2$),",
                               "filtered for pixels covered by `cohortData.`",
                               "Only used if `P(sim)$initialBiomassSource == 'biomassMap'`, which is currently deactivated."),
                  sourceURL = ""),
     expectsInput("cceArgs", "list",
                  desc = paste("A list of quoted objects used by the `growthAndMortalityDriver` `calculateClimateEffect` function")),
-    expectsInput("cohortData", "data.table",
+    expectsInput("cohortData", "data.table",                                    # nolint: in_no_default
                  desc = paste("`data.table` with cohort-level information on age and biomass, by `pixelGroup` and ecolocation",
                               "(i.e., `ecoregionGroup`). If supplied, it must have the following columns: `pixelGroup` (integer),",
                               "`ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in $g/m^2$), `age` (integer in years)")),
-    expectsInput("ecoregion", "data.table",
+    expectsInput("columnsForPixelGroups", "character",                          # nolint: in_no_default
+                 paste("Optional. If not supplied, will use LandR::columnsForPixelGroups(); see ?LandR::columnsForPixelGroups()")),
+    expectsInput("ecoregion", "data.table",                                     # nolint: in_no_default
                  desc = "Ecoregion look up table",
                  sourceURL = paste0("https://raw.githubusercontent.com/LANDIS-II-Foundation/",
                                     "Extensions-Succession/master/biomass-succession-archive/",
                                     "trunk/tests/v6.0-2.0/ecoregions.txt")),
-    expectsInput("ecoregionMap", "SpatRaster",
+    expectsInput("ecoregionMap", "SpatRaster",                                  # nolint: in_no_default
                  desc = paste("Ecoregion map that has mapcodes matching the `ecoregion` and `speciesEcoregion` tables.",
                               "Defaults to a dummy map matching `rasterToMatch` with two regions")),
     # expectsInput("initialCommunities", "data.table",
@@ -183,11 +185,11 @@ defineModule(sim, list(
     # expectsInput("initialCommunitiesMap", "SpatRaster",
     #              desc = "initial community map that has mapcodes match initial community table",
     #              sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
-    expectsInput("lastReg", "numeric",
+    expectsInput("lastReg", "numeric",                                          # nolint: in_no_default
                  desc = "An internal counter keeping track of when the last regeneration event occurred"),
-    expectsInput("minRelativeB", "data.frame",
-                 desc = "table defining the relative biomass cut points to classify stand shadeness."),
-    expectsInput("pixelGroupMap", "SpatRaster",
+    # expectsInput("minRelativeB", "data.frame",                                  # nolint: in_no_default
+    #              desc = "table defining the relative biomass cut points to classify stand shadeness."),
+    expectsInput("pixelGroupMap", "SpatRaster",                                 # nolint: in_no_default
                  desc = paste("A raster layer with `pixelGroup` IDs per pixel. Pixels are grouped" ,
                               "based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition,",
                               "even if the user supplies other initial groupings (e.g., via the `Biomass_borealDataPrep`",
@@ -204,7 +206,7 @@ defineModule(sim, list(
                               "and may be ommited. However, this may result in downstream issues with",
                               "other modules. Default is from Dominic Cyr and Yan Boulanger's project"),
                  sourceURL = "https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv"),
-    expectsInput("speciesEcoregion", "data.table",
+    expectsInput("speciesEcoregion", "data.table",                              # nolint: in_no_default
                  desc = paste("Table of spatially-varying species traits (`maxB`, `maxANPP`,",
                               "`establishprob`), defined by species and `ecoregionGroup` (i.e. ecolocation).",
                               "Defaults to a dummy table based on dummy data of biomass, age, ecoregion and land cover class")),
@@ -300,6 +302,10 @@ defineModule(sim, list(
                                "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs")),
     createsOutput("speciesEcoregion", "data.table",
                   desc = "Define the `maxANPP`, `maxB` and `SEP` change with both ecoregion and simulation time."),
+    createsOutput("speciesLayers", "SpatRaster",
+                 "Modified from the input version of this following a call to checkSpeciesTraits()"),
+    createsOutput("sppNameVector", "character",
+                 "Modified from the input version of this following a call to sppHarmonize()"),
     createsOutput("spinupOutput", "data.table",
                   desc = "Spin-up output. Currently deactivated."),
     createsOutput("sppColorVect", "character",
@@ -979,7 +985,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   haveAllRasters <- all(!unlist(lapply(rasterNamesToCompare, function(rn) is.null(sim[[rn]]))))
 
   if (haveAllRasters) {
-    rastersToCompare <- mget(rasterNamesToCompare, envir(sim))
+    rastersToCompare <- mget(rasterNamesToCompare, envir(sim))                  # nolint: unresolved_accessor 
     do.call(.compareRas, append(list(x = sim$rasterToMatch, res = TRUE), rastersToCompare))
   } else {
     stop(
@@ -1374,7 +1380,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     groupSize <- maxRowsDT(
       maxLen = 1e7,
       maxMem = P(sim)$.maxMemory,
-      startClockTime = sim$._startClockTime,
+      startClockTime = sim$._startClockTime,  # nolint: in_used_undeclared
       groupSize = groupSize,
       modEnv = mod
     )
@@ -2313,7 +2319,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   shortNames <- equivalentName(levsLeading, sppEquiv, P(sim)$sppEquivPlotCol)
   shortNames[whMixedLevs] <- "Mixed"
   levs[[levelsName]] <- shortNames
-  levels(sim$vegTypeMap) <- levs
+  levels(sim$vegTypeMap) <- levs                                                # nolint: conflicting_fn_unqualified
 
   colsLeading <- equivalentName(names(sim$sppColorVect), sppEquiv, "Leading")
   colsLeading[whMixedSppColors] <- "Mixed"
