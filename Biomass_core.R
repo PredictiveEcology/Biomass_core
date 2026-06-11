@@ -165,6 +165,9 @@ defineModule(sim, list(
                  sourceURL = ""),
     expectsInput("cceArgs", "list",
                  desc = paste("A list of quoted objects used by the `growthAndMortalityDriver` `calculateClimateEffect` function")),
+    # TODO is this ok even if not CS?
+    expectsInput(objectName = "currentClimateRasters", objectClass = "SpatRaster",
+                  desc= "a single-year subset of projected or historical rasters"),
     expectsInput("cohortData", "data.table",
                  desc = paste("`data.table` with cohort-level information on age and biomass, by `pixelGroup` and ecolocation",
                               "(i.e., `ecoregionGroup`). If supplied, it must have the following columns: `pixelGroup` (integer),",
@@ -272,7 +275,7 @@ defineModule(sim, list(
                   desc = "Internal use. Keeps track of which pixels are inactive."),
     createsOutput("inactivePixelIndexReporting", "integer",
                   desc = "Internal use. Keeps track of which pixels are inactive in the reporting study area."),
-    createsOutput("gmcsPredictions", "list", 
+    createsOutput("gmcsPredictions", "list",
                   desc = "optional list of data.frames containing climate-sensitive growth and mortality output"),
     # createsOutput("initialCommunities", "character",
     #               desc = "Because the initialCommunities object can be LARGE, it is saved to disk with this filename"),
@@ -1512,6 +1515,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
         ## this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
         ## as long as the function is called 'calculateClimateEffect', represents a multiplier,
         ## and uses growth, mortality and age limits
+
         cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
           eval(x, envir = sim)
         })
