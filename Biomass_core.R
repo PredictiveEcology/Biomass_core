@@ -1483,40 +1483,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       ##    lines down to discuss this double counting
       set(subCohortData, NULL, "aNPPAct", pmax(1, subCohortData$aNPPAct - subCohortData$mAge))
 
-      ## generate climate-sensitivity predictions - this will no longer run if LandR pkg is the driver
-      if (!P(sim)$growthAndMortalityDrivers == "LandR") {
-        ## necessary due to column joining
-        if (!is.null(subCohortData$growthPred)) {
-          set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
-        }
-
-        ## get arguments from sim environment --
-        ## this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
-        ## as long as the function is called 'calculateClimateEffect', represents a multiplier,
-        ## and uses growth, mortality and age limits
-
-        cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
-          arg <- eval(x, envir = sim)
-        })
-        names(cceArgs) <- paste(sim$cceArgs)
-
-        predObj <- calculateClimateEffect(cceArgs = cceArgs,
-                                          cohortData = subCohortData,
-                                          pixelGroupMap = sim$pixelGroupMap,
-                                          gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
-                                          gmcsMinAge = P(sim)$gmcsMinAge,
-                                          time = time(sim),
-                                          cohortDefinitionCols = P(sim)$cohortDefinitionCols)
-        ## Join must be done this way
-        if (subgroup == "Group1" | numGroups == 1) {
-          sim$gmcsPredictions <- list()
-        }
-        sim$gmcsPredictions[[subgroup]] <- predObj
-        predObj <- predObj[, .SD, .SDcols = c(P(sim)$cohortDefinitionCols, "growthPred", "mortPred")]
-        commonNames <- names(predObj)[names(predObj) %in% names(subCohortData)]
-        subCohortData <- subCohortData[predObj, on = commonNames]
-        subCohortData[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred / 100))] ## changed from ratio to pct for memory
-      }
+      ## Climate Independent Growth and Mortality
       subCohortData <- calculateGrowthMortality(cohortData = subCohortData)
 
       ## NOTE RE: double removal of mAge -- it is a correct implementation of the LANDIS source
@@ -1528,16 +1495,73 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
       ## https://github.com/LANDIS-II-Foundation/Extension-Biomass-Succession/blob/master/src/CohortBiomass.cs
       set(subCohortData, NULL, "mBio", pmax(0, subCohortData$mBio - subCohortData$mAge))
       set(subCohortData, NULL, "mBio", pmin(subCohortData$mBio, subCohortData$aNPPAct))
-      set(subCohortData, NULL, "mortality", subCohortData$mBio + subCohortData$mAge)
+      set(subCohortData, NULL, "baselineMortality", subCohortData$mBio + subCohortData$mAge)
 
-      ## this line will return mortality unchanged unless LandR_BiomassGMCS is also run
+      ## Keep only join columns
+      baselineCols <- c(P(sim)$cohortDefinitionCols, "baselineMortality")
+      baselineData <- subCohortData[, ..baselineCols]
+
+      ## Climate-Sensitive Growth and Mortality
       if (!P(sim)$growthAndMortalityDrivers == "LandR") {
-        # subCohortData[, mortality := pmax(0, asInteger(mortality * mortPred / 100))]
-        subCohortData[, mortality := pmax(0, mortality + mortPred)] #mortality is no longer a modifier
-        subCohortData[, mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
-        if (!P(sim)$keepClimateCols) {
-          set(subCohortData, NULL, c("growthPred", "mortPred"), NULL)
+
+        subCohortDataCS <- copy(subCohortData) #Creating new object for CS calculations
+
+        ## necessary due to column joining
+        if (!is.null(subCohortDataCS$growthPred)) {
+          set(subCohortDataCS, NULL, c("growthPred", "mortPred"), NULL)
         }
+
+        ## get arguments from sim environment --
+        ## this way Biomass_core is blind to whatever is used by calculateClimateEffect fxns
+        ## as long as the function is called 'calculateClimateEffect', represents a multiplier,
+        ## and uses growth, mortality and age limits
+
+        cceArgs <- lapply(sim$cceArgs, FUN = function(x) {
+          eval(x, envir = sim)
+        })
+        names(cceArgs) <- paste(sim$cceArgs)
+
+        predObj <- calculateClimateEffect(cceArgs = cceArgs,
+                                          cohortData = subCohortDataCS,
+                                          pixelGroupMap = sim$pixelGroupMap,
+                                          gmcsGrowthLimits = P(sim)$gmcsGrowthLimits,
+                                          gmcsMinAge = P(sim)$gmcsMinAge,
+                                          time = time(sim),
+                                          cohortDefinitionCols = P(sim)$cohortDefinitionCols)
+        ## Join must be done this way
+        if (subgroup == "Group1" | numGroups == 1) {
+          sim$gmcsPredictions <- list()
+        }
+        sim$gmcsPredictions[[subgroup]] <- predObj
+        predObj <- predObj[, .SD, .SDcols = c(P(sim)$cohortDefinitionCols, "growthPred", "mortPred")]
+        commonNames <- names(predObj)[names(predObj) %in% names(subCohortDataCS)]
+        subCohortDataCS <- subCohortDataCS[predObj, on = commonNames]
+        subCohortDataCS[, aNPPAct := pmax(0, asInteger(aNPPAct * growthPred / 100))] ## changed from ratio to pct for memory
+
+        ## Recalculate growth & mortality
+        subCohortDataCS <- calculateGrowthMortality(cohortData = subCohortDataCS)
+
+        set(subCohortDataCS, NULL, "mBio", pmax(0, subCohortDataCS$mBio - subCohortDataCS$mAge))
+        set(subCohortDataCS, NULL, "mBio", pmin(subCohortDataCS$mBio, subCohortDataCS$aNPPAct))
+        set(subCohortDataCS, NULL, "mortality", subCohortDataCS$mBio + subCohortDataCS$mAge)
+      }
+
+
+      ## Climate Independent vs Climate Sensitive Mortality
+      if (P(sim)$growthAndMortalityDrivers == "LandR") {
+        subCohortData[, mortality := baselineMortality] #Keeping CI mortality with LandR
+      } else {
+        subCohortDataCS <- subCohortDataCS[baselineData, on = P(sim)$cohortDefinitionCols]
+
+        subCohortDataCS[, mortality := baselineMortality + mortPred]   ##Combine baseline + climate mortality
+        subCohortDataCS[, mortality := pmax(0, mortality)] #mortality is no longer a modifier
+        subCohortDataCS[,mortality := pmin(mortality, B + aNPPAct)] #this prevents negative biomass, but allows B = 0 for 1 year
+
+        if (!P(sim)$keepClimateCols) {
+          set(subCohortDataCS, NULL, c("growthPred", "mortPred", "baselineMortality"), NULL)
+        }
+
+        subCohortData <- subCohortDataCS
       }
 
       set(subCohortData, NULL, c("mBio", "mAge", "maxANPP", "maxB", "maxB_eco", "bAP", "bPM"), NULL)
