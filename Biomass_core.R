@@ -1860,8 +1860,8 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
       seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
                                                on = "pixelIndex", nomatch = 0], by = "pixelIndex")
 
-      message(cli::col_blue("Of", NROW(emptyForestPixels),
-                   "burned and empty pixels: Num pixels where seeds arrived:",
+      message(cli::col_blue("Of ", NROW(emptyForestPixels),
+                   " burned and empty pixels: Num pixels where seeds arrived:",
                    NROW(seedsArrivedPixels)))
     }
 
@@ -1891,8 +1891,8 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
         # seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
         seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
                                                  on = "pixelIndex", nomatch = 0], by = "pixelIndex")
-        message(cli::col_blue("Of", NROW(emptyForestPixels),
-                     "burned and empty pixels: Num pixels where seedlings established:",
+        message(cli::col_blue("Of ", NROW(emptyForestPixels),
+                     " burned and empty pixels: Num pixels where seedlings established:",
                      NROW(seedsArrivedPixels)))
       }
 
