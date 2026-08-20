@@ -19,6 +19,7 @@ jobs:
     if: "!contains(github.event.commits[0].message, '[skip-ci]')"
     name: Render module Rmd
     runs-on: ubuntu-latest
+    timeout-minutes: 90
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -26,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: PredictiveEcology/actions/install-spatial-deps@v0.2
+      - uses: PredictiveEcology/actions/install-spatial-deps@v0.4
 
       - name: Install other dependencies
         run: |
@@ -45,13 +46,13 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
 
-      - uses: PredictiveEcology/actions/install-Require@v0.2
+      - uses: PredictiveEcology/actions/install-Require@v0.4
         with:
           GitTag: 'development'
 
-      - uses: PredictiveEcology/actions/install-SpaDES@v0.2
+      - uses: PredictiveEcology/actions/install-SpaDES@v0.4
 
-      - uses: PredictiveEcology/actions/install-Rmd-pkgs@v0.2
+      - uses: PredictiveEcology/actions/install-Rmd-pkgs@v0.4
 
       - name: Install module package and other dependencies
         run: |
