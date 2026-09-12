@@ -867,7 +867,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
 
     ## Create initial communities, i.e., pixelGroups -----------------------
     if (!suppliedElsewhere("columnsForPixelGroups", sim, where = "sim")) {
-      columnsForPixelGroups <- LandR::columnsForPixelGroups
+      columnsForPixelGroups <- LandR::columnsForPixelGroups()
     } else {
       columnsForPixelGroups <- sim$columnsForPixelGroups
     }
