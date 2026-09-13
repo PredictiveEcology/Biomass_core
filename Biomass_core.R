@@ -28,7 +28,7 @@ defineModule(sim, list(
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@development (>= 2.0.0.9002)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/LandR@development (>= 1.1.5.9016)"),
+                  "PredictiveEcology/LandR@development (>= 1.2.0.9015)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
