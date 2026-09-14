@@ -28,7 +28,7 @@ defineModule(sim, list(
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@development (>= 2.0.0.9002)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/LandR@development (>= 1.1.5.9016)"),
+                  "PredictiveEcology/LandR@development (>= 1.2.0.9015)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -367,6 +367,14 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
   switch(
     eventType,
     init = {
+      ## No tree species in this study area (sppEquiv has no rows, established by fireSense_ELFs):
+      ## cohortData is empty by construction, so there is no vegetation to simulate. Leave the
+      ## empty tables from Biomass_borealDataPrep as they are and schedule no events.
+      if (is.data.frame(sim$sppEquiv) && nrow(sim$sppEquiv) == 0L) {
+        message("Biomass_core: no tree species in this study area; no vegetation dynamics to simulate")
+        return(invisible(sim))
+      }
+
       ## do stuff for this event
 
       ## Define .plotInterval/.saveInterval if need be
