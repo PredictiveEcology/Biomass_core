@@ -1,5 +1,11 @@
 Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
+# Biomass_core (development version)
+
+* `vegLeadingProportion` now defaults to `getOption("NTEMS.mixedwoodProp", getOption("LandR.vegLeadingProportion", 0.8))`,
+  the same nested option LandR's `vegTypeMapGenerator()` uses, so one option sets the leading-species
+  threshold for every module and LandR function. The default is unchanged (0.8) when neither option is set.
+
 # Biomass_core 2.0.2 (2026-06-02)
 
 * Metadata cleanup: removed the unused `dataSource` field; added `speciesLayers` and `sppNameVector` to `createsOutput` so they are declared module outputs.
