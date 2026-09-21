@@ -608,8 +608,8 @@ follow `species$speciesCode`.
 If provided, *Biomass_core* uses this vector to (attempt to) obtain `speciesLayers`
 for the listed species. If not provided, the user (or another module) can pass a filtered `sppEquiv` table
 (i.e., containing only the species that are to be simulated). If neither is provided,
-then *Biomass_core* attempts to use any species for which if finds available species
-(ref:percent) cover data in the study area.
+then *Biomass_core* attempts to use any species for which if finds available
+species (ref:percent) cover data in the study area.
 
 **Cohort-simulation-related objects**
 
