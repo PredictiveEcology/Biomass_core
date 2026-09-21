@@ -6,11 +6,11 @@
 library(data.table)
 
 test_that("calculateSumB() sums biomass over the cohorts old enough to count", {
-  ## The 2019 expectation gives every cohort in a pixelGroup the group total; since the
-  ## 2021 rewrite of calculateSumB() only cohorts old enough to be counted carry it and
-  ## younger ones keep sumB = 0. Which is intended is an open question (see the PR that
-  ## rewrote this test), so the expectation is not asserted until it is answered.
-  skip("calculateSumB() semantics for young cohorts undecided since the 2021 rewrite")
+  ## Every cohort in a pixelGroup carries the group total. `wh` decides which cohorts are
+  ## summed -- LANDIS-II leaves the young ones out -- not which cohorts feel the result.
+  ## Between the Dec-2021 rewrite (9342cf1) and the fix for #111, young cohorts kept
+  ## sumB = 0 and so competed as though the site were empty; this is that regression test.
+  ## Group 2 is all young, so it has no cohort old enough to count and correctly stays 0.
   successionTimestep <- 10
   cohortData <- data.table(pixelGroup = c(rep(1, 13), rep(2, 10)), ecoregionGroup = 1,
                            speciesCode = 16, age = c(1:10, 20, 30, 50, 1:10), B = c(1:13, 1:10),
