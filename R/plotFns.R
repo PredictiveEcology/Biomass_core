@@ -57,7 +57,7 @@ speciesLeadingPlot <- function(df, cols, plotTitle = NULL, plotSubtitle = NULL) 
   gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[["counts"]], fill = .data[["leadingType"]])) +
     geom_area(position = "fill") +
     scale_fill_manual(values = cols, , breaks = ~ .x[.x != "1. Empty"], na.value = "#00000000") +
-    geom_hline(yintercept = 1, linetype = "dashed", color = "darkgrey", size = 1) +
+    geom_hline(yintercept = 1, linetype = "dashed", color = "darkgrey", linewidth = 1) +
     labs(x = "Year", y = "Proportion", fill = "Species", title = plotTitle, subtitle = plotSubtitle) +
     theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
     theme_bw(base_size = 16)
@@ -78,7 +78,7 @@ speciesLeadingPlot <- function(df, cols, plotTitle = NULL, plotSubtitle = NULL) 
 speciesAgeANPPPlot <- function(df, y, species, cols, ylab = "y",
                                plotTitle = NULL, plotSubtitle = NULL) {
   gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[[y]], colour = .data[[species]], group = .data[[species]])) +
-    geom_line(size = 1) +
+    geom_line(linewidth = 1) +
     scale_colour_manual(values = cols) +
     labs(x = "Year", y = ylab, title = plotTitle, , subtitle = plotSubtitle, colour = "Species") +
     theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
@@ -121,7 +121,7 @@ gg_vegAttrMap <- function(x, title, subtitle = NULL) {
 #'
 landscapeAttributesPlot <- function(df, varLabels, plotTitle = NULL, plotSubtitle = NULL) {
   gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[["value"]], colour = .data[["variable"]])) +
-    geom_line(size = 1) +
+    geom_line(linewidth = 1) +
     scale_colour_brewer(type = "qual", palette = "Dark2") +
     facet_wrap(~ variable, scales = "free_y",
                labeller = labeller(variable = varLabels)) +
