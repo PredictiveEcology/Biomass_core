@@ -1,15 +1,17 @@
 Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
-# Biomass_core 2.0.3 (2026-09-16)
+# Biomass_core (development version)
 
 * `calculateSumB()`: every cohort in a `pixelGroup` again carries that group's total biomass
   (closes #111). Since the December 2021 rewrite (`9342cf1`) only cohorts at or past
   `successionTimestep` carried it and younger ones kept `sumB = 0`, so for a young cohort
   `calculateCompetition()` computed `bPot = max(1, maxB - sumB + B)` as though the site were
-  empty -- no competition, and inflated `bAP`, ANPP and growth, precisely for newly
-  established cohorts. The mask selects which cohorts are *summed* (LANDIS-II leaves the
-  young ones out of the total), not which cohorts feel the result. The 2019 test that
-  encodes this is no longer skipped.
+  empty. The larger `bPot` lowered the cohort's `bAP`, and with it the growth-related
+  mortality (`mBio` rises with `bAP`), so young cohorts under a canopy grew as though in the
+  open: net growth was overstated, mostly through understated mortality (ANPP was unchanged
+  for `growthcurve = 0` and slightly lower otherwise). The mask selects which cohorts are
+  *summed* (LANDIS-II leaves the young ones out of the total), not which cohorts feel the
+  result. The 2019 test that encodes this is no longer skipped.
 * `calculateSumB()` no longer re-keys `cohortData`. The group total is now matched on
   `pixelGroup` rather than `rep.int()` over a sorted table, which removes two latent hazards:
   the `wh` mask and `which(wh)` were computed *before* `checkAndChangeKey()` sorted the rows,
