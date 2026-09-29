@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-date: "Last updated: 2026-09-22"
+date: "Last updated: 2026-09-29"
 output:
   bookdown::html_document2:
     toc: true
@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_corea8ac49705446ceddee39df6699b74c51314396e1)
+[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_corea0bebb9a7de003cecfebfd678e978f2d642c1a39)
 
 [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
@@ -1299,6 +1299,14 @@ event (growth and mortality are always yearly);
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Attribute (field) column in `studyAreaReporting` to use for defining zones for transition plots. If `NA`, subpolygons will be aggregated and dissolved for use as a single zone. </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> .plotTransitionNaRm </td>
+   <td style="text-align:left;"> logical </td>
+   <td style="text-align:left;"> TRUE </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> Passed to `na.rm` in `LandR::vegTransitions()` for transition plots. If `TRUE`, pixels with no vegetation type in a transition year are dropped. If `FALSE`, they are kept and labelled `"_NA_"`: pixels with no cohorts (e.g., burned and not regenerated), and also pixels in `studyAreaReporting` that are not simulated (`NA` in `ecoregionMap`). </td>
   </tr>
   <tr>
    <td style="text-align:left;"> .plotTransitionTimes </td>
