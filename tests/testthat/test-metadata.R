@@ -82,7 +82,7 @@ test_that("parameters are the expected names", {
   expect_identical(
     sort(md$parameters$paramName),
     sort(c(".maxMemory", ".plotInitialTime", ".plotInterval", ".plotMaps", ".plots",
-           ".plotTransitionField", ".plotTransitionTimes", ".runName",
+           ".plotTransitionField", ".plotTransitionNaRm", ".plotTransitionTimes", ".runName",
            ".saveInitialTime", ".saveInterval", ".sslVerify", ".studyAreaName",
            ".useCache", ".useParallel", "calcSummaryBGM", "calibrate",
            "cohortDefinitionCols", "cutpoint", "dataYear", "gmcsGrowthLimits",
@@ -92,4 +92,13 @@ test_that("parameters are the expected names", {
            "sppEquivCol", "sppEquivPlotCol", "successionTimestep",
            "vegLeadingProportion"))
   )
+})
+
+test_that(".plotTransitionNaRm is logical and defaults to TRUE", {
+  ## TRUE keeps the transition plots as they were before the parameter existed.
+  md <- SpaDES.core::moduleMetadata(module = moduleName, path = modulePath)
+  p <- md$parameters[md$parameters$paramName == ".plotTransitionNaRm", ]
+  ## `paramClass` and `default` are list columns
+  expect_identical(p$paramClass[[1]], "logical")
+  expect_identical(p$default[[1]], TRUE)
 })

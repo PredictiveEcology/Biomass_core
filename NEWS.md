@@ -15,9 +15,17 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
   the `wh` mask and `which(wh)` were computed *before* `checkAndChangeKey()` sorted the rows,
   so both referred to the pre-sort order; and when the table had no prior key that sort was
   never undone, silently re-keying the caller's object.
-* `vegLeadingProportion` now defaults to `getOption("NTEMS.mixedwoodProp", getOption("LandR.vegLeadingProportion", 0.8))`,
-  the same nested option LandR's `vegTypeMapGenerator()` uses, so one option sets the leading-species
-  threshold for every module and LandR function. The default is unchanged (0.8) when neither option is set.
+* `vegLeadingProportion` now defaults to `LandR::leadingSpeciesProp()` (option
+  `LandR.leadingSpeciesProp`, which takes `LandR.mixedwoodProp`, 0.75, unless set), so the
+  leading-species threshold is set once for every module and LandR function instead of being
+  hard-coded per module. **The default changes from 0.8 to 0.75**, which changes vegetation type
+  maps. Requires LandR >= 1.2.0.9024 (PredictiveEcology/LandR#234).
+* New parameter `.plotTransitionNaRm` (default `TRUE`, as before) is passed as `na.rm` to
+  `LandR::vegTransitions()` in the `plotTransitions` event. Set `FALSE` to keep pixels with no
+  vegetation type (no cohorts, e.g. burned and not regenerated, or not simulated) in the
+  transitions dataset and plots, labelled `"_NA_"`.
+* Added `ggalluvial` and `ggrepel` to `reqdPkgs`: `LandR::plotVegTransitions()` stops without
+  them, and LandR only suggests them.
 
 # Biomass_core 2.0.2 (2026-06-02)
 
