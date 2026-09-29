@@ -7,6 +7,12 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
   leading-species threshold is set once for every module and LandR function instead of being
   hard-coded per module. **The default changes from 0.8 to 0.75**, which changes vegetation type
   maps. Requires LandR >= 1.2.0.9024 (PredictiveEcology/LandR#234).
+* New parameter `.plotTransitionNaRm` (default `TRUE`, as before) is passed as `na.rm` to
+  `LandR::vegTransitions()` in the `plotTransitions` event. Set `FALSE` to keep pixels with no
+  vegetation type (no cohorts, e.g. burned and not regenerated, or not simulated) in the
+  transitions dataset and plots, labelled `"_NA_"`.
+* Added `ggalluvial` and `ggrepel` to `reqdPkgs`: `LandR::plotVegTransitions()` stops without
+  them, and LandR only suggests them.
 
 # Biomass_core 2.0.2 (2026-06-02)
 
