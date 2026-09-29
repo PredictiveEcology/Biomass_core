@@ -14,14 +14,14 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("2.0.2")),
+  version = list(Biomass_core = numeric_version("2.0.2.9000")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.md", "Biomass_core.Rmd"),
   loadOrder = list(after = c("Biomass_speciesParameters")),
   reqdPkgs = list("arrow", "assertthat", "cli", "compiler", "data.table",
-                  "dplyr", "fpCompare", "ggplot2", "grid",
+                  "dplyr", "fpCompare", "ggalluvial", "ggplot2", "ggrepel", "grid",
                   "parallel", "purrr", "quickPlot (>= 1.0.2.9003)", "Rcpp",
                   "R.utils", "scales", "terra", "tidyr",
                   "reproducible (>= 2.1.0)",
@@ -134,6 +134,12 @@ defineModule(sim, list(
     defineParameter(".plotTransitionField", "character", NA_character_, NA, NA,
                     desc = paste("Attribute (field) column in `studyAreaReporting` to use for defining zones for transition plots.",
                                  "If `NA`, subpolygons will be aggregated and dissolved for use as a single zone.")),
+    defineParameter(".plotTransitionNaRm", "logical", TRUE, NA, NA,
+                    desc = paste("Passed to `na.rm` in `LandR::vegTransitions()` for transition plots.",
+                                 "If `TRUE`, pixels with no vegetation type in a transition year are dropped.",
+                                 "If `FALSE`, they are kept and labelled `\"_NA_\"`: pixels with no cohorts",
+                                 "(e.g., burned and not regenerated), and also pixels in `studyAreaReporting`",
+                                 "that are not simulated (`NA` in `ecoregionMap`).")),
     defineParameter(".plotTransitionTimes", "integer", NA_integer_, NA, NA,
                     desc = paste("Simulation times for which transition plots will be built, or `NA` for none.",
                                  "NOTE: these can be computationally intensive for large landscapes")),
@@ -627,19 +633,13 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
       }
     },
     plotTransitions = {
-      if (is.na(P(sim)$.plotTransitionField)) {
-        zones_poly <- terra::aggregate(sim$studyAreaReporting)
-        zones_poly$PolyID <- P(sim)$.studyAreaName
-      } else {
-        zones_poly <- sim$studyAreaReporting
-      }
-
-      transitions_df <- vegTransitions(
+      transitions_df <- vegTransitionsByZone(
         vtm = mod$vtm_files,
-        zones = zones_poly,
-        field = ifelse(is.na(P(sim)$.plotTransitionField), "PolyID", P(sim)$.plotTransitionField),
+        studyAreaReporting = sim$studyAreaReporting,
+        field = P(sim)$.plotTransitionField,
+        studyAreaName = P(sim)$.studyAreaName,
         times = P(sim)$.plotTransitionTimes,
-        na.rm = TRUE,
+        na.rm = P(sim)$.plotTransitionNaRm,
         dest = outputPath(sim)
       )
 

@@ -130,3 +130,31 @@ landscapeAttributesPlot <- function(df, varLabels, plotTitle = NULL, plotSubtitl
     labs(x = "Year", y = "Value", colour = "", title = plotTitle, subtitle = plotSubtitle)
   return(gg)
 }
+
+#' Build the vegetation type transitions dataset used by the transition plots
+#'
+#' @param vtm character vector of file paths to vegetation type maps, one per `times`.
+#' @param studyAreaReporting `SpatVector` of reporting polygons.
+#' @param field character. Column in `studyAreaReporting` defining the zones. If `NA`,
+#'   `studyAreaReporting` is dissolved into a single zone named `studyAreaName`.
+#' @param studyAreaName character. Zone name used when `field` is `NA`.
+#' @param times integer vector of simulation times, one per `vtm`.
+#' @param na.rm logical, passed to `LandR::vegTransitions()`. `TRUE` drops pixels with no
+#'   vegetation type; `FALSE` keeps them, labelled `"_NA_"`.
+#' @param dest character. Directory passed to `LandR::vegTransitions()`.
+#'
+#' @return the `arrow` dataset returned by `LandR::vegTransitions()`.
+#'
+vegTransitionsByZone <- function(vtm, studyAreaReporting, field, studyAreaName, times,
+                                 na.rm, dest) {
+  if (is.na(field)) {
+    zones <- terra::aggregate(studyAreaReporting)
+    zones$PolyID <- studyAreaName
+    field <- "PolyID"
+  } else {
+    zones <- studyAreaReporting
+  }
+
+  LandR::vegTransitions(vtm = vtm, zones = zones, field = field, times = times,
+                        na.rm = na.rm, dest = dest)
+}
