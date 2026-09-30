@@ -2,6 +2,7 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
 # Biomass_core (development version)
 
+* `reqdPkgs` no longer lists `curl`, `httr`, `lme4`, `Require`, `tidyterra` and `viridis`. The module calls them only as `pkg::fun()`, which resolves whether or not the package is attached or imported into the module, and LandR already installs each of them as a hard dependency; listed, they were attached for every module in a simulation under the default `spades.reqdPkgsAttach = TRUE`.
 * Two calls that could not run: `.gc()` (large maps, over 3e7 cells) is `gc()` -- `.gc` (an ecosystem helper that calls `gc()` repeatedly) is not provided by any package in the module's reqdPkgs -- and `maxValue(sim$biomassMap)`, a raster-only function called on a terra object, is `terra::minmax()`, which reads the stored min/max rather than every value (in the `initialBiomassSource = "biomassMap"` branch, which currently stops before reaching it).
 * `reqdPkgs` now lists `curl`, `httr`, `lme4`, `Require`, `tidyterra` and `viridis`, which the module's code uses.
 
