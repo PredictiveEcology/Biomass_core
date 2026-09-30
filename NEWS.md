@@ -17,6 +17,8 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
   the `wh` mask and `which(wh)` were computed *before* `checkAndChangeKey()` sorted the rows,
   so both referred to the pre-sort order; and when the table had no prior key that sort was
   never undone, silently re-keying the caller's object.
+* Two calls that could not run: `.gc()` (large maps, over 3e7 cells) is `gc()` -- `.gc` (an ecosystem helper that calls `gc()` repeatedly) is not provided by any package in the module's reqdPkgs -- and `maxValue(sim$biomassMap)`, a raster-only function called on a terra object, is `terra::minmax()`, which reads the stored min/max rather than every value (in the `initialBiomassSource = "biomassMap"` branch, which currently stops before reaching it).
+* `reqdPkgs` now lists `curl`, `httr`, `lme4`, `Require`, `tidyterra` and `viridis`, which the module's code uses.
 * `vegLeadingProportion` now defaults to `LandR::leadingSpeciesProp()` (option
   `LandR.leadingSpeciesProp`, which takes `LandR.mixedwoodProp`, 0.75, unless set), so the
   leading-species threshold is set once for every module and LandR function instead of being

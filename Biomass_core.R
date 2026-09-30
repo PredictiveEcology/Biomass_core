@@ -14,16 +14,16 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("2.0.2.9001")),
+  version = list(Biomass_core = numeric_version("2.0.2.9003")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.md", "Biomass_core.Rmd"),
   loadOrder = list(after = c("Biomass_speciesParameters")),
-  reqdPkgs = list("arrow", "assertthat", "cli", "compiler", "data.table",
-                  "dplyr", "fpCompare", "ggalluvial", "ggplot2", "ggrepel", "grid",
+  reqdPkgs = list("arrow", "assertthat", "cli", "compiler", "curl", "data.table",
+                  "dplyr", "fpCompare", "ggalluvial", "ggplot2", "ggrepel", "grid", "httr", "lme4",
                   "parallel", "purrr", "quickPlot (>= 1.0.2.9003)", "Rcpp",
-                  "R.utils", "scales", "terra", "tidyr",
+                  "R.utils", "Require", "scales", "terra", "tidyr", "tidyterra", "viridis",
                   "reproducible (>= 2.1.0)",
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@development (>= 2.0.0.9002)",
@@ -874,7 +874,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       currentYear = time(sim)
     )
     if (ncell(sim$rasterToMatch) > 3e7) {
-      .gc()
+      gc()
     }
 
     ## Create initial communities, i.e., pixelGroups -----------------------
@@ -1155,7 +1155,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
         pixelGroup = as.vector(values(pixelGroupMap))
       )
       biomassTable <- na.omit(biomassTable)
-      maxBiomass <- maxValue(sim$biomassMap)
+      maxBiomass <- terra::minmax(sim$biomassMap, compute = TRUE)["max", 1] # stored min/max; maxValue() is raster-only
       if (maxBiomass < 1e3) {
         if (verbose > 0) {
           message(cli::col_green(
