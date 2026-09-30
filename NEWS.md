@@ -2,7 +2,7 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
 # Biomass_core (development version)
 
-* Two calls that could not run: `.gc()` (large maps, over 3e7 cells) is `gc()` -- `.gc` (an ecosystem helper that calls `gc()` repeatedly) is not provided by any package in the module's reqdPkgs -- and `maxValue(sim$biomassMap)`, a raster-only function called on a terra object, is `max()` of the map's values (in the `initialBiomassSource = "biomassMap"` branch, which currently stops before reaching it).
+* Two calls that could not run: `.gc()` (large maps, over 3e7 cells) is `gc()` -- `.gc` (an ecosystem helper that calls `gc()` repeatedly) is not provided by any package in the module's reqdPkgs -- and `maxValue(sim$biomassMap)`, a raster-only function called on a terra object, is `terra::minmax()`, which reads the stored min/max rather than every value (in the `initialBiomassSource = "biomassMap"` branch, which currently stops before reaching it).
 
 * `vegLeadingProportion` now defaults to `LandR::leadingSpeciesProp()` (option
   `LandR.leadingSpeciesProp`, which takes `LandR.mixedwoodProp`, 0.75, unless set), so the

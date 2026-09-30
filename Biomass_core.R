@@ -1155,7 +1155,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
         pixelGroup = as.vector(values(pixelGroupMap))
       )
       biomassTable <- na.omit(biomassTable)
-      maxBiomass <- max(biomassTable$biomass) # the map's non-NA values, just above; maxValue() is raster-only
+      maxBiomass <- terra::minmax(sim$biomassMap, compute = TRUE)["max", 1] # stored min/max; maxValue() is raster-only
       if (maxBiomass < 1e3) {
         if (verbose > 0) {
           message(cli::col_green(
