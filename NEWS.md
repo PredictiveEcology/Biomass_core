@@ -2,6 +2,7 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
 # Biomass_core (development version)
 
+* `WardDispersalSeeding()` reads the `pixelGroupMap` values once and passes them to `LANDISDisp()` as `pgv` (burned pixels set to `NA`), instead of copying the raster and reading its values again inside `LANDISDisp()`. Results are unchanged; saves about 1.7 s per call on a 9M-cell map. Needs the `pgv` argument of `LANDISDisp()` (PredictiveEcology/LandR#255); no version floor is set until that is released.
 * Two calls that could not run: `.gc()` (large maps, over 3e7 cells) is `gc()` -- `.gc` (an ecosystem helper that calls `gc()` repeatedly) is not provided by any package in the module's reqdPkgs -- and `maxValue(sim$biomassMap)`, a raster-only function called on a terra object, is `terra::minmax()`, which reads the stored min/max rather than every value (in the `initialBiomassSource = "biomassMap"` branch, which currently stops before reaching it).
 * `reqdPkgs` now lists `curl`, `httr`, `lme4`, `Require`, `tidyterra` and `viridis`, which the module's code uses.
 
