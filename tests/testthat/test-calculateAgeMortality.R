@@ -1,19 +1,12 @@
+## Rewritten from the 2019-2021 test of the same name: the function is now a package
+## function (the module is converted to a package before the tests run), so it is called
+## directly rather than through simInit() + sim$.mods. The inputs and the expected values
+## are the originals; only the harness and the renamed `stage` level ("mainsimulation" is
+## now "nonSpinup") changed.
+library(data.table)
+
 test_that("test process of age reclassification",{
-  library(SpaDES)
-  # define the module and path
-  module <- list("Biomass_core")
-  path <- list(modulePath="..",
-               outputPath="~/output")
-  parameters <- list(.progress=list(type="graphical", interval=1),
-                     .globals=list(verbose=FALSE),
-                     Biomass_core=list( .saveInitialTime=NA))
   spinupMortalityfraction <- 0.001
-  objects <- list()
-  mySim <- simInit(times=list(start=0, end=1),
-                   params=parameters,
-                   modules=module,
-                   objects=objects,
-                   paths=path)
   # for the spin up stage test
   cohortData <- data.table(age = 2:496,
                            B = c(1096, 1854, 2626, 3391, 4140, 4868, 5574, 6256, 6915, 7551,
@@ -69,11 +62,7 @@ test_that("test process of age reclassification",{
                                  614, 599, 585, 571, 557, 544, 531, 518, 506, 494, 482, 470, 459,
                                  448, 437, 427, 416, 407, 397, 387),
                            longevity = 500, mortalityshape = 10)
-  if(exists("calculateAgeMortality")){
-    output <- calculateAgeMortality(cohortData, stage="spinup", spinupMortalityfraction)
-  } else {
-    output <- mySim$.mods$Biomass_core$calculateAgeMortality(cohortData, stage="spinup", spinupMortalityfraction)
-  }
+  output <- calculateAgeMortality(cohortData, stage="spinup", spinupMortalityfraction)
   cohortData_output <- output[,.(age,mAge=round(mAge,2))]
   cohortData_output_compared <- data.table(age = 2:496, mAge = c(1.15, 1.94, 2.76, 3.56, 4.35, 5.12, 5.87, 6.6, 7.3, 7.98, 8.64,
                                9.27, 9.89, 10.49, 11.07, 11.63, 12.18, 12.71, 13.22, 13.73,
@@ -190,11 +179,7 @@ test_that("test process of age reclassification",{
                                1464, 1429, 1395, 1362, 1330, 1298, 1267, 1237, 1208, 1179, 1151,
                                1124),
                            longevity = 500, mortalityshape = 10)
-  if(exists("calculateAgeMortality")){
-    output <- calculateAgeMortality(cohortData, stage="mainsimulation", spinupMortalityfraction)
-  } else {
-    output <- mySim$.mods$Biomass_core$calculateAgeMortality(cohortData,stage="mainsimulation", spinupMortalityfraction)
-  }
+  output <- calculateAgeMortality(cohortData, stage = "nonSpinup", spinupMortalityfraction)
   cohortData_output <- output[,.(age,mAge=round(mAge,2))]
   cohortData_output_compared <- data.table(age = 2:452,
                                            mAge=c(0.05, 0.09, 0.13, 0.17, 0.21, 0.25, 0.3, 0.34, 0.39, 0.43,

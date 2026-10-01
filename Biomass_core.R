@@ -14,21 +14,21 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("2.0.2")),
+  version = list(Biomass_core = numeric_version("2.0.2.9002")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.md", "Biomass_core.Rmd"),
   loadOrder = list(after = c("Biomass_speciesParameters")),
-  reqdPkgs = list("arrow", "assertthat", "cli", "compiler", "data.table",
-                  "dplyr", "fpCompare", "ggplot2", "grid",
+  reqdPkgs = list("arrow", "assertthat", "cli", "compiler", "curl", "data.table",
+                  "dplyr", "fpCompare", "ggalluvial", "ggplot2", "ggrepel", "grid", "httr", "lme4",
                   "parallel", "purrr", "quickPlot (>= 1.0.2.9003)", "Rcpp",
-                  "R.utils", "scales", "terra", "tidyr",
+                  "R.utils", "Require", "scales", "terra", "tidyr", "tidyterra", "viridis",
                   "reproducible (>= 2.1.0)",
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@development (>= 2.0.0.9002)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/LandR@development (>= 1.2.0.9015)"),
+                  "PredictiveEcology/LandR@development (>= 1.2.0.9024)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -111,8 +111,12 @@ defineModule(sim, list(
                     paste("Defines the simulation time step, default is 10 years.",
                           "Note that growth and mortality always happen on a yearly basis.",
                           "Cohorts younger than this age will not be included in competitive interactions")),
-    defineParameter("vegLeadingProportion", "numeric", 0.8, 0, 1,
-                    desc = "A number that defines whether a species is leading for a given pixel"),
+    defineParameter("vegLeadingProportion", "numeric", LandR::leadingSpeciesProp(),
+                    0, 1,
+                    desc = paste("A number that defines whether a species is leading for a given pixel.",
+                                 "Default: `LandR::leadingSpeciesProp()`, i.e. option `LandR.leadingSpeciesProp`,",
+                                 "which takes `LandR.mixedwoodProp` (0.75) unless set. Setting it in one place",
+                                 "moves every module and LandR function together.")),
     defineParameter(".maxMemory", "numeric", 5, NA, NA,
                     desc = "Maximum amount of memory (in GB) to use for dispersal calculations."),
     defineParameter(".plotInitialTime", "numeric", start(sim), NA, NA,
@@ -130,6 +134,12 @@ defineModule(sim, list(
     defineParameter(".plotTransitionField", "character", NA_character_, NA, NA,
                     desc = paste("Attribute (field) column in `studyAreaReporting` to use for defining zones for transition plots.",
                                  "If `NA`, subpolygons will be aggregated and dissolved for use as a single zone.")),
+    defineParameter(".plotTransitionNaRm", "logical", TRUE, NA, NA,
+                    desc = paste("Passed to `na.rm` in `LandR::vegTransitions()` for transition plots.",
+                                 "If `TRUE`, pixels with no vegetation type in a transition year are dropped.",
+                                 "If `FALSE`, they are kept and labelled `\"_NA_\"`: pixels with no cohorts",
+                                 "(e.g., burned and not regenerated), and also pixels in `studyAreaReporting`",
+                                 "that are not simulated (`NA` in `ecoregionMap`).")),
     defineParameter(".plotTransitionTimes", "integer", NA_integer_, NA, NA,
                     desc = paste("Simulation times for which transition plots will be built, or `NA` for none.",
                                  "NOTE: these can be computationally intensive for large landscapes")),
@@ -623,19 +633,13 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
       }
     },
     plotTransitions = {
-      if (is.na(P(sim)$.plotTransitionField)) {
-        zones_poly <- terra::aggregate(sim$studyAreaReporting)
-        zones_poly$PolyID <- P(sim)$.studyAreaName
-      } else {
-        zones_poly <- sim$studyAreaReporting
-      }
-
-      transitions_df <- vegTransitions(
+      transitions_df <- vegTransitionsByZone(
         vtm = mod$vtm_files,
-        zones = zones_poly,
-        field = ifelse(is.na(P(sim)$.plotTransitionField), "PolyID", P(sim)$.plotTransitionField),
+        studyAreaReporting = sim$studyAreaReporting,
+        field = P(sim)$.plotTransitionField,
+        studyAreaName = P(sim)$.studyAreaName,
         times = P(sim)$.plotTransitionTimes,
-        na.rm = TRUE,
+        na.rm = P(sim)$.plotTransitionNaRm,
         dest = outputPath(sim)
       )
 
@@ -722,7 +726,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
               cli::col_blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'ecoregionMap'"))
     }
-    ecoregionMap <- makeDummyEcoregionMaP(sim$rasterToMatch)
+    ecoregionMap <- makeDummyEcoregionMap(sim$rasterToMatch)
 
     if (suppliedElsewhere("biomassMap", sim, where = "sim"))
       message(cli::col_blue("'biomassMap' was supplied, but "),
@@ -731,7 +735,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                    "'cohortData', 'pixelGroupMap' and 'biomassMap'"))
     ## note that to make the dummy sim$biomassMap, we need to first make a dummy rawBiomassMap
     httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-      rawBiomassMap <- makeDummyRawBiomassMaP(sim$rasterToMatch)
+      rawBiomassMap <- makeDummyRawBiomassMap(sim$rasterToMatch)
     })
 
     if (suppliedElsewhere("standAgeMap", sim, where = "sim"))
@@ -870,12 +874,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       currentYear = time(sim)
     )
     if (ncell(sim$rasterToMatch) > 3e7) {
-      .gc()
+      gc()
     }
 
     ## Create initial communities, i.e., pixelGroups -----------------------
     if (!suppliedElsewhere("columnsForPixelGroups", sim, where = "sim")) {
-      columnsForPixelGroups <- LandR::columnsForPixelGroups
+      columnsForPixelGroups <- LandR::columnsForPixelGroups()
     } else {
       columnsForPixelGroups <- sim$columnsForPixelGroups
     }
@@ -1151,7 +1155,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
         pixelGroup = as.vector(values(pixelGroupMap))
       )
       biomassTable <- na.omit(biomassTable)
-      maxBiomass <- maxValue(sim$biomassMap)
+      maxBiomass <- terra::minmax(sim$biomassMap, compute = TRUE)["max", 1] # stored min/max; maxValue() is raster-only
       if (maxBiomass < 1e3) {
         if (verbose > 0) {
           message(cli::col_green(

@@ -54,7 +54,7 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
     if (any(anyDuplicates)) {
       # pull out only duplicated types. NOTE "which = TRUE" gives only the indices of the joined rows;
       # will use the inverse below
-      tdDuplicates <- targetData[unique(targetData[anyDuplicates]), nomatch = NULL,
+      tdDuplicates <- targetData[unique(targetData[anyDuplicates], by = byGroupsNoAge), nomatch = NULL,
                                  on = byGroupsNoAge, which = TRUE]
 
       td <- targetData[tdDuplicates]
