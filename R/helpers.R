@@ -132,17 +132,20 @@ calculateSumB <- compiler::cmpfun(function(cohortData, lastReg, currentTime, suc
 
   set(cohortData, NULL, "sumB", 0L) # this is faster than only doing for !wh
   if (any(wh)) {
-    if (FALSE) {  # This is the "normal" data.table way. But it is slow, surprisingly
-      cohortData[wh, sumB := sum(B, na.rm = TRUE), by = "pixelGroup"]
-    } else {
-      # Faster replacement -- 1) sort on pixelGroup, 2) sum by group and .N by group, but don't reassign to full table
-      #                       3) rep the sumByGroup each .N times  4) now reassign vector back to data.table
-      oldKey <- checkAndChangeKey(cohortData, "pixelGroup")
-      tmp <- cohortData[wh, list(N = .N, Sum = sum(B, na.rm = TRUE)), by = "pixelGroup"]
-      set(cohortData, which(wh), "sumB", rep.int(tmp$Sum, tmp$N))
-      if (!is.null(oldKey)) setkeyv(cohortData, oldKey) # marginally faster to avoid
-    }
-
+    ## `wh` decides which cohorts COUNT TOWARD the site total -- LANDIS-II leaves the young
+    ## ones out of the sum -- not which cohorts feel the result. Every cohort in the
+    ## pixelGroup carries the group total, because competition is felt by young and old
+    ## alike: with sumB = 0, calculateCompetition()'s bPot = max(1, maxB - sumB + B) lets a
+    ## young cohort grow as though the site were empty. See #111.
+    ##
+    ## Matching on pixelGroup rather than rep.int() over a re-keyed table also removes two
+    ## hazards. `wh` and `which(wh)` are positional, but checkAndChangeKey() sorts the table
+    ## *after* they are computed, so they referred to the pre-sort order; and when the table
+    ## had no prior key that sort was never undone, silently re-keying the caller's object.
+    tmp <- cohortData[wh, list(Sum = sum(B, na.rm = TRUE)), by = "pixelGroup"]
+    m <- match(cohortData$pixelGroup, tmp$pixelGroup)
+    hasSum <- !is.na(m) # FALSE for a pixelGroup with no cohort old enough to count: stays 0
+    set(cohortData, which(hasSum), "sumB", tmp$Sum[m[hasSum]])
   } else {
     Require::messageVerbose("Skipping sumB calculation because there are no cohorts older than successionTimestep",
                             verbose = verbose)
