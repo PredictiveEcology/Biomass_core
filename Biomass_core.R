@@ -14,21 +14,21 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("2.0.1")),
+  version = list(Biomass_core = numeric_version("2.1.0.9000")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("README.md", "Biomass_core.Rmd"),
   loadOrder = list(after = c("Biomass_speciesParameters")),
-  reqdPkgs = list("arrow", "assertthat", "cli", "compiler", "data.table",
-                  "dplyr", "fpCompare", "ggplot2", "grid",
+  reqdPkgs = list("arrow", "assertthat", "cli", "compiler", "curl", "data.table",
+                  "dplyr", "fpCompare", "ggalluvial", "ggplot2", "ggrepel", "grid", "httr", "lme4",
                   "parallel", "purrr", "quickPlot (>= 1.0.2.9003)", "Rcpp",
-                  "R.utils", "scales", "terra", "tidyr",
+                  "R.utils", "Require", "scales", "terra", "tidyr", "tidyterra", "viridis",
                   "reproducible (>= 2.1.0)",
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@development (>= 2.0.0.9002)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/LandR@development (>= 1.1.5.9016)"),
+                  "PredictiveEcology/LandR@development (>= 1.2.0.9024)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -46,12 +46,12 @@ defineModule(sim, list(
                                  "This parameter should only be modified if additional modules are adding columns to cohortData")),
     defineParameter("cutpoint", "numeric", 1e10, NA, NA,
                     desc = "A numeric scalar indicating how large each chunk of an internal data.table is, when processing by chunks"),
-    defineParameter("dataSource", "character", "SCANFI", NA, NA,
-                    paste(
-                      "Source for species cover, biomass, age, and landcover data used to initialize cohorts.",
-                      "Currently, only kNN (2001, 2011) and SCANFI (2020) provide all necesarry layers.",
-                      "Mixing multiple datasets requires additonal raster geoprocessing and is not recommended."
-                    )),
+    # defineParameter("dataSource", "character", "SCANFI", NA, NA,
+    #                 paste(
+    #                   "Source for species cover, biomass, age, and landcover data used to initialize cohorts.",
+    #                   "Currently, only kNN (2001, 2011) and SCANFI (2020) provide all necesarry layers.",
+    #                   "Mixing multiple datasets requires additonal raster geoprocessing and is not recommended."
+    #                 )),
     defineParameter("dataYear", "numeric", 2020, NA, NA,
                     paste(
                       "the year for which SCANFI data wil be fetched for use with the module.",
@@ -111,8 +111,12 @@ defineModule(sim, list(
                     paste("Defines the simulation time step, default is 10 years.",
                           "Note that growth and mortality always happen on a yearly basis.",
                           "Cohorts younger than this age will not be included in competitive interactions")),
-    defineParameter("vegLeadingProportion", "numeric", 0.8, 0, 1,
-                    desc = "A number that defines whether a species is leading for a given pixel"),
+    defineParameter("vegLeadingProportion", "numeric", LandR::leadingSpeciesProp(),
+                    0, 1,
+                    desc = paste("A number that defines whether a species is leading for a given pixel.",
+                                 "Default: `LandR::leadingSpeciesProp()`, i.e. option `LandR.leadingSpeciesProp`,",
+                                 "which takes `LandR.mixedwoodProp` (0.75) unless set. Setting it in one place",
+                                 "moves every module and LandR function together.")),
     defineParameter(".maxMemory", "numeric", 5, NA, NA,
                     desc = "Maximum amount of memory (in GB) to use for dispersal calculations."),
     defineParameter(".plotInitialTime", "numeric", start(sim), NA, NA,
@@ -130,6 +134,12 @@ defineModule(sim, list(
     defineParameter(".plotTransitionField", "character", NA_character_, NA, NA,
                     desc = paste("Attribute (field) column in `studyAreaReporting` to use for defining zones for transition plots.",
                                  "If `NA`, subpolygons will be aggregated and dissolved for use as a single zone.")),
+    defineParameter(".plotTransitionNaRm", "logical", TRUE, NA, NA,
+                    desc = paste("Passed to `na.rm` in `LandR::vegTransitions()` for transition plots.",
+                                 "If `TRUE`, pixels with no vegetation type in a transition year are dropped.",
+                                 "If `FALSE`, they are kept and labelled `\"_NA_\"`: pixels with no cohorts",
+                                 "(e.g., burned and not regenerated), and also pixels in `studyAreaReporting`",
+                                 "that are not simulated (`NA` in `ecoregionMap`).")),
     defineParameter(".plotTransitionTimes", "integer", NA_integer_, NA, NA,
                     desc = paste("Simulation times for which transition plots will be built, or `NA` for none.",
                                  "NOTE: these can be computationally intensive for large landscapes")),
@@ -158,7 +168,7 @@ defineModule(sim, list(
                           'NULL is allowed but will result in plots without subtitles.'))
   ),
   inputObjects = bindrows(
-    expectsInput("biomassMap", "SpatRaster",
+    expectsInput("biomassMap", "SpatRaster",                                    # nolint: in_no_default
                  desc = paste("Total biomass raster layer in study area (in $g/m^2$),",
                               "filtered for pixels covered by `cohortData.`",
                               "Only used if `P(sim)$initialBiomassSource == 'biomassMap'`, which is currently deactivated."),
@@ -168,16 +178,18 @@ defineModule(sim, list(
     # TODO is this ok even if not CS?
     expectsInput(objectName = "currentClimateRasters", objectClass = "SpatRaster",
                   desc= "a single-year subset of projected or historical rasters"),
-    expectsInput("cohortData", "data.table",
+    expectsInput("cohortData", "data.table",                                    # nolint: in_no_default
                  desc = paste("`data.table` with cohort-level information on age and biomass, by `pixelGroup` and ecolocation",
                               "(i.e., `ecoregionGroup`). If supplied, it must have the following columns: `pixelGroup` (integer),",
                               "`ecoregionGroup` (factor), `speciesCode` (factor), `B` (integer in $g/m^2$), `age` (integer in years)")),
-    expectsInput("ecoregion", "data.table",
+    expectsInput("columnsForPixelGroups", "character",                          # nolint: in_no_default
+                 paste("Optional. If not supplied, will use LandR::columnsForPixelGroups(); see ?LandR::columnsForPixelGroups()")),
+    expectsInput("ecoregion", "data.table",                                     # nolint: in_no_default
                  desc = "Ecoregion look up table",
                  sourceURL = paste0("https://raw.githubusercontent.com/LANDIS-II-Foundation/",
                                     "Extensions-Succession/master/biomass-succession-archive/",
                                     "trunk/tests/v6.0-2.0/ecoregions.txt")),
-    expectsInput("ecoregionMap", "SpatRaster",
+    expectsInput("ecoregionMap", "SpatRaster",                                  # nolint: in_no_default
                  desc = paste("Ecoregion map that has mapcodes matching the `ecoregion` and `speciesEcoregion` tables.",
                               "Defaults to a dummy map matching `rasterToMatch` with two regions")),
     # expectsInput("initialCommunities", "data.table",
@@ -186,11 +198,11 @@ defineModule(sim, list(
     # expectsInput("initialCommunitiesMap", "SpatRaster",
     #              desc = "initial community map that has mapcodes match initial community table",
     #              sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
-    expectsInput("lastReg", "numeric",
+    expectsInput("lastReg", "numeric",                                          # nolint: in_no_default
                  desc = "An internal counter keeping track of when the last regeneration event occurred"),
-    expectsInput("minRelativeB", "data.frame",
-                 desc = "table defining the relative biomass cut points to classify stand shadeness."),
-    expectsInput("pixelGroupMap", "SpatRaster",
+    # expectsInput("minRelativeB", "data.frame",                                  # nolint: in_no_default
+    #              desc = "table defining the relative biomass cut points to classify stand shadeness."),
+    expectsInput("pixelGroupMap", "SpatRaster",                                 # nolint: in_no_default
                  desc = paste("A raster layer with `pixelGroup` IDs per pixel. Pixels are grouped" ,
                               "based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition,",
                               "even if the user supplies other initial groupings (e.g., via the `Biomass_borealDataPrep`",
@@ -207,7 +219,7 @@ defineModule(sim, list(
                               "and may be ommited. However, this may result in downstream issues with",
                               "other modules. Default is from Dominic Cyr and Yan Boulanger's project"),
                  sourceURL = "https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv"),
-    expectsInput("speciesEcoregion", "data.table",
+    expectsInput("speciesEcoregion", "data.table",                              # nolint: in_no_default
                  desc = paste("Table of spatially-varying species traits (`maxB`, `maxANPP`,",
                               "`establishprob`), defined by species and `ecoregionGroup` (i.e. ecolocation).",
                               "Defaults to a dummy table based on dummy data of biomass, age, ecoregion and land cover class")),
@@ -305,6 +317,10 @@ defineModule(sim, list(
                                "Currently obtained from LANDIS-II Biomass Succession v.6.0-2.0 inputs")),
     createsOutput("speciesEcoregion", "data.table",
                   desc = "Define the `maxANPP`, `maxB` and `SEP` change with both ecoregion and simulation time."),
+    createsOutput("speciesLayers", "SpatRaster",
+                 "Modified from the input version of this following a call to checkSpeciesTraits()"),
+    createsOutput("sppNameVector", "character",
+                 "Modified from the input version of this following a call to sppHarmonize()"),
     createsOutput("spinupOutput", "data.table",
                   desc = "Spin-up output. Currently deactivated."),
     createsOutput("sppColorVect", "character",
@@ -366,6 +382,14 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
   switch(
     eventType,
     init = {
+      ## No tree species in this study area (sppEquiv has no rows, established by fireSense_ELFs):
+      ## cohortData is empty by construction, so there is no vegetation to simulate. Leave the
+      ## empty tables from Biomass_borealDataPrep as they are and schedule no events.
+      if (is.data.frame(sim$sppEquiv) && nrow(sim$sppEquiv) == 0L) {
+        message("Biomass_core: no tree species in this study area; no vegetation dynamics to simulate")
+        return(invisible(sim))
+      }
+
       ## do stuff for this event
 
       ## Define .plotInterval/.saveInterval if need be
@@ -614,19 +638,13 @@ doEvent.Biomass_core <- function(sim, eventTime, eventType, debug = FALSE) {
       }
     },
     plotTransitions = {
-      if (is.na(P(sim)$.plotTransitionField)) {
-        zones_poly <- terra::aggregate(sim$studyAreaReporting)
-        zones_poly$PolyID <- P(sim)$.studyAreaName
-      } else {
-        zones_poly <- sim$studyAreaReporting
-      }
-
-      transitions_df <- vegTransitions(
+      transitions_df <- vegTransitionsByZone(
         vtm = mod$vtm_files,
-        zones = zones_poly,
-        field = ifelse(is.na(P(sim)$.plotTransitionField), "PolyID", P(sim)$.plotTransitionField),
+        studyAreaReporting = sim$studyAreaReporting,
+        field = P(sim)$.plotTransitionField,
+        studyAreaName = P(sim)$.studyAreaName,
         times = P(sim)$.plotTransitionTimes,
-        na.rm = TRUE,
+        na.rm = P(sim)$.plotTransitionNaRm,
         dest = outputPath(sim)
       )
 
@@ -713,7 +731,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
               cli::col_blue("'cohortData' or 'pixelGroupMap'.\n If this is wrong, provide matching ",
                    "'cohortData', 'pixelGroupMap' and 'ecoregionMap'"))
     }
-    ecoregionMap <- makeDummyEcoregionMaP(sim$rasterToMatch)
+    ecoregionMap <- makeDummyEcoregionMap(sim$rasterToMatch)
 
     if (suppliedElsewhere("biomassMap", sim, where = "sim"))
       message(cli::col_blue("'biomassMap' was supplied, but "),
@@ -722,7 +740,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
                    "'cohortData', 'pixelGroupMap' and 'biomassMap'"))
     ## note that to make the dummy sim$biomassMap, we need to first make a dummy rawBiomassMap
     httr::with_config(config = httr::config(ssl_verifypeer = P(sim)$.sslVerify), {
-      rawBiomassMap <- makeDummyRawBiomassMaP(sim$rasterToMatch)
+      rawBiomassMap <- makeDummyRawBiomassMap(sim$rasterToMatch)
     })
 
     if (suppliedElsewhere("standAgeMap", sim, where = "sim"))
@@ -861,12 +879,12 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       currentYear = time(sim)
     )
     if (ncell(sim$rasterToMatch) > 3e7) {
-      .gc()
+      gc()
     }
 
     ## Create initial communities, i.e., pixelGroups -----------------------
     if (!suppliedElsewhere("columnsForPixelGroups", sim, where = "sim")) {
-      columnsForPixelGroups <- LandR::columnsForPixelGroups
+      columnsForPixelGroups <- LandR::columnsForPixelGroups()
     } else {
       columnsForPixelGroups <- sim$columnsForPixelGroups
     }
@@ -984,7 +1002,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   haveAllRasters <- all(!unlist(lapply(rasterNamesToCompare, function(rn) is.null(sim[[rn]]))))
 
   if (haveAllRasters) {
-    rastersToCompare <- mget(rasterNamesToCompare, envir(sim))
+    rastersToCompare <- mget(rasterNamesToCompare, envir(sim))                  # nolint: unresolved_accessor 
     do.call(.compareRas, append(list(x = sim$rasterToMatch, res = TRUE), rastersToCompare))
   } else {
     stop(
@@ -1142,7 +1160,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
         pixelGroup = as.vector(values(pixelGroupMap))
       )
       biomassTable <- na.omit(biomassTable)
-      maxBiomass <- maxValue(sim$biomassMap)
+      maxBiomass <- terra::minmax(sim$biomassMap, compute = TRUE)["max", 1] # stored min/max; maxValue() is raster-only
       if (maxBiomass < 1e3) {
         if (verbose > 0) {
           message(cli::col_green(
@@ -1379,7 +1397,7 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
     groupSize <- maxRowsDT(
       maxLen = 1e7,
       maxMem = P(sim)$.maxMemory,
-      startClockTime = sim$._startClockTime,
+      startClockTime = sim$._startClockTime,  # nolint: in_used_undeclared
       groupSize = groupSize,
       modEnv = mod
     )
@@ -1865,8 +1883,8 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
       seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
                                                on = "pixelIndex", nomatch = 0], by = "pixelIndex")
 
-      message(cli::col_blue("Of", NROW(emptyForestPixels),
-                   "burned and empty pixels: Num pixels where seeds arrived:",
+      message(cli::col_blue("Of ", NROW(emptyForestPixels),
+                   " burned and empty pixels: Num pixels where seeds arrived:",
                    NROW(seedsArrivedPixels)))
     }
 
@@ -1896,8 +1914,8 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
         # seedsArrivedPixels <- unique(seedingData[emptyForestPixels, on = "pixelIndex", nomatch = 0], by = "pixelIndex")
         seedsArrivedPixels <- unique(seedingData[unique(emptyForestPixels, by = "pixelIndex"),
                                                  on = "pixelIndex", nomatch = 0], by = "pixelIndex")
-        message(cli::col_blue("Of", NROW(emptyForestPixels),
-                     "burned and empty pixels: Num pixels where seedlings established:",
+        message(cli::col_blue("Of ", NROW(emptyForestPixels),
+                     " burned and empty pixels: Num pixels where seedlings established:",
                      NROW(seedsArrivedPixels)))
       }
 
@@ -2324,7 +2342,7 @@ plotVegAttributesMaps <- compiler::cmpfun(function(sim) {
   shortNames <- equivalentName(levsLeading, sppEquiv, P(sim)$sppEquivPlotCol)
   shortNames[whMixedLevs] <- "Mixed"
   levs[[levelsName]] <- shortNames
-  levels(sim$vegTypeMap) <- levs
+  levels(sim$vegTypeMap) <- levs                                                # nolint: conflicting_fn_unqualified
 
   colsLeading <- equivalentName(names(sim$sppColorVect), sppEquiv, "Leading")
   colsLeading[whMixedSppColors] <- "Mixed"

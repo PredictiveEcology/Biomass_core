@@ -57,7 +57,7 @@ speciesLeadingPlot <- function(df, cols, plotTitle = NULL, plotSubtitle = NULL) 
   gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[["counts"]], fill = .data[["leadingType"]])) +
     geom_area(position = "fill") +
     scale_fill_manual(values = cols, , breaks = ~ .x[.x != "1. Empty"], na.value = "#00000000") +
-    geom_hline(yintercept = 1, linetype = "dashed", color = "darkgrey", size = 1) +
+    geom_hline(yintercept = 1, linetype = "dashed", color = "darkgrey", linewidth = 1) +
     labs(x = "Year", y = "Proportion", fill = "Species", title = plotTitle, subtitle = plotSubtitle) +
     theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
     theme_bw(base_size = 16)
@@ -78,7 +78,7 @@ speciesLeadingPlot <- function(df, cols, plotTitle = NULL, plotSubtitle = NULL) 
 speciesAgeANPPPlot <- function(df, y, species, cols, ylab = "y",
                                plotTitle = NULL, plotSubtitle = NULL) {
   gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[[y]], colour = .data[[species]], group = .data[[species]])) +
-    geom_line(size = 1) +
+    geom_line(linewidth = 1) +
     scale_colour_manual(values = cols) +
     labs(x = "Year", y = ylab, title = plotTitle, , subtitle = plotSubtitle, colour = "Species") +
     theme(legend.text = element_text(size = 12), legend.title = element_blank()) +
@@ -121,7 +121,7 @@ gg_vegAttrMap <- function(x, title, subtitle = NULL) {
 #'
 landscapeAttributesPlot <- function(df, varLabels, plotTitle = NULL, plotSubtitle = NULL) {
   gg <- ggplot(data = df, aes(x = .data[["year"]], y = .data[["value"]], colour = .data[["variable"]])) +
-    geom_line(size = 1) +
+    geom_line(linewidth = 1) +
     scale_colour_brewer(type = "qual", palette = "Dark2") +
     facet_wrap(~ variable, scales = "free_y",
                labeller = labeller(variable = varLabels)) +
@@ -129,4 +129,32 @@ landscapeAttributesPlot <- function(df, varLabels, plotTitle = NULL, plotSubtitl
     theme(legend.position = "none") +
     labs(x = "Year", y = "Value", colour = "", title = plotTitle, subtitle = plotSubtitle)
   return(gg)
+}
+
+#' Build the vegetation type transitions dataset used by the transition plots
+#'
+#' @param vtm character vector of file paths to vegetation type maps, one per `times`.
+#' @param studyAreaReporting `SpatVector` of reporting polygons.
+#' @param field character. Column in `studyAreaReporting` defining the zones. If `NA`,
+#'   `studyAreaReporting` is dissolved into a single zone named `studyAreaName`.
+#' @param studyAreaName character. Zone name used when `field` is `NA`.
+#' @param times integer vector of simulation times, one per `vtm`.
+#' @param na.rm logical, passed to `LandR::vegTransitions()`. `TRUE` drops pixels with no
+#'   vegetation type; `FALSE` keeps them, labelled `"_NA_"`.
+#' @param dest character. Directory passed to `LandR::vegTransitions()`.
+#'
+#' @return the `arrow` dataset returned by `LandR::vegTransitions()`.
+#'
+vegTransitionsByZone <- function(vtm, studyAreaReporting, field, studyAreaName, times,
+                                 na.rm, dest) {
+  if (is.na(field)) {
+    zones <- terra::aggregate(studyAreaReporting)
+    zones$PolyID <- studyAreaName
+    field <- "PolyID"
+  } else {
+    zones <- studyAreaReporting
+  }
+
+  LandR::vegTransitions(vtm = vtm, zones = zones, field = field, times = times,
+                        na.rm = na.rm, dest = dest)
 }
