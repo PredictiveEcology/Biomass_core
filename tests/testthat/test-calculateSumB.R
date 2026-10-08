@@ -30,3 +30,14 @@ test_that("calculateSumB() sums biomass over the cohorts old enough to count", {
     expect_equal(setkey(output, pixelGroup, age), ref(c(rep(46, 13), rep(10, 10))))
   }
 })
+
+test_that("calculateSumB() gives sumB = 0, not NA, when no cohort is old enough to count (#42)", {
+  cohortData <- data.table(pixelGroup = c(1, 1, 2), ecoregionGroup = 1, speciesCode = 16,
+                           age = c(1, 5, 9), B = c(10, 20, 30), mortality = 0, aNPPAct = 0)
+  expect_message(
+    output <- calculateSumB(copy(cohortData), lastReg = 0, currentTime = 5,
+                            successionTimestep = 10, verbose = TRUE),
+    "no cohorts older than successionTimestep"
+  )
+  expect_identical(output$sumB, c(0L, 0L, 0L))
+})
