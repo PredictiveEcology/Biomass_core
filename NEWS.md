@@ -2,6 +2,8 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
 # Biomass_core (development version)
 
+* `WardDispersalSeeding()` reads the `pixelGroupMap` values once and passes them to `LANDISDisp()` as `pgv` (burned pixels set to `NA`), instead of copying the raster and reading its values again inside `LANDISDisp()`. Results are unchanged; saves about 1.7 s per call on a 9M-cell map. Requires LandR >= 1.2.0.9052 (PredictiveEcology/LandR#255).
+
 # Biomass_core 2.1.0
 
 This release brings the module's development since early 2025 to the main branch. It works with forest inputs from SCANFI, the national satellite forest inventory, and adds plots of how forest types change over time, along with clearer summary plots. Climate-sensitive runs now follow the current method in the LandR.CS package.

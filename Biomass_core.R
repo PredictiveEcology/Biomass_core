@@ -14,7 +14,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("2.1.0.9000")),
+  version = list(Biomass_core = numeric_version("2.1.0.9001")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -28,7 +28,7 @@ defineModule(sim, list(
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@development (>= 2.0.0.9002)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/LandR@development (>= 1.2.0.9024)"),
+                  "PredictiveEcology/LandR@development (>= 1.2.0.9052)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -1807,7 +1807,8 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
                                   successionTimestep = P(sim)$successionTimestep)
   siteShade <- calcSiteShade(currentTime = round(time(sim)), cohortData = sim$cohortData,
                              sim$speciesEcoregion, sim$minRelativeB)
-  activePixelGroup <- data.table(pixelGroup = unique(as.vector(values(sim$pixelGroupMap))[tempActivePixel])) %>%
+  pgv <- as.integer(as.vector(values(sim$pixelGroupMap)))
+  activePixelGroup <- data.table(pixelGroup = unique(pgv[tempActivePixel])) %>%
     na.omit()
   siteShade <- siteShade[activePixelGroup, on = "pixelGroup"]
   siteShade[is.na(siteShade), siteShade := 0]
@@ -1860,18 +1861,18 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
     # } else {
     #   inactivePixelIndex <- sim$inactivePixelIndex
     # }
-    reducedPixelGroupMap <- sim$pixelGroupMap
-
-    # Calculate the maximum size of the chunks for LANDISDisp
+    # Burned pixels this year can neither source nor receive; mask them in the vector
+    # (LANDISDisp reads `pgv`, not the raster values)
     if (length(pixelsFromCurYrBurn) > 0) {
-      reducedPixelGroupMap[pixelsFromCurYrBurn] <- NA
+      pgv[pixelsFromCurYrBurn] <- NA
     }
 
     seedingData <- LANDISDisp(
       dtRcv = seedReceive,
       dtSrc = seedSource,
       speciesTable = sim$species,
-      pixelGroupMap = reducedPixelGroupMap,
+      pixelGroupMap = sim$pixelGroupMap,
+      pgv = pgv,
       plot.it = FALSE,
       successionTimestep = P(sim)$successionTimestep,
       verbose = verbose > 0
