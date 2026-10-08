@@ -1,5 +1,7 @@
 Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
+# Biomass_core (development version)
+
 # Biomass_core 2.1.0
 
 This release brings the module's development since early 2025 to the main branch. It works with forest inputs from SCANFI, the national satellite forest inventory, and adds plots of how forest types change over time, along with clearer summary plots. Climate-sensitive runs now follow the current method in the LandR.CS package.
