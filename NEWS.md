@@ -3,9 +3,30 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 # Biomass_core (development version)
 
 * `WardDispersalSeeding()` reads the `pixelGroupMap` values once and passes them to `LANDISDisp()` as `pgv` (burned pixels set to `NA`), instead of copying the raster and reading its values again inside `LANDISDisp()`. Results are unchanged; saves about 1.7 s per call on a 9M-cell map. Needs the `pgv` argument of `LANDISDisp()` (PredictiveEcology/LandR#255); no version floor is set until that is released.
+
+# Biomass_core 2.1.0
+
+This release brings the module's development since early 2025 to the main branch. It works with forest inputs from SCANFI, the national satellite forest inventory, and adds plots of how forest types change over time, along with clearer summary plots. Climate-sensitive runs now follow the current method in the LandR.CS package.
+
+Young trees under an older canopy now feel competition from it. Before, they grew as if in the open, so young cohorts were too productive; growth and mortality in mixed-age stands change as a result. A stand is now called "leading" by a species at 75% instead of 80%, which shifts vegetation type maps, and a study area with no tree species no longer stops the run. One issue is unresolved: in climate-sensitive runs, part of the climate effect on mortality may be counted twice (see https://github.com/PredictiveEcology/Biomass_core/pull/101). Runs that do not use climate sensitivity are not affected.
+
+* `calculateSumB()`: every cohort in a `pixelGroup` again carries that group's total biomass
+  (closes #111). Since the December 2021 rewrite (`9342cf1`) only cohorts at or past
+  `successionTimestep` carried it and younger ones kept `sumB = 0`, so for a young cohort
+  `calculateCompetition()` computed `bPot = max(1, maxB - sumB + B)` as though the site were
+  empty. The larger `bPot` lowered the cohort's `bAP`, and with it the growth-related
+  mortality (`mBio` rises with `bAP`), so young cohorts under a canopy grew as though in the
+  open: net growth was overstated, mostly through understated mortality (ANPP was unchanged
+  for `growthcurve = 0` and slightly lower otherwise). The mask selects which cohorts are
+  *summed* (LANDIS-II leaves the young ones out of the total), not which cohorts feel the
+  result. The 2019 test that encodes this is no longer skipped.
+* `calculateSumB()` no longer re-keys `cohortData`. The group total is now matched on
+  `pixelGroup` rather than `rep.int()` over a sorted table, which removes two latent hazards:
+  the `wh` mask and `which(wh)` were computed *before* `checkAndChangeKey()` sorted the rows,
+  so both referred to the pre-sort order; and when the table had no prior key that sort was
+  never undone, silently re-keying the caller's object.
 * Two calls that could not run: `.gc()` (large maps, over 3e7 cells) is `gc()` -- `.gc` (an ecosystem helper that calls `gc()` repeatedly) is not provided by any package in the module's reqdPkgs -- and `maxValue(sim$biomassMap)`, a raster-only function called on a terra object, is `terra::minmax()`, which reads the stored min/max rather than every value (in the `initialBiomassSource = "biomassMap"` branch, which currently stops before reaching it).
 * `reqdPkgs` now lists `curl`, `httr`, `lme4`, `Require`, `tidyterra` and `viridis`, which the module's code uses.
-
 * `vegLeadingProportion` now defaults to `LandR::leadingSpeciesProp()` (option
   `LandR.leadingSpeciesProp`, which takes `LandR.mixedwoodProp`, 0.75, unless set), so the
   leading-species threshold is set once for every module and LandR function instead of being
