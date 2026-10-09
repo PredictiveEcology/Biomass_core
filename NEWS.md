@@ -2,7 +2,6 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
 # Biomass_core (development version)
 
-* The `year` column of `speciesEcoregion` is now read in `time(sim)` units, as `LandR::speciesEcoregionLatestYear()` already assumed. Init used to renumber the years to start at 0, so a table with several years had its traits applied at the wrong times (calendar years: the last year's traits from the first growth step on; years from 0: one `successionTimestep` early). If the earliest year is after `start(sim)`, its rows are copied to `start(sim)` with a message (new `speciesEcoregionStartYear()`). `updateSpeciesEcoregionAttributes()` now stops, naming the species and ecoregion, instead of silently dropping cohorts that have no traits. Tables with a single year, which is every current input, give the same results. Builds on #80.
 * `WardDispersalSeeding()` reads the `pixelGroupMap` values once and passes them to `LANDISDisp()` as `pgv` (burned pixels set to `NA`), instead of copying the raster and reading its values again inside `LANDISDisp()`. Results are unchanged; saves about 1.7 s per call on a 9M-cell map. Requires LandR >= 1.2.0.9052 (PredictiveEcology/LandR#255).
 
 # Biomass_core 2.1.0

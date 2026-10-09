@@ -1,30 +1,3 @@
-#' Make sure `speciesEcoregion` has traits for the start of the simulation
-#'
-#' The `year` column of `speciesEcoregion` is in the same units as `time(sim)`: the traits
-#' in a row apply from that year on (see `LandR::speciesEcoregionLatestYear()`). If the
-#' earliest year is after `startTime`, there would be no traits for the first years of the
-#' simulation, so the earliest year's rows are copied to `startTime`.
-#'
-#' @param speciesEcoregion A `data.table` with a `year` column (see
-#'   `updateSpeciesEcoregionAttributes()`).
-#' @param startTime `integer`/`numeric`. The start of the simulation, as in `start(sim)`.
-#'
-#' @return `speciesEcoregion`, with rows for `startTime` added if needed.
-#'
-#' @export
-#' @importFrom data.table rbindlist set
-speciesEcoregionStartYear <- function(speciesEcoregion, startTime) {
-  firstYear <- min(speciesEcoregion$year)
-  if (firstYear > startTime) {
-    message("speciesEcoregion has no traits at or before start(sim) (", startTime,
-            "); using its earliest year (", firstYear, ") from start(sim)")
-    firstYrRows <- speciesEcoregion[year == firstYear]
-    set(firstYrRows, NULL, "year", as(startTime, class(firstYrRows$year)))
-    speciesEcoregion <- rbindlist(list(firstYrRows, speciesEcoregion))
-  }
-  speciesEcoregion
-}
-
 #' Updates the `speciesEcoregion` used in current year from original `speciesEcoregion` file
 #'
 #' A LANDIS-II `speciesEcoregion` file has a column called "year", which specifies the
@@ -74,20 +47,7 @@ updateSpeciesEcoregionAttributes <- function(speciesEcoregion, currentTime, coho
     if (length(colsToRm))
       set(cohortData, NULL, colsToRm, NULL)
     # cohortData <- cohortData[, -..colsToRm]
-    specieseco_current <- if (any(speciesEcoregion$year <= currentTime)) {
-      speciesEcoregionLatestYear(speciesEcoregion, currentTime)
-    } else {
-      speciesEcoregion[0]
-    }
-    missingTraits <- cohortData[!specieseco_current, on = c("speciesCode", "ecoregionGroup")]
-    if (NROW(missingTraits)) {
-      missingTraits <- unique(missingTraits[, .(speciesCode, ecoregionGroup)])
-      stop("speciesEcoregion has no traits at or before year ", currentTime, " for ",
-           NROW(missingTraits), " speciesCode x ecoregionGroup combination(s) in cohortData, e.g. ",
-           paste(head(paste(missingTraits$speciesCode, missingTraits$ecoregionGroup, sep = " x "), 5),
-                 collapse = ", "),
-           ". Their cohorts would be dropped.")
-    }
+    specieseco_current <- speciesEcoregionLatestYear(speciesEcoregion, currentTime)
     specieseco_current <- setkey(specieseco_current[, .(speciesCode, maxANPP, maxB, ecoregionGroup)],
                                  speciesCode, ecoregionGroup)
     specieseco_current[, maxB_eco := max(maxB), by = ecoregionGroup]
