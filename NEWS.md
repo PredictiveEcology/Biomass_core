@@ -2,6 +2,14 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
 # Biomass_core (development version)
 
+* `WardDispersalSeeding()` reads the `pixelGroupMap` values once and passes them to `LANDISDisp()` as `pgv` (burned pixels set to `NA`), instead of copying the raster and reading its values again inside `LANDISDisp()`. Results are unchanged; saves about 1.7 s per call on a 9M-cell map. Requires LandR >= 1.2.0.9052 (PredictiveEcology/LandR#255).
+
+# Biomass_core 2.1.0
+
+This release brings the module's development since early 2025 to the main branch. It works with forest inputs from SCANFI, the national satellite forest inventory, and adds plots of how forest types change over time, along with clearer summary plots. Climate-sensitive runs now follow the current method in the LandR.CS package.
+
+Young trees under an older canopy now feel competition from it. Before, they grew as if in the open, so young cohorts were too productive; growth and mortality in mixed-age stands change as a result. A stand is now called "leading" by a species at 75% instead of 80%, which shifts vegetation type maps, and a study area with no tree species no longer stops the run. One issue is unresolved: in climate-sensitive runs, part of the climate effect on mortality may be counted twice (see https://github.com/PredictiveEcology/Biomass_core/pull/101). Runs that do not use climate sensitivity are not affected.
+
 * `calculateSumB()`: every cohort in a `pixelGroup` again carries that group's total biomass
   (closes #111). Since the December 2021 rewrite (`9342cf1`) only cohorts at or past
   `successionTimestep` carried it and younger ones kept `sumB = 0`, so for a young cohort
