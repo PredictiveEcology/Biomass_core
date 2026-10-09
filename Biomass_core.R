@@ -1027,6 +1027,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       maxANPP = "numeric"
     )
   )
+  ## `year` is in the same units as time(sim); make sure there are traits for start(sim)
+  sim$speciesEcoregion <- speciesEcoregionStartYear(sim$speciesEcoregion, start(sim))
   speciesEcoregion <- sim$speciesEcoregion
   speciesEcoregion <- setkey(speciesEcoregion, ecoregionGroup, speciesCode)
 
@@ -1249,14 +1251,6 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   }
 
   sim$lastReg <- 0
-  speciesEcoregion[, identifier := year > P(sim)$successionTimestep]
-  speciesEcoregion_True <- speciesEcoregion[identifier == TRUE, ]
-  speciesEcoregion_False <- speciesEcoregion[identifier == FALSE, ]
-  if (NROW(speciesEcoregion_False)) {
-    speciesEcoregion_True_addon <- speciesEcoregion_False[year == max(year), ]
-    speciesEcoregion_True <- rbindlist(list(speciesEcoregion_True_addon, speciesEcoregion_True))
-  }
-  sim$speciesEcoregion <- speciesEcoregion_True[, ':='(year = year - min(year), identifier = NULL)]
 
   sim$lastFireYear <- "noFire"
 
