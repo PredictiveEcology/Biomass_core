@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_coreccc0df27f464d682ad4e2e6de7579c7fc232e5b1)
+[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core76b9cdde7742981d1b6e1e7b77010b6c37e8bf40)
 
 [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
