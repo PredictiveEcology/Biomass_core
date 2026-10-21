@@ -23,10 +23,12 @@ on:
     branches:
       - main
       - development
+      - modsForFireSense
   push:
     branches:
       - main
       - development
+      - modsForFireSense
     paths:
       - .github/workflows/render-module-rmd.yaml
       - Biomass_core.Rmd
