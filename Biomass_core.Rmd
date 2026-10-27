@@ -497,7 +497,7 @@ depending on their shade tolerance (see [Probabilities of
 germination](#prob-germ)).
 
 Site shade varies from X0 (no shade) to X5 (maximum shade). By default,
-*Biomass_core* uses the same minimum realtive biomass threshold values across
+*Biomass_core* uses the same minimum relative biomass threshold values across
 all ecolocations, adjusted from a [publicly available LANDIS-II
 table](https://github.com/dcyr/LANDIS-II_IA_generalUseFiles) to better reflect
 Western Canada boreal forest dynamics (see Table \@ref(tab:minRelB)).
@@ -586,7 +586,7 @@ level is a land-cover classification. Hence, these ecolocations contain
 relatively coarse scale regional information plus finer scale land cover
 information. The `ecoregionMap` layer must be defined as a categorical
 raster, with an associated Raster Attribute Table (RAT; see, e.g.,
-`raster::ratify`). The RAT must contain the columns: `ID` (the value in the
+`terra::levels`). The RAT must contain the columns: `ID` (the value in the
 raster layer), `ecoregion` (the first level of grouping) and
 `ecoregionGroup` (the full ecolocation "name" written as
 \<firstlevel_secondlevel\>). Note that if creating `ecoregionGroup`'s by
@@ -596,17 +596,17 @@ numeric grouping levels. For instance, if Natural Ecoregion `2` has
 land-cover types `1`, `2` and `3`, the RAT will contain `ID = {1,2,3}`,
 `ecoregion = {2}` and `ecoregionGroup = {2_1, 2_2, 2_3}`. However, the user
 is free to use any groupings they wish. Finally, note that all ecolocations
-(`ecoregionGroup`'s) are should be listed in the `ecoregion` table.
+(`ecoregionGroup`'s) should be listed in the `ecoregion` table.
 
--   `rasterToMatch` -- a RasterLayer, with a given resolution and projection
+-   `rasterToMatch` -- a SpatRaster, with a given resolution and projection
 determining the pixels (i.e., non-NA values) where forest dynamics will be
 simulated. Needs to match `studyArea`. If not supplied, *Biomass_core*
 attempts to produce it from `studyArea`, with a 240 m resolution and the
 projection of `studyArea` (or the SCANFI projection, if `studyArea` is not
 projected).
 
--   `studyArea` -- a `SpatialPolygonsDataFrame` with a single polygon
-determining the where the simulation will take place. This is the only input
+-   `studyArea` -- a `SpatVector` with a single polygon
+determining where the simulation will take place. This is the only input
 object that **must be supplied by the user or another module**.
 
 -   `speciesLayers` -- layers of species (ref:percent) cover data. Default data
