@@ -2625,9 +2625,9 @@ CohortAgeReclassification <- function(sim) {
       sim$speciesLayers <- prepSpeciesLayers_SCANFI(
         destinationPath = dPath,
         outputPath = dPath,
-        studyArea = sim$studyArea_biomassParam,
+        studyArea = sim$studyArea,
         studyAreaName = P(sim)$.studyAreaName,
-        rasterToMatch = sim$rasterToMatch_biomassParam,
+        rasterToMatch = sim$rasterToMatch,
         sppEquiv = sim$sppEquiv,
         sppEquivCol = P(sim)$sppEquivCol,
         thresh = 10,
