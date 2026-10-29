@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-date: "Last updated: 2026-10-28"
+date: "Last updated: 2026-10-29"
 output:
   bookdown::html_document2:
     toc: true
@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core85b8e7f8d6d23cf7e6d139b58fe3f78b26595649)
+[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core50cf3ede7f98ae05473ea024fb8c5a5c84837aa6)
 
 [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
@@ -668,9 +668,9 @@ user-defined tables.
 
 A species' probability of germination results from the combination of its shade
 tolerance level (an invariant species trait in the `species` table; Table
-\@ref(tab:invariantSpptraits)) and the site shade [defined by the amount of
-biomass in the pixel -- see [minimum relative biomass
-parameter](#ecolocation-traits) and @SchellerMiranda2015,p.14]. By default, both
+\@ref(tab:invariantSpptraits)) and the site shade -- defined by the amount of
+biomass in the pixel, see [minimum relative biomass
+parameter](#ecolocation-traits) -- [@SchellerMiranda2015, p. 14]. By default, both
 *Biomass_core* and *Biomass_borealDataPrep* use a publicly available LANDIS-II
 table (called `sufficientLight` in the module; Table \@ref(tab:suffLight)).
 
