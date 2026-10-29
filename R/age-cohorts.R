@@ -102,41 +102,51 @@ aggregateCohorts <- function(cohortData, by, cols) {
   out[, ..cdColNames] # keep only the columns, in the correct order, as cohortData
 }
 
-#' Periodically squash old cohorts into age windows
+#' Squash cohorts that reach a multiple of an age interval
 #'
-#' At squash times (every `squashInterval` years from `startTime`), cohorts of the same species in a
-#' `pixelGroup` whose ages fall in the same window just below a multiple of `squashInterval` are
-#' merged into one cohort. Window k is (k * `squashInterval` - w_k, k * `squashInterval`], where
-#' w_k is `bandWidth[min(k, length(bandWidth))]`, i.e. the last width repeats. Ages between windows
-#' are not changed. `B`, `mortality` and `aNPPAct` are summed; `age` is the
-#' B-weighted mean age rounded to the `successionTimestep` grid (`ts * k + 1`). Merged cohorts that
-#' land on the same age are summed. Cohorts alone in their window are not changed.
+#' Run at every age reclassification (every `successionTimestep`, so ages are on the `ts * j + 1`
+#' grid and each cohort's years since establishment, `age - 1`, takes every multiple of
+#' `successionTimestep` exactly once). A cohort with `age - 1` a positive multiple `k * squashInterval`
+#' is an anchor. It is merged with all cohorts of the same `pixelGroup` x species whose `age - 1` is in
+#' [`k * squashInterval - w_k`, `k * squashInterval`], where `w_k` is `bandWidth[min(k, length(bandWidth))]`
+#' (the last width repeats). `B`, `mortality` and `aNPPAct` are summed; `age` is the
+#' B-weighted mean age rounded to the `successionTimestep` grid. Merged cohorts that land on the same
+#' age are summed. An anchor with no partner is not changed.
 #'
 #' @inheritParams ageReclassification
-#' @param squashInterval years between squashes, counted from `startTime`; `NA` means never.
-#' @param currentTime,startTime current and start time of the simulation. Nothing is done
-#'   at `startTime` or when `currentTime - startTime` is not a multiple of `squashInterval`.
-#' @param bandWidth widths (years) of the windows, starting with the one ending at `squashInterval`;
-#'   the last value repeats.
+#' @param squashInterval age interval (years); `NA` means no squashing.
+#' @param bandWidth widths (years) of the windows below each multiple of `squashInterval`;
+#'   the k-th multiple uses the k-th width and the last width repeats.
 #'
-#' @return `cohortData`, with squashed cohorts if it is a squash time; otherwise `cohortData` itself.
+#' @return `cohortData`, with squashed cohorts.
 #' @export
 #' @importFrom data.table rbindlist set
-squashCohortAges <- function(cohortData, squashInterval, currentTime, startTime,
-                             bandWidth, successionTimestep,
+squashCohortAges <- function(cohortData, squashInterval, bandWidth, successionTimestep,
                              byGroups = c("pixelGroup", "speciesCode", "age")) {
-  if (is.na(squashInterval) || currentTime == startTime ||
-      (currentTime - startTime) %% squashInterval != 0) {
-    return(cohortData)
-  }
+  if (is.na(squashInterval)) return(cohortData)
   byGroupsNoAge <- setdiff(byGroups, "age")
-  k <- ceiling(cohortData$age / squashInterval)
-  inWindow <- cohortData$age > k * squashInterval - bandWidth[pmin(k, length(bandWidth))]
-  old <- !is.na(inWindow) & inWindow
-  if (!any(old)) return(cohortData)
+  ya <- cohortData$age - 1
+  isAnchor <- !is.na(ya) & ya > 0 & ya %% squashInterval == 0
+  if (!any(isAnchor)) return(cohortData)
+
+  anchors <- cohortData[isAnchor, ..byGroupsNoAge]
+  set(anchors, NULL, "k", ya[isAnchor] / squashInterval)
+  set(anchors, NULL, "hi", anchors$k * squashInterval)
+  set(anchors, NULL, "lo", anchors$hi - bandWidth[pmin(anchors$k, length(bandWidth))])
+  anchors <- unique(anchors)
+  set(anchors, NULL, ".anchor", seq_len(NROW(anchors)))
+  rows <- cohortData[, ..byGroupsNoAge]
+  set(rows, NULL, "rowi", seq_len(NROW(rows)))
+  set(rows, NULL, "ya", ya)
+  hits <- anchors[rows, on = c(byGroupsNoAge, "lo<=ya", "hi>=ya"), nomatch = NULL,
+                  .(rowi = rowi, anchor = .anchor)]
+  hits <- hits[!duplicated(hits$rowi), ]
+  band <- rep(NA_integer_, NROW(cohortData))
+  band[hits$rowi] <- hits$anchor
+  old <- !is.na(band)
 
   sq <- cohortData[old, ]
-  set(sq, NULL, ".band", k[old])
+  set(sq, NULL, ".band", band[old])
   ## ages on the successionTimestep grid are ts * k + 1
   sq[, age := if (.N > 1L) {
     w <- if (sum(B, na.rm = TRUE) > 0) B else rep(1, .N)
@@ -176,9 +186,8 @@ suppressedCohortsToRemove <- function(cohortData, relativeB, minAgeFrac) {
 
 #' Check the cohort-reduction parameters
 #'
-#' Stops with a message if `squashInterval` is not `NA` and is not a multiple of
-#' `successionTimestep`, or if any `bandWidth` is not a positive multiple of `successionTimestep`
-#' or exceeds `squashInterval` (windows would overlap).
+#' Stops with a message if `squashInterval` is not `NA` and it, or any `bandWidth`, is not a
+#' positive multiple of `successionTimestep`.
 #'
 #' @param squashInterval,bandWidth,successionTimestep see the `cohortSquash*` and
 #'   `successionTimestep` parameters.
@@ -187,17 +196,14 @@ suppressedCohortsToRemove <- function(cohortData, relativeB, minAgeFrac) {
 #' @export
 checkCohortSquashParams <- function(squashInterval, bandWidth, successionTimestep) {
   if (!is.na(squashInterval)) {
-    if (squashInterval %% successionTimestep != 0) {
-      stop("cohortSquashInterval (", squashInterval, ") must be a multiple of successionTimestep (",
+    ok <- function(x) !anyNA(x) && all(x > 0 & x %% successionTimestep == 0)
+    if (!ok(squashInterval)) {
+      stop("cohortSquashInterval (", squashInterval, ") must be a positive multiple of successionTimestep (",
            successionTimestep, ")")
     }
-    if (anyNA(bandWidth) || !all(bandWidth > 0 & bandWidth %% successionTimestep == 0)) {
+    if (!ok(bandWidth)) {
       stop("cohortSquashBandWidth (", paste(bandWidth, collapse = ", "),
            ") must be positive multiples of successionTimestep (", successionTimestep, ")")
-    }
-    if (any(bandWidth > squashInterval)) {
-      stop("cohortSquashBandWidth (", paste(bandWidth, collapse = ", "),
-           ") must not exceed cohortSquashInterval (", squashInterval, "), or windows overlap")
     }
   }
   invisible(NULL)

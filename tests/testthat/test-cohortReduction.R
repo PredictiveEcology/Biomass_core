@@ -9,43 +9,49 @@ squashCD <- function() {
              mortality = c(1, 2, 3, 4, 5, 6), aNPPAct = c(10, 20, 30, 40, 50, 60))
 }
 
-mk <- function(age, B = 100) data.table(pixelGroup = 1L, ecoregionGroup = 1L, speciesCode = 1L,
-                                         age = as.integer(age), B = B, mortality = 1, aNPPAct = 10)
-sq <- function(cd, t, w, interval = 100) squashCohortAges(cd, interval, t, 0, w, successionTimestep = 10)
+## cohorts given as years since establishment (ya); age = ya + 1
+mk <- function(ya, B = 100, sp = 1L) data.table(pixelGroup = 1L, ecoregionGroup = 1L, speciesCode = sp,
+                                              age = as.integer(ya + 1), B = B, mortality = 1, aNPPAct = 10)
+sq <- function(cd, w, interval = 100) squashCohortAges(cd, interval, w, successionTimestep = 10)
+yaOf <- function(cd) sort(cd$age - 1)
 
-test_that("squashCohortAges() merges cohorts in the same window and leaves the rest", {
-  cd <- mk(c(81, 91, 101, 161, 171, 181, 191), B = c(100, 300, 50, 60, 10, 10, 20))
-  cd <- rbind(cd, data.table(pixelGroup = 1L, ecoregionGroup = 1L, speciesCode = 2L, age = 91L,
-                             B = 40, mortality = 1, aNPPAct = 10))
-  out <- sq(cd, 100, c(20, 30))
+test_that("squashCohortAges() merges an anchor with the cohorts in its window (single width)", {
+  cd <- rbind(mk(c(60, 80, 100, 130), B = c(50, 100, 300, 70)), mk(100, B = 40, sp = 2L))
+  out <- sq(cd, 20)
   setkeyv(out, c("speciesCode", "age"))
-  expect_equal(NROW(out), 5L)
+  expect_equal(NROW(out), 4L)
   expect_identical(colnames(out), colnames(cd))
   expect_false(anyDuplicated(out, by = c("pixelGroup", "speciesCode", "age")) > 0)
-  ## 81 (B100) and 91 (B300): mean(age - 1) = 87.5 -> round(8.75) = 9 -> 91
-  m1 <- out[out$speciesCode == 1L & out$age == 91L, ]
-  expect_equal(c(m1$B, m1$mortality, m1$aNPPAct), c(400, 2, 20))
-  ## 171, 181, 191 (B 10, 10, 20): mean(age - 1) = 182.5 -> round(18.25) = 18 -> 181
-  m2 <- out[out$speciesCode == 1L & out$age == 181L, ]
-  expect_equal(c(m2$B, m2$mortality, m2$aNPPAct), c(40, 3, 30))
-  expect_equal(out[out$speciesCode == 1L & out$age == 101L, ]$B, 50)
-  expect_equal(out[out$speciesCode == 1L & out$age == 161L, ]$B, 60)
-  expect_equal(out[out$speciesCode == 2L, ]$B, 40)  # a lone cohort in its window
+  ## 80 (B100) and 100 (B300): mean ya = 95 -> round(9.5) = 10 (half to even) -> ya 100
+  m <- out[out$speciesCode == 1L & out$age == 101L, ]
+  expect_equal(c(m$B, m$mortality, m$aNPPAct), c(400, 2, 20))
+  expect_equal(yaOf(out[out$speciesCode == 1L, ]), c(60, 100, 130))
+  expect_equal(out[out$speciesCode == 1L & out$age == 61L, ]$B, 50)
+  expect_equal(out[out$speciesCode == 2L, ]$B, 40)  # lone anchor: unchanged
   expect_equal(sum(out$B), sum(cd$B))
 })
 
-test_that("squashCohortAges() repeats the last width", {
-  cd <- mk(c(171, 181, 191))
-  expect_equal(NROW(sq(cd, 100, 20)), 2L)         # k = 2 window is (180, 200]: 181 + 191 merge
-  expect_equal(NROW(sq(mk(c(181, 191)), 100, 20)), 1L)
-  expect_equal(NROW(sq(cd, 100, c(20, 30, 40))), 1L)
+test_that("squashCohortAges() follows the worked example with widening widths", {
+  w <- c(20, 30, 40, 50, 60, 70, 80)
+  cd <- mk(c(10, 30, 50, 70, 90))
+  ageBy <- function(cd, n) { cd <- copy(cd); cd$age <- cd$age + as.integer(n); cd }
+  cd <- sq(ageBy(cd, 10), w)  # 20 40 60 80 100: 100 anchors, merges 80
+  expect_equal(yaOf(cd), c(20, 40, 60, 90))
+  expect_equal(max(cd$B), 200)
+  cd <- sq(ageBy(cd, 40), w)  # 60 80 100 130: 100 anchors, merges 80
+  expect_equal(yaOf(cd), c(60, 90, 130))
+  cd <- sq(ageBy(cd, 60), w)  # 120 150 190: no anchor
+  expect_equal(yaOf(cd), c(120, 150, 190))
+  cd <- sq(ageBy(cd, 10), w)  # 130 160 200: anchor 200 (k = 2, w = 30), nothing in [170, 200]
+  expect_equal(yaOf(cd), c(130, 160, 200))
+  ## the last width repeats: with w = 20 only, k = 2 reaches back to 180
+  expect_equal(NROW(sq(mk(c(170, 180, 200)), 20)), 2L)
+  expect_equal(NROW(sq(mk(c(170, 180, 200)), c(20, 30))), 1L)
 })
 
-test_that("squashCohortAges() does nothing with NA interval, at start, or off schedule", {
-  cd <- mk(c(81, 91))
-  expect_identical(squashCohortAges(cd, NA, 100, 0, 20, 10), cd)
-  expect_identical(sq(cd, 0, 20), cd)
-  expect_identical(sq(cd, 50, 20), cd)
+test_that("squashCohortAges() returns the input with a NA interval", {
+  cd <- mk(c(80, 100))
+  expect_identical(squashCohortAges(cd, NA, 20, 10), cd)
 })
 
 test_that("suppressedCohortsToRemove() removes only old, small cohorts and keeps a species' largest", {
@@ -64,26 +70,10 @@ test_that("suppressedCohortsToRemove() removes only old, small cohorts and keeps
   expect_false(any(suppressedCohortsToRemove(cd, NA, 0.75)))
 })
 
-test_that("squashCohortAges(): widening windows join a merged cohort with neighbours at the next squash", {
-  w <- c(20, 30, 40)
-  cd <- mk(c(81, 91, 131, 151, 171), B = 100)
-  s1 <- sq(cd, 100, w)  # 81 and 91 merge (-> 91); 131, 151, 171 are between windows or alone
-  expect_equal(NROW(s1), 4L)
-  s1$age <- s1$age + 100L   # 100 years later: 191 (merged), 231, 251, 271
-  s1 <- rbind(s1, mk(c(171, 181), B = 100))  # cohorts now in (170, 200] with the merged 191
-  s2 <- sq(s1, 200, w)
-  expect_equal(max(s2$B), 400)  # 191 (B 200) + 171 + 181 (100 each) merged
-  expect_lt(NROW(s2), NROW(s1))
-  ## one width: the merged cohort's age modulo the interval is unchanged and nothing joins it
-  f <- sq(rbind(mk(c(81, 91)), mk(171)), 100, 20)
-  f$age <- f$age + 100L
-  expect_equal(NROW(sq(f, 200, 20)), NROW(f))
-})
-
 test_that("checkCohortSquashParams() validates interval and widths", {
   expect_null(checkCohortSquashParams(NA, 7, 10))
   expect_null(checkCohortSquashParams(100, c(20, 30, 40), 10))
   expect_error(checkCohortSquashParams(105, 20, 10), "multiple of successionTimestep")
   expect_error(checkCohortSquashParams(100, c(20, 35), 10), "multiples of successionTimestep")
-  expect_error(checkCohortSquashParams(100, 120, 10), "must not exceed")
+  expect_error(checkCohortSquashParams(100, 0, 10), "multiples of successionTimestep")
 })
