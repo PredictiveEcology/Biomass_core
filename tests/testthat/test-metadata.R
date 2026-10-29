@@ -85,11 +85,13 @@ test_that("parameters are the expected names", {
            ".plotTransitionField", ".plotTransitionNaRm", ".plotTransitionTimes", ".runName",
            ".saveInitialTime", ".saveInterval", ".sslVerify", ".studyAreaName",
            ".useCache", ".useParallel", "calcSummaryBGM", "calibrate",
-           "cohortDefinitionCols", "cutpoint", "dataYear", "gmcsGrowthLimits",
+           "cohortDefinitionCols", "cohortSquashBandWidth", "cohortSquashInterval",
+           "cutpoint", "dataYear", "gmcsGrowthLimits",
            "gmcsMinAge", "growthAndMortalityDrivers", "growthInitialTime", "initialB",
            "initialBiomassSource", "keepClimateCols", "minCohortBiomass", "mixedType",
            "plotOverstory", "seedingAlgorithm", "spinupMortalityfraction",
            "sppEquivCol", "sppEquivPlotCol", "successionTimestep",
+           "suppressedCohortMinAgeFrac", "suppressedCohortRelativeB",
            "vegLeadingProportion"))
   )
 })

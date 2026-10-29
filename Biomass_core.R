@@ -90,10 +90,34 @@ defineModule(sim, list(
     defineParameter("keepClimateCols", "logical", FALSE, NA, NA, "include growth and mortality predictions in `cohortData`?"),
     defineParameter("minCohortBiomass", "numeric", 9, NA, NA,
                     desc = "Cohorts with biomass below this threshold (in $g/m^2$) are removed. Not a LANDIS-II BSE parameter."),
+    defineParameter("cohortSquashBandWidth", "numeric", 20, 1, NA,
+                    desc = paste("Widths (years) w of the age windows squashed by `cohortSquashInterval`: at each squash,",
+                                 "window k is (k * interval - w_k, k * interval]; if the vector is shorter than needed",
+                                 "its last value repeats. Positive multiples of `successionTimestep`, not larger than the",
+                                 "interval. With one width, a cohort's age modulo the interval does not change between",
+                                 "squashes, so a cohort is merged only if its age falls in a window, and then stays merged",
+                                 "with the same cohorts; with widening widths, older windows are wider, so a cohort merged",
+                                 "at one squash is joined by neighbouring cohorts at later squashes. Tested value: 20.")),
+    defineParameter("cohortSquashInterval", "numeric", NA, 1, NA,
+                    desc = paste("`NA` (default) is off. Otherwise, every this many years from `start(sim)`, cohorts",
+                                 "of the same species in a pixelGroup whose ages fall in the same window just below a",
+                                 "multiple of the interval (see `cohortSquashBandWidth`) are merged into one: B, mortality",
+                                 "and aNPPAct are summed and age is the B-weighted mean age. Must be a multiple of",
+                                 "`successionTimestep`. Reduces cohort numbers in long runs but changes results: about 10%",
+                                 "landscape-biomass shift in fire-free landscapes, within noise with fire every 150 years",
+                                 "or more often. Tested value: 100 (with width 20).")),
     defineParameter("mixedType", "numeric", 2, 0, 2,
                     desc = paste("How to define mixed stands: 0 for none; 1 for any species admixture;",
                                  "2 for deciduous > conifer. See `?LandR::vegTypeMapGenerator`.")),
     defineParameter("plotOverstory", "logical", FALSE, NA, NA, desc = "swap max age plot with overstory biomass"),
+    defineParameter("suppressedCohortMinAgeFrac", "numeric", 0.75, 0, 1,
+                    desc = paste("Only cohorts older than this fraction of their species' longevity are removed by",
+                                 "`suppressedCohortRelativeB`. Tested value: 0.75.")),
+    defineParameter("suppressedCohortRelativeB", "numeric", NA, 0, 1,
+                    desc = paste("`NA` (default) is off. Otherwise, a cohort is removed each year when its B is below",
+                                 "this fraction of the total B of its pixelGroup and its age is above",
+                                 "`suppressedCohortMinAgeFrac` * longevity; a species' last cohort in a pixelGroup is",
+                                 "never removed. Changes results slightly (under 2% in tests). Tested value: 0.01.")),
     defineParameter("seedingAlgorithm", "character", "wardDispersal", NA_character_, NA_character_,
                     desc = paste("Choose which seeding algorithm will be used among",
                                  "'noSeeding' (no horizontal, nor vertical seeding - not in LANDIS-II BSE), 'noDispersal'",
@@ -692,6 +716,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       stop("please set `P(sim)$minCohortBiomass` to be lower than `P(sim)$initialB`")
     }
   }
+  checkCohortSquashParams(P(sim)$cohortSquashInterval, P(sim)$cohortSquashBandWidth,
+                          P(sim)$successionTimestep)
   paramCheckOtherMods(sim, "initialB", ifSetButDifferent = "warning")
 
   ## prepare species ------------------------------------------------
@@ -1432,6 +1458,11 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
       ## Die from old age or low biomass -- rm from cohortData ------------------
       keep <- (subCohortData$age <= subCohortData$longevity) & (subCohortData$B >=  P(sim)$minCohortBiomass)
+      if (!is.na(P(sim)$suppressedCohortRelativeB)) {
+        ## subCohortData holds whole pixelGroups (subgroups are split by pixelGroup)
+        keep <- keep & !suppressedCohortsToRemove(subCohortData, P(sim)$suppressedCohortRelativeB,
+                                                  P(sim)$suppressedCohortMinAgeFrac)
+      }
       if (all(keep)) {
         subCohortPostLongevity <- subCohortData
         diedCohortData <- subCohortData[0]
@@ -2499,6 +2530,17 @@ CohortAgeReclassification <- function(sim) {
       stage = "mainSimulation",
       byGroups = P(sim)$cohortDefinitionCols
     )
+    if (!is.na(P(sim)$cohortSquashInterval)) {
+      sim$cohortData <- squashCohortAges(
+        cohortData = sim$cohortData,
+        squashInterval = P(sim)$cohortSquashInterval,
+        currentTime = time(sim),
+        startTime = start(sim),
+        successionTimestep = P(sim)$successionTimestep,
+        bandWidth = P(sim)$cohortSquashBandWidth,
+        byGroups = P(sim)$cohortDefinitionCols
+      )
+    }
   }
   return(invisible(sim))
 }

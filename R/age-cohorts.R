@@ -59,14 +59,8 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
 
       td <- targetData[tdDuplicates]
 
-      td <- td[, .(ecoregionGroup = unique(ecoregionGroup),
-                   age = successionTimestepPlusOne,
-                   B = sum(B, na.rm = TRUE),
-                   mortality = sum(mortality, na.rm = TRUE),
-                   aNPPAct = sum(aNPPAct, na.rm = TRUE)),
-               by = byGroupsNoAge]
-      cdColNames <- intersect(colnames(cohortData), colnames(td))
-      td <- td[, ..cdColNames] # keep only the columns, in the correct order, as cohortData
+      set(td, NULL, "age", successionTimestepPlusOne)
+      td <- aggregateCohorts(td, c(byGroupsNoAge, "age"), colnames(cohortData))
       tdNonDups <- targetData[-tdDuplicates]
       #age the non-duplicates, else unique 1 year-old cohorts stay age 1 for another successionTimestep
       tdNonDups <- tdNonDups[, age := successionTimestepPlusOne]
@@ -86,3 +80,125 @@ ageReclassification <- compiler::cmpfun(function(cohortData, successionTimestep,
   }
   return(cohortData)
 })
+
+#' Sum cohorts that share the same grouping
+#'
+#' Internal helper shared by `ageReclassification()` and `squashCohortAges()`.
+#'
+#' @param cohortData A `data.table` with `ecoregionGroup`, `B`, `mortality` and `aNPPAct`.
+#' @param by columns defining the cohorts to be merged (including `age`).
+#' @param cols column names to keep, in order (usually `colnames(cohortData)`);
+#'   only those present in the result are returned.
+#'
+#' @return a `data.table` with one row per `by` group; `B`, `mortality` and `aNPPAct` are summed.
+#' @noRd
+aggregateCohorts <- function(cohortData, by, cols) {
+  out <- cohortData[, .(ecoregionGroup = unique(ecoregionGroup),
+                        B = sum(B, na.rm = TRUE),
+                        mortality = sum(mortality, na.rm = TRUE),
+                        aNPPAct = sum(aNPPAct, na.rm = TRUE)),
+                    by = by]
+  cdColNames <- intersect(cols, colnames(out))
+  out[, ..cdColNames] # keep only the columns, in the correct order, as cohortData
+}
+
+#' Periodically squash old cohorts into age windows
+#'
+#' At squash times (every `squashInterval` years from `startTime`), cohorts of the same species in a
+#' `pixelGroup` whose ages fall in the same window just below a multiple of `squashInterval` are
+#' merged into one cohort. Window k is (k * `squashInterval` - w_k, k * `squashInterval`], where
+#' w_k is `bandWidth[min(k, length(bandWidth))]`, i.e. the last width repeats. Ages between windows
+#' are not changed. `B`, `mortality` and `aNPPAct` are summed; `age` is the
+#' B-weighted mean age rounded to the `successionTimestep` grid (`ts * k + 1`). Merged cohorts that
+#' land on the same age are summed. Cohorts alone in their window are not changed.
+#'
+#' @inheritParams ageReclassification
+#' @param squashInterval years between squashes, counted from `startTime`; `NA` means never.
+#' @param currentTime,startTime current and start time of the simulation. Nothing is done
+#'   at `startTime` or when `currentTime - startTime` is not a multiple of `squashInterval`.
+#' @param bandWidth widths (years) of the windows, starting with the one ending at `squashInterval`;
+#'   the last value repeats.
+#'
+#' @return `cohortData`, with squashed cohorts if it is a squash time; otherwise `cohortData` itself.
+#' @export
+#' @importFrom data.table rbindlist set
+squashCohortAges <- function(cohortData, squashInterval, currentTime, startTime,
+                             bandWidth, successionTimestep,
+                             byGroups = c("pixelGroup", "speciesCode", "age")) {
+  if (is.na(squashInterval) || currentTime == startTime ||
+      (currentTime - startTime) %% squashInterval != 0) {
+    return(cohortData)
+  }
+  byGroupsNoAge <- setdiff(byGroups, "age")
+  k <- ceiling(cohortData$age / squashInterval)
+  inWindow <- cohortData$age > k * squashInterval - bandWidth[pmin(k, length(bandWidth))]
+  old <- !is.na(inWindow) & inWindow
+  if (!any(old)) return(cohortData)
+
+  sq <- cohortData[old, ]
+  set(sq, NULL, ".band", k[old])
+  ## ages on the successionTimestep grid are ts * k + 1
+  sq[, age := if (.N > 1L) {
+    w <- if (sum(B, na.rm = TRUE) > 0) B else rep(1, .N)
+    as.integer(round(sum((age - 1) * w, na.rm = TRUE) / sum(w, na.rm = TRUE) / successionTimestep) *
+                 successionTimestep + 1)
+  } else age[1L],
+  by = c(byGroupsNoAge, ".band")]
+  set(sq, NULL, ".band", NULL)
+  sq <- aggregateCohorts(sq, c(byGroupsNoAge, "age"), colnames(cohortData))
+
+  rbindlist(list(cohortData[!old, ], sq), fill = TRUE)
+}
+
+#' Which cohorts are old and suppressed?
+#'
+#' A cohort qualifies when its `B` is below `relativeB` times the total `B` of its `pixelGroup`
+#' (all species) and its `age` is above `minAgeFrac * longevity`. A species' last cohort in a
+#' `pixelGroup` is never removed: if all of its cohorts qualify, the one with the largest `B`
+#' (first, in a tie) is kept.
+#'
+#' @param cohortData A `data.table` with `pixelGroup`, `speciesCode`, `age`, `B` and `longevity`.
+#' @param relativeB fraction of the `pixelGroup`'s total `B`; `NA` removes nothing.
+#' @param minAgeFrac fraction of `longevity` that `age` must exceed.
+#'
+#' @return a logical vector, one per row of `cohortData`, `TRUE` for cohorts to remove.
+#' @export
+suppressedCohortsToRemove <- function(cohortData, relativeB, minAgeFrac) {
+  if (is.na(relativeB)) return(rep(FALSE, NROW(cohortData)))
+  dt <- data.table::data.table(pg = cohortData$pixelGroup, sp = cohortData$speciesCode,
+                               B = cohortData$B, age = cohortData$age,
+                               longevity = cohortData$longevity)
+  dt[, totB := sum(B, na.rm = TRUE), by = pg]
+  dt[, remove := !is.na(B) & !is.na(age) & B < relativeB * totB & age > minAgeFrac * longevity]
+  dt[, remove := remove & !(all(remove) & seq_len(.N) == which.max(B)), by = .(pg, sp)]
+  dt$remove
+}
+
+#' Check the cohort-reduction parameters
+#'
+#' Stops with a message if `squashInterval` is not `NA` and is not a multiple of
+#' `successionTimestep`, or if any `bandWidth` is not a positive multiple of `successionTimestep`
+#' or exceeds `squashInterval` (windows would overlap).
+#'
+#' @param squashInterval,bandWidth,successionTimestep see the `cohortSquash*` and
+#'   `successionTimestep` parameters.
+#'
+#' @return `NULL`, invisibly.
+#' @export
+checkCohortSquashParams <- function(squashInterval, bandWidth, successionTimestep) {
+  if (!is.na(squashInterval)) {
+    if (squashInterval %% successionTimestep != 0) {
+      stop("cohortSquashInterval (", squashInterval, ") must be a multiple of successionTimestep (",
+           successionTimestep, ")")
+    }
+    if (anyNA(bandWidth) || !all(bandWidth > 0 & bandWidth %% successionTimestep == 0)) {
+      stop("cohortSquashBandWidth (", paste(bandWidth, collapse = ", "),
+           ") must be positive multiples of successionTimestep (", successionTimestep, ")")
+    }
+    if (any(bandWidth > squashInterval)) {
+      stop("cohortSquashBandWidth (", paste(bandWidth, collapse = ", "),
+           ") must not exceed cohortSquashInterval (", squashInterval, "), or windows overlap")
+    }
+  }
+  invisible(NULL)
+}
