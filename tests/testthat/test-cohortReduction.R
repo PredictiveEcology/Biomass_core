@@ -22,10 +22,10 @@ test_that("squashCohortAges() merges an anchor with the cohorts in its window (s
   expect_equal(NROW(out), 4L)
   expect_identical(colnames(out), colnames(cd))
   expect_false(anyDuplicated(out, by = c("pixelGroup", "speciesCode", "age")) > 0)
-  ## 80 (B100) and 100 (B300): mean ya = 95 -> round(9.5) = 10 (half to even) -> ya 100
-  m <- out[out$speciesCode == 1L & out$age == 101L, ]
+  ## 80 (B100) and 100 (B300): B-weighted mean ya = 95, not moved to the grid
+  m <- out[out$speciesCode == 1L & out$age == 96L, ]
   expect_equal(c(m$B, m$mortality, m$aNPPAct), c(400, 2, 20))
-  expect_equal(yaOf(out[out$speciesCode == 1L, ]), c(60, 100, 130))
+  expect_equal(yaOf(out[out$speciesCode == 1L, ]), c(60, 95, 130))
   expect_equal(out[out$speciesCode == 1L & out$age == 61L, ]$B, 50)
   expect_equal(out[out$speciesCode == 2L, ]$B, 40)  # lone anchor: unchanged
   expect_equal(sum(out$B), sum(cd$B))
@@ -47,6 +47,18 @@ test_that("squashCohortAges() follows the worked example with widening widths", 
   ## the last width repeats: with w = 20 only, k = 2 reaches back to 180
   expect_equal(NROW(sq(mk(c(170, 180, 200)), 20)), 2L)
   expect_equal(NROW(sq(mk(c(170, 180, 200)), c(20, 30))), 1L)
+})
+
+test_that("squashCohortAges() anchors an off-grid cohort that crosses a multiple of the interval", {
+  ## ya 93 is off the grid; ten years later it is 103, having crossed 100, and merges with 83 (in [80, 110))
+  cd <- mk(c(73, 93))
+  cd$age <- cd$age + 10L
+  out <- sq(cd, 20)
+  expect_equal(yaOf(out), 93)  # (83 + 103) / 2, equal B
+  expect_equal(out$B, 200)
+  ## a cohort at ya 93 does not anchor: it has not crossed 100
+  expect_identical(sq(mk(c(73, 93)), 20), mk(c(73, 93)))
+  expect_type(out$age, "integer")
 })
 
 test_that("squashCohortAges() returns the input with a NA interval", {

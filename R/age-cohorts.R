@@ -104,14 +104,16 @@ aggregateCohorts <- function(cohortData, by, cols) {
 
 #' Squash cohorts that reach a multiple of an age interval
 #'
-#' Run at every age reclassification (every `successionTimestep`, so ages are on the `ts * j + 1`
-#' grid and each cohort's years since establishment, `age - 1`, takes every multiple of
-#' `successionTimestep` exactly once). A cohort with `age - 1` a positive multiple `k * squashInterval`
-#' is an anchor. It is merged with all cohorts of the same `pixelGroup` x species whose `age - 1` is in
-#' [`k * squashInterval - w_k`, `k * squashInterval`], where `w_k` is `bandWidth[min(k, length(bandWidth))]`
-#' (the last width repeats). `B`, `mortality` and `aNPPAct` are summed; `age` is the
-#' B-weighted mean age rounded to the `successionTimestep` grid. Merged cohorts that land on the same
-#' age are summed. An anchor with no partner is not changed.
+#' Run at every age reclassification (every `successionTimestep`). With `ya = age - 1` (years since
+#' establishment), a cohort is an anchor if it crossed a positive multiple of `squashInterval`
+#' since the previous reclassification, i.e. `floor(ya / I) > floor((ya - successionTimestep) / I)`,
+#' with `k = floor(ya / I)`. Each cohort is thus an anchor exactly once per multiple, on or off the
+#' `ts * j + 1` age grid. An anchor is merged with all cohorts of the same `pixelGroup` x species whose `ya`
+#' is in [`k * I - w_k`, `k * I + successionTimestep`) (anchors are those with `ya >= k * I`),
+#' where `w_k` is `bandWidth[min(k, length(bandWidth))]` (the last width repeats).
+#' `B`, `mortality` and `aNPPAct` are summed; `age` is the B-weighted mean age, rounded to the nearest
+#' year (`age` is an integer column). Merged cohorts that land on the same age are summed.
+#' An anchor with no partner is not changed.
 #'
 #' @inheritParams ageReclassification
 #' @param squashInterval age interval (years); `NA` means no squashing.
@@ -126,19 +128,20 @@ squashCohortAges <- function(cohortData, squashInterval, bandWidth, successionTi
   if (is.na(squashInterval)) return(cohortData)
   byGroupsNoAge <- setdiff(byGroups, "age")
   ya <- cohortData$age - 1
-  isAnchor <- !is.na(ya) & ya > 0 & ya %% squashInterval == 0
+  isAnchor <- !is.na(ya) & ya >= squashInterval &
+    floor(ya / squashInterval) > floor((ya - successionTimestep) / squashInterval)
   if (!any(isAnchor)) return(cohortData)
 
   anchors <- cohortData[isAnchor, ..byGroupsNoAge]
-  set(anchors, NULL, "k", ya[isAnchor] / squashInterval)
-  set(anchors, NULL, "hi", anchors$k * squashInterval)
-  set(anchors, NULL, "lo", anchors$hi - bandWidth[pmin(anchors$k, length(bandWidth))])
+  set(anchors, NULL, "k", floor(ya[isAnchor] / squashInterval))
+  set(anchors, NULL, "hi", anchors$k * squashInterval + successionTimestep)
+  set(anchors, NULL, "lo", anchors$k * squashInterval - bandWidth[pmin(anchors$k, length(bandWidth))])
   anchors <- unique(anchors)
   set(anchors, NULL, ".anchor", seq_len(NROW(anchors)))
   rows <- cohortData[, ..byGroupsNoAge]
   set(rows, NULL, "rowi", seq_len(NROW(rows)))
   set(rows, NULL, "ya", ya)
-  hits <- anchors[rows, on = c(byGroupsNoAge, "lo<=ya", "hi>=ya"), nomatch = NULL,
+  hits <- anchors[rows, on = c(byGroupsNoAge, "lo<=ya", "hi>ya"), nomatch = NULL,
                   .(rowi = rowi, anchor = .anchor)]
   hits <- hits[!duplicated(hits$rowi), ]
   band <- rep(NA_integer_, NROW(cohortData))
@@ -147,11 +150,10 @@ squashCohortAges <- function(cohortData, squashInterval, bandWidth, successionTi
 
   sq <- cohortData[old, ]
   set(sq, NULL, ".band", band[old])
-  ## ages on the successionTimestep grid are ts * k + 1
+  ## B-weighted mean age, to the nearest year (age is an integer column)
   sq[, age := if (.N > 1L) {
     w <- if (sum(B, na.rm = TRUE) > 0) B else rep(1, .N)
-    as.integer(round(sum((age - 1) * w, na.rm = TRUE) / sum(w, na.rm = TRUE) / successionTimestep) *
-                 successionTimestep + 1)
+    as.integer(round(sum((age - 1) * w, na.rm = TRUE) / sum(w, na.rm = TRUE)) + 1)
   } else age[1L],
   by = c(byGroupsNoAge, ".band")]
   set(sq, NULL, ".band", NULL)
