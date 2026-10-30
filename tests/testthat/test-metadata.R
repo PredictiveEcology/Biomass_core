@@ -86,7 +86,7 @@ test_that("parameters are the expected names", {
            ".saveInitialTime", ".saveInterval", ".sslVerify", ".studyAreaName",
            ".useCache", ".useParallel", "calcSummaryBGM", "calibrate",
            "cohortDefinitionCols", "cohortSquashBandWidth", "cohortSquashInterval",
-           "cutpoint", "dataYear", "gmcsGrowthLimits",
+           "conditionalTimestepInterval", "conditionalTimestepMinCohorts", "cutpoint", "dataYear", "gmcsGrowthLimits",
            "gmcsMinAge", "growthAndMortalityDrivers", "growthInitialTime", "initialB",
            "initialBiomassSource", "keepClimateCols", "minCohortBiomass", "mixedType",
            "plotOverstory", "seedingAlgorithm", "spinupMortalityfraction",

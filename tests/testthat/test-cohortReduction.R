@@ -89,3 +89,44 @@ test_that("checkCohortSquashParams() validates interval and widths", {
   expect_error(checkCohortSquashParams(100, c(20, 35), 10), "multiples of successionTimestep")
   expect_error(checkCohortSquashParams(100, 0, 10), "multiples of successionTimestep")
 })
+
+## pixelGroup 1: species 1 has 3 older cohorts and a new one (age 1), species 2 has 2 older cohorts;
+## pixelGroup 2: species 1 has 3 older cohorts
+condCD <- function() {
+  data.table(pixelGroup = c(1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L),
+             speciesCode = c(1L, 1L, 1L, 1L, 2L, 2L, 1L, 1L, 1L),
+             age = c(1L, 21L, 41L, 61L, 31L, 71L, 11L, 21L, 31L))
+}
+condBlocked <- function(time, interval = 20, n = 2) conditionalTimestepBlocked(condCD(), time, interval, n)
+
+test_that("conditionalTimestepBlocked() blocks nothing by default (NA interval)", {
+  out <- condBlocked(10, interval = NA)
+  expect_identical(colnames(out), c("pixelGroup", "speciesCode"))
+  expect_identical(NROW(out), 0L)
+})
+
+test_that("conditionalTimestepBlocked() blocks species with more than n cohorts off the interval only", {
+  off <- condBlocked(10)
+  setorderv(off, c("pixelGroup", "speciesCode"))
+  ## new (age 1) cohorts do not count: species 1 in pixelGroup 1 has 3 older cohorts > 2
+  expect_identical(off$pixelGroup, c(1L, 2L))
+  expect_identical(off$speciesCode, c(1L, 1L))
+  expect_identical(NROW(condBlocked(20)), 0L)  # on the interval
+  expect_identical(NROW(condBlocked(40)), 0L)
+  ## n = 3: nothing has more than 3 older cohorts; n = 0: every pair with an older cohort
+  expect_identical(NROW(condBlocked(10, n = 3)), 0L)
+  expect_identical(NROW(condBlocked(10, n = 0)), 3L)
+})
+
+test_that("conditionalTimestepBlocked() never blocks a species with <= n cohorts", {
+  off <- condBlocked(10)
+  expect_false(any(off$pixelGroup == 1L & off$speciesCode == 2L))  # 2 older cohorts
+})
+
+test_that("checkConditionalTimestepParams() needs a positive multiple of successionTimestep", {
+  expect_null(checkConditionalTimestepParams(NA, 10))
+  expect_null(checkConditionalTimestepParams(20, 10))
+  expect_error(checkConditionalTimestepParams(25, 10), "multiple of successionTimestep")
+  expect_error(checkConditionalTimestepParams(0, 10), "multiple of successionTimestep")
+  expect_error(checkConditionalTimestepParams(-10, 10), "multiple of successionTimestep")
+})

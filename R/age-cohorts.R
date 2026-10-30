@@ -210,3 +210,45 @@ checkCohortSquashParams <- function(squashInterval, bandWidth, successionTimeste
   }
   invisible(NULL)
 }
+
+#' Which (pixelGroup, species) may not receive new seed-established cohorts now?
+#'
+#' A species in a `pixelGroup` that already has more than `minCohorts` cohorts older than the
+#' newly established ones (`age > 1`; `age == 1` cohorts come from serotiny or resprouting this
+#' step) is blocked, unless `currentTime` is a multiple of `interval`. Nothing is blocked when
+#' `interval` is `NA`. Seeding paths drop these pairs from their seed receivers; serotiny and
+#' resprouting are not affected.
+#'
+#' @param cohortData A `data.table` with `pixelGroup`, `speciesCode` and `age`.
+#' @param currentTime the simulation time, `time(sim)`.
+#' @param interval years between the times when blocked pairs may establish; `NA` blocks nothing.
+#' @param minCohorts a pair is blocked when it has more than this many cohorts.
+#'
+#' @return a `data.table` with columns `pixelGroup` and `speciesCode` (no rows if nothing is blocked).
+#' @export
+conditionalTimestepBlocked <- function(cohortData, currentTime, interval, minCohorts) {
+  byCols <- c("pixelGroup", "speciesCode")
+  if (is.na(interval) || round(currentTime) %% interval == 0) {
+    return(cohortData[integer(0), ..byCols])
+  }
+  n <- cohortData[age > 1L, .N, by = byCols]
+  n[N > minCohorts, ..byCols]
+}
+
+#' Check the conditional-timestep parameters
+#'
+#' Stops with a message if `interval` is not `NA` and is not a positive multiple of
+#' `successionTimestep`.
+#'
+#' @param interval,successionTimestep see the `conditionalTimestepInterval` and
+#'   `successionTimestep` parameters.
+#'
+#' @return `NULL`, invisibly.
+#' @export
+checkConditionalTimestepParams <- function(interval, successionTimestep) {
+  if (!is.na(interval) && !(interval > 0 && interval %% successionTimestep == 0)) {
+    stop("conditionalTimestepInterval (", interval, ") must be a positive multiple of successionTimestep (",
+         successionTimestep, ")")
+  }
+  invisible(NULL)
+}

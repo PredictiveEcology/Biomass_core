@@ -100,7 +100,23 @@ defineModule(sim, list(
                                  "mortality and aNPPAct summed, age the B-weighted mean age in whole years); the k-th multiple",
                                  "uses the k-th width, and the last width repeats. A positive multiple of",
                                  "`successionTimestep`. Reduces cohort numbers in long runs but changes results.",
-                                 "Tested value: 100 (with width 20); results will be posted in a comment on the pull request.")),
+                                 "Tested value: 100 (with width 20); results will be posted in a comment on the pull request.",
+                                 "Squashing changes what a cohort is, so it breaks the LandR-CBM module/package, which converts",
+                                 "LandR cohorts to CBM growth curves; that code would need changes before it can be used with this option.")),
+    defineParameter("conditionalTimestepInterval", "numeric", NA, 1, NA,
+                    desc = paste("`NA` (default) is off. Otherwise, a species in a pixelGroup that already has more than",
+                                 "`conditionalTimestepMinCohorts` cohorts older than newly established ones can receive new",
+                                 "seed-established cohorts only when `time(sim)` is a multiple of this many years; at other",
+                                 "succession steps its establishment there is skipped. Species with fewer cohorts establish every",
+                                 "succession step. Serotiny and resprouting (post-fire cohorts) are not restricted. A positive multiple of",
+                                 "`successionTimestep`. Limits cohort numbers but changes results. Tested value: 20 (with",
+                                 "`conditionalTimestepMinCohorts` 2: keeps 62% of table rows, with a 15% biomass bias with no fire;",
+                                 "with 5: keeps 76% of rows, with about 10% bias). It only limits establishment, so",
+                                 "LandR-CBM needs no changes.")),
+    defineParameter("conditionalTimestepMinCohorts", "numeric", 2, 0, NA,
+                    desc = paste("Used only when `conditionalTimestepInterval` is not `NA`: the number of cohorts (older than",
+                                 "newly established ones) a species in a pixelGroup can have and still establish new cohorts every",
+                                 "succession step. Larger values restrict fewer species and bias results less. Tested values: 2 and 5.")),
     defineParameter("mixedType", "numeric", 2, 0, 2,
                     desc = paste("How to define mixed stands: 0 for none; 1 for any species admixture;",
                                  "2 for deciduous > conifer. See `?LandR::vegTypeMapGenerator`.")),
@@ -713,6 +729,7 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
   }
   checkCohortSquashParams(P(sim)$cohortSquashInterval, P(sim)$cohortSquashBandWidth,
                           P(sim)$successionTimestep)
+  checkConditionalTimestepParams(P(sim)$conditionalTimestepInterval, P(sim)$successionTimestep)
   paramCheckOtherMods(sim, "initialB", ifSetButDifferent = "warning")
 
   ## prepare species ------------------------------------------------
@@ -1633,12 +1650,16 @@ Dispersal <- function(sim) {
   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% pixelsFromCurYrBurn)]
   # tempInactivePixel <- c(sim$inactivePixelIndex, pixelsFromCurYrBurn)
 
+  ## (pixelGroup, species) pairs that may not receive new seed-established cohorts this step
+  blocked <- conditionalTimestepBlocked(sim$cohortData, time(sim), P(sim)$conditionalTimestepInterval,
+                                        P(sim)$conditionalTimestepMinCohorts)
+
   if (P(sim)$seedingAlgorithm == "noDispersal") {
-    sim <- NoDispersalSeeding(sim, tempActivePixel)
+    sim <- NoDispersalSeeding(sim, tempActivePixel, blocked)
   } else if (P(sim)$seedingAlgorithm == "universalDispersal") {
-    sim <- UniversalDispersalSeeding(sim, tempActivePixel)
+    sim <- UniversalDispersalSeeding(sim, tempActivePixel, blocked)
   } else if (P(sim)$seedingAlgorithm == "wardDispersal") {
-    sim <- WardDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
+    sim <- WardDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn, blocked)
   } else if (!P(sim)$seedingAlgorithm == "noSeeding") {
     stop("Undefined seed dispersal type!")
   }
@@ -1647,7 +1668,7 @@ Dispersal <- function(sim) {
   return(invisible(sim))
 }
 
-NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
+NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, blocked) {
   # if (sim$lastFireYear == round(time(sim))) { # if current year is both fire year and succession year
   #   # find new active pixel that remove successful postfire regeneration
   #   # since this is on site regeneration, all the burnt pixels can not seeding
@@ -1671,6 +1692,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
   seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, c("shadetolerance", "lightProb", "siteShade", "sumB"), NULL)
+  seedingData <- seedingData[!blocked, on = names(blocked)]
   seedingData <- unique(seedingData, by = c("pixelGroup", "speciesCode"))
 
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
@@ -1721,7 +1743,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   return(invisible(sim))
 })
 
-UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
+UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, blocked) {
   # if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
   #   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
   # } else {
@@ -1757,6 +1779,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
   seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData)), ]
   set(seedingData, NULL, c("siteShade", "lightProb", "shadetolerance"), NULL)
+  seedingData <- seedingData[!blocked, on = names(blocked)]
   # pixelGroupEcoregion <- unique(sim$cohortData, by = c("pixelGroup"))[,'.'(pixelGroup, sumB)]
 
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
@@ -1808,7 +1831,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   return(invisible(sim))
 })
 
-WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFromCurYrBurn,
+WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFromCurYrBurn, blocked,
                                                   verbose = getOption("LandR.verbose", TRUE)) {
 
   sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
@@ -1858,6 +1881,8 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
 
     ## rm ones that had successful serotiny or resprouting
     seedReceive <- seedReceive[!sim$cohortData[age == 1L], on = c("pixelGroup", "speciesCode")]
+    ## and ones that already have many cohorts, off the conditionalTimestepInterval
+    seedReceive <- seedReceive[!blocked, on = names(blocked)]
     ##    (info contained within seedReceive)
     ## this is should be a inner join, needs to specify the nomatch=0, nomatch = NA is default that suggest the full join.
     seedSource <- seedSource[speciesCode %in% unique(seedReceive$speciesCode), ]
