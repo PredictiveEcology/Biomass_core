@@ -82,12 +82,17 @@ test_that("suppressedCohortsToRemove() removes only old, small cohorts and keeps
   expect_false(any(suppressedCohortsToRemove(cd, NA, 0.75)))
 })
 
-test_that("checkCohortSquashParams() validates interval and widths", {
-  expect_null(checkCohortSquashParams(NA, 7, 10))
-  expect_null(checkCohortSquashParams(100, c(20, 30, 40), 10))
-  expect_error(checkCohortSquashParams(105, 20, 10), "multiple of successionTimestep")
-  expect_error(checkCohortSquashParams(100, c(20, 35), 10), "multiples of successionTimestep")
-  expect_error(checkCohortSquashParams(100, 0, 10), "multiples of successionTimestep")
+test_that("the vector parameters unpack to the helpers' arguments; NA unpacks to off", {
+  off <- NA
+  cd <- mk(c(60, 80, 100, 130), B = c(50, 100, 300, 70))
+  cd$longevity <- 200L
+  expect_identical(squashCohortAges(cd, off[1], off[-1], successionTimestep = 10), cd)
+  expect_false(any(suppressedCohortsToRemove(cd, off[1], off[2])))
+  expect_identical(NROW(conditionalTimestepBlocked(cd, 10, off[1], off[2])), 0L)
+  ## cohortSquash = c(100, 20, 30) is interval 100 with widths 20, 30
+  p <- c(100, 20, 30)
+  expect_identical(squashCohortAges(cd, p[1], p[-1], successionTimestep = 10),
+                   squashCohortAges(cd, 100, c(20, 30), successionTimestep = 10))
 })
 
 ## pixelGroup 1: species 1 has 3 older cohorts and a new one (age 1), species 2 has 2 older cohorts;
@@ -130,10 +135,34 @@ test_that("dropBlockedSeeds() drops blocked pairs and returns x unchanged when n
   expect_identical(dropBlockedSeeds(seeds, condBlocked(10, interval = NA)), seeds)
 })
 
-test_that("checkConditionalTimestepParams() needs a positive multiple of successionTimestep", {
-  expect_null(checkConditionalTimestepParams(NA, 10))
-  expect_null(checkConditionalTimestepParams(20, 10))
-  expect_error(checkConditionalTimestepParams(25, 10), "multiple of successionTimestep")
-  expect_error(checkConditionalTimestepParams(0, 10), "multiple of successionTimestep")
-  expect_error(checkConditionalTimestepParams(-10, 10), "multiple of successionTimestep")
+test_that("checkCohortReductionParams() accepts NA (off) and the documented forms", {
+  expect_null(checkCohortReductionParams(NA, NA, NA, 10))
+  expect_null(checkCohortReductionParams(c(100, 20), c(0.01, 0.75), c(20, 5), 10))
+  expect_null(checkCohortReductionParams(c(100, 20, 30, 40), NA, c(20, 0), 10))
+})
+
+test_that("checkCohortReductionParams() names cohortSquash and its form when it is wrong", {
+  expect_error(checkCohortReductionParams(100, NA, NA, 10), "cohortSquash must be NA or c\\(interval, width")
+  expect_error(checkCohortReductionParams(c(105, 20), NA, NA, 10), "multiple of successionTimestep")
+  expect_error(checkCohortReductionParams(c(100, 35), NA, NA, 10), "multiple of successionTimestep")
+  expect_error(checkCohortReductionParams(c(100, 0), NA, NA, 10), "multiple of successionTimestep")
+  expect_error(checkCohortReductionParams(c(100, NA), NA, NA, 10), "cohortSquash must be NA")
+})
+
+test_that("checkCohortReductionParams() names cohortRemoveSuppressed and its form when it is wrong", {
+  expect_error(checkCohortReductionParams(NA, 0.01, NA, 10),
+               "cohortRemoveSuppressed must be NA or c\\(relativeB, minAgeFrac\\)")
+  expect_error(checkCohortReductionParams(NA, c(0.01, 0.75, 1), NA, 10), "cohortRemoveSuppressed must be NA")
+  expect_error(checkCohortReductionParams(NA, c(0.01, 1.5), NA, 10), "between 0 and 1")
+  expect_error(checkCohortReductionParams(NA, c(-0.01, 0.5), NA, 10), "between 0 and 1")
+})
+
+test_that("checkCohortReductionParams() names cohortEstablishmentLimit and its form when it is wrong", {
+  expect_error(checkCohortReductionParams(NA, NA, 20, 10),
+               "cohortEstablishmentLimit must be NA or c\\(interval, minCohorts\\)")
+  expect_error(checkCohortReductionParams(NA, NA, c(20, 5, 1), 10), "cohortEstablishmentLimit must be NA")
+  expect_error(checkCohortReductionParams(NA, NA, c(25, 5), 10), "multiple of successionTimestep")
+  expect_error(checkCohortReductionParams(NA, NA, c(0, 5), 10), "multiple of successionTimestep")
+  expect_error(checkCohortReductionParams(NA, NA, c(20, -1), 10), "minCohorts >= 0")
+  expect_error(checkCohortReductionParams(NA, NA, c("20", "5"), 10), "cohortEstablishmentLimit must be NA")
 })

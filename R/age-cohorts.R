@@ -188,26 +188,39 @@ suppressedCohortsToRemove <- function(cohortData, relativeB, minAgeFrac) {
 
 #' Check the cohort-reduction parameters
 #'
-#' Stops with a message if `squashInterval` is not `NA` and it, or any `bandWidth`, is not a
-#' positive multiple of `successionTimestep`.
+#' Each of `cohortSquash`, `cohortRemoveSuppressed` and `cohortEstablishmentLimit` must be `NA`
+#' (off) or a numeric vector of the right form; stops with a message naming the parameter and the
+#' form otherwise.
 #'
-#' @param squashInterval,bandWidth,successionTimestep see the `cohortSquash*` and
-#'   `successionTimestep` parameters.
+#' * `cohortSquash`: `c(interval, width, ...)`, at least two values, each a positive multiple of
+#'   `successionTimestep`.
+#' * `cohortRemoveSuppressed`: `c(relativeB, minAgeFrac)`, both between 0 and 1.
+#' * `cohortEstablishmentLimit`: `c(interval, minCohorts)`, `interval` a positive multiple of
+#'   `successionTimestep` and `minCohorts` >= 0.
+#'
+#' @param cohortSquash,cohortRemoveSuppressed,cohortEstablishmentLimit,successionTimestep see the
+#'   parameters of the same names.
 #'
 #' @return `NULL`, invisibly.
 #' @export
-checkCohortSquashParams <- function(squashInterval, bandWidth, successionTimestep) {
-  if (!is.na(squashInterval)) {
-    ok <- function(x) !anyNA(x) && all(x > 0 & x %% successionTimestep == 0)
-    if (!ok(squashInterval)) {
-      stop("cohortSquashInterval (", squashInterval, ") must be a positive multiple of successionTimestep (",
-           successionTimestep, ")")
-    }
-    if (!ok(bandWidth)) {
-      stop("cohortSquashBandWidth (", paste(bandWidth, collapse = ", "),
-           ") must be positive multiples of successionTimestep (", successionTimestep, ")")
+checkCohortReductionParams <- function(cohortSquash, cohortRemoveSuppressed, cohortEstablishmentLimit,
+                                       successionTimestep) {
+  isMultiple <- function(x) all(x > 0 & x %% successionTimestep == 0)
+  check <- function(x, name, form, nValues, valid, why) {
+    if (length(x) == 1L && is.na(x)) return(invisible(NULL)) # off
+    if (!is.numeric(x) || anyNA(x) || !nValues(length(x)) || !valid(x)) {
+      stop(name, " must be NA or ", form, why, "; got c(", paste(x, collapse = ", "), ")", call. = FALSE)
     }
   }
+  check(cohortSquash, "cohortSquash", "c(interval, width, ...)",
+        function(n) n >= 2L, isMultiple,
+        paste0(", with every value a positive multiple of successionTimestep (", successionTimestep, ")"))
+  check(cohortRemoveSuppressed, "cohortRemoveSuppressed", "c(relativeB, minAgeFrac)",
+        function(n) n == 2L, function(x) all(x >= 0 & x <= 1), ", both between 0 and 1")
+  check(cohortEstablishmentLimit, "cohortEstablishmentLimit", "c(interval, minCohorts)",
+        function(n) n == 2L, function(x) isMultiple(x[1]) && x[2] >= 0,
+        paste0(", with interval a positive multiple of successionTimestep (", successionTimestep,
+               ") and minCohorts >= 0"))
   invisible(NULL)
 }
 
@@ -245,22 +258,4 @@ conditionalTimestepBlocked <- function(cohortData, currentTime, interval, minCoh
 #' @export
 dropBlockedSeeds <- function(x, blocked) {
   if (nrow(blocked) == 0L) x else x[!blocked, on = names(blocked)]
-}
-
-#' Check the conditional-timestep parameters
-#'
-#' Stops with a message if `interval` is not `NA` and is not a positive multiple of
-#' `successionTimestep`.
-#'
-#' @param interval,successionTimestep see the `conditionalTimestepInterval` and
-#'   `successionTimestep` parameters.
-#'
-#' @return `NULL`, invisibly.
-#' @export
-checkConditionalTimestepParams <- function(interval, successionTimestep) {
-  if (!is.na(interval) && !(interval > 0 && interval %% successionTimestep == 0)) {
-    stop("conditionalTimestepInterval (", interval, ") must be a positive multiple of successionTimestep (",
-         successionTimestep, ")")
-  }
-  invisible(NULL)
 }
