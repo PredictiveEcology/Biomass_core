@@ -114,7 +114,7 @@ defineModule(sim, list(
                                  "`conditionalTimestepMinCohorts` 2: keeps 62% of table rows, with a 15% biomass bias with no fire;",
                                  "with 5: keeps 76% of rows, with about 10% bias). It only limits establishment, so",
                                  "LandR-CBM needs no changes.")),
-    defineParameter("conditionalTimestepMinCohorts", "numeric", 2, 0, NA,
+    defineParameter("conditionalTimestepMinCohorts", "numeric", 5, 0, NA,
                     desc = paste("Used only when `conditionalTimestepInterval` is not `NA`: the number of cohorts (older than",
                                  "newly established ones) a species in a pixelGroup can have and still establish new cohorts every",
                                  "succession step. Larger values restrict fewer species and bias results less. Tested values: 2 and 5.")),
