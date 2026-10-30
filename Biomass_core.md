@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_coreeb5330a6db385026e37ce8042177010543e4289b)
+[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core0e2581ebc6f2a4ae2daa1bd6ed4782d712dbf725)
 
 [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
@@ -1206,6 +1206,33 @@ event (growth and mortality are always yearly);
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> Cohorts with biomass below this threshold (in $g/m^2$) are removed. Not a LANDIS-II BSE parameter. </td>
+   <td style="text-align:left;"> TRUE </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> cohortEstablishmentLimit </td>
+   <td style="text-align:left;"> numeric </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> `NA` (default) is off. Otherwise `c(interval, minCohorts)`: a species in a pixelGroup that already has more than `minCohorts` cohorts older than newly established ones can receive new seed-established cohorts only when `time(sim)` is a multiple of `interval` (years); at other succession steps its establishment there is skipped. Species with `minCohorts` or fewer cohorts establish every succession step. `interval` must be a positive multiple of `successionTimestep`; `minCohorts` must be &gt;= 0. Serotiny and resprouting (post-fire cohorts) are not restricted. Limits cohort numbers but changes results. Tested values: `c(20, 5)` (keeps 76% of table rows, with about 10% biomass bias with no fire) and `c(20, 2)` (62% of rows, 15% bias). It only limits establishment, so the LandR-CBM module/package needs no changes. </td>
+   <td style="text-align:left;"> TRUE </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> cohortRemoveSuppressed </td>
+   <td style="text-align:left;"> numeric </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> `NA` (default) is off. Otherwise `c(relativeB, minAgeFrac)`, both between 0 and 1: a cohort is removed each year when its B is below `relativeB` times the total B of its pixelGroup and its age is above `minAgeFrac` longevity; a species' last cohort in a pixelGroup is never removed. Changes results. Tested value: `c(0.01, 0.75)`. It only removes cohorts, so the LandR-CBM module/package needs no changes. </td>
+   <td style="text-align:left;"> TRUE </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> cohortSquash </td>
+   <td style="text-align:left;"> numeric </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> `NA` (default) is off. Otherwise `c(interval, width, ...)`: when a cohort reaches a multiple of `interval` (years), it is merged with same-species cohorts in its pixelGroup up to `width` years younger (B, mortality and aNPPAct summed, age the B-weighted mean age in whole years). With more than one `width`, the k-th multiple of `interval` uses the k-th width and the last width repeats, so older cohorts can be merged more coarsely. `interval` and every `width` must be positive multiples of `successionTimestep`. Reduces cohort numbers in long runs but changes results. Tested value: `c(100, 20)`. Squashing changes what a cohort is, so it breaks the LandR-CBM module/package, which converts LandR cohorts to CBM growth curves; that code would need changes before it can be used with this option. </td>
    <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
