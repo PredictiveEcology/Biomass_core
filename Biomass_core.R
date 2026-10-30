@@ -14,7 +14,7 @@ defineModule(sim, list(
     person("Jean", "Marchal", email = "jean.d.marchal@gmail.com", role = "ctb")
   ),
   childModules = character(0),
-  version = list(Biomass_core = numeric_version("2.1.0.9001")),
+  version = list(Biomass_core = numeric_version("2.1.0.9003")),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
@@ -28,7 +28,7 @@ defineModule(sim, list(
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
                   "ianmseddy/LandR.CS@development (>= 2.0.0.9002)",
                   "PredictiveEcology/pemisc@development",
-                  "PredictiveEcology/LandR@development (>= 1.2.0.9052)"),
+                  "PredictiveEcology/LandR@development (>= 1.2.0.9053)"),
   parameters = rbind(
     defineParameter("calcSummaryBGM", "character", "end", NA, NA,
                     desc = paste("A character vector describing when to calculate the summary of biomass, growth and mortality",
@@ -55,7 +55,8 @@ defineModule(sim, list(
     defineParameter("dataYear", "numeric", 2020, NA, NA,
                     paste(
                       "the year for which SCANFI data wil be fetched for use with the module.",
-                      "One of 2000, 2010, or 2020, but note that only 2020 is currently supported." ## TODO
+                      "One of 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020 or 2025 (SCANFI v2).",
+                      "Only used if `speciesLayers` are not supplied."
                     )),
     defineParameter("initialB", "numeric", 10, 1, NA,
                     desc = paste("Initial biomass values of new age-1 cohorts.",
@@ -90,6 +91,32 @@ defineModule(sim, list(
     defineParameter("keepClimateCols", "logical", FALSE, NA, NA, "include growth and mortality predictions in `cohortData`?"),
     defineParameter("minCohortBiomass", "numeric", 9, NA, NA,
                     desc = "Cohorts with biomass below this threshold (in $g/m^2$) are removed. Not a LANDIS-II BSE parameter."),
+    defineParameter("cohortEstablishmentLimit", "numeric", NA, NA, NA,
+                    desc = paste("`NA` (default) is off. Otherwise `c(interval, minCohorts)`: a species in a pixelGroup that already",
+                                 "has more than `minCohorts` cohorts older than newly established ones can receive new",
+                                 "seed-established cohorts only when `time(sim)` is a multiple of `interval` (years); at other",
+                                 "succession steps its establishment there is skipped. Species with `minCohorts` or fewer cohorts",
+                                 "establish every succession step. `interval` must be a positive multiple of `successionTimestep`;",
+                                 "`minCohorts` must be >= 0. Serotiny and resprouting (post-fire cohorts) are not restricted.",
+                                 "Limits cohort numbers but changes results. Tested values: `c(20, 5)` (keeps 76% of table rows, with about",
+                                 "10% biomass bias with no fire) and `c(20, 2)` (62% of rows, 15% bias). It only limits establishment,",
+                                 "so the LandR-CBM module/package needs no changes.")),
+    defineParameter("cohortRemoveSuppressed", "numeric", NA, NA, NA,
+                    desc = paste("`NA` (default) is off. Otherwise `c(relativeB, minAgeFrac)`, both between 0 and 1: a cohort is",
+                                 "removed each year when its B is below `relativeB` times the total B of its pixelGroup and its age",
+                                 "is above `minAgeFrac` * longevity; a species' last cohort in a pixelGroup is never removed.",
+                                 "Changes results. Tested value: `c(0.01, 0.75)`. It only removes cohorts, so the LandR-CBM",
+                                 "module/package needs no changes.")),
+    defineParameter("cohortSquash", "numeric", NA, NA, NA,
+                    desc = paste("`NA` (default) is off. Otherwise `c(interval, width, ...)`: when a cohort reaches a multiple of",
+                                 "`interval` (years), it is merged with same-species cohorts in its pixelGroup up to `width` years",
+                                 "younger (B, mortality and aNPPAct summed, age the B-weighted mean age in whole years). With",
+                                 "more than one `width`, the k-th multiple of `interval` uses the k-th width and the last width",
+                                 "repeats, so older cohorts can be merged more coarsely. `interval` and every `width` must be",
+                                 "positive multiples of `successionTimestep`. Reduces cohort numbers in long runs but changes",
+                                 "results. Tested value: `c(100, 20)`. Squashing changes what a cohort is, so it breaks the",
+                                 "LandR-CBM module/package, which converts LandR cohorts to CBM growth curves; that code would",
+                                 "need changes before it can be used with this option.")),
     defineParameter("mixedType", "numeric", 2, 0, 2,
                     desc = paste("How to define mixed stands: 0 for none; 1 for any species admixture;",
                                  "2 for deciduous > conifer. See `?LandR::vegTypeMapGenerator`.")),
@@ -197,8 +224,10 @@ defineModule(sim, list(
     #              sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
     expectsInput("lastReg", "numeric",                                          # nolint: in_no_default
                  desc = "An internal counter keeping track of when the last regeneration event occurred"),
-    # expectsInput("minRelativeB", "data.frame",                                  # nolint: in_no_default
-    #              desc = "table defining the relative biomass cut points to classify stand shadeness."),
+    expectsInput("minRelativeB", "data.frame",                                  # nolint: in_no_default
+                 desc = paste("table defining the relative biomass cut points to classify stand shadeness.",
+                              "Needed when `cohortData` and `pixelGroupMap` are supplied; otherwise",
+                              "it is made together with them (dummy version)")),
     expectsInput("pixelGroupMap", "SpatRaster",                                 # nolint: in_no_default
                  desc = paste("A raster layer with `pixelGroup` IDs per pixel. Pixels are grouped" ,
                               "based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition,",
@@ -213,8 +242,9 @@ defineModule(sim, list(
                               "'mortalityshape', 'growthcurve', 'resproutage_min', 'resproutage_max',",
                               "'postfireregen', 'wooddecayrate', 'leaflongevity' 'leafLignin',",
                               "'hardsoft'. The last seven traits are not used in *Biomass_core*,",
-                              "and may be ommited. However, this may result in downstream issues with",
-                              "other modules. Default is from Dominic Cyr and Yan Boulanger's project"),
+                              "but are required by `LandR::assertSpeciesTable()` (unless",
+                              "`options(LandR.assertions = FALSE)`), and by other modules.",
+                              "Default is from Dominic Cyr and Yan Boulanger's project"),
                  sourceURL = "https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv"),
     expectsInput("speciesEcoregion", "data.table",                              # nolint: in_no_default
                  desc = paste("Table of spatially-varying species traits (`maxB`, `maxANPP`,",
@@ -224,7 +254,7 @@ defineModule(sim, list(
                  paste(
                    "cover percentage raster layers by species in Canada species map.",
                    "Defaults to the Canadian Forestry Service, National Forest Inventory,",
-                   "SCANFI-derived species cover maps from 2020 using a cover threshold of 10 -",
+                   "SCANFI-derived species cover maps from `dataYear` (default 2020) using a cover threshold of 10 -",
                    "see <https://open.canada.ca/data/en/dataset/18e6a919-53fd-41ce-b4e2-44a9707c52dc> for metadata"
                  )),
     expectsInput("sppColorVect", "character",
@@ -692,6 +722,8 @@ Init <- function(sim, verbose = getOption("LandR.verbose", TRUE)) {
       stop("please set `P(sim)$minCohortBiomass` to be lower than `P(sim)$initialB`")
     }
   }
+  checkCohortReductionParams(P(sim)$cohortSquash, P(sim)$cohortRemoveSuppressed,
+                             P(sim)$cohortEstablishmentLimit, P(sim)$successionTimestep)
   paramCheckOtherMods(sim, "initialB", ifSetButDifferent = "warning")
 
   ## prepare species ------------------------------------------------
@@ -1438,6 +1470,11 @@ MortalityAndGrowth <- compiler::cmpfun(function(sim) {
 
       ## Die from old age or low biomass -- rm from cohortData ------------------
       keep <- (subCohortData$age <= subCohortData$longevity) & (subCohortData$B >=  P(sim)$minCohortBiomass)
+      if (!anyNA(P(sim)$cohortRemoveSuppressed)) {
+        ## subCohortData holds whole pixelGroups (subgroups are split by pixelGroup)
+        keep <- keep & !suppressedCohortsToRemove(subCohortData, P(sim)$cohortRemoveSuppressed[1],
+                                                  P(sim)$cohortRemoveSuppressed[2])
+      }
       if (all(keep)) {
         subCohortPostLongevity <- subCohortData
         diedCohortData <- subCohortData[0]
@@ -1613,12 +1650,16 @@ Dispersal <- function(sim) {
   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% pixelsFromCurYrBurn)]
   # tempInactivePixel <- c(sim$inactivePixelIndex, pixelsFromCurYrBurn)
 
+  ## (pixelGroup, species) pairs that may not receive new seed-established cohorts this step
+  blocked <- conditionalTimestepBlocked(sim$cohortData, time(sim), P(sim)$cohortEstablishmentLimit[1],
+                                        P(sim)$cohortEstablishmentLimit[2])
+
   if (P(sim)$seedingAlgorithm == "noDispersal") {
-    sim <- NoDispersalSeeding(sim, tempActivePixel)
+    sim <- NoDispersalSeeding(sim, tempActivePixel, blocked)
   } else if (P(sim)$seedingAlgorithm == "universalDispersal") {
-    sim <- UniversalDispersalSeeding(sim, tempActivePixel)
+    sim <- UniversalDispersalSeeding(sim, tempActivePixel, blocked)
   } else if (P(sim)$seedingAlgorithm == "wardDispersal") {
-    sim <- WardDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn)
+    sim <- WardDispersalSeeding(sim, tempActivePixel, pixelsFromCurYrBurn, blocked)
   } else if (!P(sim)$seedingAlgorithm == "noSeeding") {
     stop("Undefined seed dispersal type!")
   }
@@ -1627,7 +1668,7 @@ Dispersal <- function(sim) {
   return(invisible(sim))
 }
 
-NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
+NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, blocked) {
   # if (sim$lastFireYear == round(time(sim))) { # if current year is both fire year and succession year
   #   # find new active pixel that remove successful postfire regeneration
   #   # since this is on site regeneration, all the burnt pixels can not seeding
@@ -1651,6 +1692,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
   seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, c("shadetolerance", "lightProb", "siteShade", "sumB"), NULL)
+  seedingData <- dropBlockedSeeds(seedingData, blocked)
   seedingData <- unique(seedingData, by = c("pixelGroup", "speciesCode"))
 
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
@@ -1701,7 +1743,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   return(invisible(sim))
 })
 
-UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
+UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, blocked) {
   # if (sim$lastFireYear == round(time(sim))) { # the current year is both fire year and succession year
   #   tempActivePixel <- sim$activePixelIndex[!(sim$activePixelIndex %in% sim$postFirePixel)]
   # } else {
@@ -1737,6 +1779,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
   seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData)), ]
   set(seedingData, NULL, c("siteShade", "lightProb", "shadetolerance"), NULL)
+  seedingData <- dropBlockedSeeds(seedingData, blocked)
   # pixelGroupEcoregion <- unique(sim$cohortData, by = c("pixelGroup"))[,'.'(pixelGroup, sumB)]
 
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
@@ -1788,7 +1831,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel) {
   return(invisible(sim))
 })
 
-WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFromCurYrBurn,
+WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFromCurYrBurn, blocked,
                                                   verbose = getOption("LandR.verbose", TRUE)) {
 
   sim$cohortData <- calculateSumB(cohortData = sim$cohortData,
@@ -1838,6 +1881,8 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
 
     ## rm ones that had successful serotiny or resprouting
     seedReceive <- seedReceive[!sim$cohortData[age == 1L], on = c("pixelGroup", "speciesCode")]
+    ## and ones that already have many cohorts, off the cohortEstablishmentLimit interval
+    seedReceive <- dropBlockedSeeds(seedReceive, blocked)
     ##    (info contained within seedReceive)
     ## this is should be a inner join, needs to specify the nomatch=0, nomatch = NA is default that suggest the full join.
     seedSource <- seedSource[speciesCode %in% unique(seedReceive$speciesCode), ]
@@ -2505,6 +2550,15 @@ CohortAgeReclassification <- function(sim) {
       stage = "mainSimulation",
       byGroups = P(sim)$cohortDefinitionCols
     )
+    if (!anyNA(P(sim)$cohortSquash)) {
+      sim$cohortData <- squashCohortAges(
+        cohortData = sim$cohortData,
+        squashInterval = P(sim)$cohortSquash[1],
+        successionTimestep = P(sim)$successionTimestep,
+        bandWidth = P(sim)$cohortSquash[-1],
+        byGroups = P(sim)$cohortDefinitionCols
+      )
+    }
   }
   return(invisible(sim))
 }
@@ -2631,13 +2685,13 @@ CohortAgeReclassification <- function(sim) {
       sim$speciesLayers <- prepSpeciesLayers_SCANFI(
         destinationPath = dPath,
         outputPath = dPath,
-        studyArea = sim$studyArea_biomassParam,
+        studyArea = sim$studyArea,
         studyAreaName = P(sim)$.studyAreaName,
-        rasterToMatch = sim$rasterToMatch_biomassParam,
+        rasterToMatch = sim$rasterToMatch,
         sppEquiv = sim$sppEquiv,
         sppEquivCol = P(sim)$sppEquivCol,
         thresh = 10,
-        year = P(sim)$dataYear
+        dataYear = P(sim)$dataYear
       ) |>
         Cache(
           userTags = c(cacheTags, "speciesLayers"),
