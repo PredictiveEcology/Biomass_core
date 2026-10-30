@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-date: "Last updated: 2026-10-29"
+date: "Last updated: 2026-10-30"
 output:
   bookdown::html_document2:
     toc: true
@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core50cf3ede7f98ae05473ea024fb8c5a5c84837aa6)
+[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_coreeb5330a6db385026e37ce8042177010543e4289b)
 
 [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
@@ -942,6 +942,12 @@ and `B` composition, even if the user supplies other initial groupings
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> minRelativeB </td>
+   <td style="text-align:left;"> data.frame </td>
+   <td style="text-align:left;"> table defining the relative biomass cut points to classify stand shadeness. Needed when `cohortData` and `pixelGroupMap` are supplied; otherwise it is made together with them (dummy version) </td>
+   <td style="text-align:left;"> NA </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> pixelGroupMap </td>
    <td style="text-align:left;"> SpatRaster </td>
    <td style="text-align:left;"> A raster layer with `pixelGroup` IDs per pixel. Pixels are grouped based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition, even if the user supplies other initial groupings (e.g., via the `Biomass_borealDataPrep` module. </td>
@@ -956,7 +962,7 @@ and `B` composition, even if the user supplies other initial groupings
   <tr>
    <td style="text-align:left;"> species </td>
    <td style="text-align:left;"> data.table </td>
-   <td style="text-align:left;"> A table of invariant species traits with the following trait colums: 'species', 'Area', 'longevity', 'sexualmature', 'shadetolerance', 'firetolerance', 'seeddistance_eff', 'seeddistance_max', 'resproutprob', 'mortalityshape', 'growthcurve', 'resproutage_min', 'resproutage_max', 'postfireregen', 'wooddecayrate', 'leaflongevity' 'leafLignin', 'hardsoft'. The last seven traits are not used in Biomass_core , and may be ommited. However, this may result in downstream issues with other modules. Default is from Dominic Cyr and Yan Boulanger's project </td>
+   <td style="text-align:left;"> A table of invariant species traits with the following trait colums: 'species', 'Area', 'longevity', 'sexualmature', 'shadetolerance', 'firetolerance', 'seeddistance_eff', 'seeddistance_max', 'resproutprob', 'mortalityshape', 'growthcurve', 'resproutage_min', 'resproutage_max', 'postfireregen', 'wooddecayrate', 'leaflongevity' 'leafLignin', 'hardsoft'. The last seven traits are not used in Biomass_core , but are required by `LandR::assertSpeciesTable()` (unless `options(LandR.assertions = FALSE)`), and by other modules. Default is from Dominic Cyr and Yan Boulanger's project </td>
    <td style="text-align:left;"> https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv </td>
   </tr>
   <tr>
@@ -968,7 +974,7 @@ and `B` composition, even if the user supplies other initial groupings
   <tr>
    <td style="text-align:left;"> speciesLayers </td>
    <td style="text-align:left;"> SpatRaster </td>
-   <td style="text-align:left;"> cover percentage raster layers by species in Canada species map. Defaults to the Canadian Forestry Service, National Forest Inventory, SCANFI-derived species cover maps from 2020 using a cover threshold of 10 - see &lt;https://open.canada.ca/data/en/dataset/18e6a919-53fd-41ce-b4e2-44a9707c52dc&gt; for metadata </td>
+   <td style="text-align:left;"> cover percentage raster layers by species in Canada species map. Defaults to the Canadian Forestry Service, National Forest Inventory, SCANFI-derived species cover maps from `dataYear` (default 2020) using a cover threshold of 10 - see &lt;https://open.canada.ca/data/en/dataset/18e6a919-53fd-41ce-b4e2-44a9707c52dc&gt; for metadata </td>
    <td style="text-align:left;"> NA </td>
   </tr>
   <tr>
@@ -1127,7 +1133,7 @@ event (growth and mortality are always yearly);
    <td style="text-align:left;"> 2020 </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> the year for which SCANFI data wil be fetched for use with the module. One of 2000, 2010, or 2020, but note that only 2020 is currently supported. </td>
+   <td style="text-align:left;"> the year for which SCANFI data wil be fetched for use with the module. One of 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020 or 2025 (SCANFI v2). Only used if `speciesLayers` are not supplied. </td>
    <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
