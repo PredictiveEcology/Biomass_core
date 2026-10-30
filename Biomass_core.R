@@ -1696,7 +1696,7 @@ NoDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, blocked) {
   seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
   seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData), 0, 1),]
   set(seedingData, NULL, c("shadetolerance", "lightProb", "siteShade", "sumB"), NULL)
-  seedingData <- seedingData[!blocked, on = names(blocked)]
+  seedingData <- dropBlockedSeeds(seedingData, blocked)
   seedingData <- unique(seedingData, by = c("pixelGroup", "speciesCode"))
 
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
@@ -1783,7 +1783,7 @@ UniversalDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, blo
   seedingData <- assignLightProb(sufficientLight = sim$sufficientLight, seedingData)
   seedingData <- seedingData[lightProb %>>% runif(nrow(seedingData)), ]
   set(seedingData, NULL, c("siteShade", "lightProb", "shadetolerance"), NULL)
-  seedingData <- seedingData[!blocked, on = names(blocked)]
+  seedingData <- dropBlockedSeeds(seedingData, blocked)
   # pixelGroupEcoregion <- unique(sim$cohortData, by = c("pixelGroup"))[,'.'(pixelGroup, sumB)]
 
   pixelsInfor <- setkey(data.table(pixelIndex = tempActivePixel,
@@ -1886,7 +1886,7 @@ WardDispersalSeeding <- compiler::cmpfun(function(sim, tempActivePixel, pixelsFr
     ## rm ones that had successful serotiny or resprouting
     seedReceive <- seedReceive[!sim$cohortData[age == 1L], on = c("pixelGroup", "speciesCode")]
     ## and ones that already have many cohorts, off the conditionalTimestepInterval
-    seedReceive <- seedReceive[!blocked, on = names(blocked)]
+    seedReceive <- dropBlockedSeeds(seedReceive, blocked)
     ##    (info contained within seedReceive)
     ## this is should be a inner join, needs to specify the nomatch=0, nomatch = NA is default that suggest the full join.
     seedSource <- seedSource[speciesCode %in% unique(seedReceive$speciesCode), ]

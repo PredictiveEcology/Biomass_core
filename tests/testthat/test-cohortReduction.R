@@ -123,6 +123,13 @@ test_that("conditionalTimestepBlocked() never blocks a species with <= n cohorts
   expect_false(any(off$pixelGroup == 1L & off$speciesCode == 2L))  # 2 older cohorts
 })
 
+test_that("dropBlockedSeeds() drops blocked pairs and returns x unchanged when none are blocked", {
+  seeds <- data.table(pixelGroup = c(1L, 1L, 2L), speciesCode = c(1L, 2L, 1L), v = 1:3)
+  out <- dropBlockedSeeds(seeds, condBlocked(10))
+  expect_identical(out$v, 2L)
+  expect_identical(dropBlockedSeeds(seeds, condBlocked(10, interval = NA)), seeds)
+})
+
 test_that("checkConditionalTimestepParams() needs a positive multiple of successionTimestep", {
   expect_null(checkConditionalTimestepParams(NA, 10))
   expect_null(checkConditionalTimestepParams(20, 10))

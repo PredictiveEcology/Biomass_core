@@ -235,6 +235,18 @@ conditionalTimestepBlocked <- function(cohortData, currentTime, interval, minCoh
   n[N > minCohorts, ..byCols]
 }
 
+#' Drop blocked (pixelGroup, species) pairs from a seed table
+#'
+#' @param x a `data.table` with `pixelGroup` and `speciesCode`.
+#' @param blocked the result of [conditionalTimestepBlocked()]. When it has no rows (the default, with
+#'   the option off) `x` is returned as is, so the anti-join and its copy of `x` are skipped.
+#'
+#' @return `x` without the rows in `blocked`.
+#' @export
+dropBlockedSeeds <- function(x, blocked) {
+  if (nrow(blocked) == 0L) x else x[!blocked, on = names(blocked)]
+}
+
 #' Check the conditional-timestep parameters
 #'
 #' Stops with a message if `interval` is not `NA` and is not a positive multiple of
