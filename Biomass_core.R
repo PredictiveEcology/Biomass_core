@@ -55,7 +55,8 @@ defineModule(sim, list(
     defineParameter("dataYear", "numeric", 2020, NA, NA,
                     paste(
                       "the year for which SCANFI data wil be fetched for use with the module.",
-                      "One of 2000, 2010, or 2020, but note that only 2020 is currently supported." ## TODO
+                      "One of 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020 or 2025 (SCANFI v2).",
+                      "Only used if `speciesLayers` are not supplied."
                     )),
     defineParameter("initialB", "numeric", 10, 1, NA,
                     desc = paste("Initial biomass values of new age-1 cohorts.",
@@ -232,8 +233,10 @@ defineModule(sim, list(
     #              sourceURL = "https://github.com/LANDIS-II-Foundation/Extensions-Succession/raw/master/biomass-succession-archive/trunk/tests/v6.0-2.0/initial-communities.gis"),
     expectsInput("lastReg", "numeric",                                          # nolint: in_no_default
                  desc = "An internal counter keeping track of when the last regeneration event occurred"),
-    # expectsInput("minRelativeB", "data.frame",                                  # nolint: in_no_default
-    #              desc = "table defining the relative biomass cut points to classify stand shadeness."),
+    expectsInput("minRelativeB", "data.frame",                                  # nolint: in_no_default
+                 desc = paste("table defining the relative biomass cut points to classify stand shadeness.",
+                              "Needed when `cohortData` and `pixelGroupMap` are supplied; otherwise",
+                              "it is made together with them (dummy version)")),
     expectsInput("pixelGroupMap", "SpatRaster",                                 # nolint: in_no_default
                  desc = paste("A raster layer with `pixelGroup` IDs per pixel. Pixels are grouped" ,
                               "based on identical `ecoregionGroup`, `speciesCode`, `age` and `B` composition,",
@@ -248,8 +251,9 @@ defineModule(sim, list(
                               "'mortalityshape', 'growthcurve', 'resproutage_min', 'resproutage_max',",
                               "'postfireregen', 'wooddecayrate', 'leaflongevity' 'leafLignin',",
                               "'hardsoft'. The last seven traits are not used in *Biomass_core*,",
-                              "and may be ommited. However, this may result in downstream issues with",
-                              "other modules. Default is from Dominic Cyr and Yan Boulanger's project"),
+                              "but are required by `LandR::assertSpeciesTable()` (unless",
+                              "`options(LandR.assertions = FALSE)`), and by other modules.",
+                              "Default is from Dominic Cyr and Yan Boulanger's project"),
                  sourceURL = "https://raw.githubusercontent.com/dcyr/LANDIS-II_IA_generalUseFiles/master/speciesTraits.csv"),
     expectsInput("speciesEcoregion", "data.table",                              # nolint: in_no_default
                  desc = paste("Table of spatially-varying species traits (`maxB`, `maxANPP`,",
@@ -259,7 +263,7 @@ defineModule(sim, list(
                  paste(
                    "cover percentage raster layers by species in Canada species map.",
                    "Defaults to the Canadian Forestry Service, National Forest Inventory,",
-                   "SCANFI-derived species cover maps from 2020 using a cover threshold of 10 -",
+                   "SCANFI-derived species cover maps from `dataYear` (default 2020) using a cover threshold of 10 -",
                    "see <https://open.canada.ca/data/en/dataset/18e6a919-53fd-41ce-b4e2-44a9707c52dc> for metadata"
                  )),
     expectsInput("sppColorVect", "character",
@@ -2691,7 +2695,7 @@ CohortAgeReclassification <- function(sim) {
         sppEquiv = sim$sppEquiv,
         sppEquivCol = P(sim)$sppEquivCol,
         thresh = 10,
-        year = P(sim)$dataYear
+        dataYear = P(sim)$dataYear
       ) |>
         Cache(
           userTags = c(cacheTags, "speciesLayers"),

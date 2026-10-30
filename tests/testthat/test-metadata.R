@@ -24,6 +24,7 @@ test_that("inputs are the expected names and classes", {
       ecoregion                        = "data.table",
       ecoregionMap                     = "SpatRaster",
       lastReg                          = "numeric",
+      minRelativeB                     = "data.frame",
       pixelGroupMap                    = "SpatRaster",
       rasterToMatch                    = "SpatRaster",
       species                          = "data.table",
