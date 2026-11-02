@@ -2,6 +2,9 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
 # Biomass_core (development version)
 
+* `.inputObjects` stops when another module has a different `dataYear` (`paramCheckOtherMods(ifSetButDifferent = "error")`), as for `cohortDefinitionCols` and the others; `fireSense_dataPrepPredict` had 2011 while the vegetation modules had 2020.
+
+
 * Three optional, off-by-default ways to reduce cohort numbers in long runs; with the defaults (`NA`) nothing changes. Each is one parameter, a vector: the first value is what triggers the behaviour and the others tune it. All options change results; test results will be posted in a comment on the pull request.
   1) `cohortRemoveSuppressed = c(relativeB, minAgeFrac)` removes old cohorts whose B is a tiny fraction of their pixelGroup's B (tested at `c(0.01, 0.75)`).
   2) `cohortSquash = c(interval, width, ...)` merges a cohort that reaches a multiple of `interval` with same-species cohorts in its pixelGroup up to `width` years younger, into one cohort with the B-weighted mean age in whole years; with several widths the k-th multiple uses the k-th width and the last repeats, so older cohorts are merged more coarsely (tested at `c(100, 20)`).
