@@ -2647,6 +2647,7 @@ CohortAgeReclassification <- function(sim) {
 
   ## check parameter consistency across modules
   paramCheckOtherMods(sim, "cohortDefinitionCols", ifSetButDifferent = "error")
+  paramCheckOtherMods(sim, "dataYear", ifSetButDifferent = "error")
   paramCheckOtherMods(sim, "initialB", ifSetButDifferent = "error")
   paramCheckOtherMods(sim, "sppEquivCol", ifSetButDifferent = "error")
   paramCheckOtherMods(sim, "vegLeadingProportion", ifSetButDifferent = "error")
