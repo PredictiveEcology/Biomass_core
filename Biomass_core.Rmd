@@ -61,11 +61,6 @@ Require(c("SpaDES.core", "git2r",  "dplyr", "data.table", "kableExtra",
 ```{r badgeFigs-Biomass-core, include = FALSE, eval = TRUE, cache = FALSE}
 dir.create("figures", showWarnings = FALSE)
 
-if (!file.exists("figures/markdownBadge.png")) {
-  download.file(url = "https://img.shields.io/badge/Made%20with-Markdown-1f425f.png",
-                destfile = "figures/markdownBadge.png",
-                mode = 'wb')
-}
 if (!file.exists("figures/issuesBadge.png")) {
   download.file(url = "https://img.shields.io/badge/Get%20help-Report%20issues-%3CCOLOR%3E.png",
                 destfile = "figures/issuesBadge.png",
