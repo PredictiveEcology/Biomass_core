@@ -22,7 +22,7 @@ defineModule(sim, list(
   loadOrder = list(after = c("Biomass_speciesParameters")),
   reqdPkgs = list("arrow", "assertthat", "cli", "compiler", "curl", "data.table",
                   "dplyr", "fpCompare", "ggalluvial", "ggplot2", "ggrepel", "googledrive", "grid",
-                  "httr", "lme4", "parallel", "purrr", "quickPlot (>= 1.0.2.9003)", "Rcpp",
+                  "httr", "httr2", "lme4", "parallel", "purrr", "quickPlot (>= 1.0.2.9003)", "Rcpp",
                   "R.utils", "Require", "scales", "terra", "tidyr", "tidyterra", "viridis",
                   "reproducible (>= 2.1.0)",
                   "SpaDES.core (>= 2.1.4)", "SpaDES.tools (>= 1.0.0.9001)",
