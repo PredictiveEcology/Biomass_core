@@ -96,11 +96,17 @@ defineModule(sim, list(
                                  "has more than `minCohorts` cohorts older than newly established ones can receive new",
                                  "seed-established cohorts only when `time(sim)` is a multiple of `interval` (years); at other",
                                  "succession steps its establishment there is skipped. Species with `minCohorts` or fewer cohorts",
-                                 "establish every succession step. `interval` must be a positive multiple of `successionTimestep`;",
-                                 "`minCohorts` must be >= 0. Serotiny and resprouting (post-fire cohorts) are not restricted.",
-                                 "Limits cohort numbers but changes results. Tested values: `c(20, 5)` (keeps 76% of table rows, with about",
-                                 "10% biomass bias with no fire) and `c(20, 2)` (62% of rows, 15% bias). It only limits establishment,",
-                                 "so the LandR-CBM module/package needs no changes.")),
+                                 "establish every succession step. `interval` must be a positive multiple of `successionTimestep`,",
+                                 "or `Inf` for a hard cap (a species over its limit never establishes from seed there);",
+                                 "`minCohorts` must be >= 0. `c(interval, m1, m2, m3, m4, m5)` sets `minCohorts` by shade tolerance",
+                                 "class 1 to 5 (`shadetolerance` in `sim$species`, rounded and limited to 1-5). The per-tolerance",
+                                 "hard cap is `c(Inf, 1, 2, 3, 4, 5)`: at most 2, 3, 4, 5 and 6 seed cohorts for tolerance 1 to 5,",
+                                 "because blocking starts once a species has more than `m` cohorts.",
+                                 "Serotiny and resprouting (post-fire cohorts) are not restricted. Limits cohort numbers but changes",
+                                 "results. In the test-landscape simulator, `c(Inf, 1, 2, 3, 4, 5)` kept about 2 / 4 / 6 cohorts per pixel",
+                                 "for Pinu_con / Pseu_men / Abie_ama (the current rule gives 3-5 / 7-9 / 34), with 46-64% of the cohort",
+                                 "rows. It lowered fire-free landscape biomass by 10-26% over 600-1000 years and left it unchanged with",
+                                 "fire every 150 years. It only limits establishment, so the LandR-CBM module/package needs no changes.")),
     defineParameter("cohortRemoveSuppressed", "numeric", NA, NA, NA,
                     desc = paste("`NA` (default) is off. Otherwise `c(relativeB, minAgeFrac)`, both between 0 and 1: a cohort is",
                                  "removed each year when its B is below `relativeB` times the total B of its pixelGroup and its age",
@@ -1652,7 +1658,7 @@ Dispersal <- function(sim) {
 
   ## (pixelGroup, species) pairs that may not receive new seed-established cohorts this step
   blocked <- conditionalTimestepBlocked(sim$cohortData, time(sim), P(sim)$cohortEstablishmentLimit[1],
-                                        P(sim)$cohortEstablishmentLimit[2])
+                                        P(sim)$cohortEstablishmentLimit[-1], sim$species)
 
   if (P(sim)$seedingAlgorithm == "noDispersal") {
     sim <- NoDispersalSeeding(sim, tempActivePixel, blocked)

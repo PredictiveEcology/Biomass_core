@@ -195,8 +195,8 @@ suppressedCohortsToRemove <- function(cohortData, relativeB, minAgeFrac) {
 #' * `cohortSquash`: `c(interval, width, ...)`, at least two values, each a positive multiple of
 #'   `successionTimestep`.
 #' * `cohortRemoveSuppressed`: `c(relativeB, minAgeFrac)`, both between 0 and 1.
-#' * `cohortEstablishmentLimit`: `c(interval, minCohorts)`, `interval` a positive multiple of
-#'   `successionTimestep` and `minCohorts` >= 0.
+#' * `cohortEstablishmentLimit`: `c(interval, minCohorts)` or `c(interval, m1, m2, m3, m4, m5)`,
+#'   `interval` `Inf` or a positive multiple of `successionTimestep`, and every `minCohorts` / `m` >= 0.
 #'
 #' @param cohortSquash,cohortRemoveSuppressed,cohortEstablishmentLimit,successionTimestep see the
 #'   parameters of the same names.
@@ -217,9 +217,10 @@ checkCohortReductionParams <- function(cohortSquash, cohortRemoveSuppressed, coh
         paste0(", with every value a positive multiple of successionTimestep (", successionTimestep, ")"))
   check(cohortRemoveSuppressed, "cohortRemoveSuppressed", "c(relativeB, minAgeFrac)",
         function(n) n == 2L, function(x) all(x >= 0 & x <= 1), ", both between 0 and 1")
-  check(cohortEstablishmentLimit, "cohortEstablishmentLimit", "c(interval, minCohorts)",
-        function(n) n == 2L, function(x) isMultiple(x[1]) && x[2] >= 0,
-        paste0(", with interval a positive multiple of successionTimestep (", successionTimestep,
+  check(cohortEstablishmentLimit, "cohortEstablishmentLimit",
+        "c(interval, minCohorts) or c(interval, m1, m2, m3, m4, m5)",
+        function(n) n %in% c(2L, 6L), function(x) (x[1] == Inf || isMultiple(x[1])) && all(x[-1] >= 0),
+        paste0(", with interval Inf or a positive multiple of successionTimestep (", successionTimestep,
                ") and minCohorts >= 0"))
   invisible(NULL)
 }
@@ -228,24 +229,35 @@ checkCohortReductionParams <- function(cohortSquash, cohortRemoveSuppressed, coh
 #'
 #' A species in a `pixelGroup` that already has more than `minCohorts` cohorts older than the
 #' newly established ones (`age > 1`; `age == 1` cohorts come from serotiny or resprouting this
-#' step) is blocked, unless `currentTime` is a multiple of `interval`. Nothing is blocked when
-#' `interval` is `NA`. Seeding paths drop these pairs from their seed receivers; serotiny and
+#' step) is blocked, unless `currentTime` is a multiple of `interval`. With `interval = Inf` there
+#' is no such time: the block holds at every time (a hard cap). Nothing is blocked when
+#' `interval` is `NA`. `minCohorts` is one number for all species, or five numbers, one per shade
+#' tolerance class 1 to 5; a species' class is its `shadetolerance` in `species`, rounded and
+#' clamped to 1..5. Seeding paths drop these pairs from their seed receivers; serotiny and
 #' resprouting are not affected.
 #'
 #' @param cohortData A `data.table` with `pixelGroup`, `speciesCode` and `age`.
 #' @param currentTime the simulation time, `time(sim)`.
-#' @param interval years between the times when blocked pairs may establish; `NA` blocks nothing.
-#' @param minCohorts a pair is blocked when it has more than this many cohorts.
+#' @param interval years between the times when blocked pairs may establish; `NA` blocks nothing,
+#'   `Inf` never lets them establish.
+#' @param minCohorts a pair is blocked when it has more than this many cohorts: one value, or
+#'   five values for shade tolerance classes 1 to 5.
+#' @param species A `data.table` with `speciesCode` and `shadetolerance`; only used when `minCohorts`
+#'   has five values.
 #'
 #' @return a `data.table` with columns `pixelGroup` and `speciesCode` (no rows if nothing is blocked).
 #' @export
-conditionalTimestepBlocked <- function(cohortData, currentTime, interval, minCohorts) {
+conditionalTimestepBlocked <- function(cohortData, currentTime, interval, minCohorts, species = NULL) {
   byCols <- c("pixelGroup", "speciesCode")
-  if (is.na(interval) || round(currentTime) %% interval == 0) {
+  if (is.na(interval) || (is.finite(interval) && round(currentTime) %% interval == 0)) {
     return(cohortData[integer(0), ..byCols])
   }
   n <- cohortData[age > 1L, .N, by = byCols]
-  n[N > minCohorts, ..byCols]
+  m <- if (length(minCohorts) == 5L) {
+    tol <- species$shadetolerance[match(n$speciesCode, species$speciesCode)]
+    minCohorts[pmin(5L, pmax(1L, as.integer(round(tol))))]
+  } else minCohorts
+  n[N > m, ..byCols]
 }
 
 #' Drop blocked (pixelGroup, species) pairs from a seed table

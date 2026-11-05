@@ -2,6 +2,8 @@ Known issues: <https://github.com/PredictiveEcology/Biomass_core/issues>
 
 # Biomass_core (development version)
 
+* `cohortEstablishmentLimit` also accepts `c(interval, m1, m2, m3, m4, m5)`, a different `minCohorts` for each shade tolerance class 1 to 5 (`shadetolerance` of `sim$species`, rounded and limited to 1-5), and `interval = Inf`, a hard cap: a species over its limit never establishes from seed there. `c(Inf, 1, 2, 3, 4, 5)` allows at most 2, 3, 4, 5 and 6 seed cohorts for tolerance 1 to 5. `conditionalTimestepBlocked()` has a new `species` argument. The two-value form behaves as before.
+
 * `.inputObjects` stops when another module has a different `dataYear` (`paramCheckOtherMods(ifSetButDifferent = "error")`), as for `cohortDefinitionCols` and the others; `fireSense_dataPrepPredict` had 2011 while the vegetation modules had 2020.
 
 
