@@ -128,6 +128,48 @@ test_that("conditionalTimestepBlocked() never blocks a species with <= n cohorts
   expect_false(any(off$pixelGroup == 1L & off$speciesCode == 2L))  # 2 older cohorts
 })
 
+## per-shade-tolerance form: species 1 has tolerance 1 and 2 cohorts, species 2 has tolerance 5 and
+## `n5` cohorts, all in pixelGroup 1
+tolBlocked <- function(time, interval = Inf, m = c(1, 2, 3, 4, 5), n5 = 5L, tol = c(1, 5)) {
+  cd <- data.table(pixelGroup = 1L, speciesCode = rep(1:2, c(2L, n5)), age = 10L * seq_len(2L + n5))
+  sp <- data.table(speciesCode = 1:2, shadetolerance = tol)
+  conditionalTimestepBlocked(cd, time, interval, m, sp)
+}
+
+test_that("per-tolerance minCohorts blocks by the species' shade tolerance class", {
+  out <- tolBlocked(10)
+  expect_identical(out$speciesCode, 1L)  # tol 1: 2 cohorts > 1; tol 5: 5 cohorts <= 5
+  expect_identical(tolBlocked(10, n5 = 6L)$speciesCode, 1:2)  # tol 5 with 6 cohorts > 5
+  ## the length-1 form is the same m for every class
+  cd <- condCD()
+  sp <- data.table(speciesCode = 1:2, shadetolerance = c(1, 5))
+  expect_identical(conditionalTimestepBlocked(cd, 10, 20, 2, sp), condBlocked(10))
+})
+
+test_that("interval = Inf is a hard cap at every time, including time 0", {
+  for (tm in c(0, 10, 20, 1000)) expect_identical(tolBlocked(tm)$speciesCode, 1L)
+  expect_identical(NROW(conditionalTimestepBlocked(condCD(), 0, Inf, 2)), 2L)
+})
+
+test_that("a non-integer shadetolerance is rounded to a class in 1..5", {
+  expect_identical(tolBlocked(10, n5 = 6L, tol = c(1, 4.6))$speciesCode, 1:2)  # 4.6 -> 5: m = 5, 6 > 5
+  expect_identical(tolBlocked(10, n5 = 5L, tol = c(1, 4.6))$speciesCode, 1L)   # 4.6 -> 5, not 4 (m = 4)
+  expect_identical(tolBlocked(10, n5 = 5L, tol = c(1, 7))$speciesCode, 1L)     # clamped to 5
+  expect_identical(tolBlocked(10, n5 = 2L, tol = c(0, 5), m = c(0, 9, 9, 9, 9))$speciesCode, 1L)  # clamped to 1
+})
+
+test_that("checkCohortReductionParams() accepts the per-tolerance and Inf forms and rejects bad ones", {
+  expect_null(checkCohortReductionParams(NA, NA, c(Inf, 1, 2, 3, 4, 5), 10))
+  expect_null(checkCohortReductionParams(NA, NA, c(Inf, 5), 10))
+  expect_null(checkCohortReductionParams(NA, NA, c(20, 1, 2, 3, 4, 5), 10))
+  for (n in c(3, 4, 5, 7)) {
+    expect_error(checkCohortReductionParams(NA, NA, c(Inf, rep(1, n - 1)), 10), "cohortEstablishmentLimit must be NA")
+  }
+  expect_error(checkCohortReductionParams(NA, NA, c(Inf, 1, 2, 3, -4, 5), 10), "minCohorts >= 0")
+  expect_error(checkCohortReductionParams(NA, NA, c(-Inf, 5), 10), "multiple of successionTimestep")
+  expect_error(checkCohortReductionParams(NA, NA, c(25, 1, 2, 3, 4, 5), 10), "multiple of successionTimestep")
+})
+
 test_that("dropBlockedSeeds() drops blocked pairs and returns x unchanged when none are blocked", {
   seeds <- data.table(pixelGroup = c(1L, 1L, 2L), speciesCode = c(1L, 2L, 1L), v = 1:3)
   out <- dropBlockedSeeds(seeds, condBlocked(10))
