@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-date: "Last updated: 2026-11-03"
+date: "Last updated: 2026-11-06"
 output:
   bookdown::html_document2:
     toc: true
@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core59925cd2f6d41a95776605c4b44ce75b1d1d6325)
+[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_corecddc41a2b29b04fc91d1d9e9cbcc9621f0639da6)
 
 [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
@@ -1214,7 +1214,7 @@ event (growth and mortality are always yearly);
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
    <td style="text-align:left;"> NA </td>
-   <td style="text-align:left;"> `NA` (default) is off. Otherwise `c(interval, minCohorts)`: a species in a pixelGroup that already has more than `minCohorts` cohorts older than newly established ones can receive new seed-established cohorts only when `time(sim)` is a multiple of `interval` (years); at other succession steps its establishment there is skipped. Species with `minCohorts` or fewer cohorts establish every succession step. `interval` must be a positive multiple of `successionTimestep`; `minCohorts` must be &gt;= 0. Serotiny and resprouting (post-fire cohorts) are not restricted. Limits cohort numbers but changes results. Tested values: `c(20, 5)` (keeps 76% of table rows, with about 10% biomass bias with no fire) and `c(20, 2)` (62% of rows, 15% bias). It only limits establishment, so the LandR-CBM module/package needs no changes. </td>
+   <td style="text-align:left;"> `NA` (default) is off. Otherwise `c(interval, minCohorts)`: a species in a pixelGroup that already has more than `minCohorts` cohorts older than newly established ones can receive new seed-established cohorts only when `time(sim)` is a multiple of `interval` (years); at other succession steps its establishment there is skipped. Species with `minCohorts` or fewer cohorts establish every succession step. `interval` must be a positive multiple of `successionTimestep`, or `Inf` for a hard cap (a species over its limit never establishes from seed there); `minCohorts` must be &gt;= 0. `c(interval, m1, m2, m3, m4, m5)` sets `minCohorts` by shade tolerance class 1 to 5 (`shadetolerance` in `sim$species`, rounded and limited to 1-5). The per-tolerance hard cap is `c(Inf, 1, 2, 3, 4, 5)`: at most 2, 3, 4, 5 and 6 seed cohorts for tolerance 1 to 5, because blocking starts once a species has more than `m` cohorts. Serotiny and resprouting (post-fire cohorts) are not restricted. Limits cohort numbers but changes results. In the test-landscape simulator, `c(Inf, 1, 2, 3, 4, 5)` kept about 2 / 4 / 6 cohorts per pixel for Pinu_con / Pseu_men / Abie_ama (the current rule gives 3-5 / 7-9 / 34), with 46-64% of the cohort rows. It lowered fire-free landscape biomass by 10-26% over 600-1000 years and left it unchanged with fire every 150 years. It only limits establishment, so the LandR-CBM module/package needs no changes. </td>
    <td style="text-align:left;"> TRUE </td>
   </tr>
   <tr>
