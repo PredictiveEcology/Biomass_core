@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-date: "Last updated: 2026-11-05"
+date: "Last updated: 2026-11-24"
 output:
   bookdown::html_document2:
     toc: true
@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_coref0770d5ffa04fd57d8bd5aa9d49370a080ca8224)
+[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core57e5867448cfd6254d7a9e41070277a21d079fa0)
 
 [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
@@ -1695,6 +1695,297 @@ and mortality (`summaryBGM` event);
 execution of one or more modules by parsing and checking their code and
 executing the `.inputObjects` function(s), where the developer provides
 mechanisms to satisfy each module's expected inputs with default values.
+
+
+
+<div class="figure">
+<img src="figures/Biomass_core_eventFlow.png" alt="(ref:Biomass-core) events, as read from the module code with its default parameters." width="100%" />
+<p class="caption">(\#fig:eventFlow-Biomass-core)(ref:Biomass-core) events, as read from the module code with its default parameters.</p>
+</div>
+
+Table \@ref(tab:eventObjects-Biomass-core) lists, for each object, the code that writes it and the code that only reads it.
+
+<table class="table" style="width: auto !important; border-bottom: 0;">
+<caption>(\#tab:eventObjects-Biomass-core)Where each object of (ref:Biomass-core) is written and read, in run order.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Object </th>
+   <th style="text-align:left;"> Written by </th>
+   <th style="text-align:left;"> Read by </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr grouplength="7"><td colspan="3" style="border-bottom: 1px solid;"><strong>Inputs</strong></td></tr>
+<tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> studyArea </td>
+   <td style="text-align:left;"> .inputObjects (default) </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> columnsForPixelGroups </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;"> init </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> rasterToMatch </td>
+   <td style="text-align:left;"> .inputObjects (default) </td>
+   <td style="text-align:left;"> init, mortalityAndGrowth, plotSummaryBySpecies </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> sppEquiv </td>
+   <td style="text-align:left;"> .inputObjects (default) </td>
+   <td style="text-align:left;"> init </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> studyAreaReporting </td>
+   <td style="text-align:left;"> .inputObjects (default) </td>
+   <td style="text-align:left;"> init, plotSummaryBySpecies, plotMaps </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> sufficientLight </td>
+   <td style="text-align:left;"> .inputObjects (default) </td>
+   <td style="text-align:left;"> Dispersal </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> cceArgs </td>
+   <td style="text-align:left;"> .inputObjects (default) </td>
+   <td style="text-align:left;"> mortalityAndGrowth </td>
+  </tr>
+  <tr grouplength="13"><td colspan="3" style="border-bottom: 1px solid;"><strong>Inputs the module also updates</strong></td></tr>
+<tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> biomassMap </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> cohortData </td>
+   <td style="text-align:left;"> init, Dispersal, mortalityAndGrowth, cohortAgeReclassification </td>
+   <td style="text-align:left;"> summaryRegen, summaryBGM, plotSummaryBySpecies, plotAvgs </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> ecoregion </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> ecoregionMap </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;"> Dispersal, summaryBGM </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> lastReg </td>
+   <td style="text-align:left;"> init, Dispersal </td>
+   <td style="text-align:left;"> mortalityAndGrowth </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> minRelativeB </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;"> Dispersal </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> pixelGroupMap </td>
+   <td style="text-align:left;"> init, Dispersal, mortalityAndGrowth </td>
+   <td style="text-align:left;"> summaryRegen, summaryBGM, plotSummaryBySpecies, plotAvgs </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> species </td>
+   <td style="text-align:left;"> .inputObjects (default), init </td>
+   <td style="text-align:left;"> Dispersal, mortalityAndGrowth, plotSummaryBySpecies, plotMaps, plotAvgs </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> speciesEcoregion </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;"> Dispersal, mortalityAndGrowth </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> speciesLayers </td>
+   <td style="text-align:left;"> .inputObjects (default), init </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> sppColorVect </td>
+   <td style="text-align:left;"> .inputObjects (default), init </td>
+   <td style="text-align:left;"> summaryBGM, plotSummaryBySpecies, plotMaps </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> sppNameVector </td>
+   <td style="text-align:left;"> .inputObjects (default), init </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> treedFirePixelTableSinceLastDisp </td>
+   <td style="text-align:left;"> .inputObjects (default), Dispersal </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr grouplength="17"><td colspan="3" style="border-bottom: 1px solid;"><strong>Outputs</strong></td></tr>
+<tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> activePixelIndex </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;"> Dispersal </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> activePixelIndexReporting </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;"> plotSummaryBySpecies </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> inactivePixelIndex </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> inactivePixelIndexReporting </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> lastFireYear </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> regenerationOutput </td>
+   <td style="text-align:left;"> init, Dispersal </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> simulatedBiomassMap </td>
+   <td style="text-align:left;"> init, summaryBGM </td>
+   <td style="text-align:left;"> plotMaps </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> simulationOutput </td>
+   <td style="text-align:left;"> init, summaryBGM </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> simulationTreeOutput </td>
+   <td style="text-align:left;"> init, mortalityAndGrowth </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> spinupOutput </td>
+   <td style="text-align:left;"> init </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> vegTypeMap </td>
+   <td style="text-align:left;"> init, summaryBGM </td>
+   <td style="text-align:left;"> plotSummaryBySpecies, plotMaps </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> reproductionMap </td>
+   <td style="text-align:left;"> summaryRegen </td>
+   <td style="text-align:left;"> plotMaps </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> ANPPMap </td>
+   <td style="text-align:left;"> summaryBGM </td>
+   <td style="text-align:left;"> plotMaps </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> mortalityMap </td>
+   <td style="text-align:left;"> summaryBGM </td>
+   <td style="text-align:left;"> plotMaps </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> summaryBySpecies </td>
+   <td style="text-align:left;"> plotSummaryBySpecies </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> summaryBySpecies1 </td>
+   <td style="text-align:left;"> plotSummaryBySpecies </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;padding-left: 2em;" indentlevel="1"> summaryLandscape </td>
+   <td style="text-align:left;"> plotAvgs </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+</tbody>
+<tfoot><tr><td style="padding: 0; " colspan="100%">
+<sup></sup> Not shown, off with the default parameters: summaryBGMstart, summaryBGMpostDisp, summaryBGMpostRegen, summaryBGMpostGM, summaryBGMpostAging, buildVTM, plotTransitions, save.</td></tr></tfoot>
+</table>
+
+
+#### .inputObjects {-}
+
+during simInit: defaults for inputs not supplied
+
+![](figures/Biomass_core_io_.inputObjects.png){width=100%}
+
+
+
+#### init {-}
+
+the init event
+
+![](figures/Biomass_core_io_init.png){width=100%}
+
+
+
+#### Dispersal {-}
+
+every 10 years (successionTimestep); first at start + 10 years
+
+![](figures/Biomass_core_io_Dispersal.png){width=100%}
+
+
+
+#### mortalityAndGrowth {-}
+
+every year; first at start (growthInitialTime)
+
+![](figures/Biomass_core_io_mortalityAndGrowth.png){width=100%}
+
+
+
+#### cohortAgeReclassification {-}
+
+every 10 years (successionTimestep); first at start + 10 years
+
+![](figures/Biomass_core_io_cohortAgeReclassification.png){width=100%}
+
+
+
+#### summaryRegen {-}
+
+every 10 years (successionTimestep); first at start + 10 years
+
+![](figures/Biomass_core_io_summaryRegen.png){width=100%}
+
+
+
+#### summaryBGM {-}
+
+every 10 years (successionTimestep); first at start
+
+![](figures/Biomass_core_io_summaryBGM.png){width=100%}
+
+
+
+#### plotSummaryBySpecies {-}
+
+every 10 years (.plotInterval); first at start; and at end
+
+![](figures/Biomass_core_io_plotSummaryBySpecies.png){width=100%}
+
+
+
+#### plotMaps {-}
+
+every 10 years (.plotInterval); first at start (.plotInitialTime)
+
+![](figures/Biomass_core_io_plotMaps.png){width=100%}
+
+
+
+#### plotAvgs {-}
+
+every 10 years (.plotInterval); first at start; and at end
+
+![](figures/Biomass_core_io_plotAvgs.png){width=100%}
 
 ### Differences between *Biomass_core* and the LANDIS-II Biomass Succession Extension model (LBSE) {#biomass-core-vs-lbse}
 
