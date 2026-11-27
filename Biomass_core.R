@@ -2655,7 +2655,8 @@ CohortAgeReclassification <- function(sim) {
     P(sim)$sppEquivCol,
     sim$sppColorVect,
     P(sim)$vegLeadingProportion,
-    sim$studyArea
+    sim$studyArea,
+    dPath = dPath
   )
 
   ## the following may, or may not change inputs
