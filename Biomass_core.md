@@ -1,6 +1,6 @@
 ---
 title: "LandR _Biomass_core_ Manual"
-date: "Last updated: 2026-11-24"
+date: "Last updated: 2026-11-27"
 output:
   bookdown::html_document2:
     toc: true
@@ -44,7 +44,7 @@ always_allow_html: true
 
 
 
-[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core57e5867448cfd6254d7a9e41070277a21d079fa0)
+[![module-version-Badge](figures/moduleVersionBadge.png)](https://github.com/PredictiveEcology/Biomass_core76ef948327174ba5dd9497e1a20256382bddd5c0)
 
 [![Issues-badge](figures/issuesBadge.png)](https://github.com/PredictiveEcology/Biomass_core/issues)
 
