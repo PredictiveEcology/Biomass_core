@@ -2650,12 +2650,13 @@ CohortAgeReclassification <- function(sim) {
   ## already (rather than potentially being supplied by a downstream module)
   ## the function checks whether the tables exist internally.
   sppOuts <- sppHarmonize(
-    sim$sppEquiv,
-    sim$sppNameVector,
-    P(sim)$sppEquivCol,
-    sim$sppColorVect,
-    P(sim)$vegLeadingProportion,
-    sim$studyArea
+    sppEquiv = sim$sppEquiv,
+    sppNameVector = sim$sppNameVector,
+    sppEquivCol = P(sim)$sppEquivCol,
+    sppColorVect = sim$sppColorVect,
+    vegLeadingProportion = P(sim)$vegLeadingProportion,
+    studyArea = sim$studyArea,
+    dPath = dPath
   )
 
   ## the following may, or may not change inputs
